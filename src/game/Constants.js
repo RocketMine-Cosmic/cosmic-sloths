@@ -29,6 +29,21 @@ export const ARENAS = [
   { id: 'blackhole', name: 'Abyssal Vortex', bg: '#000000', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b29cf4702_map18.png', duration: 390, effect: 'solar_flare' },
   { id: 'mothership', name: 'Turquoise Drift', bg: '#220022', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/b7bfbd6fe_Map19.png', duration: 420, effect: 'neon_rain' },
   { id: 'dimension', name: 'Rainbow Rift', bg: '#110033', image: 'https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/6f707a3e0_Map20.png', duration: 450, effect: 'solar_flare' },
+  // ===== OUTER GALAXY (S11-S20) — endgame ladder, added 2026-06-04 =====
+  // Sector indices 10-19 in this array → display sectors 11-20. Backgrounds in the
+  // 69de258a7e072380b89d66e3 storage bucket. Effects reuse the existing 4 engine effects
+  // (fog / neon_rain / solar_flare / none) — new effects can be added in a later pass.
+  // Durations grow +30s per sector, 8:00 → 12:30. MUST match ARENA_DURATIONS in saveScore.
+  { id: 'galactic_core', name: 'The Galactic Core', bg: '#0a0518', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/069d2b286_MilkyWay_Starfield.png', duration: 480, effect: 'fog' },
+  { id: 'pillars', name: 'Pillars of Creation', bg: '#1a0a2a', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/5e69ed395_Nubula_Pillars.png', duration: 510, effect: 'neon_rain' },
+  { id: 'saturnian', name: 'Saturnian Reach', bg: '#1a1a05', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/28e6f3f01_Ringed_planets.png', duration: 540, effect: 'none' },
+  { id: 'andromeda', name: 'Andromeda\'s Edge', bg: '#05101a', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/4300cbae0_Spiral_Galaxy.png', duration: 570, effect: 'fog' },
+  { id: 'painters_spiral', name: 'The Painter\'s Spiral', bg: '#1a1505', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/b2890294e_Majestic_spiral.png', duration: 600, effect: 'solar_flare' },
+  { id: 'harmony', name: 'Harmony Drift', bg: '#0a1a15', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/04713b746_Harmony.png', duration: 630, effect: 'neon_rain' },
+  { id: 'chromatic', name: 'Chromatic Tides', bg: '#1a0510', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/8717e0950_Swirling_nebulae.png', duration: 660, effect: 'fog' },
+  { id: 'stormfront', name: 'Stormfront Nebula', bg: '#051520', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/c0893d46c_Cosmic_Storm.png', duration: 690, effect: 'solar_flare' },
+  { id: 'supernova', name: 'Supernova Heart', bg: '#200510', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/c6b90fc36_SuperNova_Burst.png', duration: 720, effect: 'solar_flare' },
+  { id: 'devourer', name: 'The Devourer', bg: '#000000', image: 'https://media.base44.com/images/public/69de258a7e072380b89d66e3/9161fafb4_Cosmic_BlackHole.png', duration: 750, effect: 'none' },
   // Squad Meteor — dedicated DPS-check arena. Background = QuantumHole.png, 3-min run,
   // no mob spawns (handled by GameEngine when arena.id === 'quantum_meteor'), single
   // stationary asteroid target. Not selectable in normal Hub/Loadouts — entered only
@@ -209,6 +224,18 @@ const loadSprite = (filename) => {
     return null;
 };
 
+// Outer Galaxy sprite loader — new storage bucket (69de258...) for T11-T14 mobs and
+// the Pulsar Guardian boss. Existing Inner Galaxy sprites stay in the original bucket
+// via loadSprite() above. Same Image() preload pattern — only the path differs.
+const loadSpriteOG = (filename) => {
+    if (typeof window !== 'undefined') {
+        const img = new Image();
+        img.src = `https://media.base44.com/images/public/69de258a7e072380b89d66e3/${filename}`;
+        return img;
+    }
+    return null;
+};
+
 export const ENEMIES = [
   // Tier 1
   { id: 't1_void_glow', name: 'Void Glow Orb', hp: 10, speed: 2.2, damage: 6, color: '#a855f7', radius: 27, xp: 1, tier: 1, spriteImage: loadSprite('ffb4f7068_void_glow_orb_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
@@ -262,13 +289,50 @@ export const ENEMIES = [
   { id: 't10_shadow', name: 'Shadow Stalker', hp: 420, speed: 2.2, damage: 120, color: '#1e293b', radius: 81, xp: 10, tier: 10, spriteImage: loadSprite('9199eef7e_shadow_stalker_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
   { id: 't10_crystal_vortex', name: 'Crystal Vortex', hp: 480, speed: 1.6, damage: 130, color: '#d946ef', radius: 86, xp: 10, tier: 10, isRanged: true, spriteImage: loadSprite('703e0a56e_crystal_vortex_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
 
+  // ===== OUTER GALAXY (S11-S20) — T11-T14 endgame mobs, added 2026-06-04 =====
+  // Sprites in the 69de258a7e072380b89d66e3 bucket via loadSpriteOG. All use the same
+  // 4×4 / 16-frame format as existing mobs. Stats scale roughly from the T10 baseline
+  // (T10: HP 420-480 / dmg 120-130) up through T14 mythic apex tier.
+
+  // Tier 11 — Outer Galaxy swarm + fast + tank mix
+  { id: 't11_asteroid_crab', name: 'Asteroid Crab', hp: 700, speed: 1.0, damage: 150, color: '#3b82f6', radius: 90, xp: 11, tier: 11, isTank: true, spriteImage: loadSpriteOG('d058a4791_Asteroid_Crab_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_cosmic_jellyfish', name: 'Cosmic Jellyfish', hp: 600, speed: 1.6, damage: 140, color: '#06b6d4', radius: 95, xp: 11, tier: 11, spriteImage: loadSpriteOG('93adad41e_Cosmic_Jellyfish_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_galaxy_mantis', name: 'Galaxy Mantis', hp: 550, speed: 1.9, damage: 160, color: '#14b8a6', radius: 82, xp: 11, tier: 11, isRanged: true, spriteImage: loadSpriteOG('a0c3ffe18_Galaxy_Mantis_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_spectral_mothlet', name: 'Spectral Mothlet', hp: 500, speed: 2.2, damage: 135, color: '#f0abfc', radius: 72, xp: 11, tier: 11, spriteImage: loadSpriteOG('da4b6bf5a_neon_mothra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_star_scarab', name: 'Star Scarab Beetle', hp: 600, speed: 1.7, damage: 145, color: '#0ea5e9', radius: 85, xp: 11, tier: 11, spriteImage: loadSpriteOG('150bb4721_Star_Scarab_Beetle_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_void_bat', name: 'Void Bat', hp: 500, speed: 2.1, damage: 140, color: '#7e22ce', radius: 75, xp: 11, tier: 11, spriteImage: loadSpriteOG('d6da65840_Void_Bat_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_void_eel', name: 'Void Eel', hp: 550, speed: 2.5, damage: 155, color: '#0d9488', radius: 80, xp: 11, tier: 11, spriteImage: loadSpriteOG('b9f304545_Void_Eel_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't11_shadow_mantling', name: 'Shadow Mantling', hp: 580, speed: 2.4, damage: 150, color: '#1e1b4b', radius: 78, xp: 11, tier: 11, spriteImage: loadSpriteOG('ec5f8466f_void_mantra_sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+
+  // Tier 12 — Outer Galaxy elites + heavy ranged
+  { id: 't12_nebula_octopus', name: 'Nebula Octopus', hp: 1100, speed: 1.4, damage: 195, color: '#a855f7', radius: 100, xp: 12, tier: 12, spriteImage: loadSpriteOG('78215c244_Nebula_Octopus_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't12_nebula_scorpion', name: 'Nebula Scorpion', hp: 1000, speed: 1.6, damage: 205, color: '#c026d3', radius: 95, xp: 12, tier: 12, isRanged: true, spriteImage: loadSpriteOG('9a42c9c27_Nebula_Scorpion_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't12_aurora_moth', name: 'Aurora Moth', hp: 850, speed: 2.0, damage: 175, color: '#34d399', radius: 85, xp: 12, tier: 12, spriteImage: loadSpriteOG('f3a323dae_Aurora_Moth_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't12_galaxy_wasp', name: 'Galaxy Wasp', hp: 900, speed: 2.1, damage: 190, color: '#9333ea', radius: 80, xp: 12, tier: 12, isRanged: true, spriteImage: loadSpriteOG('1779a4a15_Galaxy_Wasp_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+
+  // Tier 13 — Outer Galaxy mythic-tier elites
+  { id: 't13_aurora_serpent', name: 'Aurora Serpent', hp: 1600, speed: 1.8, damage: 250, color: '#22d3ee', radius: 105, xp: 13, tier: 13, spriteImage: loadSpriteOG('a982ba85c_Aurora_Serpent_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't13_comet_ray', name: 'Comet Ray', hp: 1400, speed: 2.0, damage: 270, color: '#f97316', radius: 100, xp: 13, tier: 13, isRanged: true, spriteImage: loadSpriteOG('c9ca34e78_Comit_Ray_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't13_nebula_serpent', name: 'Nebula Serpent', hp: 1700, speed: 1.7, damage: 245, color: '#d946ef', radius: 110, xp: 13, tier: 13, spriteImage: loadSpriteOG('2f0782efb_Nebula_Serpent_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't13_plasma_raptor', name: 'Plasma Raptor', hp: 1450, speed: 2.5, damage: 265, color: '#fb923c', radius: 100, xp: 13, tier: 13, spriteImage: loadSpriteOG('7a54d1f3f_Plasma_Raptor_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't13_void_shark', name: 'Void Shark', hp: 1500, speed: 2.4, damage: 275, color: '#581c87', radius: 105, xp: 13, tier: 13, spriteImage: loadSpriteOG('33a8cf065_Void_Shark_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+
+  // Tier 14 — Outer Galaxy apex mythics (intended to spawn only in S16-S20)
+  { id: 't14_cosmic_manta_ray', name: 'Cosmic Manta Ray', hp: 2500, speed: 1.9, damage: 310, color: '#1e3a8a', radius: 120, xp: 14, tier: 14, spriteImage: loadSpriteOG('aa4cd6eb7_Cosmic_Manta_Ray_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't14_nebula_panther', name: 'Nebula Panther', hp: 2400, speed: 2.3, damage: 330, color: '#7c2d12', radius: 115, xp: 14, tier: 14, spriteImage: loadSpriteOG('37f8125b9_Nebula_Panther_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+  { id: 't14_plasma_wyrm', name: 'Plasma Wyrm', hp: 2800, speed: 1.8, damage: 320, color: '#dc2626', radius: 125, xp: 14, tier: 14, spriteImage: loadSpriteOG('68e0a16db_Plasma_Wyrm_Sheet.png'), frameCount: 16, animationSpeed: 0.15 },
+
   // Bosses (spawn anywhere at the end)
   { id: 'boss_nebula_devourer', name: 'Nebula Devourer', hp: 7000, speed: 0.8, damage: 60, color: '#8b5cf6', radius: 124, xp: 800, isBoss: true, spriteImage: loadSprite('34fdca1a0_nebula_devourer_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
   { id: 'boss_plasma_kraken', name: 'Plasma Kraken', hp: 6000, speed: 0.6, damage: 70, color: '#ef4444', radius: 113, xp: 700, isBoss: true, spriteImage: loadSprite('7464748bb_plasma_kraken_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
   { id: 'boss_stellar_colossus', name: 'Stellar Colossus', hp: 9000, speed: 1.0, damage: 55, color: '#f59e0b', radius: 135, xp: 900, isBoss: true, spriteImage: loadSprite('d39368909_stellar_colossus_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
   { id: 'boss_cosmic_wyrm', name: 'Cosmic Wyrm Lord', hp: 11000, speed: 0.9, damage: 80, color: '#0ea5e9', radius: 146, xp: 1000, isBoss: true, spriteImage: loadSprite('88e8a0d84_cosmic_wyrm_lord_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
   { id: 'boss_supernova_empress', name: 'Supernova Empress', hp: 14000, speed: 1.2, damage: 90, color: '#ec4899', radius: 110, xp: 1200, isBoss: true, spriteImage: loadSprite('4d3a1f090_supernova_empress_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' },
-  { id: 'boss_nexus_annihilator', name: 'Nexus Annihilator', hp: 18000, speed: 0.5, damage: 120, color: '#1e293b', radius: 160, xp: 1500, isBoss: true, spriteImage: loadSprite('29ea7426c_nexus_annihilator_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' }
+  { id: 'boss_nexus_annihilator', name: 'Nexus Annihilator', hp: 18000, speed: 0.5, damage: 120, color: '#1e293b', radius: 160, xp: 1500, isBoss: true, spriteImage: loadSprite('29ea7426c_nexus_annihilator_sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'side', weakDesc: 'Attack from the sides' },
+  // Outer Galaxy boss — joins the shared boss rotation pool. Anchors S20 (The Devourer)
+  // as the guaranteed mythic finale; eligible on S12/S14/S16/S18 alongside the other 6.
+  // Same 5×5 / 25-frame sheet format as existing bosses.
+  { id: 'boss_pulsar_guardian', name: 'Pulsar Guardian', hp: 22000, speed: 0.7, damage: 110, color: '#fbbf24', radius: 150, xp: 1700, isBoss: true, spriteImage: loadSpriteOG('83baa9440_Pulsar_Guardian_Sheet.png'), frameCount: 25, animationSpeed: 0.12, weakSide: 'back', weakDesc: 'Attack from behind' }
 ];
 
 // Talent trees redesigned around two themed paths per character.

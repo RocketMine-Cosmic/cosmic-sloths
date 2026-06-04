@@ -46,5 +46,38 @@ export const ENEMY_LORE = {
     'boss_stellar_colossus': "Enormous glowing yellow-orange crystal star with rotating arms and a blazing central eye.",
     'boss_cosmic_wyrm': "Enormous glowing teal serpentine dragon with blazing aura and crystal fins.",
     'boss_supernova_empress': "Radiant pink-gold exploding star queen with flowing energy wings and crown of flames.",
-    'boss_nexus_annihilator': "Colossal dark cosmic entity with glowing purple energy core, rotating metallic rings and massive energy tendrils."
+    'boss_nexus_annihilator': "Colossal dark cosmic entity with glowing purple energy core, rotating metallic rings and massive energy tendrils.",
+
+    // ===== Outer Galaxy (S11-S20) — T11-T14 mythic-tier mobs + Pulsar Guardian =====
+
+    // Tier 11
+    't11_asteroid_crab': "A massive crustacean whose shell has fused with planetary debris. Glowing eyes betray an ancient, hostile intellect.",
+    't11_cosmic_jellyfish': "Drifting bioluminescent giants that strain stardust from the void. Their tendrils carry a paralytic neural toxin.",
+    't11_galaxy_mantis': "A precision predator with mantis-like reflexes. It snipes targets across light-years with razor-sharp limbs.",
+    't11_spectral_mothlet': "A smaller, faster cousin of the Neon Mothra. Its iridescent wings refract reality into blinding bursts of light.",
+    't11_star_scarab': "Armored swarm beetles that nest in dying suns. Their carapaces are forged in stellar plasma itself.",
+    't11_void_bat': "Echo-locating predators that flit between dimensions. They hunt in clouds and tear through ship hulls in seconds.",
+    't11_void_eel': "Slick, electric serpents from the cosmic deep. They strike with the speed of a lightning bolt.",
+    't11_shadow_mantling': "A juvenile dimensional manta. Smaller and faster than its kin, it phases between layers of space to ambush prey.",
+
+    // Tier 12
+    't12_nebula_octopus': "An eight-armed leviathan formed of pure nebular matter. Each tentacle conducts a different cosmic energy.",
+    't12_nebula_scorpion': "Its tail injects a venom that converts ship armor into stardust. Approach with extreme caution.",
+    't12_aurora_moth': "Drawn to high-energy emissions, these moths swarm starship reactors. Their wing dust scrambles targeting systems.",
+    't12_galaxy_wasp': "An apex hunter of the Outer Galaxy hive. Its stinger pierces shielding and delivers crystallized cosmic radiation.",
+
+    // Tier 13
+    't13_aurora_serpent': "A celestial dragon born of solar wind and aurora light. It commands cosmic currents like extensions of its body.",
+    't13_comet_ray': "A phoenix-like apparition that ignites in solar atmospheres. Its passing leaves trails of incinerated matter.",
+    't13_nebula_serpent': "An ancient drake that coils through gas clouds older than entire civilizations. Its flames burn colder than absolute zero.",
+    't13_plasma_raptor': "A hyperspeed apex predator clad in plasma feathers. Few survive a single pass.",
+    't13_void_shark': "An apex hunter from the deepest cosmic abyss. It senses gravitational disturbances across galactic distances.",
+
+    // Tier 14
+    't14_cosmic_manta_ray': "A primordial leviathan with the night sky imprinted on its skin. Said to predate the stars themselves.",
+    't14_nebula_panther': "Made of stalking flame and shadow. Once it locks onto prey, escape is statistically impossible.",
+    't14_plasma_wyrm': "A mythic wyrm whose body is a contained supernova. To behold it is to witness the death of stars.",
+
+    // Outer Galaxy boss
+    'boss_pulsar_guardian': "The last sentinel of a collapsed star. Its core still pulses with the rhythm of a sun long dead, and its rage radiates outward in waves of pure stellar fury."
 };
