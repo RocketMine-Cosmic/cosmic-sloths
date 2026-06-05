@@ -4,7 +4,7 @@
 //
 // Order MUST mirror functions/saveScore.js ARENA_ORDER + game/Constants.js ARENAS.
 
-const SECTOR_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension'];
+const SECTOR_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension', 'supernova', 'painters_spiral', 'stormfront', 'harmony', 'chromatic', 'saturnian', 'pillars', 'andromeda', 'galactic_core'];
 
 const NAMES = {
     station:    'Azure Expanse',
@@ -17,6 +17,15 @@ const NAMES = {
     blackhole:  'Abyssal Vortex',
     mothership: 'Turquoise Drift',
     dimension:  'Rainbow Rift',
+    supernova:  'Supernova',
+    painters_spiral: 'Painters Spiral',
+    stormfront: 'Stormfront',
+    harmony:    'Harmony',
+    chromatic:  'Chromatic',
+    saturnian:  'Saturnian',
+    pillars:    'Pillars',
+    andromeda:  'Andromeda',
+    galactic_core: 'Galactic Core',
     endless:    'Endless Mode',
     world_boss_arena: 'Global Raid',
 };
