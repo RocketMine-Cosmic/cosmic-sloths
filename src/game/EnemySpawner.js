@@ -389,7 +389,12 @@ export function spawnEnemies(engine, dt) {
                 newElite.maxHp = elite.hp * hpMult * 2.5;
                 newElite.hp = newElite.maxHp;
                 newElite.damage = elite.damage * dmgMult * 1.5;
-                newElite.radius = elite.radius * 1.4;
+                // Elite radius bump cut 1.4× → 1.15× (2026-06-05, Anubis screenshot).
+                // High-tier Outer Galaxy mobs already render at sprite size 1.8×
+                // radius, so a 1.4× elite multiplier on top made T11+ elites fill
+                // half the screen on mobile. 1.15× still reads as "noticeably
+                // bigger" thanks to the elite aura ring, without being oppressive.
+                newElite.radius = elite.radius * 1.15;
                 newElite.speed = elite.speed * 1.2 * spdMult;
                 newElite.xp = elite.xp * 4;
                 newElite.isElite = true;
