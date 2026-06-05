@@ -421,14 +421,20 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             }
             ctx.globalAlpha = 1.0;
         } else if (p.type === 'buzzsaw') {
-            ctx.rotate((p.rotation || time * 15) * (p.vx < 0 ? -1 : 1));
+            // Rotation speed cut 15 → 6 (2026-06-05, Anubis video). At 15 rad/s
+            // × 7 overlapping swarm blades the spike edges created a flickering
+            // moiré pattern that strained the eyes. 6 rad/s still reads as
+            // "spinning fast" without the strobe.
+            ctx.rotate((p.rotation || time * 6) * (p.vx < 0 ? -1 : 1));
             // Use source-over (normal blending) for the blade body so overlapping
             // saws don't stack additively to pure white (Texxy bug 2026-05-14 —
             // 11 saws on screen looked like a stream of bright shurikens).
             // Chrome body + dark outline gives a readable metallic silhouette;
             // the white core is kept tiny + additive for a single hot highlight.
             ctx.globalCompositeOperation = 'source-over';
-            const spikes = p.weaponId === 'buzzsawSwarm' ? 10 : 8;
+            // Swarm variant: 10 → 8 spikes (matches base blade). 10 spikes at
+            // high rotation produced the moiré flicker reported on the swarm.
+            const spikes = 8;
             ctx.beginPath();
             for (let i = 0; i < spikes * 2; i++) {
                 const a = (Math.PI * 2 / (spikes * 2)) * i;
@@ -445,11 +451,11 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             // Inner hub ring
             ctx.fillStyle = '#3a3d44';
             ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.35, 0, Math.PI * 2); ctx.fill();
-            // Single small additive highlight — keeps the "spinning metal catching light"
-            // feel without the previous whole-blade whiteout.
+            // Single small additive highlight — alpha 0.7 → 0.35 so overlapping
+            // swarm blades don't compound into the eye-straining bright pulse.
             ctx.globalCompositeOperation = 'lighter';
             ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 0.7;
+            ctx.globalAlpha = 0.35;
             ctx.beginPath(); ctx.arc(0, 0, p.radius * 0.15, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
