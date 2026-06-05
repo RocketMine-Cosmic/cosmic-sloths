@@ -4,7 +4,7 @@
 //
 // Order MUST mirror functions/saveScore.js ARENA_ORDER + game/Constants.js ARENAS.
 
-const SECTOR_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension', 'supernova', 'painters_spiral', 'stormfront', 'harmony', 'chromatic', 'saturnian', 'pillars', 'andromeda', 'galactic_core'];
+const SECTOR_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension', 'galactic_core', 'andromeda', 'pillars', 'saturnian', 'chromatic', 'harmony', 'stormfront', 'painters_spiral', 'supernova'];
 
 const NAMES = {
     station:    'Azure Expanse',
