@@ -4,7 +4,7 @@
 //
 // Order MUST mirror functions/saveScore.js ARENA_ORDER + game/Constants.js ARENAS.
 
-const SECTOR_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension', 'galactic_core', 'andromeda', 'pillars', 'saturnian', 'chromatic', 'harmony', 'stormfront', 'painters_spiral', 'supernova'];
+const SECTOR_ORDER = ['station', 'asteroid', 'nebula', 'void', 'plasma', 'crystal', 'moon', 'blackhole', 'mothership', 'dimension', 'galactic_core', 'pillars', 'saturnian', 'andromeda', 'painters_spiral', 'harmony', 'chromatic', 'stormfront', 'supernova', 'devourer'];
 
 const NAMES = {
     station:    'Azure Expanse',
@@ -17,15 +17,16 @@ const NAMES = {
     blackhole:  'Abyssal Vortex',
     mothership: 'Turquoise Drift',
     dimension:  'Rainbow Rift',
-    supernova:  'Supernova',
-    painters_spiral: 'Painters Spiral',
-    stormfront: 'Stormfront',
-    harmony:    'Harmony',
-    chromatic:  'Chromatic',
-    saturnian:  'Saturnian',
-    pillars:    'Pillars',
-    andromeda:  'Andromeda',
-    galactic_core: 'Galactic Core',
+    galactic_core: 'The Galactic Core',
+    pillars:    'Pillars of Creation',
+    saturnian:  'Saturnian Reach',
+    andromeda:  'Andromeda\'s Edge',
+    painters_spiral: 'The Painter\'s Spiral',
+    harmony:    'Harmony Drift',
+    chromatic:  'Chromatic Tides',
+    stormfront: 'Stormfront Nebula',
+    supernova:  'Supernova Heart',
+    devourer:   'The Devourer',
     endless:    'Endless Mode',
     world_boss_arena: 'Global Raid',
 };
