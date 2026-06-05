@@ -376,7 +376,11 @@ export function spawnEnemies(engine, dt) {
             // can spawn as elites; Inner Galaxy keeps the existing cap at 9.
             const eliteTierCap = outerBand ? 14 : 9;
             const eliteMin = Math.min(eliteTierCap, Math.max(2, maxTier + 1));
-            const elites = ENEMIES.filter(e => !e.isBoss && e.tier >= eliteMin);
+            // Cap the elite pool's MAX tier too (fix 2026-06-05): without this,
+            // S9–S10 elite rolls could pull T11–T14 Outer Galaxy mobs into Inner
+            // Galaxy sectors because the filter was `e.tier >= eliteMin` with no
+            // upper bound. Now elites can only come from the sector's tier band.
+            const elites = ENEMIES.filter(e => !e.isBoss && e.tier >= eliteMin && e.tier <= eliteTierCap);
             if (elites.length > 0) {
                 const elite = elites[Math.floor(Math.random() * elites.length)];
                 let newElite = engine.enemyPool.length > 0 ? engine.enemyPool.pop() : {};
