@@ -14,6 +14,35 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
+// Builds the squad badge map for a list of leaderboard rows. Matches members by
+// BOTH wallet_address AND player_name so older RunScore rows that are missing a
+// wallet (or where the player has since switched wallets) still get their squad
+// tag shown. Returned map is keyed by:
+//   - "<lowercase wallet>" for wallet matches
+//   - "name:<lowercase name>" for player_name fallback matches
+async function buildSquadLookup(rows) {
+    const wallets = [...new Set(rows.map(r => (r.wallet_address || '').toLowerCase()).filter(Boolean))];
+    const names = [...new Set(rows.filter(r => !r.wallet_address && r.player_name).map(r => r.player_name))];
+    const memberSets = await Promise.all([
+        wallets.length > 0 ? base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } }) : Promise.resolve([]),
+        names.length > 0 ? base44.entities.SquadMember.filter({ player_name: { $in: names } }) : Promise.resolve([]),
+    ]);
+    const members = [...memberSets[0], ...memberSets[1]];
+    if (members.length === 0) return {};
+    const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
+    const squads = squadIds.length > 0 ? await base44.entities.Squad.filter({ id: { $in: squadIds } }) : [];
+    const squadMap = Object.fromEntries(squads.map(s => [s.id, s]));
+    const result = {};
+    for (const m of members) {
+        const s = squadMap[m.squad_id];
+        if (!s) continue;
+        const badge = { tag: s.tag, name: s.name, icon: s.icon };
+        if (m.wallet_address) result[m.wallet_address.toLowerCase()] = badge;
+        if (m.player_name) result['name:' + m.player_name.toLowerCase()] = badge;
+    }
+    return result;
+}
+
 // Built-in defaults — mirrors functions/leaderboardPayoutConfig DEFAULT_CONFIG.
 // Used until the live config arrives from the backend.
 const DEFAULT_PAYOUT_CONFIG = {
@@ -296,21 +325,8 @@ export default function Leaderboard() {
                 // Squad badge lookup for the displayed players (same pattern as below).
                 try {
                     const players = (await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n }))?.data?.players || [];
-                    const wallets = [...new Set(players.map(p => (p.wallet_address || '').toLowerCase()).filter(Boolean))];
-                    if (wallets.length > 0) {
-                        const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
-                        const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
-                        const squads = squadIds.length > 0 ? await base44.entities.Squad.filter({ id: { $in: squadIds } }) : [];
-                        const squadMap = Object.fromEntries(squads.map(s => [s.id, s]));
-                        const result = {};
-                        for (const m of members) {
-                            const s = squadMap[m.squad_id];
-                            if (s) result[(m.wallet_address || '').toLowerCase()] = { tag: s.tag, name: s.name, icon: s.icon };
-                        }
-                        setSquadByWallet(result);
-                    } else {
-                        setSquadByWallet({});
-                    }
+                    const result = await buildSquadLookup(players);
+                    setSquadByWallet(result);
                 } catch (_) {}
 
                 if (!silent) setLoading(false);
@@ -366,23 +382,11 @@ export default function Leaderboard() {
             setLastUpdated(Date.now());
 
             // Look up squad membership for the displayed players (best-effort, non-blocking).
-            // Some RunScore rows may not have wallet_address (older records) — those just won't show a squad.
+            // Some RunScore rows may not have wallet_address (older records) — we now also
+            // look up by player_name as a fallback so those still get a squad badge.
             try {
-                const wallets = [...new Set(allUnique.map(s => (s.wallet_address || '').toLowerCase()).filter(Boolean))];
-                if (wallets.length > 0) {
-                    const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
-                    const squadIds = [...new Set(members.map(m => m.squad_id).filter(Boolean))];
-                    const squads = squadIds.length > 0 ? await base44.entities.Squad.filter({ id: { $in: squadIds } }) : [];
-                    const squadMap = Object.fromEntries(squads.map(s => [s.id, s]));
-                    const result = {};
-                    for (const m of members) {
-                        const s = squadMap[m.squad_id];
-                        if (s) result[(m.wallet_address || '').toLowerCase()] = { tag: s.tag, name: s.name, icon: s.icon };
-                    }
-                    setSquadByWallet(result);
-                } else {
-                    setSquadByWallet({});
-                }
+                const result = await buildSquadLookup(allUnique);
+                setSquadByWallet(result);
             } catch (e) {
                 console.warn('[Leaderboard] squad lookup failed:', e?.message);
             }
@@ -593,7 +597,8 @@ export default function Leaderboard() {
                                                 </div>
                                                 <div className="text-[10px] md:text-xs text-slate-400 truncate mt-0.5 flex items-center gap-2 flex-wrap">
                                                     {(() => {
-                                                        const sq = squadByWallet[(score.wallet_address || '').toLowerCase()];
+                                                        const sq = squadByWallet[(score.wallet_address || '').toLowerCase()]
+                                                            || squadByWallet['name:' + (score.player_name || '').toLowerCase()];
                                                         if (!sq) return null;
                                                         return (
                                                             <span className="flex items-center gap-1 text-orange-300 bg-orange-950/40 border border-orange-700/40 px-1.5 py-0.5 rounded font-bold" title={sq.name}>
