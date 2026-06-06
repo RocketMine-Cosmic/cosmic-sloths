@@ -1101,6 +1101,10 @@ export default function Game() {
             if (!e.touches || e.touches.length === 0) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
+            // Opt-out for buttons inside the edge guard zones (e.g. HideHudButton
+            // sits in top-right corner and was getting its tap eaten on Android,
+            // softlocking players who hid the HUD — Texxy/Crybel bug 2026-06-06).
+            if (e.target?.closest?.('[data-allow-edge-touch]')) return;
             // Pre-emptively block touches that START in browser-gesture zones:
             //   - top 60px → pull-to-refresh
             //   - leftmost 25px → iOS Safari swipe-back / Android edge-swipe
@@ -1113,6 +1117,9 @@ export default function Game() {
 
         const onTouchMove = (e) => {
             if (!e.touches || e.touches.length === 0) return;
+            // Same opt-out as onTouchStart — without it the move handler would
+            // still preventDefault the gesture started on the button.
+            if (e.target?.closest?.('[data-allow-edge-touch]')) return;
             const x = e.touches[0].clientX;
             const y = e.touches[0].clientY;
             const dx = x - startX;
