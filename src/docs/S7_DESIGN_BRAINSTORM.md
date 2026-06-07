@@ -120,7 +120,29 @@ const PUSHBACK_WEAPONS = new Set(['shieldBubble', 'aegisMatrix', 'burningBarrier
 const cdFloor = PUSHBACK_WEAPONS.has(w.id) ? 0.85 : 0.5;
 w.timer = (w.baseCooldown / 60) × max(0.35, cooldownMult) × max(cdFloor, cdMult);
 ```
-Shield bubble min CD becomes `3.0s × 0.35 × 0.85 = 0.89s` instead of `0.525s`. With life 2.0s → ~2.2 overlapping (was ~3.8). Aegis Matrix → ~5 overlapping (was ~8.6). burningBarrier inherits the floor automatically — owner confirmed any future pushback weapon should also pick this up (just add its id to the set). Still strong, no longer ridiculous.
+Shield bubble min CD becomes `3.0s × 0.35 × 0.85 = 0.89s` instead of `0.525s`. With life 2.0s → ~2.2 overlapping (was ~3.8). Aegis Matrix → ~5 overlapping (was ~8.6). burningBarrier inherits the floor automatically — owner confirmed any future pushback weapon should also pick this up (just add its id to the set).
+
+### 4a-bis. Pushback weapon base damage — cut to land BELOW or AT median DPS
+
+**Owner design intent (2026-06-07):** "with the shield nerf it should be = to or less than the rest — it's a shield at the end of the day." The pushback archetype is DEFENSIVE. Damage is a chip bonus, pushback is the value. The §4a CD floor alone leaves Aegis Matrix at ~72k DPS (4-5× median) because base 40 × overlap × stack compounds. We need base damage cuts on top of the CD floor.
+
+```js
+// Constants.js WEAPONS — pushback shield archetype base damage cuts
+shieldBubble:   baseDamage 15 → 8   // Pure defense — pushback IS the value
+aegisMatrix:    baseDamage 40 → 10  // Evolved offensive shield — at median, not above
+burningBarrier: baseDamage 18 → 10  // Pool+shield synergy — median tier
+```
+
+Effective DPS per enemy after §4a + §4a-bis (assumes ~90× full multiplier stack at S20 Cosmic):
+| Weapon | Old DPS | §4a only | §4a + §4a-bis | Role |
+|---|---|---|---|---|
+| shieldBubble | ~20k | ~12k | **~6k** | Pure defense — below median |
+| burningBarrier | ~35k | ~22k | **~12k** | Synergy hybrid — at median |
+| aegisMatrix | ~125k | ~72k | **~18k** | Evolved — slightly above median, NOT dominant |
+
+Result: the entire pushback archetype lands AT or BELOW the median offensive weapons (Quantum ~15k, Buzzsaw ~10k, Drones ~10k). Aegis stays the strongest of the three (it's evolved, players who earned it deserve some payoff) but no longer 5× above competing builds. Players who want raw DPS pick Quantum or Buzzsaw or Hellfire instead. Players who want defensive utility pick shield.
+
+**Trade-off:** existing shield/aegis builds will feel weaker by 60-85% on damage. This is the intended outcome — shield+nuke meta dies. Players are nudged to either (a) accept shield as a defensive layer and pick a real DPS weapon alongside it, or (b) drop shield entirely for an offensive build.
 
 ### 4b. Pushback decays in the final 0.5s of shield lifetime
 ```js
@@ -159,19 +181,20 @@ hpMult = (1 + 2.1 × progress^1.6) × _hpMult × sectorDifficultyScale
 
 **Design intent for the curve:** the whole S7 package exists to get OFF the shield+nuke meta. If we tune OG HP around shield's max DPS (~12k DPS post-§4a-nerf), we make shield easier without breaking its dominance over other builds. We need to tune around the **MEDIAN viable build** with shield already nerfed.
 
-Realistic DPS by build type at S20 Cosmic (assuming §4a-d shield nerfs in place):
+Realistic DPS by build type at S20 Cosmic (assuming §4a-d shield nerfs + §4a-bis base damage cuts):
 | Build | Effective DPS per target | Notes |
 |---|---|---|
-| Shield Bubble (post-nerf) | ~12k | 2.2 overlaps × 4 ticks/sec × ~1350/tick. Pushback decays in last 0.5s (§4b) |
-| Aegis Matrix (post-nerf) | ~15k | 5 overlaps × 4 ticks/sec, still strongest single-target zone weapon |
-| Quantum Collapse | ~15k | 3 pulses per cast, each hits hitList-bound, but burst-y |
-| Buzzsaw Swarm (chain) | ~10k | 7 blades × 8 chains, multi-target scaling |
-| Orbital Defense | ~10k | 7 drones × beams |
+| Shield Bubble (fully nerfed) | **~6k** | Pure defense — pushback IS the value. Chip damage only |
 | Hellfire pool | ~6k | Per enemy in pool |
 | Supernova Beam | ~5k | Single-target only |
 | Sonic Boom (SkyByte) | ~7k effective | Movement-gated |
+| Orbital Defense | ~10k | 7 drones × beams |
+| Buzzsaw Swarm (chain) | ~10k | 7 blades × 8 chains, multi-target scaling |
+| Burning Barrier (synergy) | ~12k | Pool+shield, median tier |
+| Quantum Collapse | ~15k | 3 pulses per cast, hitList-bound but burst-y |
+| Aegis Matrix (evolved) | ~18k | Highest of pushback archetype — earned via evolution |
 
-**Median competitive build: ~8-10k DPS.** Shield is faster, single-target is slower — but at the chosen HP, all three should land within "viable, different feel" not "one is mandatory."
+**Median competitive build: ~10-15k DPS.** Shield is now the WEAKEST viable (defense, not offense). Pure offense weapons (Quantum, Buzzsaw, Hellfire) sit at median. Aegis is the strongest evolved pushback but no longer dominant. Single-target snipers are slowest. All 5+ archetypes land within ~3× of each other instead of the current 14× spread.
 
 **Proposed curve** — tuned for ~10k median DPS with 5-7s TTK:
 ```js
@@ -182,16 +205,17 @@ const OUTER_GALAXY_HP_MULT = {
 ```
 
 End-of-sector Cosmic mob HP + TTK by build:
-| Sector | Mob HP | Shield TTK | Median build TTK | Single-target TTK |
-|---|---|---|---|---|
-| S11 | **26k** | 2.2s | 2.6s | 5.2s |
-| S15 | **78k** | 6.5s | 7.8s | 15.6s |
-| S20 | **143k** | 11.9s | 14.3s | 28.6s |
+| Sector | Mob HP | Shield TTK (6k DPS) | Median TTK (12k) | Aegis TTK (18k) | Single-target TTK (5k) |
+|---|---|---|---|---|---|
+| S11 | **26k** | 4.3s | 2.2s | 1.4s | 5.2s |
+| S15 | **78k** | 13s | 6.5s | 4.3s | 15.6s |
+| S20 | **143k** | 24s | 11.9s | 7.9s | 28.6s |
 
 **What this achieves:**
-- Shield is **faster** than median (1.2×) but not **dominant** (was 5×+ in the current meta).
-- Median AoE/synergy builds (Quantum, Buzzsaw, Aegis, Drones) are all within 30% of shield's clear rate.
-- Single-target builds (Supernova/Sniper) are 2-2.5× slower → still viable on bosses and chip damage, not the primary trash clearer (genre standard, accepted limitation).
+- Shield Bubble is the SLOWEST viable build at S20 — explicit "defense, not offense" identity. Players bringing only shield will struggle and need to add a real DPS weapon.
+- Median offensive builds (Burning Barrier, Quantum, Buzzsaw, Drones) clear waves at a healthy pace.
+- Aegis Matrix is the fastest pushback option but on par with Quantum, not 5× above. Earned via evolution = earns some edge.
+- Single-target builds (Supernova/Sniper) are the slowest — accepted genre limitation, viable on bosses + chip damage.
 - Nukes become "wave-thin tool" not "mandatory clear" — a 2.5×-maxHp nuke (per §4c) does 357k damage at S20 which kills ~2.5 mobs but doesn't delete the screen.
 
 **Sector progression feel:** S20 mobs ~5.5× tougher than S11 mobs and ~8× tougher than S10 Inner Galaxy. Real progression without the impossible-wall feel.
@@ -267,6 +291,7 @@ Easy stays at 1.0× DD (no ramp). Normal sees gentle pressure (max +75% spawn ra
 3. **Nukes stay as RNG pickups.** No tactical-button redesign.
 4. **OG HP cut approved for S7 — must support BUILD VARIETY, not just lower the wall for shield.** v3 cited "1.43M HP at S20" but real end-of-sector was 6.6M (math was wrong). Owner's two followups: (a) "weapons still won't cut through 1.43M HP," (b) "we're trying to get away from pure shield builds — that's what started this." §4e now tunes the curve around the **median competitive build** (Quantum/Buzzsaw/Aegis/Drones at ~10k DPS) with shield already nerfed by §4a-d, so 5+ build archetypes are viable at S20. S20 multiplier drops 698× → 11×.
 5. **burningBarrier inherits the lifted CD floor.** Pushback-weapon class gets the floor, not per-weapon tuning. Future pushback weapons auto-inherit by adding to the `PUSHBACK_WEAPONS` set (see 4a).
+6. **Pushback weapons must be ≤ median DPS — "it's a shield at the end of the day."** Owner clarified the goal isn't "weaker shield meta," it's "shield is defensive, not the top damage option." §4a alone left Aegis at 4-5× median because base damage 40 stacks brutally. §4a-bis adds base damage cuts (shield 15→8, aegis 40→10, burning barrier 18→10) so the entire pushback archetype lands AT or BELOW median offensive weapons. Shield builds become "bring shield AND a real DPS weapon" instead of "shield is the DPS weapon."
 
 ---
 
