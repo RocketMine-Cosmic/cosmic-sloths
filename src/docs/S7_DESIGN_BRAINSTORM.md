@@ -145,48 +145,60 @@ if (Math.random() < 0.005 + (engine.player.luck * 0.0005)) { ... }
 ```
 Halves the base + luck contribution. Luck builds still see more nukes than non-luck builds, just half as often.
 
-### 4e. Outer Galaxy HP curve — aggressive cut so weapons can actually clear
+### 4e. Outer Galaxy HP curve — tuned for build variety, NOT shield dominance
 
-**Math correction:** my v3 proposal cited "1.43M HP at S20" but only used the raw `OUTER_GALAXY_HP_MULT[20]`. The actual end-of-sector mob HP is:
+**Math correction first:** my v3 cited "1.43M HP at S20" but only used the raw `OUTER_GALAXY_HP_MULT[20]`. Actual end-of-sector mob HP is:
 
 ```
 hpMult = (1 + 2.1 × progress^1.6) × _hpMult × sectorDifficultyScale
        = 3.1 × 1.5 × OUTER_GALAXY_HP_MULT[sector]    (at end-of-sector Cosmic)
 ```
 
-So:
-- **Current S20:** `2800 (T14 base) × 3.1 × 1.5 × 698 = 9.1M HP per mob`
-- **v3 proposal S20 (510):** `2800 × 3.1 × 1.5 × 510 = 6.6M HP per mob`
+- **Current S20:** `2800 (T14 base) × 3.1 × 1.5 × 698 = 9.1M HP per mob` — wildly above anything any build can clear.
+- **v3 proposal S20 (510):** `2800 × 3.1 × 1.5 × 510 = 6.6M HP per mob` — still impossible.
 
-Realistic maxed player DPS at S20 Cosmic:
-- damageMult stack (talents + perm + mastery + relic + banner + OG forge ×2): **~5× player damage**, peaking ~7× during banner uptime
-- Shield Bubble effective: `15 × ~90 (full stack) × 4 ticks/sec × 2.2 overlapping (post-CD-nerf) = ~12k DPS per enemy in radius`
-- Supernova Beam single-target: `60 × ~90 × ~1 hit/sec = ~5.4k DPS single-target`
+**Design intent for the curve:** the whole S7 package exists to get OFF the shield+nuke meta. If we tune OG HP around shield's max DPS (~12k DPS post-§4a-nerf), we make shield easier without breaking its dominance over other builds. We need to tune around the **MEDIAN viable build** with shield already nerfed.
 
-**TTK against my v3 proposal (6.6M HP):** Shield 9 minutes per mob, Sniper 20 minutes. Nukes are literally mandatory. You were right — the cut wasn't even close.
+Realistic DPS by build type at S20 Cosmic (assuming §4a-d shield nerfs in place):
+| Build | Effective DPS per target | Notes |
+|---|---|---|
+| Shield Bubble (post-nerf) | ~12k | 2.2 overlaps × 4 ticks/sec × ~1350/tick. Pushback decays in last 0.5s (§4b) |
+| Aegis Matrix (post-nerf) | ~15k | 5 overlaps × 4 ticks/sec, still strongest single-target zone weapon |
+| Quantum Collapse | ~15k | 3 pulses per cast, each hits hitList-bound, but burst-y |
+| Buzzsaw Swarm (chain) | ~10k | 7 blades × 8 chains, multi-target scaling |
+| Orbital Defense | ~10k | 7 drones × beams |
+| Hellfire pool | ~6k | Per enemy in pool |
+| Supernova Beam | ~5k | Single-target only |
+| Sonic Boom (SkyByte) | ~7k effective | Movement-gated |
 
-**Honest target:** for weapons to be the primary clear method (nukes as bonus, not requirement), end-of-sector S20 Cosmic mob HP should land around **150k-200k**. That gives shield builds ~13-17s per mob (viable in waves where AoE hits 4-8 enemies simultaneously → effective kill-rate ~3-5 mobs/sec). Single-target builds will still struggle at S20 — that's a genre standard (Vampire Survivors, Brotato all the same), not a bug.
+**Median competitive build: ~8-10k DPS.** Shield is faster, single-target is slower — but at the chosen HP, all three should land within "viable, different feel" not "one is mandatory."
 
-**Proposed curve** — drops the multiplier ~98% across the band:
+**Proposed curve** — tuned for ~10k median DPS with 5-7s TTK:
 ```js
 const OUTER_GALAXY_HP_MULT = {
-    11: 3,   12: 4,   13: 5,   14: 6,   15: 7,
-    16: 8,   17: 9,   18: 10,  19: 11,  20: 12,
+    11: 2,   12: 3,   13: 4,   14: 5,   15: 6,
+    16: 7,   17: 8,   18: 9,   19: 10,  20: 11,
 };
 ```
 
-End-of-sector Cosmic mob HP under this curve:
-| Sector | Mob HP per T14 mob | Shield TTK | Notes |
-|---|---|---|---|
-| S11 | 2800 × 3.1 × 1.5 × 3 = **39k** | ~3.3s | Entry-level OG, gentle ramp from S10 (~18k) |
-| S15 | 2800 × 3.1 × 1.5 × 7 = **91k** | ~7.6s | Mid-OG, requires real positioning |
-| S20 | 2800 × 3.1 × 1.5 × 12 = **156k** | ~13s | Apex, hybrid AoE+single-target builds needed |
+End-of-sector Cosmic mob HP + TTK by build:
+| Sector | Mob HP | Shield TTK | Median build TTK | Single-target TTK |
+|---|---|---|---|---|
+| S11 | **26k** | 2.2s | 2.6s | 5.2s |
+| S15 | **78k** | 6.5s | 7.8s | 15.6s |
+| S20 | **143k** | 11.9s | 14.3s | 28.6s |
 
-**Sector progression feel:** S20 mobs are ~4× tougher than S11 mobs and ~9× tougher than S10 Inner Galaxy. That's meaningful progression without the impossible-wall feel.
+**What this achieves:**
+- Shield is **faster** than median (1.2×) but not **dominant** (was 5×+ in the current meta).
+- Median AoE/synergy builds (Quantum, Buzzsaw, Aegis, Drones) are all within 30% of shield's clear rate.
+- Single-target builds (Supernova/Sniper) are 2-2.5× slower → still viable on bosses and chip damage, not the primary trash clearer (genre standard, accepted limitation).
+- Nukes become "wave-thin tool" not "mandatory clear" — a 2.5×-maxHp nuke (per §4c) does 357k damage at S20 which kills ~2.5 mobs but doesn't delete the screen.
 
-**Trade-off acknowledged:** S20 is no longer the "mythic-tier 698× wall" the curve was originally designed as. It's a genuinely hard sector that weapons can actually clear. The owner needs to decide whether OG should feel like a NEW DIFFICULTY (current design, requires nukes) or a NEW LADDER (this proposal, weapons primary).
+**Sector progression feel:** S20 mobs ~5.5× tougher than S11 mobs and ~8× tougher than S10 Inner Galaxy. Real progression without the impossible-wall feel.
 
-**Also:** boss HP at S20 uses `sectorDifficultyScale × 0.3` for the 30-40× boss-HP-vs-mob ratio. Under this curve, Pulsar Guardian at S20 ends at `22000 × 12 × 0.3 × 1.5 = ~119k HP` — a 2-3 minute boss fight with shield, ~5 min with sniper. Tunable separately if too easy.
+**Boss HP at S20:** uses `sectorDifficultyScale × 0.3` boss factor. Under this curve, Pulsar Guardian at S20 ends at `22000 × 11 × 0.3 × 1.5 = ~109k HP` — ~2-3 min fight at median DPS, faster with shield. Tunable separately via the `× 0.3` factor if too fast.
+
+**The crucial design point:** the goal isn't "shield clears faster." The goal is "5+ build archetypes all work at S20." The §4a-d shield nerfs + this HP curve together accomplish that. Tuning higher (e.g. my prev S20: 12) would have made non-shield builds borderline, defeating the purpose.
 
 ### 4f. DD → Score multiplier (the carrot)
 ```js
@@ -253,7 +265,7 @@ Easy stays at 1.0× DD (no ramp). Normal sees gentle pressure (max +75% spawn ra
 1. **Character kit rework — off the table.** Too much work. S7 is shield + nuke + OG HP + DD reward only.
 2. **DD score reward — must work on Normal/Hard too.** Cosmic params are too brutal for lower difficulties → scaled DD params per difficulty (see 4g).
 3. **Nukes stay as RNG pickups.** No tactical-button redesign.
-4. **OG HP cut approved for S7 — but v3's proposed cut was insufficient.** Real end-of-sector S20 was 6.6M HP per mob under v3 (not the 1.43M I cited). Owner's followup: "weapons still won't cut through 1.43M HP with 15k DPS — players would be long dead." §4e now proposes a much more aggressive curve (S20: 12× vs current 698×) so weapons are the primary clear method and nukes become a thinning bonus rather than a requirement.
+4. **OG HP cut approved for S7 — must support BUILD VARIETY, not just lower the wall for shield.** v3 cited "1.43M HP at S20" but real end-of-sector was 6.6M (math was wrong). Owner's two followups: (a) "weapons still won't cut through 1.43M HP," (b) "we're trying to get away from pure shield builds — that's what started this." §4e now tunes the curve around the **median competitive build** (Quantum/Buzzsaw/Aegis/Drones at ~10k DPS) with shield already nerfed by §4a-d, so 5+ build archetypes are viable at S20. S20 multiplier drops 698× → 11×.
 5. **burningBarrier inherits the lifted CD floor.** Pushback-weapon class gets the floor, not per-weapon tuning. Future pushback weapons auto-inherit by adding to the `PUSHBACK_WEAPONS` set (see 4a).
 
 ---
