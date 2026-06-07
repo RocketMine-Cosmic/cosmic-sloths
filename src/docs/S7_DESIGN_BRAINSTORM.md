@@ -6,6 +6,13 @@
 
 **This doc replaces v2.** v2 fixed v1's incorrect assumptions about the shield + DD, but it still treated the AFK meta as a "fix shield + nuke" problem. Reading every system end-to-end (`WeaponSystem`, `CharacterMechanics`, `ProjectileSystem`, `EnemyAI`, `BossSystem`, `NFTPerks`, `SquadUltimate`, `Constants`, `UpgradeSystem`) shows it's deeper than that — **the AFK meta is built into 5 of 10 characters and reinforced by every weapon model except single-target projectiles.**
 
+**Owner decisions (2026-06-07) — see Section 7.** Key decisions baked into Section 4 below:
+- Option 3 (character kit rework) is OFF the table — too much work.
+- DD score reward must work on Normal/Hard too (with scaled parameters).
+- Nukes stay as RNG pickups.
+- Outer Galaxy HP cut is approved for S7 — confirmed too brutal for non-shield builds.
+- `burningBarrier` inherits the lifted shield CD floor.
+
 This v3 is the synthesis layer. The full system audit lives in four sister docs:
 - [`S7_WEAPON_AUDIT.md`](./S7_WEAPON_AUDIT.md) — every weapon by damage model
 - [`S7_CHARACTER_AUDIT.md`](./S7_CHARACTER_AUDIT.md) — every character + AFK affinity
@@ -82,46 +89,38 @@ From the audit, three coherent build paths emerge as obvious top-tier:
 
 ---
 
-## 3. The Real Question for S7
+## 3. The Approach for S7
 
-Three options the owner could pursue, in increasing order of scope:
+Two complementary axes, both shipping in S7:
 
-### Option 1 — Surgical nerf (v2's recommendation)
-Nerf shield uptime, nuke damage, Outer Galaxy HP. ~15 lines of code. Build A becomes worse; Builds B and C become relatively stronger. Meta shifts but doesn't restructure.
+### Axis A — Surgical nerf (the brake)
+Nerf shield uptime, nuke damage, Outer Galaxy HP. ~20 lines of code. Build A becomes worse; Builds B and C become relatively stronger. Meta shifts but doesn't restructure.
 
-**Risk:** Surface-level fix. Banner-NeoByte, decoy-HoloDrift, hack-CodeBreaker still reward stationary play with their KIT, not just shield. After 2 weeks players find Build A2 (e.g. dense pool weapons + banner) and complaint resumes.
+**Acknowledged limit:** Banner-NeoByte, decoy-HoloDrift, hack-CodeBreaker still reward stationary play with their KIT, not just shield. After 2 weeks players may find Build A2 (e.g. dense pool weapons + banner). Owner has accepted this trade-off — character kit rework is too much work for S7.
 
-### Option 2 — Reward axis (broader)
-Keep Option 1, AND add a score multiplier tied to Dynamic Difficulty (`dynamicDifficulty.spawnRateMult`) capped at 2× score. DD ramps with kill velocity, so this rewards aggressive play directly. Players who AFK keep their DD pinned at 1.0× and stay at 1.0× score; players who push for max DD earn double points.
+### Axis B — DD → Score reward (the carrot)
+Add a score multiplier tied to Dynamic Difficulty (`dynamicDifficulty.spawnRateMult`) capped at 2× score. DD ramps with kill velocity, so this rewards aggressive play directly. Players who AFK keep DD pinned at 1.0× and stay at 1.0× score; players who push for max DD earn up to 2× points.
 
-**Why this works:** the existing DD system already does ~80% of the "Heat" idea v1 proposed without knowing. It just doesn't pay out. Wiring score to DD is ~5 lines server-side in `saveScore`. It turns "playing aggressively" from a self-imposed challenge into a scored objective.
-
-**Risk:** Cosmic-only (DD only ramps on Cosmic). Easy/Normal/Hard players see no change. May feel like "the leaderboard is even more Cosmic-locked."
-
-### Option 3 — Restructure (broadest)
-Reposition shield bubble as a defensive cooldown ABILITY (like Glitch's phase shift) rather than a weapon. Pull aegisMatrix out of the level-up pool. Replace pushback with **damage absorption** — bubble absorbs N damage over its life, no pushback. Re-tune the 5 high-AFK character kits to add a "movement reward" mechanic (e.g. Banner only buffs while moving INTO it, not standing in it).
-
-**Why this works:** addresses the root design issue. AFK becomes mechanically unsupported.
-
-**Risk:** Huge scope. Breaks a lot of existing builds. Probably an S8 plan, not S7.
+**Owner-required scope:** must work on Normal and Hard too, not just Cosmic. Cosmic DD parameters (3.5× spawn cap, 2.5× speed cap, +0.30/cycle) are too brutal for lower difficulties — Normal and Hard need scaled-down DD parameters. See 4h below.
 
 ---
 
 ## 4. Recommended S7 Package
 
-**Ship Option 1 + Option 2 together.** Option 3 stays in the design queue for S8.
+Six concrete changes. Each is independently revertible if it lands wrong.
 
 Concrete changes:
 
-### 4a. Shield uptime — lift the per-weapon CD floor for shields only
+### 4a. Shield uptime — lift the per-weapon CD floor for all pushback weapons
 ```js
 // WeaponSystem.js or GameEngine.updateWeapons
 // Currently: w.timer = (w.baseCooldown / 60) × max(0.35, cooldownMult) × max(0.5, cdMult)
-// New per-weapon override:
-const cdFloor = (w.id === 'shieldBubble' || w.id === 'aegisMatrix') ? 0.85 : 0.5;
+// New per-weapon override — applies to ALL Model C (pushback) weapons:
+const PUSHBACK_WEAPONS = new Set(['shieldBubble', 'aegisMatrix', 'burningBarrier']);
+const cdFloor = PUSHBACK_WEAPONS.has(w.id) ? 0.85 : 0.5;
 w.timer = (w.baseCooldown / 60) × max(0.35, cooldownMult) × max(cdFloor, cdMult);
 ```
-Shield bubble min CD becomes `3.0s × 0.35 × 0.85 = 0.89s` instead of `0.525s`. With life 2.0s → ~2.2 overlapping (was ~3.8). Aegis Matrix → ~5 overlapping (was ~8.6). Still strong, no longer ridiculous.
+Shield bubble min CD becomes `3.0s × 0.35 × 0.85 = 0.89s` instead of `0.525s`. With life 2.0s → ~2.2 overlapping (was ~3.8). Aegis Matrix → ~5 overlapping (was ~8.6). burningBarrier inherits the floor automatically — owner confirmed any future pushback weapon should also pick this up (just add its id to the set). Still strong, no longer ridiculous.
 
 ### 4b. Pushback decays in the final 0.5s of shield lifetime
 ```js
@@ -160,21 +159,45 @@ S20 mob HP drops from ~1.95M to ~1.43M. A maxed weapon (~11.5k DPS for shield, ~
 ```js
 // functions/saveScore.js — apply at server-side score finalize
 const ddPeak = stats.ddPeakSpawnMult || 1.0; // client passes peak DD reached this run
-const heatBonus = 1 + ((ddPeak - 1) / 2.5) × 1.0; // 0 at 1.0×, 1.0 at 3.5× cap
-const finalScore = Math.floor(rawScore × Math.min(2.0, heatBonus));
+// Heat bonus scales linearly with how close to the difficulty's own cap the player pushed.
+// Cosmic cap 3.5×, Hard cap 2.5×, Normal cap 1.75× (see 4h). Same absolute formula —
+// Cosmic at 3.5× = 2.0× score, Hard at 2.5× = 2.0× score, Normal at 1.75× = 2.0× score.
+const ddCapForDifficulty = { normal: 1.75, hard: 2.5, cosmic: 3.5 }[stats.difficulty] || 1.0;
+const ddProgress = (ddPeak - 1.0) / (ddCapForDifficulty - 1.0); // 0..1
+const heatBonus = 1 + Math.min(1.0, Math.max(0, ddProgress)); // 1.0 at base, 2.0 at cap
+const finalScore = Math.floor(rawScore × heatBonus);
 ```
-Engine tracks `dynamicDifficulty.spawnRateMult` per frame, sends peak with score. HUD shows "HEAT 2.4×" when DD > 1.5×.
+Engine tracks `dynamicDifficulty.spawnRateMult` per frame, sends peak with score. HUD shows "HEAT 2.4×" when DD > 1.5×. Easy stays uncapped (no DD).
 
-### 4g. Tag character signature triggers with the SAME `weaponId` they currently use, so the post-run breakdown actually shows banner damage
-*(QoL — already partially done; complete coverage so it's clear in run stats how much of your damage came from shield vs banner vs base weapons)*
+### 4g. DD enabled on Normal and Hard (owner-required for 4f to make sense)
+Currently DD only ramps on Cosmic (`ddEnabled = !this._isS6 || this.difficulty.id === 'cosmic'`). Score reward needs DD to actually ramp on Normal/Hard or those players see HEAT pinned at 1.0×.
+
+Per-difficulty DD parameters — Cosmic params would obliterate Normal/Hard players, so scaled down:
+
+```js
+// GameEngine.js update() — DD ramp block
+const DD_PARAMS = {
+    normal:  { spawnCap: 1.75, speedCap: 1.5, upStep: 0.20, downStep: 0.05, floor: 0.85 },
+    hard:    { spawnCap: 2.5,  speedCap: 2.0, upStep: 0.25, downStep: 0.05, floor: 0.85 },
+    cosmic:  { spawnCap: 3.5,  speedCap: 2.5, upStep: 0.30, downStep: 0.05, floor: 0.85 },
+};
+const p = DD_PARAMS[this.difficulty.id];
+const ddEnabled = !!p; // easy still disabled
+```
+
+Easy stays at 1.0× DD (no ramp). Normal sees gentle pressure (max +75% spawn rate at peak), Hard sees stronger (+150%), Cosmic unchanged.
+
+### 4h. Tag character signature triggers with their `weaponId` for run stats
+*(QoL — already partially done; complete coverage so post-run breakdown shows how much damage came from shield vs banner vs base weapons. Helps players see WHY their build is winning, which informs build choice.)*
 
 ---
 
 ## 5. What Deliberately Stays the Same
 
-- **No character rebalancing.** NeoByte / CodeBreaker / Pandypaws kits stay as-is. Option 3 (re-design AFK kits) is S8 work.
-- **No weapon damage / area / level scaling changes** to anything but shieldBubble and aegisMatrix CD floor.
-- **No DD parameter changes.** DD already does its job; just doesn't pay out.
+- **No character rebalancing.** NeoByte / CodeBreaker / Pandypaws kits stay as-is. Owner confirmed this is too much work.
+- **Nukes stay as RNG pickups.** Owner confirmed — don't redesign into a tactical button.
+- **No weapon damage / area / level scaling changes** to anything but pushback-weapon CD floors.
+- **No Cosmic DD parameter changes.** Cosmic's existing parameters (3.5× / 2.5× / +0.30) are unchanged; we only ADD Normal/Hard DD with scaled-down params.
 - **No talent / mastery / relic changes.** These layers are well-tuned per the layer audit.
 - **No synergy / evolution rules changes.** The 14 paths are well-designed; vineWhip's centrality is a feature.
 - **No Inner Galaxy mob HP changes.** Inner Galaxy clears are fine; nerfing them would hurt new players.
@@ -185,29 +208,21 @@ Engine tracks `dynamicDifficulty.spawnRateMult` per frame, sends peak with score
 
 - v1: designed against assumed mechanics. Was wrong about almost everything.
 - v2: read combat code, designed a surgical fix to shield + nuke + OG HP. Correct, but incomplete — didn't account for the character-design side.
-- v3: read everything. Confirms v2's surgical fixes are right AS FAR AS THEY GO, but adds:
-  - **Option 2 (DD → Score)** as the *positive incentive*. v2 only nerfed; v3 also rewards.
-  - **Acknowledges 5/10 characters were designed around AFK mechanics.** A surgical nerf won't kill the meta because the character kits still passively support it. We can ship S7 with Option 1+2, then plan a character-kit pass for S8.
-  - **Picks the right size for S7.** Option 3 is the "right" design fix but it's a season's worth of work on its own.
+- v3: read everything. Confirms v2's surgical fixes are right AS FAR AS THEY GO, plus:
+  - **DD → Score reward** as the *positive incentive*. v2 only nerfed; v3 also rewards.
+  - **DD extended to Normal and Hard** with scaled parameters so the score reward isn't Cosmic-locked.
+  - **Acknowledges 5/10 characters were designed around AFK mechanics.** Owner has accepted this trade-off — a surgical nerf won't fully kill the AFK meta because the character kits still passively support it. S7 ships the brake + carrot; if Build A2 emerges in 2-3 weeks, we look at it then.
 
 ---
 
-## 7. Open Questions for Owner
+## 7. Decisions (answered by owner, 2026-06-07)
 
-1. **Should the post-S7 plan include reworking the 5 high-AFK character kits?** (Option 3 long-form work) — this is months of design work, would need a full season cycle.
-no thats to much work
+1. **Character kit rework — off the table.** Too much work. S7 is shield + nuke + OG HP + DD reward only.
+2. **DD score reward — must work on Normal/Hard too.** Cosmic params are too brutal for lower difficulties → scaled DD params per difficulty (see 4g).
+3. **Nukes stay as RNG pickups.** No tactical-button redesign.
+4. **OG HP cut approved for S7.** Confirmed too brutal for non-shield/aegis weapons at current curve. Ships in S7 patch.
+5. **burningBarrier inherits the lifted CD floor.** Pushback-weapon class gets the floor, not per-weapon tuning. Future pushback weapons auto-inherit by adding to the `PUSHBACK_WEAPONS` set (see 4a).
 
-2. **Are we comfortable with score-multiplier reward being Cosmic-only?** DD only ramps on Cosmic by design. Easy/Normal/Hard players would never see the "HEAT" bonus.
-we would need to work out a good dd scale for normal and hard difficultys the cosmic version would be to hard on the lower difficultys i think
-
-3. **Should nukes get redesigned into a tactical button** (e.g. mastery-tree unlock with 60s CD doing 30% maxHp) rather than RNG pickup? Removes luck-stacking exploit cleanly.
-no there a pick up 
-
-4. **Are we touching the Outer Galaxy HP curve so soon after release (2026-06-04, 3 days ago)?** Players may still be in the "learning" phase. Worth waiting 2 weeks to confirm the curve is actually wrong vs. just hard.
-yes its a bit to brutal for any weapon bar shield/ageis atm
-
-5. **Should burningBarrier and any future pushback weapon inherit the new shield CD floor automatically**, or be tuned per-weapon? Currently only shieldBubble + aegisMatrix would get the lifted floor.
-yes
 ---
 
 ## 8. Cross-references
