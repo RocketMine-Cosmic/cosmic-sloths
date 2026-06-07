@@ -12,7 +12,7 @@ Two facts the original draft got wrong:
 
 1. **S11+ mobs are already HP sponges to every non-nuke weapon.** That means the "nukes are overshadowing weapons" framing is partly a *symptom*, not a root cause. In Outer Galaxy, nukes aren't preferred — they're often the *only* thing that clears. Section 3c is rewritten below: we should be **lowering** S11-S20 mob HP, not leaving it alone.
 
-2. **Shield bubble / Aegis Matrix physically blocks enemies from reaching the player.** Mobs pile up at the bubble's perimeter not because they're slow, but because the geometry won't let them in. Section 3b (mob speed +15%) is therefore **mostly useless** as a standalone fix — a faster mob still hits the same wall. The actual structural lever is the shield bubble's enemy-blocking behavior, addressed in the **new Section 3g**.
+2. **Shield bubble / Aegis Matrix physically blocks enemies — and that's all it does.** No damage absorption, no mitigation buffer; the bubble is purely a wall. Mobs pile up at the perimeter because the geometry won't let them in. Section 3b (mob speed +15%) is therefore **mostly useless** as a standalone fix — a faster mob still hits the same wall. And the "absorb-not-block" redesign from an earlier draft doesn't work because there's no absorption mechanic to fall back on. The actual structural lever is changing *what blocking costs the player* — see the rewritten Section 3g.
 
 The S7 Launch Patch list at the bottom is rewritten to reflect both. Treat the rest of the doc as still useful diagnostic context, but jump straight to Sections 3c/3g/5 for the actual S7 recommendation.
 
@@ -136,23 +136,30 @@ Anubis says *"weapon upgrades should be your main source of enemy clear."* For t
 
 ### 3g. Shield bubble / Aegis Matrix — the structural fix (NEW, HIGHEST impact)
 
-This is the actual root cause of the AFK meta. Mobs pile up around the player because shield bubble / Aegis Matrix **stops them from entering melee range entirely**. No amount of spawn-rate, mob-speed, or damage tuning fixes that — the fortress just collects bigger piles.
+This is the actual root cause of the AFK meta. Mobs pile up around the player because shield bubble / Aegis Matrix **physically blocks them from entering**. That's it — that's the entire mechanic. It's not a damage shield, it's a *wall*.
 
-The shield isn't *too strong* in raw mitigation terms. It's that it functions as both **damage absorber** AND **physical wall**. That double-duty is what enables stand-still play. Decouple those two functions and the meta cracks open.
+That means the "absorb damage but don't block" idea from the first revision doesn't work — there's no absorb function to fall back on. **If we take away the block, we take away the whole tool.** The redesign has to either change *when* it blocks, *how long* it blocks, or *what blocking costs* the player.
 
-**Four options, gentlest to most aggressive:**
+**Five options, gentlest to most aggressive:**
 
-1. **Shield no longer blocks enemies, only absorbs contact damage.** Mobs walk *through* the bubble field but take no contact-damage retaliation; player still gets a damage shield. Visually: bubble becomes a translucent aura instead of a hard sphere. **This is the cleanest fix.** Players keep their defensive tool, but standing still now means mobs are pressing in on them — which is exactly the texture Anubis is asking for.
+1. **Bubble has integrity HP — degrades from enemy contact.** Each frame an enemy is pressing on the bubble, it loses a small chunk of integrity. When integrity hits 0, the bubble collapses for X seconds before re-forming (or until re-cast). 1 enemy → lasts a long time. 30 enemies piled up → collapses in seconds. Self-balancing: small waves still get fortressed; the moment piles form, the wall fails. **This is the cleanest fix.** Preserves the shield as a real defensive tool, but the pile-and-wait strategy actively destroys it.
 
-2. **Shield has a "pressure cap" — too many mobs pushing on it = it bursts early.** Bubble takes accelerated damage proportional to the number of enemies in contact (e.g., 5+ enemies = 2× drain rate, 10+ = 4×). Punishes piling specifically. Players can still bubble through small waves; large clusters force them to move.
+2. **Bubble has a duration timer + cooldown.** Active for N seconds (e.g., 6s), then dispelled for M seconds (e.g., 4s) before it can re-form. Player gets ~60% uptime. Forces a movement rhythm — players will learn to reposition during the down window. Simple, predictable, but feels more "ability cooldown" than "passive shield."
 
-3. **Shield repels mobs outward on activation, then no longer blocks.** First 0.5s after bubble pops, all nearby enemies get a 200u radial knockback (creates breathing room). Then the bubble enters absorb-only mode (per Option 1). Gives the shield a tactical *moment* instead of being a permanent fortress.
+3. **Bubble shrinks while enemies are pressing on it.** Starts at full radius, shrinks proportional to contact pressure (e.g., −5u/sec per enemy in contact). When small enough, mobs reach the player. Re-expands when contact ends. Same self-balancing idea as Option 1 but visual instead of HP-based — players see the wall closing in on them.
 
-4. **Replace shield with a directional barrier (front-facing arc only).** Heaviest redesign. Bubble becomes a 120° forward-facing shield the player must orient toward threats. Fundamentally turns it into a skill-based defensive tool. Likely too big a swing for S7 launch — flag for S8 if (1) doesn't go far enough.
+4. **Bubble requires the player to be moving.** Active speed threshold (e.g., 50% of player max speed) — bubble drops the instant the player stands still, regains shortly after movement resumes. *Directly* anti-AFK: stand still and you lose your defense, full stop. Strongest design statement but most disruptive to existing playstyles.
 
-**Recommend Option 1 for S7 launch.** Single-line behavior change, preserves the shield's identity as "the defensive option," directly breaks the AFK loop. If telemetry post-launch shows piles still forming (some players will lean into the new "tank with weapons" build), escalate to Option 2 mid-season.
+5. **Bubble becomes a one-shot "burst" instead of a persistent field.** On activation, all enemies within radius are pushed back AND take damage; bubble then dissipates immediately and re-cools. Tactical "OH SHIT" button, not a fortress. Heaviest redesign — flag for S8 if Options 1-3 don't go far enough.
 
-**Implementation note:** the shield bubble blocking behavior almost certainly lives in `EnemyAI.js` (collision against player invincibility / shield state). Worth a focused audit before committing — if removing the block requires touching projectile/pickup collision too, the change gets bigger fast. Read that file first.
+**Recommend Option 1 for S7 launch.** It preserves the shield's *identity* (a persistent zone of safety) while making the AFK strategy literally consume the shield. Solo player kiting a small wave? Bubble lasts forever. Player stacking 30 mobs to nuke? Bubble breaks in seconds and they take real risk. The mechanic teaches the right behavior on its own.
+
+**Implementation audit needed:** the shield's blocking behavior lives somewhere in `EnemyAI.js` (collision against the player's shield state) and the bubble lifetime is in whatever spawned it (weapon system or character ability). Need to:
+1. Find where the block is enforced.
+2. Find where the bubble's existence is tracked.
+3. Decide if integrity is a new field on the shield instance or a global player stat.
+
+Worth a 1-hour read pass before committing to numbers. Don't ship blind.
 
 ### 3f. Dynamic Difficulty rework (MEDIUM impact, MEDIUM risk)
 
@@ -172,7 +179,7 @@ Current DD (`game/GameEngine.js`, referenced in `EnemySpawner.js:248`) caps spaw
 ## 4. Anti-Goals (Things We Should NOT Do)
 
 - ❌ **Don't make mobs into sponges.** Bullet-sponge HP scaling is the #1 mistake in this genre. Anubis is begging us not to.
-- ❌ ~~**Don't nerf shield bubble directly.**~~ **REVISED:** the shield bubble *is* the structural problem (Section 3g). We don't nerf its *strength*, but we do change its *behavior* — absorb damage, stop blocking enemy movement. Keep it powerful, break its fortress role.
+- ❌ ~~**Don't nerf shield bubble directly.**~~ **REVISED:** the shield bubble *is* the structural problem (Section 3g). We don't nerf its raw radius or duration; we make the AFK strategy actively *consume* it (integrity that drains under contact pressure). Small waves → wall holds. Stacked piles → wall breaks. Self-correcting.
 - ❌ **Don't remove nukes.** They're fun. Just stop letting them BE the strategy.
 - ❌ **Don't add a stamina/move-or-die mechanic.** Forced movement = forced micro-stress. Tier-1 free-to-play players will quit. Use pressure (spawn density, mob speed) instead.
 
@@ -185,7 +192,7 @@ If we ship all the LOW-RISK stuff at S7 rollover and save the big systems for mi
 ### S7 Launch Patch (Week 1 of S7) — REVISED
 
 **Tier 1 — The actually-load-bearing changes:**
-- ✅ **Shield bubble Option 1** (3g): absorbs damage, no longer blocks enemy movement. This is the single highest-leverage change in the whole doc.
+- ✅ **Shield bubble Option 1** (3g): bubble gains integrity HP, drains from enemy contact pressure, collapses + cooldowns when broken. Single highest-leverage change in the whole doc. AFK piling literally consumes the shield.
 - ✅ **Outer Galaxy HP cut** (3c): S11-S20 HP multipliers reduced 25-35%. Brings weapons back into the conversation in the sponge band.
 - ✅ **Nuke drop rate −33%** (3d.1). Now that the shield doesn't fortress and Outer Galaxy mobs aren't sponges, nukes can be rarer without bricking progression.
 
@@ -203,7 +210,7 @@ This is a 2-3 day changelist (3g needs an EnemyAI audit). Each lever still indep
 ### S7 Mid-Season Patch (Week 2-3)
 - ⏳ Heat system replaces DD (proposal 3f).
 - ⏳ Weapon evolution post-level damage scaling (proposal 3e — needs audit).
-- ⏳ If shield Option 1 leaves AFK builds still viable → escalate to Option 2 (pressure-cap drain).
+- ⏳ If shield Option 1 leaves AFK builds still viable → escalate to Option 2 (duration timer + cooldown) or Option 4 (movement-required).
 
 ### S7 End-of-Season Audit
 - 📊 Compare avg kills/run, avg nuke pickups/run, avg run duration, top-of-leaderboard build diversity vs. S6 baseline.
@@ -228,6 +235,6 @@ Anubis is right that the meta has drifted from "shooter" toward "pickup manageme
 2. **S11-S20 mobs are already HP sponges to weapons.** Players aren't choosing nukes there — they're forced to them. "Reduce nuke reliance" without addressing the sponge curve just makes Outer Galaxy unplayable.
 
 The cheapest, highest-signal S7 launch patch is:
-> **Shield absorbs but no longer blocks. Outer Galaxy mobs are 25-35% less spongy. Nukes are 33% rarer. The rest is pacing polish.**
+> **Shield bubble gains integrity that drains under enemy contact pressure (AFK piling breaks the wall). Outer Galaxy mobs are 25-35% less spongy. Nukes are 33% rarer. The rest is pacing polish.**
 
 That single trio — shield rework + Outer Galaxy HP cut + nuke rarity — collapses the "fortress + wait for nuke" loop directly. Everything else in this doc (Heat system, weapon scaling, kill-velocity spawn ramps) is foundation work that builds on top of those three changes through the season.
