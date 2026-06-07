@@ -195,7 +195,9 @@ Engine tracks `dynamicDifficulty.spawnRateMult` per frame, sends peak with score
 ## 7. Open Questions for Owner
 
 1. **Should the post-S7 plan include reworking the 5 high-AFK character kits?** (Option 3 long-form work) — this is months of design work, would need a full season cycle.
+no thats to much work
 2. **Are we comfortable with score-multiplier reward being Cosmic-only?** DD only ramps on Cosmic by design. Easy/Normal/Hard players would never see the "HEAT" bonus.
+
 3. **Should nukes get redesigned into a tactical button** (e.g. mastery-tree unlock with 60s CD doing 30% maxHp) rather than RNG pickup? Removes luck-stacking exploit cleanly.
 4. **Are we touching the Outer Galaxy HP curve so soon after release (2026-06-04, 3 days ago)?** Players may still be in the "learning" phase. Worth waiting 2 weeks to confirm the curve is actually wrong vs. just hard.
 5. **Should burningBarrier and any future pushback weapon inherit the new shield CD floor automatically**, or be tuned per-weapon? Currently only shieldBubble + aegisMatrix would get the lifted floor.
