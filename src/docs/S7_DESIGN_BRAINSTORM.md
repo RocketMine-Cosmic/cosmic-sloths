@@ -1,224 +1,209 @@
-# Season 7 — Design Brainstorm (v2, code-grounded)
+# Season 7 — Design Brainstorm (v3, system-wide audit)
 
 **Status:** EXPLORATION / NOT DECIDED. Owner reads, picks what to ship.
 **Date:** 2026-06-07
-**Trigger:** Anubis Discord feedback (screenshot 2026-06-07) — "this is a shooter, not a stand-around-and-collect-nukes game."
+**Trigger:** Anubis Discord feedback (2026-06-07) — "this is a shooter, not a stand-around-and-collect-nukes game."
 
-**This doc replaces v1.** v1 made design proposals against assumed mechanics. After reading `WeaponSystem.js`, `EnemyAI.js`, `EnemySpawner.js`, `UpgradeSystem.js`, `CharacterMechanics.js`, `GameEngine.js`, `PickupSystem.js`, and `Constants.js`, almost every assumption was wrong. The v2 below is grounded in what the code actually does.
+**This doc replaces v2.** v2 fixed v1's incorrect assumptions about the shield + DD, but it still treated the AFK meta as a "fix shield + nuke" problem. Reading every system end-to-end (`WeaponSystem`, `CharacterMechanics`, `ProjectileSystem`, `EnemyAI`, `BossSystem`, `NFTPerks`, `SquadUltimate`, `Constants`, `UpgradeSystem`) shows it's deeper than that — **the AFK meta is built into 5 of 10 characters and reinforced by every weapon model except single-target projectiles.**
+
+This v3 is the synthesis layer. The full system audit lives in four sister docs:
+- [`S7_WEAPON_AUDIT.md`](./S7_WEAPON_AUDIT.md) — every weapon by damage model
+- [`S7_CHARACTER_AUDIT.md`](./S7_CHARACTER_AUDIT.md) — every character + AFK affinity
+- [`S7_LAYER_AUDIT.md`](./S7_LAYER_AUDIT.md) — every multiplicative power layer
+
+Read those when you want detail. This doc is for decisions.
 
 ---
 
-## 1. What the Code Actually Does (the things v1 got wrong)
+## 1. What the System Actually Does (the big-picture findings)
 
-### 1a. Shield Bubble / Aegis Matrix is NOT a wall
+After reading everything:
 
-It's an **AoE projectile that fires on a cooldown like every other weapon**, with three effects bundled together:
+**a. The game has FIVE distinct weapon damage models**, not "AoE vs projectile."
+1. **Single-target projectiles** (pierce-bounded, neoBlaster/napBeam/supernovaBeam etc.)
+2. **Pulse AoEs** (expanding ring with `hitList`, one hit per enemy — novaPulse/laserNova/quantumCollapse)
+3. **Pushback AoEs** (player-locked, 4-ticks/sec damage + every-frame pushback — shieldBubble/aegisMatrix/burningBarrier)
+4. **Pool AoEs** (stationary, 4-ticks/sec damage, no pushback — napalm/hellfire/toxicCloud/lash pools)
+5. **Melee swings** (one damage event per cast — vineWhip)
 
+Pushback AoEs are mechanically superior to all others in dense-wave clear because they damage 4 ticks/sec AND prevent enemies from leaving the radius. At max CDR, 4 shields overlap → ~16 damage ticks/sec at every enemy in 480u radius.
+
+**b. The AFK meta is character-design rooted, not just weapon-rooted.**
+
+From [`S7_CHARACTER_AUDIT.md`](./S7_CHARACTER_AUDIT.md#afk-affinity-summary):
+
+| AFK affinity | Characters | Mechanic that rewards standing still |
+|---|---|---|
+| Very High | NeoByte, CodeBreaker | Banner (stationary buff zone), Hack (passive enemy infighting) |
+| High | Pandypaws, NovaByte, HoloDrift | Scrap on kill, Chain explosion on kill, Decoy (taunts) |
+| Medium | DataPhantom, SynthBeats, Glitch | Neutral mechanics |
+| Low | NeonVortex (kiting needed), SkyByte (Sonic Boom REQUIRES movement) | — |
+
+**5 of 10 characters were designed around stationary mechanics.** Banners, decoys, hacks, scrap, chain explosions all trigger passively while standing still. The shield is the most visible symptom of this design philosophy, not the root cause.
+
+**c. Caps already exist for most stat-stacking** ([`S7_LAYER_AUDIT.md`](./S7_LAYER_AUDIT.md#caps-that-already-exist-the-brakes-that-work)) — playerDmgCap 4.0×, wDmgCap 1.8×, cooldownMult floor 0.35, drone caps at 7, AoE pool life capped at 15s, projectile soft-cap 200. Many of these are post-Tijckers/Anubis crash audits. **The caps work for what they cap.**
+
+**d. The caps that DON'T exist are exactly the ones the AFK meta exploits:**
+- Pushback AoE overlap has no diminishing — 8 stacked shields = 8× DPS
+- Nuke damage is `maxHp × 10` unconditional — no boss / no tier matters
+- Luck → nuke drop rate is linear — every luck point increases AFK reward
+- DD adds spawn pressure but NO score reward — no incentive to engage with it
+- No character kit penalises standing still (except SkyByte's Sonic Boom decay)
+
+**e. The Outer Galaxy HP curve forces nuke reliance** at S11+ regardless of weapon choice. S20 mobs hit ~1.95M HP. Even a maxed weapon stack lands at ~11.5k DPS for shieldBubble or ~3.7k DPS for supernovaBeam. **No weapon damage curve can dent 1.95M HP without nukes** at the Outer Galaxy clear pace.
+
+---
+
+## 2. The Three Meta Builds That Dominate
+
+From the audit, three coherent build paths emerge as obvious top-tier:
+
+### Build A — "Shield AFK"
+- **Character:** NeoByte (banner) / CodeBreaker (low CD) / Pandypaws (tank+area)
+- **Weapons:** shieldBubble → aegisMatrix + any pool AoE for secondary tick damage
+- **Passives:** cd_down × 5, area_up × 5, hp_up × 5, armor_up × 5
+- **Relics:** Cosmic Dice L5 (luck → nuke drops), Blood Chalice L5 (regen)
+- **How it plays:** stand still. Let the shield tick down everything in 480u while occasional nukes clear overflow. Score scales with kills × time, which scales with shield uptime × area.
+
+### Build B — "Sniper crit"
+- **Character:** NeonVortex (2.0 dmgM, execute) / Glitch (1.5 dmgM, crit talent)
+- **Weapons:** supernovaBeam (proj_spd → bonus damage) / buzzsawSwarm
+- **Passives:** dmg_up × 5, proj_spd × 5, hp_up × 5
+- **Relics:** Annihilation Core L5, Cosmic Dice L5 (crit chance)
+- **How it plays:** kite. Single-target high-damage shots one-shot most enemies. Execute snowballs once enemies hit 20% HP.
+
+### Build C — "Synergy stack"
+- **Character:** NovaByte (area-focused chain explosions)
+- **Weapons:** vineWhip → synergize into flamingLash/seismicWhip/thornySwarm, plus quantumCollapse
+- **Passives:** area_up × 5, cd_down × 5, dmg_up × 5
+- **How it plays:** kite-and-circle. AoE field plus chain explosions cascade through density.
+
+**Empirically, Build A dominates the leaderboard.** It has the lowest skill floor (literally: stand still) and competitive ceiling because of the pushback-uptime stacking. Builds B and C exist and work, but require more positional play. **The complaint isn't that Build A exists — it's that Build A is strictly easier than Builds B and C for similar reward.**
+
+---
+
+## 3. The Real Question for S7
+
+Three options the owner could pursue, in increasing order of scope:
+
+### Option 1 — Surgical nerf (v2's recommendation)
+Nerf shield uptime, nuke damage, Outer Galaxy HP. ~15 lines of code. Build A becomes worse; Builds B and C become relatively stronger. Meta shifts but doesn't restructure.
+
+**Risk:** Surface-level fix. Banner-NeoByte, decoy-HoloDrift, hack-CodeBreaker still reward stationary play with their KIT, not just shield. After 2 weeks players find Build A2 (e.g. dense pool weapons + banner) and complaint resumes.
+
+### Option 2 — Reward axis (broader)
+Keep Option 1, AND add a score multiplier tied to Dynamic Difficulty (`dynamicDifficulty.spawnRateMult`) capped at 2× score. DD ramps with kill velocity, so this rewards aggressive play directly. Players who AFK keep their DD pinned at 1.0× and stay at 1.0× score; players who push for max DD earn double points.
+
+**Why this works:** the existing DD system already does ~80% of the "Heat" idea v1 proposed without knowing. It just doesn't pay out. Wiring score to DD is ~5 lines server-side in `saveScore`. It turns "playing aggressively" from a self-imposed challenge into a scored objective.
+
+**Risk:** Cosmic-only (DD only ramps on Cosmic). Easy/Normal/Hard players see no change. May feel like "the leaderboard is even more Cosmic-locked."
+
+### Option 3 — Restructure (broadest)
+Reposition shield bubble as a defensive cooldown ABILITY (like Glitch's phase shift) rather than a weapon. Pull aegisMatrix out of the level-up pool. Replace pushback with **damage absorption** — bubble absorbs N damage over its life, no pushback. Re-tune the 5 high-AFK character kits to add a "movement reward" mechanic (e.g. Banner only buffs while moving INTO it, not standing in it).
+
+**Why this works:** addresses the root design issue. AFK becomes mechanically unsupported.
+
+**Risk:** Huge scope. Breaks a lot of existing builds. Probably an S8 plan, not S7.
+
+---
+
+## 4. Recommended S7 Package
+
+**Ship Option 1 + Option 2 together.** Option 3 stays in the design queue for S8.
+
+Concrete changes:
+
+### 4a. Shield uptime — lift the per-weapon CD floor for shields only
 ```js
-// WeaponSystem.js — shieldBubble
-engine.projectiles.push({
-    radius: 80 * area,        // up to 240u base, visual capped at 320u (S6)
-    damage: dmg,              // deals damage on every frame
-    pierce: 999,              // hits everyone in range
-    life: 2.0,                // each cast lasts 2 seconds
-    pushback: 250,            // pushes enemies outward 250 units when hit
-    type: 'shield_bubble'
-});
+// WeaponSystem.js or GameEngine.updateWeapons
+// Currently: w.timer = (w.baseCooldown / 60) × max(0.35, cooldownMult) × max(0.5, cdMult)
+// New per-weapon override:
+const cdFloor = (w.id === 'shieldBubble' || w.id === 'aegisMatrix') ? 0.85 : 0.5;
+w.timer = (w.baseCooldown / 60) × max(0.35, cooldownMult) × max(cdFloor, cdMult);
 ```
+Shield bubble min CD becomes `3.0s × 0.35 × 0.85 = 0.89s` instead of `0.525s`. With life 2.0s → ~2.2 overlapping (was ~3.8). Aegis Matrix → ~5 overlapping (was ~8.6). Still strong, no longer ridiculous.
 
-The "wall" the player sees is the **pushback** (250u for Shield Bubble, 300u for Aegis Matrix). Every frame an enemy is inside the bubble, it takes damage AND gets pushed 250u outward. Combined with the damage radius (which extends 1.5× past the visual cap = up to 480u for shield, 630u for Aegis), enemies physically can't close the gap — they get shoved back faster than they can move.
-
-### 1b. The shield has 100%+ uptime at max CDR
-
-Shield Bubble base cooldown = 180 frames (3s). With max stacking:
-- `player.cooldownMult` floor = 0.35
-- Per-weapon `cdMult` (`Math.max(0.5, ...)`) = 0.5
-
-Final cooldown = `3.0s × 0.35 × 0.5 = 0.525s`. **But `life: 2.0` means each cast lasts 2 seconds.** So at max CDR, you have **~4 overlapping bubbles at all times** — the "shield" is actually a permanent stacking AoE field. Aegis Matrix is even faster (base 100 frames = 1.67s × 0.35 × 0.5 = 0.29s, life 2.5s → ~9 overlapping fields).
-
-That's the AFK meta in one sentence: **the shield is just a self-sustaining AoE damage zone with pushback that costs nothing to maintain at high CDR.**
-
-### 1c. Dynamic Difficulty is already very developed
-
-I underestimated DD massively in v1. The actual code (`GameEngine.js:800-884`):
-- Spawn rate cap: **3.5×** on S6 Cosmic
-- Enemy speed cap: **2.5×** on S6 Cosmic
-- Asymmetric ramp: **+0.30/cycle up, −0.05/cycle down**
-- Floor: 0.85× (S6) — strugglers protected
-- Re-evaluates every 5s in first 60s, every 15s after
-- Kill threshold: 15/15s, or 4/15s before DD has ramped past 1.0×
-- **ONLY active on Cosmic difficulty** (Easy/Normal/Hard pinned at 1.0× — explicit decision after player feedback)
-
-The kill-velocity ramp I proposed in v1 already exists. The score-multiplier-for-heat idea is still novel, but the "DD revamp" framing was based on not knowing DD.
-
-### 1d. Weapon scaling is already aggressive
-
-`WeaponSystem.js:88-91`:
-- Per-level damage: `1 + min(24, level-1) × 0.15` → **at lvl 25 = +360% damage just from level**
-- Per-level area S6: `1 + min(24, level-1) × 0.05` → **at lvl 25 = +120% area**
-- Per-weapon dmg cap (S6): 1.8×
-- Per-weapon area cap (S6): 1.6×
-- Player damage cap (Inner Galaxy): 6.0×
-- Player damage cap (Outer Galaxy S20): 80×
-
-A maxed evolved weapon on S10 at Cosmic difficulty does roughly: `baseDmg × 4.6 (level) × 1.8 (forge) × 6.0 (player) = 49.7× baseDmg`. Weapons are NOT under-scaled. The v1 proposal "make weapon levels feel impactful" was solving a problem that doesn't exist.
-
-### 1e. Nuke pickups are luck-gated, not random
-
-`EnemyAI.js:217`:
+### 4b. Pushback decays in the final 0.5s of shield lifetime
 ```js
-if (Math.random() < 0.01 + (engine.player.luck * 0.001)) {
-    // drop nuke / magnet / shield pickup
-}
+// ProjectileSystem.js — pushback branch
+const lifeFrac = p.life / p.maxLife; // store maxLife at spawn
+const pushbackMult = Math.min(1.0, lifeFrac / 0.25); // full pushback first 75%, ramp to 0 in last 25%
+e.x += Math.cos(angle) × p.pushback × pushResist × pushbackMult × dt;
 ```
+Enemies press in as bubble fades. Creates a "safe → vulnerable → safe → vulnerable" rhythm instead of perma-fortress.
 
-Base 1% drop rate per non-elite, non-boss kill. **Luck adds 0.1% per point.** With a luck-stacked build (Cosmic Dice relic L5 + Lucky Glitch + CodeBreaker passive luck = ~10-12 luck), that's still only ~2% per kill. Anubis's "stand around for nukes" complaint is real, but it's tied to **kill volume × luck**, not a high base rate. The fix is to lower the base rate OR reduce the impact of each nuke, not redesign the drop system.
-
-### 1f. The nuke does `maxHp × 10` damage
-
-`PickupSystem.js:14-24`. A single nuke wipes ALL non-boss enemies on screen. Doesn't matter if they're T1 or T14 — they all die in one frame. This is the actual "I-win button" — not because it's frequent, but because each cast is unconditional.
-
-### 1g. Outer Galaxy mob HP is the real reason nukes feel mandatory at S11+
-
-`EnemySpawner.js:13-21`:
+### 4c. Nuke damage `maxHp × 10` → `maxHp × 2.5`
 ```js
+// PickupSystem.js triggerNukeEffect
+engine.damageEnemy(e, e.maxHp * 2.5, { weaponId: 'nukePickup' });
+```
+Still one-shots Inner Galaxy mobs. T13-T14 Outer Galaxy mobs take ~40% — nukes become "thin the herd" instead of "delete the screen."
+
+### 4d. Nuke drop rate halved
+```js
+// EnemyAI.js:217
+if (Math.random() < 0.005 + (engine.player.luck * 0.0005)) { ... }
+```
+Halves the base + luck contribution. Luck builds still see more nukes than non-luck builds, just half as often.
+
+### 4e. Outer Galaxy HP curve reduced 25-35%
+```js
+// EnemySpawner.js
 const OUTER_GALAXY_HP_MULT = {
-    11: 13.55, 12: 21.03, 13: 32.51, 14: 50.44, 15: 78.17,
-    16: 121.13, 17: 187.70, 18: 290.90, 19: 450.85, 20: 698.79,
+    11: 10,    12: 16,    13: 24,    14: 38,    15: 58,
+    16: 90,    17: 140,   18: 215,   19: 335,   20: 510,
 };
 ```
+S20 mob HP drops from ~1.95M to ~1.43M. A maxed weapon (~11.5k DPS for shield, ~3.7k DPS for supernova) can plausibly dent these in concert with nukes instead of nukes being the only solution.
 
-Mob HP scales **698× by S20**. Even with a maxed weapon doing `49.7× baseDmg` (above), a T14 mob with base HP 2800 × 698× = ~1.95M HP. That's not a sponge — it's a brick wall. Nuking is the only viable clear at S15+ because no weapon damage curve can keep pace with that exponential HP growth.
-
-So Anubis's complaint is two separate problems wearing the same shirt:
-1. **In Inner Galaxy (S1-S10):** shield bubble + AFK + occasional nuke is OPTIMAL because the shield's AoE+pushback is too good. Weapons work fine, players just don't need them.
-2. **In Outer Galaxy (S11-S20):** nukes are MANDATORY because mob HP outscales every weapon multiplier. Players don't choose nukes, the math forces them.
-
-These need different fixes.
-
----
-
-## 2. Where the AFK Meta Actually Comes From
-
-Pulling apart the loop into its mechanical roots:
-
-| Symptom Anubis describes | Actual mechanism in code |
-|---|---|
-| "Mobs cluster around me, don't reach me" | Shield Bubble/Aegis pushback (250/300u) pushes mobs out faster than they can re-approach |
-| "I just shift the pile with a nuke" | Nuke = `maxHp × 10` damage = unconditional one-shot |
-| "Weapon upgrades feel pointless" | Inner Galaxy: shield's bundled AoE+pushback clears the field for free; weapons are redundant. Outer Galaxy: mob HP outscales weapon multipliers |
-| "Why level anything but shield?" | Shield with max CDR has ~4 overlapping casts at all times → permanent free damage zone |
-| "Enemies should reach me" | Pushback resets enemy position 250u/frame whenever they enter the bubble. Speed buffs don't help — the geometry caps closure rate |
-| "I want to mow them down" | Outer Galaxy HP curve means non-nuke weapons can't actually mow anything down past S13 |
-
-**Root causes (ranked):**
-1. **Shield pushback** combined with **shield uptime at high CDR**. Standing still while the shield cycles = perfect kill zone.
-2. **Outer Galaxy mob HP curve** forces nuke reliance.
-3. **Nuke damage is unconditional** (maxHp × 10) so even rare drops define the meta.
-4. **Luck-stacking** lets the nuke drop rate go from "rare emergency" to "every 20-30 kills."
-
----
-
-## 3. Levers (with actual numbers from the code)
-
-### 3a. Shield uptime — the highest-leverage Inner Galaxy lever
-
-The pushback isn't the problem on its own — it's the pushback × 100% uptime combo. Three ways to break the uptime, in order of bluntness:
-
-**(i) Raise per-weapon CD floor for shields specifically.**
-Currently `Math.max(0.5, cdMult)` applies to all weapons. Add a per-weapon override for `shieldBubble` and `aegisMatrix` at `Math.max(0.85, cdMult)`. That makes shield CDs:
-- Shield Bubble: `3.0s × 0.35 × 0.85 = 0.89s` cooldown, life 2.0s → 2.2 overlapping (still strong, not absurd)
-- Aegis Matrix: `1.67s × 0.35 × 0.85 = 0.50s` cooldown, life 2.5s → 5 overlapping (still very strong)
-
-**(ii) Reduce shield lifetime.**
-Drop `life: 2.0 → 1.0` for Shield Bubble and `life: 2.5 → 1.5` for Aegis Matrix. Combined with (i), uptime drops to ~1× overlapping = the shield exists, but with windows. Players have to **time when to stand behind it**.
-
-**(iii) Pushback decays over the shield's life.**
-First 0.4s of the bubble = full 250u pushback. Last 0.6s = 0u. Mobs press in as the bubble fades. Hardest to implement but most "feels right" — the shield is an actual cycle of "safe → vulnerable → safe → vulnerable" instead of a constant fortress.
-
-**Recommend (i) + (iii).** Numerically gentle, breaks the bug cleanly. (ii) is a hard nerf that hits new players too.
-
-### 3b. Outer Galaxy HP curve — the Outer Galaxy lever
-
-Current S20 HP multiplier is 698.79×. Even with the per-sector dmg cap of 80× and the area cap of 12×, a T14 base 2800 HP mob hits ~1.95M HP. Drop the curve to:
-
+### 4f. DD → Score multiplier (the carrot)
+```js
+// functions/saveScore.js — apply at server-side score finalize
+const ddPeak = stats.ddPeakSpawnMult || 1.0; // client passes peak DD reached this run
+const heatBonus = 1 + ((ddPeak - 1) / 2.5) × 1.0; // 0 at 1.0×, 1.0 at 3.5× cap
+const finalScore = Math.floor(rawScore × Math.min(2.0, heatBonus));
 ```
-S11 ≈ 10×   (was 13.55)
-S15 ≈ 50×   (was 78.17)
-S20 ≈ 450×  (was 698.79)
-```
+Engine tracks `dynamicDifficulty.spawnRateMult` per frame, sends peak with score. HUD shows "HEAT 2.4×" when DD > 1.5×.
 
-That's a 25-35% reduction across the band. A maxed weapon now lands at `49.7× baseDmg` vs `1.95M ÷ 0.65 = ~1.27M HP` — still brutal, but weapons can plausibly contribute. Nukes become "thin the wave" instead of "the only clear."
-
-**Risk:** Outer Galaxy clear rates spike. Mitigation: increase mob density in the same band by +15-20% so finish-line score still scales on kill volume.
-
-### 3c. Nuke damage and drop rate
-
-`maxHp × 10` is unconditional one-shot. Two complementary changes:
-
-**(i) Damage from `maxHp × 10` → `maxHp × 2.5`.** Still one-shots Inner Galaxy mobs. T13-T14 Outer Galaxy mobs survive but take 40% of max HP — nukes become "thin the herd" instead of "delete the screen." Aligns with proposal 3b.
-
-**(ii) Drop rate from `0.01 + (luck × 0.001)` → `0.005 + (luck × 0.0005)`.** Halves the floor. Luck still helps, but a luck-30 build now sees 2% → 1% per kill. Combined with (i), nukes go from "the meta" to "a tactical option."
-
-### 3d. DD score multiplier (the one v1 idea that survives)
-
-DD already drives spawn rate and mob speed. **It doesn't currently affect score at all.** Adding a score multiplier tied to DD's spawn-rate-mult value (capped at 2.0× score at the 3.5× spawn cap) would:
-- Reward aggressive play with a visible score number, not just spawn pressure
-- Add a new mastery axis (top players chase max-DD windows)
-- Not affect non-Cosmic players (DD only ramps on Cosmic)
-
-**Concrete:** `scoreMult = 1 + ((dynamicDifficulty.spawnRateMult - 1) / 2.5) × 1.0`, capped at 2.0×. Apply at run end in `saveScore` (server-side, can't be tampered with). Players see a "HEAT" indicator on the HUD when above 1.5× DD.
-
-This is the most "Anubis-shaped" change in the doc — directly rewards the kind of aggressive play he's asking for, without forcing it on anyone.
-
-### 3e. Things v1 proposed that are NOT needed
-
-- ❌ **Spawn rate buffs.** DD already caps at 3.5×. Adding a flat bump just shifts the ceiling.
-- ❌ **Mob speed buffs.** Useless while shield pushback dominates. Fix the shield first.
-- ❌ **"Make weapon levels feel impactful."** Weapons already scale at 0.15/level damage capped at lvl 24. They feel fine in Inner Galaxy; the problem is they don't get USED because the shield does the work.
-- ❌ **Inner Galaxy HP bump.** Same reason — won't change the AFK loop, just frustrates new players.
-- ❌ **Kill-velocity spawn ramp.** Already exists as DD.
-- ❌ **End-of-run spawn taper removal.** Already removed for DD ≥ 1.5× whales (`EnemySpawner.js:299`). The taper still exists for struggling players, which is correct.
-
-### 3f. Open questions worth a doc of their own
-
-- **Should nukes become a Mastery-tree unlock instead of a pickup?** Tactical button with a 60s CD that does, say, 30% of all enemies' max HP. Removes RNG, adds agency, lets us tune knobs precisely. Big lift — flag for S8.
-- **Should pushback exist at all?** Pushback is a 10-year-old VS-genre convention. Modern entries (Brotato, Halls of Torment) use damage zones WITHOUT pushback specifically because pushback fortress builds dominate. Worth a serious debate before S7.
-- **Outer Galaxy HP curve was set 2026-06-04.** It's three days old. Was it tested with non-nuke builds? Worth asking Anubis directly: at what sector do his weapons stop killing things? That datapoint refines the 25-35% reduction number.
+### 4g. Tag character signature triggers with the SAME `weaponId` they currently use, so the post-run breakdown actually shows banner damage
+*(QoL — already partially done; complete coverage so it's clear in run stats how much of your damage came from shield vs banner vs base weapons)*
 
 ---
 
-## 4. Recommended S7 Launch Patch
+## 5. What Deliberately Stays the Same
 
-**The whole patch in three lines:**
-
-| Lever | Change | Lines of code | Risk |
-|---|---|---|---|
-| Shield uptime | Per-weapon CD floor for `shieldBubble` / `aegisMatrix` lifted 0.5 → 0.85 | ~3 lines in WeaponSystem | LOW |
-| Outer Galaxy HP | `OUTER_GALAXY_HP_MULT` lookup reduced 25-35% across S11-S20 | 1 lookup table in EnemySpawner | MEDIUM |
-| Nuke damage | `maxHp * 10` → `maxHp * 2.5` in `triggerNukeEffect` | 1 line in PickupSystem | LOW |
-| Nuke drop rate | Halved | 1 line in EnemyAI | LOW |
-| DD → Score | Map DD spawn mult to score mult (cap 2.0×) | ~5 lines in saveScore | MEDIUM |
-
-**Total impact:** ~10-15 lines of game code + 5 lines server-side. All independently revertible. Tier 1 (shield + nuke) addresses the Inner Galaxy AFK meta. Tier 2 (Outer Galaxy HP) addresses the "weapons don't work" complaint. Tier 3 (DD score) actively rewards the playstyle Anubis is asking for.
-
-**What deliberately gets left alone:**
-- All weapon damage / area / level scaling.
-- DD parameters (already well-tuned).
-- Player power caps in either galaxy.
-- Difficulty multipliers, talent trees, character mastery, relics.
-
-That's a focused, code-grounded S7 patch. It doesn't require new content, new systems, or any speculative redesign — just four targeted nudges to the existing math.
+- **No character rebalancing.** NeoByte / CodeBreaker / Pandypaws kits stay as-is. Option 3 (re-design AFK kits) is S8 work.
+- **No weapon damage / area / level scaling changes** to anything but shieldBubble and aegisMatrix CD floor.
+- **No DD parameter changes.** DD already does its job; just doesn't pay out.
+- **No talent / mastery / relic changes.** These layers are well-tuned per the layer audit.
+- **No synergy / evolution rules changes.** The 14 paths are well-designed; vineWhip's centrality is a feature.
+- **No Inner Galaxy mob HP changes.** Inner Galaxy clears are fine; nerfing them would hurt new players.
 
 ---
 
-## 5. What I Got Wrong in v1 (lessons for next time)
+## 6. Why This Lands Differently Than v1/v2
 
-For my own reference and the next time someone reads this doc:
+- v1: designed against assumed mechanics. Was wrong about almost everything.
+- v2: read combat code, designed a surgical fix to shield + nuke + OG HP. Correct, but incomplete — didn't account for the character-design side.
+- v3: read everything. Confirms v2's surgical fixes are right AS FAR AS THEY GO, but adds:
+  - **Option 2 (DD → Score)** as the *positive incentive*. v2 only nerfed; v3 also rewards.
+  - **Acknowledges 5/10 characters were designed around AFK mechanics.** A surgical nerf won't kill the meta because the character kits still passively support it. We can ship S7 with Option 1+2, then plan a character-kit pass for S8.
+  - **Picks the right size for S7.** Option 3 is the "right" design fix but it's a season's worth of work on its own.
 
-- **I never read the shield's actual implementation.** v1 spent two passes designing solutions for "the wall that blocks enemies." There is no wall. The shield is a pushback-AoE projectile. The pushback creates the wall *perception*; the fix is to break the uptime that makes the pushback constant.
-- **I never read the DD system.** v1 proposed replacing DD with a "Heat system" that turned out to be 80% of what DD already does, minus the score reward.
-- **I never read the weapon scaling.** v1 proposed making weapon levels "feel more impactful" when the existing curve already grants +360% damage at max level.
-- **I treated Anubis's "S11 is HP sponges" complaint as a perception issue.** It's literally a 698× HP multiplier at S20. The math doesn't allow non-nuke clear.
+---
 
-Reading the code first matters. The doc is only useful if its diagnoses match the actual systems.
+## 7. Open Questions for Owner
+
+1. **Should the post-S7 plan include reworking the 5 high-AFK character kits?** (Option 3 long-form work) — this is months of design work, would need a full season cycle.
+2. **Are we comfortable with score-multiplier reward being Cosmic-only?** DD only ramps on Cosmic by design. Easy/Normal/Hard players would never see the "HEAT" bonus.
+3. **Should nukes get redesigned into a tactical button** (e.g. mastery-tree unlock with 60s CD doing 30% maxHp) rather than RNG pickup? Removes luck-stacking exploit cleanly.
+4. **Are we touching the Outer Galaxy HP curve so soon after release (2026-06-04, 3 days ago)?** Players may still be in the "learning" phase. Worth waiting 2 weeks to confirm the curve is actually wrong vs. just hard.
+5. **Should burningBarrier and any future pushback weapon inherit the new shield CD floor automatically**, or be tuned per-weapon? Currently only shieldBubble + aegisMatrix would get the lifted floor.
+
+---
+
+## 8. Cross-references
+
+- Full weapon catalog by damage model: [`S7_WEAPON_AUDIT.md`](./S7_WEAPON_AUDIT.md)
+- Character kits + AFK affinity table: [`S7_CHARACTER_AUDIT.md`](./S7_CHARACTER_AUDIT.md)
+- Multiplicative stacking layers + caps: [`S7_LAYER_AUDIT.md`](./S7_LAYER_AUDIT.md)
