@@ -2,7 +2,6 @@
 
 **Status:** EXPLORATION / NOT DECIDED. Owner reads, picks what to ship.
 **Date:** 2026-06-07
-**Trigger:** Anubis Discord feedback (2026-06-07) — "this is a shooter, not a stand-around-and-collect-nukes game."
 
 **This doc replaces v2.** v2 fixed v1's incorrect assumptions about the shield + DD, but it still treated the AFK meta as a "fix shield + nuke" problem. Reading every system end-to-end (`WeaponSystem`, `CharacterMechanics`, `ProjectileSystem`, `EnemyAI`, `BossSystem`, `NFTPerks`, `SquadUltimate`, `Constants`, `UpgradeSystem`) shows it's deeper than that — **the AFK meta is built into 5 of 10 characters and reinforced by every weapon model except single-target projectiles.**
 
