@@ -6,6 +6,18 @@
 
 ---
 
+## 🔴 REVISION — 2026-06-07 (Owner Feedback)
+
+Two facts the original draft got wrong:
+
+1. **S11+ mobs are already HP sponges to every non-nuke weapon.** That means the "nukes are overshadowing weapons" framing is partly a *symptom*, not a root cause. In Outer Galaxy, nukes aren't preferred — they're often the *only* thing that clears. Section 3c is rewritten below: we should be **lowering** S11-S20 mob HP, not leaving it alone.
+
+2. **Shield bubble / Aegis Matrix physically blocks enemies from reaching the player.** Mobs pile up at the bubble's perimeter not because they're slow, but because the geometry won't let them in. Section 3b (mob speed +15%) is therefore **mostly useless** as a standalone fix — a faster mob still hits the same wall. The actual structural lever is the shield bubble's enemy-blocking behavior, addressed in the **new Section 3g**.
+
+The S7 Launch Patch list at the bottom is rewritten to reflect both. Treat the rest of the doc as still useful diagnostic context, but jump straight to Sections 3c/3g/5 for the actual S7 recommendation.
+
+---
+
 ## 1. The Core Problem Anubis Is Naming
 
 Anubis isn't really complaining about *difficulty*. He's complaining about **agency**. Right now the optimal loop is:
@@ -65,19 +77,40 @@ In short: rebalance the loop so **clear comes from sustained weapon DPS into a d
 
 **Recommend (b) + (c) combined.** (a) is too blunt; (b) fixes a specific complaint; (c) is the soul of the request.
 
-### 3b. Enemy movement speed (HIGH impact, MEDIUM risk)
+### 3b. Enemy movement speed (⚠️ DOWNGRADED — see revision callout)
 
-The current per-tier `speed` values multiplied by `engine.difficulty.speedMult` are the only knob for "how fast enemies close the gap." Most T1-T3 mobs sit around speed 60-80; Cosmic gives `speedMult ≈ 1.5×`.
+**Original premise was wrong.** With Aegis Matrix / shield bubble active, mob speed doesn't matter — the bubble physically stops them at its perimeter. A 100-speed mob and a 200-speed mob both end up doing the same thing: queuing at the edge until a nuke clears them.
 
-Anubis wants enemies to **reach the player**, not pile up at the magnet radius and wait to be nuked.
+**Where speed still matters:**
+- Pre-shield phase (level 1-5 before bubble is online).
+- Builds that don't run a bubble (rare; almost no top loadout skips it).
+- Sectors where a boss strips the bubble — but those are short windows.
 
-**Proposal:** +15-20% baseline mob speed across all tiers + add a *contact-pressure ramp*: any enemy that has been "stuck" in the magnet radius without entering the kill radius for >3s gets a small +20% speed burst. Punishes the static-pile playstyle directly. Mobs come INTO you rather than circling.
+**Revised proposal:** Skip the flat speed bump for S7. The real fix is Section 3g (shield bubble redesign). If we still want enemies to *feel* more menacing during the brief unshielded windows, a +10% Cosmic-only speed bump is fine, but expect it to be invisible to most players.
 
-### 3c. Mob HP (LOW impact, HIGH risk)
+The "contact-pressure ramp" idea (stuck-mob speed burst) also fails for the same reason — mobs aren't *choosing* to stay outside the kill radius; the bubble is forcing them to.
 
-Anubis specifically said *"slight"* HP increase. Don't overshoot. The danger is creating S6's S15-20 problem in earlier sectors — bullet-sponge mobs make every weapon feel like a pea-shooter.
+### 3c. Mob HP (REWRITTEN — Outer Galaxy is the problem, not Inner)
 
-**Proposal:** S1-S10 mobs get +10% HP. S11-S20 untouched (Outer Galaxy is already brutal). This is the lightest possible thumb on the scale and preserves the "blowing up under my weapons" feel he wants.
+The original draft missed the most important piece: **S11-S20 mobs are already HP sponges to every weapon except nukes.** That's a direct cause of the nuke meta — players aren't *choosing* nukes over weapons in Outer Galaxy, they're forced to it because beam/projectile DPS doesn't keep up with `OUTER_GALAXY_HP_MULT` values (S11 ≈ 13.5×, S20 ≈ 698.8× the baseline).
+
+`game/EnemySpawner.js:13-21` shows the lookup. The progression was designed so each sector's Normal mobs are tougher than the previous sector's Cosmic — defensible on paper, but in practice it created a band where weapons can't compete and only nukes function.
+
+**Revised proposal — two-part:**
+
+**S1-S10 (Inner Galaxy):** +10% HP. Same as before. Lightest possible thumb. Inner Galaxy is where weapon-leveling feel lives; preserve it.
+
+**S11-S20 (Outer Galaxy):** *Reduce* HP multipliers by 25-35%. New target curve:
+```
+S11 ≈ 10×   (was 13.55×)
+S15 ≈ 50×   (was 78.17×)
+S20 ≈ 450×  (was 698.79×)
+```
+Still a brutal curve. Still demands max evolved weapons + relic stack. But brings non-nuke weapons back into the conversation. Combined with the weapon-evolution scaling in Section 3e, top builds could *plausibly* clear S15-S20 without leaning on nukes.
+
+This also lets us reduce nuke drop rate (Section 3d) without bricking Outer Galaxy progression — currently nukes are the safety valve compensating for the sponge curve.
+
+**Risk:** Outer Galaxy completion rates spike → leaderboard tops cluster at the cap → less differentiation. Mitigation: pair with mob-density buff so finish-line scores still scale on kills, not just on "did you reach S20."
 
 ### 3d. Nuke pickup rebalance (MEDIUM impact, HIGH visibility)
 
@@ -101,6 +134,26 @@ Anubis says *"weapon upgrades should be your main source of enemy clear."* For t
 
 **This is the biggest design lift in the doc.** It needs careful audit of every weapon to avoid creating one OP build. Worth doing in a Phase 2 patch mid-S7 rather than at launch.
 
+### 3g. Shield bubble / Aegis Matrix — the structural fix (NEW, HIGHEST impact)
+
+This is the actual root cause of the AFK meta. Mobs pile up around the player because shield bubble / Aegis Matrix **stops them from entering melee range entirely**. No amount of spawn-rate, mob-speed, or damage tuning fixes that — the fortress just collects bigger piles.
+
+The shield isn't *too strong* in raw mitigation terms. It's that it functions as both **damage absorber** AND **physical wall**. That double-duty is what enables stand-still play. Decouple those two functions and the meta cracks open.
+
+**Four options, gentlest to most aggressive:**
+
+1. **Shield no longer blocks enemies, only absorbs contact damage.** Mobs walk *through* the bubble field but take no contact-damage retaliation; player still gets a damage shield. Visually: bubble becomes a translucent aura instead of a hard sphere. **This is the cleanest fix.** Players keep their defensive tool, but standing still now means mobs are pressing in on them — which is exactly the texture Anubis is asking for.
+
+2. **Shield has a "pressure cap" — too many mobs pushing on it = it bursts early.** Bubble takes accelerated damage proportional to the number of enemies in contact (e.g., 5+ enemies = 2× drain rate, 10+ = 4×). Punishes piling specifically. Players can still bubble through small waves; large clusters force them to move.
+
+3. **Shield repels mobs outward on activation, then no longer blocks.** First 0.5s after bubble pops, all nearby enemies get a 200u radial knockback (creates breathing room). Then the bubble enters absorb-only mode (per Option 1). Gives the shield a tactical *moment* instead of being a permanent fortress.
+
+4. **Replace shield with a directional barrier (front-facing arc only).** Heaviest redesign. Bubble becomes a 120° forward-facing shield the player must orient toward threats. Fundamentally turns it into a skill-based defensive tool. Likely too big a swing for S7 launch — flag for S8 if (1) doesn't go far enough.
+
+**Recommend Option 1 for S7 launch.** Single-line behavior change, preserves the shield's identity as "the defensive option," directly breaks the AFK loop. If telemetry post-launch shows piles still forming (some players will lean into the new "tank with weapons" build), escalate to Option 2 mid-season.
+
+**Implementation note:** the shield bubble blocking behavior almost certainly lives in `EnemyAI.js` (collision against player invincibility / shield state). Worth a focused audit before committing — if removing the block requires touching projectile/pickup collision too, the change gets bigger fast. Read that file first.
+
 ### 3f. Dynamic Difficulty rework (MEDIUM impact, MEDIUM risk)
 
 Current DD (`game/GameEngine.js`, referenced in `EnemySpawner.js:248`) caps spawn rate at 3.5× and only ramps when the player overperforms a baseline DPS target. It's too gentle for what Anubis wants.
@@ -119,7 +172,7 @@ Current DD (`game/GameEngine.js`, referenced in `EnemySpawner.js:248`) caps spaw
 ## 4. Anti-Goals (Things We Should NOT Do)
 
 - ❌ **Don't make mobs into sponges.** Bullet-sponge HP scaling is the #1 mistake in this genre. Anubis is begging us not to.
-- ❌ **Don't nerf shield bubble directly.** It's a legit defensive option; the problem is that shield + AFK is *optimal*, not that shield is *strong*. Fix the optimal-strategy problem, leave the tool alone.
+- ❌ ~~**Don't nerf shield bubble directly.**~~ **REVISED:** the shield bubble *is* the structural problem (Section 3g). We don't nerf its *strength*, but we do change its *behavior* — absorb damage, stop blocking enemy movement. Keep it powerful, break its fortress role.
 - ❌ **Don't remove nukes.** They're fun. Just stop letting them BE the strategy.
 - ❌ **Don't add a stamina/move-or-die mechanic.** Forced movement = forced micro-stress. Tier-1 free-to-play players will quit. Use pressure (spawn density, mob speed) instead.
 
@@ -129,20 +182,28 @@ Current DD (`game/GameEngine.js`, referenced in `EnemySpawner.js:248`) caps spaw
 
 If we ship all the LOW-RISK stuff at S7 rollover and save the big systems for mid-season:
 
-### S7 Launch Patch (Week 1 of S7)
-- ✅ End-of-run spawn taper REMOVED (sectors).
-- ✅ Kill-velocity-driven spawn ramp (proposal 3a.c) — cap 3×.
-- ✅ Mob speed +15% S1-S10.
-- ✅ Mob HP +10% S1-S10.
-- ✅ Nuke drop rate −33%.
-- ✅ Remove `postNukeSpawnBoostUntil` 5s boost.
+### S7 Launch Patch (Week 1 of S7) — REVISED
 
-This is a tight ~1-day-of-work changelist. Each lever is independently revertible. Players feel an immediate "the screen is busier and I'm doing more shooting" shift.
+**Tier 1 — The actually-load-bearing changes:**
+- ✅ **Shield bubble Option 1** (3g): absorbs damage, no longer blocks enemy movement. This is the single highest-leverage change in the whole doc.
+- ✅ **Outer Galaxy HP cut** (3c): S11-S20 HP multipliers reduced 25-35%. Brings weapons back into the conversation in the sponge band.
+- ✅ **Nuke drop rate −33%** (3d.1). Now that the shield doesn't fortress and Outer Galaxy mobs aren't sponges, nukes can be rarer without bricking progression.
+
+**Tier 2 — Pacing polish (cheap, complementary):**
+- ✅ Remove end-of-run spawn taper (sectors only). Stops the final 30s from feeling empty.
+- ✅ Kill-velocity spawn ramp (3a.c) — cap 3×. Heat-system precursor.
+- ✅ Remove `postNukeSpawnBoostUntil` 5s boost. Stops nukes from refilling their own queue.
+- ✅ +10% HP on S1-S10 mobs only. Anubis's "slight" bump for Inner Galaxy weapon-level feel.
+
+**Skipped from original plan:**
+- ❌ Mob speed +15% — useless without Tier-1 shield change. May add back as +10% Cosmic-only depending on playtest.
+
+This is a 2-3 day changelist (3g needs an EnemyAI audit). Each lever still independently revertible. Tier 1 is non-negotiable for the design goal; Tier 2 is feel polish on top.
 
 ### S7 Mid-Season Patch (Week 2-3)
 - ⏳ Heat system replaces DD (proposal 3f).
-- ⏳ Contact-pressure ramp on magnet-stuck mobs (proposal 3b).
 - ⏳ Weapon evolution post-level damage scaling (proposal 3e — needs audit).
+- ⏳ If shield Option 1 leaves AFK builds still viable → escalate to Option 2 (pressure-cap drain).
 
 ### S7 End-of-Season Audit
 - 📊 Compare avg kills/run, avg nuke pickups/run, avg run duration, top-of-leaderboard build diversity vs. S6 baseline.
@@ -159,11 +220,14 @@ This is a tight ~1-day-of-work changelist. Each lever is independently revertibl
 
 ---
 
-## 7. TL;DR
+## 7. TL;DR (REVISED)
 
-Anubis is right that the meta has drifted from "shooter" toward "pickup management." The fix isn't one big change — it's a coordinated nudge across spawn pacing, mob aggression, nuke prevalence, and reward curves so that **the answer to "what makes me kill faster?" is always "level my weapon," never "wait for a nuke."**
+Anubis is right that the meta has drifted from "shooter" toward "pickup management." The original draft proposed treating that with spawn/speed/HP tuning, but two structural facts changed the analysis:
+
+1. **The shield bubble is a physical wall, not just a damage shield.** Faster, denser, scarier mobs all hit the same perimeter and pile up. Tuning around it is whack-a-mole.
+2. **S11-S20 mobs are already HP sponges to weapons.** Players aren't choosing nukes there — they're forced to them. "Reduce nuke reliance" without addressing the sponge curve just makes Outer Galaxy unplayable.
 
 The cheapest, highest-signal S7 launch patch is:
-> **More mobs, slightly tougher, much faster — and nukes are rarer and don't refill the field.**
+> **Shield absorbs but no longer blocks. Outer Galaxy mobs are 25-35% less spongy. Nukes are 33% rarer. The rest is pacing polish.**
 
-Everything else (Heat system, weapon scaling, nuke redesign) builds on that foundation through the season.
+That single trio — shield rework + Outer Galaxy HP cut + nuke rarity — collapses the "fortress + wait for nuke" loop directly. Everything else in this doc (Heat system, weapon scaling, kill-velocity spawn ramps) is foundation work that builds on top of those three changes through the season.
