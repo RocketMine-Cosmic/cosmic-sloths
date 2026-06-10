@@ -10,6 +10,7 @@ import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { CHARACTERS } from '../game/Constants';
 import { PLAYER_TITLES, TITLE_TIERS, TIER_ORDER, formatBuff } from '@/lib/playerTitles';
+import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -102,11 +103,14 @@ export default function Titles({ isCarousel }) {
             const totalUnlockedTalents = talentKeys.size;
 
             // Count characters: gameplay-unlocked + NFT-granted (by name match, same as NFTPerks.js).
+            // Must use normalizeNftCharacterName so Asset Manager NFTs (e.g. "novabyte_am",
+            // added 2026-05-19) strip the _am suffix and count toward the Completionist title
+            // — Briantjeuh bug 2026-06-10 Discord: had all 10 chars via NFTs but title stayed locked.
             const owned = new Set(save.unlockedCharacters || []);
             if (Array.isArray(nfts)) {
                 const charIds = new Set(CHARACTERS.map(c => c.id.toLowerCase()));
                 nfts.forEach(nft => {
-                    const name = (nft?.metadata?.name || '').toLowerCase();
+                    const name = normalizeNftCharacterName(nft?.metadata?.name);
                     if (charIds.has(name)) owned.add(name);
                 });
             }
