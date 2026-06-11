@@ -32,3 +32,29 @@ export function isBossVacuumEnabled() {
         return false;
     }
 }
+
+// S7 rebalance gate — activates at the W24→W25 rollover (Mon Jun 15 2026
+// 00:00 UTC, season_id flips '2026-S6' → '2026-S7'). Used for the v4
+// brainstorm package (docs/S7_DESIGN_BRAINSTORM.md):
+//   §4a   Pushback CD floor (shieldBubble/aegisMatrix/burningBarrier)
+//   §4a-bis Softer pushback base damage cuts (15→12, 40→28, 18→15)
+//   §4b   Pushback decay in final 25% of shield lifetime
+//   §4c   Nuke damage maxHp × 10 → × 2.5
+//   §4d   Nuke drop rate halved
+//   §4e   Outer Galaxy mob HP curve flattened
+//   §4f   DD peak spawn → +1.0× score "heat" bonus (server-side mirror in saveScore.js)
+//   §4g   DD enabled on Normal + Hard with scaled params (was Cosmic-only)
+//   §4i   Armor → % reduction with sector-scaled cap (25-35%)
+//   §4j   Sector-scaled max HP cap (2000 → up to 4600 at S20)
+// Used by: GameEngine, WeaponSystem, ProjectileSystem, PickupSystem,
+//          EnemyAI, EnemySpawner, UpgradeSystem, functions/saveScore.js
+//          (server-side mirrors this against `season_id` it already derives).
+// MUST agree with the server-side check in functions/saveScore.js.
+export function isS7OrLater() {
+    try {
+        const { season_id } = getCurrentPeriodIds();
+        return season_id >= '2026-S7';
+    } catch {
+        return false;
+    }
+}
