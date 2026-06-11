@@ -1,9 +1,9 @@
-# Season 7 — Design Brainstorm (v3, system-wide audit)
+# Season 7 — Design Brainstorm (v4, shield/armor/HP rebalance)
 
 **Status:** EXPLORATION / NOT DECIDED. Owner reads, picks what to ship.
-**Date:** 2026-06-07
+**Date:** 2026-06-07 → 2026-06-11
 
-**This doc replaces v2.** v2 fixed v1's incorrect assumptions about the shield + DD, but it still treated the AFK meta as a "fix shield + nuke" problem. Reading every system end-to-end (`WeaponSystem`, `CharacterMechanics`, `ProjectileSystem`, `EnemyAI`, `BossSystem`, `NFTPerks`, `SquadUltimate`, `Constants`, `UpgradeSystem`) shows it's deeper than that — **the AFK meta is built into 5 of 10 characters and reinforced by every weapon model except single-target projectiles.**
+**This doc replaces v3.** v3 locked in six concrete changes (shield CD floor, nuke nerf, OG HP curve, DD→score) but stacked *three* independent nerfs on shields (CD + decay + base damage), leaving Aegis Matrix -86% DPS. v4 softens the base damage cuts and adds **armor rework + HP scaling** to fix the actual tank problem — 2-hit T14 kills are worse than shield spam because they eliminate the tank playstyle entirely. v4 keeps the CD floor + pushback decay (they're individually correct) but backs off base damage cuts, and introduces % armor reduction (25-35% cap) + sector-scaled HP to give Pandypaws and defensive builds a real survival option that doesn't rely on shields.
 
 **Owner decisions (2026-06-07) — see Section 7.** Key decisions baked into Section 4 below:
 - Option 3 (character kit rework) is OFF the table — too much work.
@@ -121,27 +121,27 @@ w.timer = (w.baseCooldown / 60) × max(0.35, cooldownMult) × max(cdFloor, cdMul
 ```
 Shield bubble min CD becomes `3.0s × 0.35 × 0.85 = 0.89s` instead of `0.525s`. With life 2.0s → ~2.2 overlapping (was ~3.8). Aegis Matrix → ~5 overlapping (was ~8.6). burningBarrier inherits the floor automatically — owner confirmed any future pushback weapon should also pick this up (just add its id to the set).
 
-### 4a-bis. Pushback weapon base damage — cut to land BELOW or AT median DPS
+### 4a-bis. Pushback weapon base damage — softer cut to preserve evolved weapons
 
-**Owner design intent (2026-06-07):** "with the shield nerf it should be = to or less than the rest — it's a shield at the end of the day." The pushback archetype is DEFENSIVE. Damage is a chip bonus, pushback is the value. The §4a CD floor alone leaves Aegis Matrix at ~72k DPS (4-5× median) because base 40 × overlap × stack compounds. We need base damage cuts on top of the CD floor.
+**Design intent (2026-06-11 revision):** §4a (CD floor) + §4b (pushback decay) individually fix the overlap exploit and add tactical gaps. Adding a third independent nerf (base damage -70 to -86%) is over-correction because it gutts evolved weapons that players earned. Softer approach: keep the fundamental nerfs, scale back base damage.
 
 ```js
-// Constants.js WEAPONS — pushback shield archetype base damage cuts
-shieldBubble:   baseDamage 15 → 8   // Pure defense — pushback IS the value
-aegisMatrix:    baseDamage 40 → 10  // Evolved offensive shield — at median, not above
-burningBarrier: baseDamage 18 → 10  // Pool+shield synergy — median tier
+// Constants.js WEAPONS — pushback shield archetype base damage cuts (softer)
+shieldBubble:   baseDamage 15 → 12   // Pure defense — -20% damage only
+aegisMatrix:    baseDamage 40 → 28   // Evolved shield — -30%, still meaningful
+burningBarrier: baseDamage 18 → 15   // Pool+shield synergy — -17%
 ```
 
-Effective DPS per enemy after §4a + §4a-bis (assumes ~90× full multiplier stack at S20 Cosmic):
-| Weapon | Old DPS | §4a only | §4a + §4a-bis | Role |
+Effective DPS per enemy after §4a + §4a-bis (softer, assumes ~90× full multiplier stack at S20 Cosmic):
+| Weapon | Old DPS | §4a only | §4a + §4a-bis (softer) | Role |
 |---|---|---|---|---|
-| shieldBubble | ~20k | ~12k | **~6k** | Pure defense — below median |
-| burningBarrier | ~35k | ~22k | **~12k** | Synergy hybrid — at median |
-| aegisMatrix | ~125k | ~72k | **~18k** | Evolved — slightly above median, NOT dominant |
+| shieldBubble | ~20k | ~12k | **~9k** | Pure defense — still below-median |
+| burningBarrier | ~35k | ~22k | **~18k** | Synergy hybrid — median tier |
+| aegisMatrix | ~125k | ~72k | **~50k** | Evolved — strong, not dominant (3× over median, not 5×) |
 
-Result: the entire pushback archetype lands AT or BELOW the median offensive weapons (Quantum ~15k, Buzzsaw ~10k, Drones ~10k). Aegis stays the strongest of the three (it's evolved, players who earned it deserve some payoff) but no longer 5× above competing builds. Players who want raw DPS pick Quantum or Buzzsaw or Hellfire instead. Players who want defensive utility pick shield.
+Result: CD floor + decay mechanics do the heavy lifting. Base damage cuts are lighter so Aegis doesn't feel "betrayed" after evolution — it's still the strongest pushback option but competitive with high-tier offensive weapons (Quantum ~15k, Buzzsaw ~10k). Players who want raw DPS will pick Quantum or Buzzsaw; players who want a mix of push + damage pick Aegis.
 
-**Trade-off:** existing shield/aegis builds will feel weaker by 60-85% on damage. This is the intended outcome — shield+nuke meta dies. Players are nudged to either (a) accept shield as a defensive layer and pick a real DPS weapon alongside it, or (b) drop shield entirely for an offensive build.
+**Rationale:** §4a-d shield nerfs alone suffice to kill the "8-overlap infinite fortress" strat. The CD floor prevents stacking, decay creates pressure windows, nuke nerf removes the AFK payoff. Softer base damage cuts preserve build identity without overkilling the evolved weapon.
 
 ### 4b. Pushback decays in the final 0.5s of shield lifetime
 ```js
@@ -258,39 +258,95 @@ Easy stays at 1.0× DD (no ramp). Normal sees gentle pressure (max +75% spawn ra
 ### 4h. Tag character signature triggers with their `weaponId` for run stats
 *(QoL — already partially done; complete coverage so post-run breakdown shows how much damage came from shield vs banner vs base weapons. Helps players see WHY their build is winning, which informs build choice.)*
 
+### 4i. Armor → % reduction (cap 25-35% per sector)
+
+**Problem:** Current armor is flat subtraction (1 armor = -1 damage per hit). At S20 Cosmic, T14 mobs hit ~775 damage; armor cap 30 only reduces that to ~745. **Armor is rounding noise.** Pandypaws with maxed armor talens still dies in 2 hits because enemy scaling (~53×, S1→S20) vastly exceeds armor growth (~7× cap).
+
+**Fix:** Convert armor to % damage reduction, scaled per sector so low-level armor isn't OP early.
+
+```js
+// GameEngine.js — damage reduction on hit
+const baseReduction = (player.armor / 100); // 30 armor = 30% reduction (capped per sector)
+const sectorReductionCap = {
+    0: 0.15, 1: 0.15, 2: 0.15, 3: 0.20, 4: 0.20, // Inner Galaxy S1-S5: 15-20% cap
+    5: 0.20, 6: 0.20, 7: 0.25, 8: 0.25, 9: 0.25, // Inner Galaxy S6-S10: 20-25% cap
+    10: 0.30, 11: 0.30, 12: 0.30, 13: 0.35,      // OG S11-S14: 30-35% cap
+    14: 0.35, 15: 0.35, 16: 0.35, 17: 0.35,      // OG S15-S18: 35% cap
+    18: 0.35, 19: 0.35                             // OG S19-S20: 35% cap
+};
+const cap = sectorReductionCap[arena.sectorIndex] || 0.25;
+const reductionMult = 1 - Math.min(baseReduction, cap); // clamped to cap, then applied as 1 - reduction
+damageDealt = incomingDamage * reductionMult;
+```
+
+**Scaling rationale:** % reduction scales infinitely (30 armor always = 30% reduction, cap permitting). At S20 where Pandypaws has 30+ armor through talens + passives:
+- Old system: 775 dmg → 745 dmg (2 hits to die)
+- New system: 775 dmg × (1 - 0.35) = **504 dmg per hit → 3 hits to die** with the same armor investment
+
+Tank builds go from "useless" to "credible alternative to pure evasion."
+
+### 4j. Sector-scaled max HP for OG (S11+)
+
+**Problem:** Player max HP plateaus at 2000 via cap logic. Mob HP scales ~8× per OG sector (S11→S20). Result: raw maxHp never provides meaningful % mitigation once you hit Outer Galaxy.
+
+**Fix:** Raise HP ceiling per OG sector. Player at S20 can reach ~5000 max HP (2.5× increase) instead of 2000, making hp_up passives actually matter in the endgame.
+
+```js
+// GameEngine.js or UpgradeSystem.js — max HP cap scaling
+const baseHpCap = 2000;
+const sectorHpMult = {
+    0: 1.0, 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.0, 6: 1.0, 7: 1.0, 8: 1.0, 9: 1.0,
+    10: 1.0, 11: 1.2, 12: 1.3, 13: 1.4, 14: 1.5, 15: 1.6, 16: 1.75, 17: 1.9, 18: 2.1, 19: 2.3
+};
+const hpCapForSector = baseHpCap * (sectorHpMult[arena.sectorIndex] || 1.0);
+player.maxHp = Math.min(player.maxHp, hpCapForSector);
+```
+
+**Result:** Pandypaws with maxed hp_up talens + Blood Chalice L5:
+- Old: 2000 HP → T20 mobs kill in 2 hits (775 × 2 = 1550 dmg)
+- New: 4600 HP → T20 mobs kill in ~6 hits (775 × 6 = 4650 dmg)
+
+Combined with §4i armor rework (35% reduction at S20):
+- Incoming: 775 dmg/hit
+- After §4i armor: 504 dmg/hit
+- With 4600 HP: **~9 hits to die**
+
+Tank playstyle becomes viable alongside Quantum/Buzzsaw/Aegis. Players aren't forced into shield-to-survive pipelines.
+
 ---
 
 ## 5. What Deliberately Stays the Same
 
 - **No character rebalancing.** NeoByte / CodeBreaker / Pandypaws kits stay as-is. Owner confirmed this is too much work.
 - **Nukes stay as RNG pickups.** Owner confirmed — don't redesign into a tactical button.
-- **No weapon damage / area / level scaling changes** to anything but pushback-weapon CD floors.
+- **No weapon damage / area / level scaling changes** to anything but pushback-weapon CD floors (§4a-bis is softer now).
 - **No Cosmic DD parameter changes.** Cosmic's existing parameters (3.5× / 2.5× / +0.30) are unchanged; we only ADD Normal/Hard DD with scaled-down params.
 - **No talent / mastery / relic changes.** These layers are well-tuned per the layer audit.
 - **No synergy / evolution rules changes.** The 14 paths are well-designed; vineWhip's centrality is a feature.
 - **No Inner Galaxy mob HP changes.** Inner Galaxy clears are fine; nerfing them would hurt new players.
+- **Inner Galaxy armor scaling unchanged.** Sector cap logic (§4i) only applies OG (S11+). Inner Galaxy stays 15-20% cap max so early-game players don't trivialize it.
 
 ---
 
-## 6. Why This Lands Differently Than v1/v2
+## 6. Why This Lands Differently Than v1/v2/v3
 
 - v1: designed against assumed mechanics. Was wrong about almost everything.
 - v2: read combat code, designed a surgical fix to shield + nuke + OG HP. Correct, but incomplete — didn't account for the character-design side.
-- v3: read everything. Confirms v2's surgical fixes are right AS FAR AS THEY GO, plus:
-  - **DD → Score reward** as the *positive incentive*. v2 only nerfed; v3 also rewards.
-  - **DD extended to Normal and Hard** with scaled parameters so the score reward isn't Cosmic-locked.
-  - **Acknowledges 5/10 characters were designed around AFK mechanics.** Owner has accepted this trade-off — a surgical nerf won't fully kill the AFK meta because the character kits still passively support it. S7 ships the brake + carrot; if Build A2 emerges in 2-3 weeks, we look at it then.
+- v3: read everything. Confirmed v2's fixes are right, added DD→score reward + OG scaling. But stacked *three* independent nerf layers on shields (CD floor + decay + base damage), leaving Aegis -86% DPS. Forgot that killing one playstyle (shield spam) shouldn't kill another (tank defense) by accident.
+- v4: **corrects the shield overcorrection** by softening base damage cuts (keep CD floor + decay, which are individually correct) and **addresses the real tank problem:** flat armor becomes useless at S20, so defensive builds die in 2 hits regardless. §4i (armor → % reduction, 25-35% cap) + §4j (HP scaling per sector) make tank playstyle viable without shields. Pandypaws goes from "irrelevant" to "plays differently from Quantum/Buzzsaw but viable."
 
 ---
 
-## 7. Decisions (answered by owner, 2026-06-07)
+## 7. Decisions (answered by owner, 2026-06-07 → 2026-06-11 revision)
 
 1. **Character kit rework — off the table.** Too much work. S7 is shield + nuke + OG HP + DD reward only.
 2. **DD score reward — must work on Normal/Hard too.** Cosmic params are too brutal for lower difficulties → scaled DD params per difficulty (see 4g).
 3. **Nukes stay as RNG pickups.** No tactical-button redesign.
 4. **OG HP cut approved for S7 — must support BUILD VARIETY, not just lower the wall for shield.** v3 cited "1.43M HP at S20" but real end-of-sector was 6.6M (math was wrong). Owner's two followups: (a) "weapons still won't cut through 1.43M HP," (b) "we're trying to get away from pure shield builds — that's what started this." §4e now tunes the curve around the **median competitive build** (Quantum/Buzzsaw/Aegis/Drones at ~10k DPS) with shield already nerfed by §4a-d, so 5+ build archetypes are viable at S20. S20 multiplier drops 698× → 11×.
 5. **burningBarrier inherits the lifted CD floor.** Pushback-weapon class gets the floor, not per-weapon tuning. Future pushback weapons auto-inherit by adding to the `PUSHBACK_WEAPONS` set (see 4a).
-6. **Pushback weapons must be ≤ median DPS — "it's a shield at the end of the day."** Owner clarified the goal isn't "weaker shield meta," it's "shield is defensive, not the top damage option." §4a alone left Aegis at 4-5× median because base damage 40 stacks brutally. §4a-bis adds base damage cuts (shield 15→8, aegis 40→10, burning barrier 18→10) so the entire pushback archetype lands AT or BELOW median offensive weapons. Shield builds become "bring shield AND a real DPS weapon" instead of "shield is the DPS weapon."
+6. **Pushback weapons: CD floor + decay are the real nerfs; base damage cuts should be gentler** (2026-06-11 revision). Owner's original direction was right on the CD floor. Adding a third independent -70% base damage nerf on top overkills the evolved weapons. v4 softens: shield 15→12 (-20%), aegis 40→28 (-30%), burning barrier 18→15 (-17%). CD floor + decay mechanics do the structural work (kill stacking, add pressure windows); lighter base cuts preserve evolved status without gutting the weapon fantasy.
+
+7. **Armor and HP are actually broken at S20, not just weak.** New findings (2026-06-11): flat armor (-1 per point, cap 30) is rounding noise once mobs deal 775 dmg/hit. %-based armor with sector-scaled caps (25-35% reduction) + HP ceiling scaling per OG sector makes defensive builds credible. Pandypaws goes from "2-hit kill, unplayable" to "6-9 hit kill depending on talens, viable tank alternative."
 
 ---
 
