@@ -92,33 +92,49 @@ Deno.serve(async (req) => {
             notes: backup_notes || '',
         });
 
-        console.log(`[backupData] Backup complete: ${backup_name} with ${Object.values(entity_counts).reduce((a, b) => a + b, 0)} total records`);
+        const totalRecords = Object.values(entity_counts).reduce((a, b) => a + b, 0);
+        console.log(`[backupData] Backup complete: ${backup_name} with ${totalRecords} total records`);
 
-        // Free the big snapshot object before the retention prune so we have headroom.
-        // Without this, the prune step OOMs because each old DataBackup row carries
-        // a ~50-100MB snapshot_data blob and the isolate is still holding everything
-        // from the fresh backup we just created.
+        // Capture id before nulling the response, then drop EVERY large object we
+        // accumulated during the backup phase. Without this, the isolate is still
+        // holding ~13k PlayerSaves + ~13k RunScores in `playerSaves`/`runScores`
+        // closure vars AND the freshly-created `backup` (which echoes back the
+        // entire snapshot_data blob it just wrote). The prune step then loads
+        // more rows on top — instant OOM.
+        const newBackupId = backup.id;
+        playerSaves.length = 0; runScores.length = 0; squads.length = 0;
+        squadMembers.length = 0; squadMessages.length = 0; tokenPools.length = 0;
+        tokenSpendLogs.length = 0; payoutLogs.length = 0; globalBosses.length = 0;
+        globalBossContributions.length = 0; globalBossEvents.length = 0;
+        squadWars.length = 0; squadChampionsPayoutLogs.length = 0;
+        squadSeasonRosters.length = 0;
         for (const k of Object.keys(snapshot_data)) delete snapshot_data[k];
+        for (const k of Object.keys(backup)) delete backup[k];
 
         // Retention: prune AUTOMATED backups older than 14 days. Manual backups are kept indefinitely.
-        // Paginate in small chunks (oldest-first) and stop as soon as we hit a row
-        // newer than the cutoff — keeps memory tiny even with hundreds of backups.
+        // CRITICAL: DataBackup.filter returns the full snapshot_data blob (~50-100MB
+        // per row). Loading 20 of those at once = 1-2GB which OOMs even on a fresh
+        // isolate. We page ONE row at a time (skip-based oldest-first), check the
+        // date, delete or stop, then drop the reference. Memory stays bounded.
         let pruned = 0;
         if (is_automated) {
             try {
                 const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
-                const PAGE = 20;
-                let done = false;
-                while (!done) {
+                const MAX_ITERS = 500; // hard safety stop
+                for (let i = 0; i < MAX_ITERS; i++) {
                     const batch = await base44.asServiceRole.entities.DataBackup.filter(
-                        { backup_type: 'automated' }, 'created_date', PAGE
+                        { backup_type: 'automated' }, 'created_date', 1
                     );
                     if (!batch.length) break;
-                    for (const old of batch) {
-                        if (new Date(old.created_date).getTime() >= cutoffMs) { done = true; break; }
-                        try { await base44.asServiceRole.entities.DataBackup.delete(old.id); pruned++; } catch {}
-                    }
-                    if (batch.length < PAGE) break;
+                    const old = batch[0];
+                    const oldId = old.id;
+                    const oldDate = old.created_date;
+                    // Free the snapshot_data blob immediately — we only needed id + date.
+                    for (const k of Object.keys(old)) delete old[k];
+                    batch.length = 0;
+                    if (new Date(oldDate).getTime() >= cutoffMs) break;
+                    if (oldId === newBackupId) break; // never prune the one we just made
+                    try { await base44.asServiceRole.entities.DataBackup.delete(oldId); pruned++; } catch {}
                 }
                 if (pruned > 0) console.log(`[backupData] Pruned ${pruned} automated backup(s) older than 14 days`);
             } catch (e) {
