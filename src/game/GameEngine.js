@@ -11,7 +11,32 @@ import { updateEnemies as updateEnemiesLogic } from './EnemyAI';
 import { updatePickups as updatePickupsLogic } from './PickupSystem';
 import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, applyUpgrade as applyUpgradeLogic, checkSynergies as checkSynergiesLogic, checkEvolutions as checkEvolutionsLogic } from './UpgradeSystem';
 import { updateCharacterMechanics } from './CharacterMechanics';
-import { isS6OrLater } from '@/lib/seasonGate';
+import { isS6OrLater, isS7OrLater } from '@/lib/seasonGate';
+
+// S7 §4a: pushback weapons share a lifted CD floor (0.85× vs default 0.5×) so
+// stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
+const S7_PUSHBACK_WEAPONS = new Set(['shieldBubble', 'aegisMatrix', 'burningBarrier']);
+
+// S7 §4i: armor → % damage reduction with sector-scaled cap (Inner Galaxy 20-25%,
+// Outer Galaxy 30-35%). Replaces S6's flat subtraction + 25% hybrid model.
+// 1 armor = 1% reduction, clamped to the cap for the player's current sector.
+const S7_ARMOR_REDUCTION_CAP = {
+    1: 0.20,  2: 0.20,  3: 0.20,  4: 0.20,  5: 0.20,
+    6: 0.20,  7: 0.25,  8: 0.25,  9: 0.25,  10: 0.25,
+    11: 0.30, 12: 0.30, 13: 0.30, 14: 0.35, 15: 0.35,
+    16: 0.35, 17: 0.35, 18: 0.35, 19: 0.35, 20: 0.35,
+};
+
+// S7 §4j: max-HP cap scales per sector through Outer Galaxy. Inner Galaxy stays
+// at the legacy 2000 ceiling; OG sectors progressively lift so dedicated tank
+// builds can hit ~4600 HP at S20. Used by UpgradeSystem.levelUp.
+const S7_HP_CAP_BY_SECTOR = {
+    11: 2400, 12: 2600, 13: 2800, 14: 3000, 15: 3200,
+    16: 3500, 17: 3800, 18: 4200, 19: 4600, 20: 5000,
+};
+export function getS7HpCapForSector(sectorIdx) {
+    return S7_HP_CAP_BY_SECTOR[sectorIdx] || 2000;
+}
 
 // Outer Galaxy (S11-S20) per-sector cap lifts (added 2026-06-04). Inner Galaxy
 // keeps the existing S6 ceilings (6.0 dmg / 4.0 area / 5.0 xp). Outer Galaxy
@@ -60,6 +85,7 @@ export class GameEngine {
         // S6+ balance levers (per docs/S6_MASTER_PLAN.md). Auto-flips at the
         // W20→W21 rollover (Mon May 25 2026 00:00 UTC). S5 keeps legacy values.
         this._isS6 = isS6OrLater();
+        this._isS7 = isS7OrLater();
 
         // L3 — Cosmic difficulty 3.0× → 2.0× gold/XP. Cuts the dominant
         // difficulty stacker without touching enemy HP/dmg (still 2.5×).
@@ -344,6 +370,8 @@ export class GameEngine {
         const sectorIdx = ARENAS.findIndex(a => a.id === this.arena.id) + 1;
         const outerCaps = OUTER_GALAXY_CAPS[sectorIdx];
         this._outerGalaxyActive = !!outerCaps;
+        // Cached for armor cap lookup (S7 §4i) + HP cap lookup (S7 §4j).
+        this._sectorIdx = sectorIdx;
         if (this._isS6) {
             if (outerCaps) {
                 this.player.damageMult = Math.min(outerCaps.dmg,  this.player.damageMult);
@@ -559,17 +587,25 @@ export class GameEngine {
             this.addParticle(this.player.x, this.player.y, '#C0C0C0', 20, 'smoke', 2);
         }
 
-        // Armor — S5: pure flat reduction (legacy). S6+: hybrid model so armor
-        // builds stay viable into late game. Each point of armor also grants a
-        // 0.5% multiplicative reduction, capped at 25% (50 armor — only true
-        // armor stackers reach this). Early game feels identical (flat dominates);
-        // late game a dedicated stacker takes ~25% less from boss hits, making
-        // armor a real defensive build path alongside HP/regen/iFrames.
+        // Armor —
+        //   S5: pure flat reduction (legacy).
+        //   S6: hybrid flat + 0.5%/point capped at 25% (better than S5 late-game).
+        //   S7 §4i: pure % reduction with sector-scaled cap (20-35%). Flat armor
+        //     was rounding noise once OG mobs hit 700+ damage — Pandypaws died in
+        //     2 hits at S20 regardless of investment. Now 1 armor = 1% reduction
+        //     clamped to the sector cap, so tank builds survive 6-9 hits at S20.
         const totalArmor = this.player.armor + (this.characterMechanics.scrapArmor || 0);
-        let actualDmg = Math.max(1, amount - totalArmor);
-        if (this._isS6) {
-            const pctReduction = Math.min(0.25, totalArmor * 0.005);
-            actualDmg = Math.max(1, actualDmg * (1 - pctReduction));
+        let actualDmg;
+        if (this._isS7) {
+            const cap = S7_ARMOR_REDUCTION_CAP[this._sectorIdx] || 0.20;
+            const reduction = Math.min(cap, totalArmor * 0.01);
+            actualDmg = Math.max(1, amount * (1 - reduction));
+        } else {
+            actualDmg = Math.max(1, amount - totalArmor);
+            if (this._isS6) {
+                const pctReduction = Math.min(0.25, totalArmor * 0.005);
+                actualDmg = Math.max(1, actualDmg * (1 - pctReduction));
+            }
         }
         if (this.player.charAugments?.includes('pan_fortress') && this.player.hp >= this.player.maxHp) {
             actualDmg = Math.max(1, Math.floor(actualDmg * 0.85));
@@ -617,7 +653,10 @@ export class GameEngine {
                     vx: Math.cos(angle) * 500,
                     vy: Math.sin(angle) * 500,
                     radius: 10,
-                    damage: aegis.baseDamage * this.player.damageMult * 2,
+                    // S7 §4a-bis: aegis base damage is nerfed 40→28 (×0.7).
+                    // Retaliation missiles inherit the same cut so all aegis damage
+                    // sources scale together.
+                    damage: aegis.baseDamage * this.player.damageMult * 2 * (this._isS7 ? 0.7 : 1),
                     pierce: 1,
                     life: 2,
                     color: '#00ff66',
@@ -831,13 +870,20 @@ export class GameEngine {
         const lowDDThreshold = (this.time < 60) ? 4 : 8;
         const normalThreshold = (this.time < 60) ? 7 : 15;
         const killThreshold = (this._isS6 && !ddRamped) ? lowDDThreshold : normalThreshold;
-        // S6+ — gate the aggressive ramp to Cosmic only. Easy/Normal/Hard players
-        // were finding the field too punishing once DD started climbing past 1.0×,
-        // so on those difficulties we leave spawnRateMult/speedMult pinned at 1.0×
-        // (set in the init block above) and skip both ramp-up and ramp-down entirely.
-        // Cosmic keeps the full DD behaviour for the top-end whales who asked for it.
-        // S5 is untouched (legacy mild ±0.1 ramp applies on all difficulties).
-        const ddEnabled = !this._isS6 || this.difficulty.id === 'cosmic';
+        // DD ramp gating:
+        //   S5: mild ±0.1 ramp on all difficulties (legacy).
+        //   S6: aggressive ramp gated to Cosmic only (others pinned at 1.0×).
+        //   S7 §4g: per-difficulty params — Normal/Hard now also ramp so the new
+        //     §4f HEAT score bonus has something to reward. Easy stays at 1.0×
+        //     (no DD).
+        const S7_DD_PARAMS = this._isS7 ? ({
+            normal: { spawnCap: 1.75, speedCap: 1.5, upStep: 0.20 },
+            hard:   { spawnCap: 2.5,  speedCap: 2.0, upStep: 0.25 },
+            cosmic: { spawnCap: 3.5,  speedCap: 2.5, upStep: 0.30 },
+        })[this.difficulty.id] : null;
+        const ddEnabled = this._isS7
+            ? !!S7_DD_PARAMS
+            : (!this._isS6 || this.difficulty.id === 'cosmic');
         if (ddEnabled && this.dynamicDifficulty.timer >= ddInterval) {
             const killsDelta = this.kills - this.dynamicDifficulty.lastKills;
             // S6+ Option 2: asymmetric ramp — strong play climbs FAST (+0.15/cycle),
@@ -852,10 +898,12 @@ export class GameEngine {
             // needed 17 windows (4+ min) to reach the 3.5× spawn cap. New 0.30
             // reaches cap in ~8 windows (2 min) — strong players actually feel
             // the field fill up within a single sector run.
-            const upStep   = this._isS6 ? 0.30 : 0.1;
-            const downStep = this._isS6 ? 0.05 : 0.1;
-            const spawnCap = this._isS6 ? 3.5 : 2.0;
-            const speedCap = this._isS6 ? 2.5 : 2.0;
+            // S7: per-difficulty params (see S7_DD_PARAMS above). Fallback chain
+            // covers S6 (Cosmic-only ramp) and S5 (mild ±0.1).
+            const upStep   = S7_DD_PARAMS ? S7_DD_PARAMS.upStep   : (this._isS6 ? 0.30 : 0.1);
+            const downStep = (this._isS6 || this._isS7) ? 0.05 : 0.1;
+            const spawnCap = S7_DD_PARAMS ? S7_DD_PARAMS.spawnCap : (this._isS6 ? 3.5 : 2.0);
+            const speedCap = S7_DD_PARAMS ? S7_DD_PARAMS.speedCap : (this._isS6 ? 2.5 : 2.0);
             // Early game (<60s) uses a more forgiving ramp-down threshold (0.5×
             // maxHp instead of 0.3×) — a couple of unlucky hits in the opening
             // shouldn't immediately throttle spawns and make the field feel dead
@@ -881,6 +929,10 @@ export class GameEngine {
             this.dynamicDifficulty.lastKills = this.kills;
             this.dynamicDifficulty.damageTaken = 0;
             this.dynamicDifficulty.timer = 0;
+            // S7 §4f: track peak spawn multiplier reached this run. Sent to
+            // saveScore at run end as the basis for the HEAT score bonus
+            // (1.0× DD = 1.0× HEAT, difficulty cap = 2.0× HEAT).
+            this.ddPeakSpawnMult = Math.max(this.ddPeakSpawnMult || 1.0, this.dynamicDifficulty.spawnRateMult);
         }
 
         if (this.hitStopTimer > 0) {
@@ -1222,7 +1274,11 @@ export class GameEngine {
                 const stats = getWeaponStatsAndMastery(this.save, w.id, this._outerGalaxyActive);
                 const cdMultiplier = stats.cdMult;
                 
-                w.timer = (w.baseCooldown / 60) * Math.max(0.35, this.player.cooldownMult) * Math.max(0.5, cdMultiplier);
+                // S7 §4a: pushback weapons (shield/aegis/burning barrier) get a
+                // lifted CD floor of 0.85× (vs 0.5× default) to break the
+                // stacked-overlap exploit. Inner-Galaxy/old behaviour unchanged.
+                const cdFloor = (this._isS7 && S7_PUSHBACK_WEAPONS.has(w.id)) ? 0.85 : 0.5;
+                w.timer = (w.baseCooldown / 60) * Math.max(0.35, this.player.cooldownMult) * Math.max(cdFloor, cdMultiplier);
             }
         });
     }
@@ -1470,6 +1526,9 @@ export class GameEngine {
             weaponKills: this.weaponKills || {},
             killedBy: this._lastDamageSource || null,
             fragments: this.runFragments || 0,
+            // S7 §4f: difficulty + DD peak feed the server-side HEAT score bonus.
+            difficulty: this.difficulty?.id || 'normal',
+            ddPeakSpawnMult: this.ddPeakSpawnMult || 1.0,
             ...extra
         };
     }

@@ -1,5 +1,9 @@
 // Projectile update logic extracted from GameEngine.
 // Handles player projectile movement, AoE, collisions, chains, and enemy projectiles.
+import { isS7OrLater } from '@/lib/seasonGate';
+
+// Cached at module load — same pattern as PickupSystem/_IS_S6.
+const _IS_S7 = isS7OrLater();
 
 // Swept circle-vs-point hit test: returns true if the line segment from (px0,py0)
 // to (px,py) passes within `r` of point (ex,ey). Handles fast projectiles + moving
@@ -296,8 +300,19 @@ export function updateProjectiles(engine, dt) {
                         const isUnstoppable = e.isBoss && engine.bossModifiers.unstoppable;
                         if (!isUnstoppable && pushResist > 0) {
                             const angle = Math.atan2(e.y - p.y, e.x - p.x);
-                            e.x += Math.cos(angle) * p.pushback * pushResist * dt;
-                            e.y += Math.sin(angle) * p.pushback * pushResist * dt;
+                            // S7 §4b: pushback decays in the final 25% of the shield's
+                            // lifetime. Creates a "press-in" window where enemies can
+                            // close the gap instead of being held off forever. p.maxLife
+                            // is set at spawn by WeaponSystem; missing → no decay (legacy).
+                            let pushbackMult = 1.0;
+                            if (_IS_S7 && p.maxLife) {
+                                const lifeFrac = 1 - (p.life / p.maxLife);
+                                if (lifeFrac > 0.75) {
+                                    pushbackMult = Math.max(0, 1 - (lifeFrac - 0.75) / 0.25);
+                                }
+                            }
+                            e.x += Math.cos(angle) * p.pushback * pushResist * pushbackMult * dt;
+                            e.y += Math.sin(angle) * p.pushback * pushResist * pushbackMult * dt;
                         }
                     }
                 });

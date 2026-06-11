@@ -2,6 +2,10 @@
 import { ENEMIES, ARENAS, QUANTUM_METEOR_SPRITE } from './Constants';
 import { SFXManager } from './SFXManager';
 import { selectBossForArena } from './BossSystem';
+import { isS7OrLater } from '@/lib/seasonGate';
+
+// Cached at module load (same pattern as other game/ modules).
+const _IS_S7 = isS7OrLater();
 
 // ============================================================================
 // OUTER GALAXY (S11-S20) — difficulty + tier configuration, added 2026-06-04.
@@ -10,17 +14,21 @@ import { selectBossForArena } from './BossSystem';
 
 // Absolute HP/dmg multiplier per sector. Replaces the stock Math.pow(1.2, arenaIndex)
 // curve on S11+. Anchored so every sector's Normal mobs are tougher than the
-// previous sector's Cosmic mobs (the no-overlap rule). Per-sector growth ≈ 1.55×.
+// previous sector's Cosmic mobs (the no-overlap rule).
 //
-// Values = (plan's "vs S10 Cosmic" multiplier) × (stock S10 Cosmic absolute = 12.9).
-// e.g. S20 = 54.17 × 12.9 ≈ 698.79.
-//
-// Cosmic in Outer Galaxy uses a tighter 1.5× multiplier on top (vs stock 2.5×).
-// Combined: S20 Cosmic = 698.79 × 1.5 ≈ 1048 absolute (matches plan's 81.25× S10C).
-const OUTER_GALAXY_HP_MULT = {
+// S6: aggressive curve, S20 ≈ 9M HP mobs — only shield+nuke could clear.
+// S7 §4e: flattened so non-shield builds can clear S20 at ~12s TTK on median
+// DPS (~12k). End-of-sector S20 Cosmic mob ≈ 2800 (T14 base) × 3.1 × 1.5 × 11
+// = ~143k HP. Bosses scale separately via the × 0.3 boss factor.
+const OUTER_GALAXY_HP_MULT_S6 = {
     11: 13.55,  12: 21.03,  13: 32.51,  14: 50.44,  15: 78.17,
     16: 121.13, 17: 187.70, 18: 290.90, 19: 450.85, 20: 698.79,
 };
+const OUTER_GALAXY_HP_MULT_S7 = {
+    11: 2,  12: 3,  13: 4,  14: 5,  15: 6,
+    16: 7,  17: 8,  18: 9,  19: 10, 20: 11,
+};
+const OUTER_GALAXY_HP_MULT = _IS_S7 ? OUTER_GALAXY_HP_MULT_S7 : OUTER_GALAXY_HP_MULT_S6;
 
 // Per-sector mob tier bands. Tightens as sectors progress — S11-S12 still see
 // some T8 mobs (entry-level Outer Galaxy), S18-S20 spawn ONLY T11-T14 mythic-tier.

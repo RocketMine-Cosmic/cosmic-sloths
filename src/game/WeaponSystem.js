@@ -1,7 +1,20 @@
 import { SoundManager } from './SoundManager';
 import { SFXManager } from './SFXManager';
 import { getWeaponStatsAndMastery } from './Constants';
-import { isS6OrLater } from '@/lib/seasonGate';
+import { isS6OrLater, isS7OrLater } from '@/lib/seasonGate';
+
+// Cached at module load — see PickupSystem.js for the same pattern.
+const _IS_S7 = isS7OrLater();
+
+// S7 §4a-bis: softer pushback base damage cuts. §4a (CD floor) + §4b (decay)
+// do the structural work of killing the stacked-shield exploit; these cuts
+// just bring evolved pushback DPS down to median-tier offence (~50k vs the
+// pre-S7 ~125k for Aegis). Multipliers vs Constants.js base values.
+const S7_PUSHBACK_DMG_NERF = {
+    shieldBubble:   12 / 15, // -20%
+    aegisMatrix:    28 / 40, // -30%
+    burningBarrier: 15 / 18, // -17%
+};
 
 // S6 visual-radius caps — applied ONLY to the drawn radius on each AoE weapon.
 // Damage hitbox (p.radius) stays uncapped so area upgrades continue to scale the
@@ -89,6 +102,12 @@ export function fireWeaponLogic(engine, w) {
     const weaponLevelMult = 1 + Math.min(_lvlCap, w.level - 1) * 0.15;
     let dmg = w.baseDamage * Math.min(playerDmgCap, engine.player.damageMult) * weaponLevelMult * Math.min(wDmgCap, wDmgMult);
     let area = w.baseArea * Math.min(playerAreaCap, engine.player.areaMult) * (1 + Math.min(_lvlCap, w.level - 1) * areaPerLevel) * Math.min(wAreaCap, wAreaMult);
+
+    // S7 §4a-bis: scaled-back pushback weapon base damage (CD floor + decay are
+    // the real nerfs; this just brings them down to median offence tier).
+    if (_IS_S7 && S7_PUSHBACK_DMG_NERF[w.id]) {
+        dmg *= S7_PUSHBACK_DMG_NERF[w.id];
+    }
 
     // Projectile Speed → Damage scaling (kinetic energy):
     // Faster projectiles hit harder. Applies ONLY to projectile-based weapons (not melee/AoE).
@@ -343,6 +362,9 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 2.0,
+            // S7 §4b: stored at spawn so ProjectileSystem can compute lifeFrac
+            // for pushback decay in the final 25%. Pre-S7 reads ignore this.
+            maxLife: 2.0,
             color: color,
             isAoe: true,
             pushback: 250,
@@ -353,6 +375,7 @@ export function fireWeaponLogic(engine, w) {
     }
     else if (w.id === 'burningBarrier') {
         const r = capDamageRadius('burningBarrier', 100 * area);
+        const barrierLife = 3.0 + (w.level * 0.5);
         engine.projectiles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0,
@@ -360,7 +383,9 @@ export function fireWeaponLogic(engine, w) {
             visualRadius: getVisualRadius('burningBarrier', r),
             damage: dmg,
             pierce: 999,
-            life: 3.0 + (w.level * 0.5),
+            life: barrierLife,
+            // S7 §4b: pushback-decay reference (see shieldBubble).
+            maxLife: barrierLife,
             color: '#ff4500',
             isAoe: true,
             pushback: 150,
@@ -768,6 +793,8 @@ export function fireWeaponLogic(engine, w) {
             damage: dmg,
             pierce: 999,
             life: 2.5,
+            // S7 §4b: pushback-decay reference (see shieldBubble).
+            maxLife: 2.5,
             color: '#ffd700',
             isAoe: true,
             pushback: 300,

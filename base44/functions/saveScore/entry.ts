@@ -136,6 +136,9 @@ function getArenaMultiplier(arenaId) {
 function validateAndRecompute(scoreData) {
     const { week_id: _runWeek, season_id: runSeasonId } = getCurrentPeriodIds();
     const isS6OrLater = runSeasonId !== '2026-S5';
+    // S7 §4f: HEAT score bonus — up to +1.0× score based on DD peak vs the
+    // difficulty's own DD cap. Server-side mirror of lib/seasonGate.isS7OrLater.
+    const isS7OrLater = runSeasonId >= '2026-S7';
 
     // S6 Phase 1: time max raised from 60 → 120 min, eliminates the false-reject
     // on legit 60+ min endless runs. S5 keeps the original 60 min cap.
@@ -281,6 +284,21 @@ function validateAndRecompute(scoreData) {
         const victoryBonus = isVictory ? (15000 + sectorIdxForBonus * 16000) : 0;
         const baseScore = kills * 45 + level * level * 15 + time * 5 + goldScoreContribution + victoryBonus;
         score = Math.min(SCORE_HARD_CEILING, Math.floor(baseScore * arenaMult));
+    }
+
+    // S7 §4f: HEAT score bonus. Scales score by up to ×2.0 based on the DD peak
+    // reached this run relative to the difficulty's own DD ceiling. Easy never
+    // ramps so it stays at ×1.0. Skipped on endless+raid+meteor (no DD there).
+    if (isS7OrLater && !isEndlessRun && !isRaidRun && !isMeteorRun) {
+        const ddPeak = Number(scoreData.ddPeakSpawnMult) || 1.0;
+        const ddCapMap = { normal: 1.75, hard: 2.5, cosmic: 3.5 };
+        const difficulty = String(scoreData.difficulty || 'normal').toLowerCase();
+        const ddCap = ddCapMap[difficulty] || 1.0;
+        if (ddCap > 1.0) {
+            const ddProgress = Math.min(1.0, Math.max(0, (ddPeak - 1.0) / (ddCap - 1.0)));
+            const heatBonus = 1 + ddProgress; // 1.0 → 2.0
+            score = Math.min(SCORE_HARD_CEILING, Math.floor(score * heatBonus));
+        }
     }
 
     return {

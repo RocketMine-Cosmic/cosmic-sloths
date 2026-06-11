@@ -3,10 +3,11 @@
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { updateBossAbilities } from './BossSystem';
-import { isS6OrLater, isBossVacuumEnabled } from '@/lib/seasonGate';
+import { isS6OrLater, isBossVacuumEnabled, isS7OrLater } from '@/lib/seasonGate';
 
 // Cached at module load — see PickupSystem for rationale.
 const _IS_S6 = isS6OrLater();
+const _IS_S7 = isS7OrLater();
 // Boss-drop XP auto-vacuum — gated to flip on at the W21→W22 weekly rollover
 // (Mon May 25 2026 00:00 UTC). Tags the boss's XP orb with `magnetSweep` so it
 // reuses the existing magnet_power vacuum (smooth ~0.5s sweep, no teleport).
@@ -214,7 +215,12 @@ export function updateEnemies(engine, dt) {
                     // to fund roughly one bribe per ~50 kills.
                     engine.pickups.push({ x: e.x + Math.random()*20-10, y: e.y + Math.random()*20-10, type: 'gold', value: 5, color: '#ffd700' });
                 }
-                if (Math.random() < 0.01 + (engine.player.luck * 0.001)) {
+                // S7 §4d: power pickup drop rate halved. Removes the AFK payoff
+                // loop (luck → nukes → screen wipe → repeat). Luck builds still
+                // see more drops than non-luck, just at half the previous rate.
+                const dropBase  = _IS_S7 ? 0.005  : 0.01;
+                const dropLuck  = _IS_S7 ? 0.0005 : 0.001;
+                if (Math.random() < dropBase + (engine.player.luck * dropLuck)) {
                     const pickupTypes = [
                         { type: 'nuke', color: '#ff0000', icon: '☢️' },
                         { type: 'magnet_power', color: '#0000ff', icon: '🧲' },

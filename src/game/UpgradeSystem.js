@@ -5,6 +5,7 @@ import { SaveManager } from './SaveManager';
 import { getBiasMultiplier, getAllocations, getUpgradeTargetId } from '@/lib/poolBias';
 import { getWeaponLevelUpEffect } from './WeaponLevelEffects';
 import { isS6OrLater } from '@/lib/seasonGate';
+import { getS7HpCapForSector } from './GameEngine';
 
 // S6+ "Overcharge" filler picks — used once the normal upgrade pool is
 // exhausted (max passives + all weapons owned + banished). These bypass the
@@ -103,7 +104,11 @@ export function levelUp(engine) {
     engine.level++;
     engine.xpRequired = Math.floor(engine.xpRequired * 1.15 + 25);
 
-    engine.player.maxHp = Math.min(2000, Math.floor(engine.player.maxHp * 1.01));
+    // S7 §4j: max-HP cap scales per sector through Outer Galaxy (S20 caps at
+    // 5000). Inner Galaxy keeps the legacy 2000 ceiling. engine._isS7 +
+    // engine._sectorIdx are set in the engine constructor.
+    const hpCap = engine._isS7 ? getS7HpCapForSector(engine._sectorIdx) : 2000;
+    engine.player.maxHp = Math.min(hpCap, Math.floor(engine.player.maxHp * 1.01));
     engine.player.damageMult = Math.min(5.0, engine.player.damageMult + 0.01);
     engine.player.armor = Math.min(30, engine.player.armor + 0.1);
     engine.player.hp = Math.min(engine.player.maxHp, engine.player.hp + (engine.player.maxHp * 0.15));

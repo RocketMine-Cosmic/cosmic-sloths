@@ -199,6 +199,10 @@ export default function Game() {
                 is_victory: !!isVictory,
                 encountered: stats.encountered || [],
                 enemyKills: stats.enemyKills || {},
+                // S7 §4f: difficulty + DD peak feed the server-side HEAT score
+                // bonus (up to ×2.0). Engine emits these in _runStats.
+                difficulty: stats.difficulty || difficultyId,
+                ddPeakSpawnMult: stats.ddPeakSpawnMult || 1.0,
             };
 
             // Read squad membership from local cache to avoid a network round-trip

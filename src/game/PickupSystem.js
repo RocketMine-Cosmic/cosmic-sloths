@@ -1,11 +1,12 @@
 // Pickup collection + magnet logic extracted from GameEngine.
 import { SFXManager } from './SFXManager';
-import { isS6OrLater } from '@/lib/seasonGate';
+import { isS6OrLater, isS7OrLater } from '@/lib/seasonGate';
 
 // Cache once per module load — `getCurrentPeriodIds` is cheap but called on
 // every gold pickup adds up. Cached value is fine since the rollover only
 // happens at the W20→W21 boundary; nobody is mid-run at exactly Sun 23:59 UTC.
 const _IS_S6 = isS6OrLater();
+const _IS_S7 = isS7OrLater();
 
 // Shared nuke effect — one-shots every non-boss enemy on screen, big screen
 // shake, 5s post-nuke spawn boost. Extracted so the NovaByte 'nova_nuke'
@@ -13,9 +14,13 @@ const _IS_S6 = isS6OrLater();
 // the player can't reach in sectors — Simon/RocketMine ask 2026-05-28).
 export function triggerNukeEffect(engine) {
     SFXManager.playWeaponFire('novaPulse');
+    // S7 §4c: nuke damage 10× maxHP → 2.5× maxHP. Still one-shots Inner Galaxy
+    // mobs; on Outer Galaxy it becomes a "thin the herd" tool instead of a
+    // screen-wipe-then-AFK button.
+    const nukeMult = _IS_S7 ? 2.5 : 10;
     engine.enemies.forEach(e => {
         if (!e.isBoss) {
-            engine.damageEnemy(e, e.maxHp * 10, { weaponId: 'nukePickup' });
+            engine.damageEnemy(e, e.maxHp * nukeMult, { weaponId: 'nukePickup' });
         }
     });
     engine.addDamageText(engine.player.x, engine.player.y - 60, `NUCLEAR DETONATION`, '#ff0000');
