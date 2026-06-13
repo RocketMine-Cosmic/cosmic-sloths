@@ -10,10 +10,11 @@ Shield-AFK dominated S6. S7 nerfs the meta while making tanks viable. Armor now 
 
 ## 🎯 What's Changing
 
-S7 is a meta rebalance focused on three things:
+S7 is a meta rebalance + economy update focused on four things:
 1. **Shield spam is weaker** — CD floor + decay + softer base damage
 2. **Tank builds are viable** — armor now scales %, HP cap rises in Outer Galaxy
 3. **Aggressive play is rewarded** — HEAT score bonus for pushing Dynamic Difficulty
+4. **More ways to earn OMENX** — new Weekly Kill Leaderboard pays the top 20 grinders every week
 
 ---
 
@@ -103,6 +104,29 @@ S7 is a meta rebalance focused on three things:
 - Endless and raid runs are unaffected.
 - Easy mode doesn't have HEAT since it has no DD ramp. Competitive play is Normal+.
 - Normal/Hard feel dynamic now instead of static.
+
+---
+
+## 🛰️ NEW: Weekly Kill Leaderboard OMENX Payouts
+
+**What changed:**
+- The **Weekly Sector Kills Leaderboard** now pays the top 20 grinders in OMENX every week.
+- Weekly score and seasonal score leaderboards still pay top 20, same as today.
+- Only **sector run kills** count (endless / raid / meteor kills don't).
+- Kill rank prizes use a flatter curve than score — rewards consistent effort, less RNG-vulnerable.
+- Per-player caps are **independent per pool** — top both kills + score in the same week and you collect both prizes.
+
+**Why:** Today only top score players earn OMENX. Kill grinders (squad bounty hunters, weekly kill rank chasers) get nothing. This carves out a dedicated payout for them and gives every playstyle a viable earning lane.
+
+**More ways to win:**
+- Best score on a single run? → Weekly score top 20
+- Most consistent grinder? → Weekly kills top 20 *(NEW)*
+- Long-haul champion? → Seasonal score top 20
+- Squad warlord? → Seasonal Squad Champions
+
+**Player notes:**
+- The kill leaderboard tab is already live in the leaderboard menu — payouts kick in with the S7 rollover.
+- Owners can now tune leaderboard payouts live (no code deploys to adjust splits).
 
 ---
 
