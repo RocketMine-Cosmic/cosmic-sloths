@@ -1,66 +1,142 @@
 # Season 7 — "Defenders Rise" Patch Notes
 
-**Live: Mon Jun 15 2026, 00:00 UTC**
+**Live: Monday 15 June 2026, 00:00 UTC (W24→W25 rollover)**
 
-Shield-AFK dominated S6. S7 nerfs the meta but **makes tanks viable**. Armor now reduces damage by %, HP scales into Outer Galaxy, and aggressive play gets score rewards.
+Shield-AFK dominated S6. S7 nerfs the meta while making tanks viable. Armor now reduces damage by %, HP scales into Outer Galaxy, and aggressive play gets score rewards.
 
-No save wipe, no relic reset — just balance.
+**No save wipe. No relic reset. Just balance.**
 
 ---
 
-## 🛡 Shields nerfed
+## 🎯 What's Changing
 
-- **Cooldown floor 0.5× → 0.85×** — can't stack 6-8 shields anymore. Expect 2-3 at max CDR.
-- **Pushback decays in final 25% of shield lifetime** — enemies close the gap. Plan your rhythm.
+S7 is a meta rebalance focused on three things:
+1. **Shield spam is weaker** — CD floor + decay + softer base damage
+2. **Tank builds are viable** — armor now scales %, HP cap rises in Outer Galaxy
+3. **Aggressive play is rewarded** — HEAT score bonus for pushing Dynamic Difficulty
+
+---
+
+## 🛡️ Shields Nerfed
+
+**What changed:**
+- **Cooldown floor 0.5× → 0.85×** — Shield Bubble, Aegis Matrix, and Burning Barrier can no longer stack 6-8 overlapping shields. Expect 2-3 at max CDR.
+- **Pushback decays in the final 25%** of each shield's lifetime — enemies close the gap as the bubble fades. Creates risk/reward rhythm.
 - **Base damage cuts:** Shield Bubble 15→12, Burning Barrier 18→15, Aegis Matrix 40→28.
 
-Shield is still the strongest pushback option. Pair it with a real DPS weapon for late sectors.
+**Why:** The "stand still, stack shields, nuke everything" loop was dominating the leaderboard. These changes nerf the stacking exploit while keeping a single shield strong.
+
+**Player notes:**
+- Shield is still the strongest pushback option. Pair it with a real DPS weapon for late sectors.
+- Aegis Matrix is still the strongest pushback weapon with retaliation missiles—just no longer 5× above everything else.
+- Burning Barrier's decay at end of lifetime means enemies will push in during the last 0.5s. Time your recast or position accordingly.
 
 ---
 
-## 🪖 Armor & HP are now good
+## 🪖 Armor & HP Are Now Good
 
-- **Armor = % damage reduction** (not flat). 1 armor = 1% reduction, capped 20-35% per sector.
-- **Max HP ceiling scales per sector** — 2000 at S10 → 4600 at S20.
+**What changed:**
+- **Armor = % damage reduction** (not flat). 1 armor = 1% reduction, with sector-scaled caps:
+  - S1-S6: 20% cap
+  - S7-S10: 25% cap
+  - S11-S13: 30% cap
+  - S14-S20: 35% cap
+- **Max HP ceiling scales in Outer Galaxy** (was locked at 2000):
+  - S11: 2,400 → S15: 3,200 → S20: 5,000
 
-Tank builds now survive 8-9 hits at S20 instead of 2. Actual viable playstyle.
+**Why:** At S20, flat armor absorbed ~30 of 775 damage per hit—effectively useless. Tank builds like Pandypaws died in 2 hits regardless of investment. Now tank builds with maxed armor + hp_up survive 6-9 hits at S20.
 
----
-
-## 💥 Nukes toned down
-
-- **Damage 10× maxHP → 2.5× maxHP.** Still deletes Inner Galaxy, but only thins crowds in Outer Galaxy.
-- **Drop rate halved.** Luck still helps, just less often.
-
----
-
-## 🌌 Outer Galaxy HP rebalanced
-
-- New end-of-sector multipliers: S11 = 2×, S15 = 6×, S20 = **11×** (was 698×)
-- Real S20 mob HP ~143k (was ~9M).
-
-S11-S20 actually feels like progression. Non-shield builds can clear without nuke reliance.
+**Player notes:**
+- Tank builds now actually viable in endgame content.
+- HP cap increases only apply to new level-ups in a run (doesn't retroactively boost existing run HP).
 
 ---
 
-## 🔥 HEAT score bonus
+## 💥 Nukes Toned Down
 
-- **DD now ramps on Normal/Hard** (was Cosmic-only). Spawn caps: Normal 1.75×, Hard 2.5×, Cosmic 3.5×.
-- **Score multiplied up to 2.0× based on DD peak.** AFK = 1.0×, aggressive = 2.0×.
+**What changed:**
+- **Damage: 10× maxHP → 2.5× maxHP.** Inner Galaxy mobs still one-shot. Outer Galaxy mobs take ~40%—nukes are now a "thin the herd" tool.
+- **Drop rate halved:** base 1% → 0.5%, luck bonus 0.1% → 0.05% per point. Luck builds still get more nukes than non-luck.
 
-Visible reward for pushing difficulty.
+**Why:** Nuke spam was the AFK payoff—stand still, collect luck stat, delete screens. These changes reduce incentive to stack luck purely for nuke farming.
+
+**Player notes:**
+- Luck still boosts crits, nuke drops, and other pickup rates. It's just no longer the dominant stat.
+- Nukes remain useful in Outer Galaxy, just not infinite.
 
 ---
 
-## ⚙ QoL
+## 🌌 Outer Galaxy HP Rebalanced
 
-- Signature weapon triggers (banner, scrap, decoys, hacks, sonic boom, chains) tagged in post-run breakdown.
+**What changed:**
+- S11–S20 mob HP multipliers dramatically reduced:
+  - S11 = 2× (was ~40×)
+  - S15 = 6× (was ~200×)
+  - S20 = 11× (was 698×)
+- Real S20 mob HP ~143k (was ~9M)
+
+**Why:** The old curve was tuned around "what can shield+nuke kill." Every other build hit a wall around S13. The new curve is tuned around median DPS at ~12k per target, so 5+ build archetypes are viable at S20.
+
+**Player notes:**
+- Outer Galaxy feels more progressive. Non-shield builds can clear without nuke reliance.
+- Difficulty comes from building skill, not forced weapon paths.
+- Sector bonus multipliers and score formula unchanged—only kill rate and build viability improve.
 
 ---
 
-## What's the same
+## 🔥 HEAT Score Bonus
 
-Character kits, talents, relics, Inner Galaxy, Cosmic DD parameters — all unchanged.
+**What changed:**
+- **Dynamic Difficulty now ramps on Normal & Hard** (was Cosmic-only):
+  - Normal: max 1.75× spawn rate, 1.5× speed
+  - Hard: max 2.5× spawn rate, 2.0× speed
+  - Cosmic: unchanged (3.5× / 2.5×)
+  - Easy: no DD, no HEAT bonus
+- **HEAT multiplier applied to sector run score** (1.0× to 2.0×) based on peak DD vs difficulty cap:
+  - AFK play = 1.0× HEAT
+  - Aggressive play (high DD) = up to 2.0× HEAT
+
+**Why:** Rewards players who push aggressively instead of turtling. Encourages dynamic, high-skill play.
+
+**Player notes:**
+- HEAT is applied server-side to final sector score only.
+- Endless and raid runs are unaffected.
+- Easy mode doesn't have HEAT since it has no DD ramp. Competitive play is Normal+.
+- Normal/Hard feel dynamic now instead of static.
+
+---
+
+## ⚙️ QoL Improvements
+
+- Signature weapon triggers (banner, scrap, decoys, hacks, sonic boom, chains) are now tagged in post-run breakdown for better stat tracking.
+
+---
+
+## 🔒 What's Unchanged
+
+| Thing | Status |
+|---|---|
+| Characters (NeoByte, Pandypaws, etc.) | **Unchanged** — no kit reworks |
+| Relics | **Unchanged** |
+| Talents & Mastery | **Unchanged** |
+| Synergies & Evolutions | **Unchanged** |
+| Inner Galaxy HP curve | **Unchanged** |
+| Score formula (kills × 120, level² × 100, etc.) | **Unchanged** — HEAT is a final multiplier on top |
+| Endless runs | **Unchanged** — HEAT only applies to sector runs |
+| Gold, rewards, payout pool | **Unchanged** |
+| NFT perks | **Unchanged** |
+
+---
+
+## 🚀 Deployment
+
+Everything is **date-gated server and client-side**. At Mon 15 Jun 2026 00:00 UTC:
+- `isS7OrLater()` flips `true` in the client
+- `season_id` returns `2026-S7` server-side
+- All S7 changes activate automatically
+- Runs started before rollover and submitted after rollover will use S7 validation
+
+Players don't need to update, clear cache, or do anything. All existing saves, relics, talents, and upgrades carry over.
 
 ---
 
