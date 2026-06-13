@@ -8,8 +8,23 @@
 🚀 **SEASON 7 — "DEFENDERS RISE" — LIVE MON 15 JUN 00:00 UTC**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-S6 was dominated by shield-AFK. S7 fixes that without nuking anyone's account.
+S6 was dominated by shield-AFK. S7 fixes that, opens up tank builds, and adds a brand new way to earn OMENX every week.
 No save wipe. No relic reset. Just balance.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛰️ **NEW: WEEKLY KILL LEADERBOARD PAYS OMENX**
+
+• Top 20 weekly sector grinders now get paid in OMENX every week
+• Only sector kills count (endless / raid / meteor don't)
+• Win kills AND score in the same week? You collect BOTH prizes
+
+More ways to win:
+• Best single-run score → Weekly score top 20
+• Most consistent grinder → Weekly kills top 20 *(NEW)*
+• Long-haul champion → Seasonal score top 20
+• Squad warlord → Seasonal Squad Champions
+
+Kill leaderboard tab is already live — payouts kick in on S7 rollover.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🛡️ **SHIELDS NERFED**
@@ -24,7 +39,7 @@ Shields are still strong. Pair one with a real DPS weapon for late sectors.
 🪖 **ARMOR & HP ARE ACTUALLY GOOD NOW**
 
 • Armor converted to % damage reduction (1 armor = 1% reduction, capped 20–35% by sector)
-• Max HP ceiling scales in Outer Galaxy — 2,000 at S10 → 4,600 at S20
+• Max HP ceiling scales in Outer Galaxy — 2,000 at S10 → 5,000 at S20
 
 Tank builds now survive 8-9 hits at S20. Pandypaws mains, this one's for you.
 
@@ -56,7 +71,7 @@ Play fast, score more. Turtle, don't.
 • Signature weapon triggers (banner, scrap, decoy, hack, sonic boom, chains) now show in post-run breakdown
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔒 **UNCHANGED:** character kits · talents · relics · synergies · Inner Galaxy · gold rewards
+🔒 **UNCHANGED:** character kits · talents · relics · synergies · Inner Galaxy · gold rewards · seasonal Squad Champions payouts
 
 See you in the Outer Galaxy 🪐
 ``
