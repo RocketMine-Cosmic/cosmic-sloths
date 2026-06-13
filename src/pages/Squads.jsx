@@ -104,6 +104,12 @@ export default function Squads({ isCarousel }) {
     const [claimingWeekly, setClaimingWeekly] = useState(false);
     const [claimingDaily, setClaimingDaily] = useState(false);
 
+    // Confirmation modal for leaving the squad — prevents accidental taps on the
+    // small "Leave" button (which triggers a 24h cooldown). All 3 Leave buttons
+    // (mobile strip, desktop panel, settings "Danger Zone") open the same modal.
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
+
     // Browse tab — lazy-loaded the first time it's opened (and refreshed at
     // most once per 60s). Avoids the always-on Squad.list('-created_date', 50)
     // for every page load.
@@ -426,6 +432,8 @@ export default function Squads({ isCarousel }) {
 
     const handleLeaveSquad = async () => {
         if (!myMemberRecord) return;
+        if (isLeaving) return;
+        setIsLeaving(true);
         try {
             SoundManager.playUIClick();
             const localSave = SaveManager.load();
@@ -451,6 +459,9 @@ export default function Squads({ isCarousel }) {
             setAllSquads(squads);
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsLeaving(false);
+            setShowLeaveConfirm(false);
         }
     };
 
@@ -863,7 +874,7 @@ export default function Squads({ isCarousel }) {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={handleLeaveSquad} className="text-xs text-red-400 bg-red-950/30 px-2 py-1 rounded border border-red-900/50 shrink-0 ml-2">
+                                        <button onClick={() => { SoundManager.playUIClick(); setShowLeaveConfirm(true); }} className="text-xs text-red-400 bg-red-950/30 px-2 py-1 rounded border border-red-900/50 shrink-0 ml-2">
                                             Leave
                                         </button>
                                     </div>
@@ -921,7 +932,7 @@ export default function Squads({ isCarousel }) {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <button onClick={handleLeaveSquad} className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50">
+                                            <button onClick={() => { SoundManager.playUIClick(); setShowLeaveConfirm(true); }} className="text-xs text-red-400 hover:text-red-300 bg-red-950/30 px-2 py-1 rounded border border-red-900/50">
                                                 Leave
                                             </button>
                                         </div>
@@ -1380,7 +1391,7 @@ export default function Squads({ isCarousel }) {
                                             <h4 className="text-xs font-bold text-red-400 mb-2 uppercase tracking-wider">Danger Zone</h4>
                                             <button
                                                 type="button"
-                                                onClick={handleLeaveSquad}
+                                                onClick={() => { SoundManager.playUIClick(); setShowLeaveConfirm(true); }}
                                                 className="w-full bg-red-950/30 hover:bg-red-950/60 text-red-400 font-bold py-2.5 rounded-lg border border-red-900/50 transition-colors"
                                             >
                                                 Disband / Leave Squad
@@ -1394,6 +1405,43 @@ export default function Squads({ isCarousel }) {
                 )}
             </div>
         </div>
+        {showLeaveConfirm && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+                onClick={() => { if (!isLeaving) setShowLeaveConfirm(false); }}
+            >
+                <div
+                    className="bg-[#0b0416] border-2 border-red-500/60 rounded-2xl p-6 max-w-sm w-full shadow-[0_0_40px_rgba(239,68,68,0.3)]"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <h3 className="text-xl font-black text-red-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <UserX className="w-5 h-5" /> Leave Squad?
+                    </h3>
+                    <p className="text-sm text-slate-300 mb-2">
+                        Are you sure you want to leave <span className="font-bold text-white">{mySquad?.name}</span>?
+                    </p>
+                    <p className="text-xs text-amber-400 bg-amber-950/30 border border-amber-900/50 rounded-lg p-2 mb-5">
+                        ⚠️ You won't be able to join or create a new squad for <span className="font-bold">24 hours</span>.
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowLeaveConfirm(false)}
+                            disabled={isLeaving}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg border border-slate-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleLeaveSquad}
+                            disabled={isLeaving}
+                            className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-lg transition-colors"
+                        >
+                            {isLeaving ? 'Leaving…' : 'Leave Squad'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         {profileSquadId && (() => {
             // If viewing a squad in the browser (not own squad) and not already in one, allow joining from the modal.
             const browsing = !mySquad && allSquads.some(s => s.id === profileSquadId);
