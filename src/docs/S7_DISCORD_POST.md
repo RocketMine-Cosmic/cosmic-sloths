@@ -19,9 +19,9 @@ No save wipe. No relic reset. Just balance.
 • Win kills AND score in the same week? You collect BOTH prizes
 
 More ways to win:
-• Best single-run score → Weekly score top 20
+• Best single-run score → Weekly score top 30
 • Most consistent grinder → Weekly kills top 20 *(NEW)*
-• Long-haul champion → Seasonal score top 20
+• Long-haul champion → Seasonal score top 30
 • Squad warlord → Seasonal Squad Champions
 
 Kill leaderboard tab is already live — payouts kick in on S7 rollover.
