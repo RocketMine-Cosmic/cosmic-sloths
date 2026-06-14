@@ -746,6 +746,11 @@ Deno.serve(async (req) => {
             // every row created from this point is either 'sector' or 'endless'.
             // Older RunScore rows lack this field until a backfill runs.
             run_type: validation.isEndless ? 'endless' : 'sector',
+            // Sanitise client-supplied difficulty against the known enum so
+            // the entity write never fails on a malformed value.
+            difficulty: ['easy', 'normal', 'hard', 'cosmic'].includes(String(scoreData.difficulty || '').toLowerCase())
+                ? String(scoreData.difficulty).toLowerCase()
+                : 'normal',
             week_id,
             season_id,
         };

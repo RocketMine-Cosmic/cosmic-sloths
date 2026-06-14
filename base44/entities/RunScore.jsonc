@@ -74,6 +74,16 @@
       ],
       "description": "Run category \u2014 used to filter reads cheaply without scanning arena_id. 'sector' = any non-endless run that lands in RunScore (sectors + Leviathan Trial modifiers), 'endless' = endless arena. Written at saveScore time; older RunScore rows may be missing this field until backfilled."
     },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "easy",
+        "normal",
+        "hard",
+        "cosmic"
+      ],
+      "description": "Difficulty the run was played on. Written at saveScore time so admin tools (RunScore Lookup) can display it. Older rows lack this field until backfilled."
+    },
     "week_id": {
       "type": "string",
       "description": "Identifier for the week (e.g., 2026-W13)"
