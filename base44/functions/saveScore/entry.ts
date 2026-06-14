@@ -264,11 +264,21 @@ function validateAndRecompute(scoreData) {
         // S11-S14 bumped from 1× → 1.5× on 2026-06-04 — players were struggling to
         // beat their S10 high scores on the early Outer Galaxy sectors because kill
         // rates drop immediately on entry while the bonus didn't kick in until S15.
-        const bonusMult = sectorIdxForBonus >= 19 ? 3.5
-                        : sectorIdxForBonus >= 17 ? 2.5
-                        : sectorIdxForBonus >= 14 ? 2
-                        : sectorIdxForBonus >= 10 ? 1.5
-                        : 1;
+        // S7 (2026-06-15 W25 rollover): Outer Galaxy HP curve was flattened
+        // dramatically (S20 mob HP 698× → 11×). Kill rates now alone reward S20,
+        // and HEAT bonus stacks up to ×2.0 on top. The original ladder was
+        // double-dipping — halved here so S20 still feels best without runaway scores.
+        const bonusMult = isS7OrLater
+            ? (sectorIdxForBonus >= 19 ? 2
+                : sectorIdxForBonus >= 17 ? 1.75
+                : sectorIdxForBonus >= 14 ? 1.5
+                : sectorIdxForBonus >= 10 ? 1.25
+                : 1)
+            : (sectorIdxForBonus >= 19 ? 3.5
+                : sectorIdxForBonus >= 17 ? 2.5
+                : sectorIdxForBonus >= 14 ? 2
+                : sectorIdxForBonus >= 10 ? 1.5
+                : 1);
         const scaledSectorBonus = (sectorScore + victoryBonus) * bonusMult;
         const endlessScore = isEndless ? Math.floor(time / 60) * 10000 : 0;
         const baseScore = killsScore + levelScore + scaledSectorBonus + endlessScore;
