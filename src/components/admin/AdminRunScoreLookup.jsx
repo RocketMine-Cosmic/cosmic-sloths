@@ -77,11 +77,12 @@ export default function AdminRunScoreLookup() {
                                 <table className="w-full text-xs">
                                     <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px]">
                                         <tr>
-                                            <th className="text-left px-2 py-2">When</th>
-                                            <th className="text-left px-2 py-2">Score</th>
-                                            <th className="text-left px-2 py-2">Char</th>
-                                            <th className="text-left px-2 py-2">Arena</th>
-                                            <th className="text-right px-2 py-2">Kills</th>
+                                             <th className="text-left px-2 py-2">When</th>
+                                             <th className="text-left px-2 py-2">Score</th>
+                                             <th className="text-left px-2 py-2">Char</th>
+                                             <th className="text-left px-2 py-2">Arena</th>
+                                             <th className="text-left px-2 py-2">Difficulty</th>
+                                             <th className="text-right px-2 py-2">Kills</th>
                                             <th className="text-right px-2 py-2">Lvl</th>
                                             <th className="text-right px-2 py-2">Time</th>
                                             <th className="text-right px-2 py-2">Gold</th>
@@ -95,6 +96,7 @@ export default function AdminRunScoreLookup() {
                                                 <td className="px-2 py-1.5 font-mono font-bold text-cyan-300">{(r.score || 0).toLocaleString()}</td>
                                                 <td className="px-2 py-1.5 text-slate-300">{r.character_id || '—'}</td>
                                                 <td className="px-2 py-1.5 text-slate-300" title={r.arena_id || ''}>{arenaLabel(r.arena_id)}</td>
+                                                <td className="px-2 py-1.5 text-slate-300 capitalize">{r.difficulty || '—'}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{r.kills || 0}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{r.level || 0}</td>
                                                 <td className="px-2 py-1.5 text-right font-mono text-slate-300">{Math.floor(r.time_survived || 0)}s</td>
