@@ -69,8 +69,14 @@ export default function Leaderboard() {
     // Calculate actual payout amount (mirrors backend distributeRewards/previewPayouts EXACTLY).
     // Backend caps at payoutCfg.top_n ranked players and sums percentages over uniqueScores.length
     // (capped at top_n), so we must use the SAME denominator here.
+    //
+    // NOTE: backend uses Math.floor() and filters amounts < 1, so tiny pools (e.g. early in the
+    // week when only a few OMENX have been spent) result in 0 payouts for everyone. The display
+    // intentionally does NOT floor — it shows the true fractional share so players can see they're
+    // earning something even when the pool is small. The actual paid amount at distribution time
+    // will round down per the backend rules.
     const calculateRewardAmount = (rank, pool, percentageFn, poolMultiplier, totalRankedPlayers) => {
-        const rewardPool = Math.floor(pool * poolMultiplier);
+        const rewardPool = pool * poolMultiplier;
         const cappedTotal = Math.min(payoutCfg.top_n, totalRankedPlayers);
         if (cappedTotal === 0) return 0;
 
@@ -80,8 +86,8 @@ export default function Leaderboard() {
         }
         if (totalPct === 0) return 0;
 
-        // Payout = (player_pct / total_pct) * reward_pool — backend uses Math.floor.
-        return Math.floor((percentageFn(rank) / totalPct) * rewardPool);
+        // Display full fractional payout (rounded by .toFixed(2) at render time).
+        return (percentageFn(rank) / totalPct) * rewardPool;
     };
 
     useEffect(() => {
