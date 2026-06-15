@@ -18,6 +18,13 @@ function OmenXIcon({ className }) {
 // Used until the live config arrives from the backend.
 const DEFAULT_PAYOUT_CONFIG = {
     top_n: 20,
+    // Pool size %s — must mirror backend DEFAULT_CONFIG. Used as fallback only;
+    // the live config from leaderboardPayoutConfig overrides these on mount so
+    // admin edits to weekly/seasonal/kill pool %s flow through to the displayed
+    // OMENX amounts on the leaderboard.
+    weekly_pool_pct: 0.15,
+    seasonal_pool_pct: 0.20,
+    kill_pool_pct: 0.05,
     weekly_tiers: [
         { min: 1,  max: 1,  pct: 0.10 },
         { min: 2,  max: 2,  pct: 0.08 },
@@ -492,6 +499,7 @@ export default function Leaderboard() {
                             periodId={view === 'weekly' ? week_id : season_id}
                             totalSpent={currentPool}
                             timeLeft={timeLeft}
+                            poolPct={view === 'weekly' ? payoutCfg.weekly_pool_pct : payoutCfg.seasonal_pool_pct}
                         />
                     )}
                     {view === 'all_time' && (
@@ -501,6 +509,7 @@ export default function Leaderboard() {
                                 periodId={week_id}
                                 totalSpent={currentPool}
                                 timeLeft={timeLeft}
+                                poolPct={payoutCfg.kill_pool_pct}
                             />
                         ) : (
                             <div className="flex items-center justify-center w-full py-8 px-4 rounded-lg bg-slate-900 border border-slate-700 mb-4">
@@ -526,12 +535,18 @@ export default function Leaderboard() {
                                 const char = CHARACTERS.find(c => c.id === score.character_id);
                                 const arena = ARENAS.find(a => a.id === score.arena_id);
                                 const isEligibleForReward = view === 'weekly' || view === 'seasonal' || view === 'all_time';
+                                // Pool % comes from the live admin config — so edits in AdminDash
+                                // immediately flow through to the displayed OMENX amounts here.
+                                // Fallbacks match DEFAULT_PAYOUT_CONFIG.
+                                const weeklyPoolPct = Number.isFinite(Number(payoutCfg.weekly_pool_pct)) ? Number(payoutCfg.weekly_pool_pct) : 0.15;
+                                const seasonalPoolPct = Number.isFinite(Number(payoutCfg.seasonal_pool_pct)) ? Number(payoutCfg.seasonal_pool_pct) : 0.20;
+                                const killPoolPct = Number.isFinite(Number(payoutCfg.kill_pool_pct)) ? Number(payoutCfg.kill_pool_pct) : 0.05;
                                 const rewardAmount = view === 'weekly'
-                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, 0.20, totalRankedPlayers)
+                                    ? calculateRewardAmount(index + 1, currentPool, getWeeklyRewardPercentage, weeklyPoolPct, totalRankedPlayers)
                                     : view === 'seasonal'
-                                    ? calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, 0.30, totalRankedPlayers)
+                                    ? calculateRewardAmount(index + 1, currentPool, getSeasonalRewardPercentage, seasonalPoolPct, totalRankedPlayers)
                                     : view === 'all_time'
-                                    ? calculateRewardAmount(index + 1, currentPool, getKillRewardPercentage, 0.05, scores.length)
+                                    ? calculateRewardAmount(index + 1, currentPool, getKillRewardPercentage, killPoolPct, scores.length)
                                     : 0;
 
                                 if (view === 'squads') {

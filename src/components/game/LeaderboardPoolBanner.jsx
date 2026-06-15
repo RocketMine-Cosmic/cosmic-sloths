@@ -9,29 +9,35 @@ function OmenXIcon({ className }) {
 // Mirrors the Champions Pool banner style so the player can see the running OMENX pot
 // they're competing for, what % of the total seasonal/weekly OMENX feeds it, and the
 // rank-by-rank split that determines payouts.
-export default function LeaderboardPoolBanner({ view, periodId, totalSpent, timeLeft }) {
+//
+// `poolPct` is passed in by the parent so admin-configured pool sizes
+// (leaderboardPayoutConfig.weekly_pool_pct / seasonal_pool_pct / kill_pool_pct)
+// flow through to the banner without needing a separate fetch here.
+export default function LeaderboardPoolBanner({ view, periodId, totalSpent, timeLeft, poolPct }) {
     const isWeekly = view === 'weekly';
     const isKills = view === 'weekly_kills';
     const isSeasonal = view === 'seasonal';
     
-    let poolPct, accent, numColor, subColor, chipBg, label;
+    let accent, numColor, subColor, chipBg, label;
+    // Safe fallbacks if poolPct prop isn't provided (mirrors backend defaults).
+    let resolvedPoolPct = Number.isFinite(Number(poolPct)) ? Number(poolPct) : null;
     
     if (isWeekly) {
-        poolPct = 0.20;
+        if (resolvedPoolPct === null) resolvedPoolPct = 0.15;
         accent = 'from-cyan-950/50 via-blue-950/50 to-cyan-950/50 border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.18)] text-cyan-200';
         numColor = 'text-cyan-100';
         subColor = 'text-cyan-300';
         chipBg = 'bg-cyan-500/30 text-cyan-100';
         label = 'Weekly Player Pool';
     } else if (isSeasonal) {
-        poolPct = 0.30;
+        if (resolvedPoolPct === null) resolvedPoolPct = 0.20;
         accent = 'from-purple-950/50 via-fuchsia-950/50 to-purple-950/50 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.18)] text-purple-200';
         numColor = 'text-purple-100';
         subColor = 'text-purple-300';
         chipBg = 'bg-purple-500/30 text-purple-100';
         label = 'Seasonal Player Pool';
     } else if (isKills) {
-        poolPct = 0.05;
+        if (resolvedPoolPct === null) resolvedPoolPct = 0.05;
         accent = 'from-orange-950/50 via-amber-950/50 to-orange-950/50 border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.18)] text-orange-200';
         numColor = 'text-orange-100';
         subColor = 'text-orange-300';
@@ -39,7 +45,7 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
         label = 'Weekly Kill Pool';
     }
     
-    const playerPool = Math.floor((totalSpent || 0) * poolPct);
+    const playerPool = Math.floor((totalSpent || 0) * resolvedPoolPct);
 
     return (
         <div className={`bg-gradient-to-r ${accent} border-2 rounded-xl p-4 mb-4`}>
