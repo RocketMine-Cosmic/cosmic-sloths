@@ -1286,7 +1286,7 @@ export default function Game() {
             
             {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
-            {!hudHidden && <UIOverlay {...gameState} ddMult={gameState.ddMult ?? 1.0} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} onSquadUltimate={handleSquadUltimate} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
+            {!hudHidden && <UIOverlay {...gameState} ddMult={gameState.ddMult ?? 1.0} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}
             {!hudHidden && <SessionExpiredBanner />}
@@ -1309,6 +1309,7 @@ export default function Game() {
                     onHideHud={() => { setHudHidden(true); }}
                     engineRef={engineRef}
                     onBuyXpBuff={handleXpBuff}
+                    onSquadUltimate={handleSquadUltimate}
                     omenxBalance={omenxBalance ?? 0}
                     xpBuffExpiry={gameState.xpBuffExpiry || 0}
                     omenxPurchasesDisabled={omenxPurchasesDisabled}

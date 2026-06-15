@@ -6,8 +6,10 @@ import SettingsModal from './SettingsModal';
 import PlayerStatsPanel from './PlayerStatsPanel';
 
 const XP_BUFF_COST = 10;
+const ULT_LITE_COST = 5;
+const ULT_FULL_COST = 10;
 
-export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, omenxBalance = 0, xpBuffExpiry = 0, omenxPurchasesDisabled = false }) {
+export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, onSquadUltimate, omenxBalance = 0, xpBuffExpiry = 0, omenxPurchasesDisabled = false }) {
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
     const [showStats, setShowStats] = useState(false);
@@ -90,6 +92,32 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                     >
                         {lowFx ? '✓ Low FX ON' : '✕ Low FX OFF'}
                     </button>
+                    {/* Squad ULTs — moved from in-run HUD to here so accidental
+                        taps mid-fight can't burn OMENX. Player taps in pause menu,
+                        confirms the OMENX charge, then resumes — clone spawns on
+                        the next unpaused tick. */}
+                    {onSquadUltimate && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => { onSquadUltimate('lite'); onResume(); }}
+                                disabled={omenxBalance < ULT_LITE_COST || omenxPurchasesDisabled}
+                                className="bg-purple-700 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-3 rounded-lg font-bold text-sm md:text-base transition-colors shadow-[0_0_15px_rgba(168,85,247,0.35)] flex flex-col items-center justify-center gap-0.5 border-2 border-purple-500"
+                                title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Spawn a capped-power squad clone'}
+                            >
+                                <span className="text-xs md:text-sm tracking-wider uppercase">Squad ULT Lite</span>
+                                <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{ULT_LITE_COST} OMENX</span>
+                            </button>
+                            <button
+                                onClick={() => { onSquadUltimate('full'); onResume(); }}
+                                disabled={omenxBalance < ULT_FULL_COST || omenxPurchasesDisabled}
+                                className="bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-3 rounded-lg font-bold text-sm md:text-base transition-colors shadow-[0_0_15px_rgba(217,70,239,0.35)] flex flex-col items-center justify-center gap-0.5 border-2 border-fuchsia-500"
+                                title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Spawn a full-power squad clone scaled to your upgrades'}
+                            >
+                                <span className="text-xs md:text-sm tracking-wider uppercase">Squad ULT Full</span>
+                                <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{ULT_FULL_COST} OMENX</span>
+                            </button>
+                        </div>
+                    )}
                     {onBuyXpBuff && (
                         buffActive ? (
                             <div className="w-full bg-emerald-950/50 border-2 border-emerald-500/60 rounded-lg px-4 py-3 flex items-center justify-center gap-2 text-emerald-300">

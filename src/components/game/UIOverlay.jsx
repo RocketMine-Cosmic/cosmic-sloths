@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
-import { useAntiMashCooldown } from '@/hooks/useAntiMashCooldown';
 import DynamicDifficultyPill from './DynamicDifficultyPill';
 
 function OmenXIcon({ className }) {
@@ -27,18 +26,13 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, onSquadUltimate, omenxPurchasesDisabled = false, arenaId = '', ddMult = 1.0 }) {
+export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, omenxPurchasesDisabled = false, arenaId = '', ddMult = 1.0 }) {
     // Squad Meteor runs don't feed the leaderboard — score has no meaning there,
     // so hide the row to avoid confusing players who think it matters.
     const isMeteorRun = arenaId === 'quantum_meteor';
     // Collapse loadout list by default on mobile so the pause button + top row stay visible.
     // Players can tap the HP bar to expand and review their build.
     const [loadoutCollapsed, setLoadoutCollapsed] = useState(true);
-    // Anti-mash: 2s cooldown on Squad Ult buttons. Settlement can be flakey
-    // and players panic-mash during fights — without this they queue multiple
-    // billable OmenX purchases for a single intended ULT.
-    const ultLiteCd = useAntiMashCooldown(2000);
-    const ultFullCd = useAntiMashCooldown(2000);
 
     // Aggregate passives once so both the count badge and the expanded list use the same data.
     const aggregatedPassives = Object.values(passives.reduce((acc, p) => {
@@ -211,45 +205,8 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
                 </div>
             </div>
 
-            {/* Floating Squad ULT buttons (bottom-right) — Lite & Full tiers */}
-            <div className="fixed bottom-24 md:bottom-6 right-2 md:right-6 flex flex-col gap-1.5 md:gap-2 pointer-events-auto z-40">
-                <button
-                    id="squad-ult-lite-btn"
-                    onPointerDown={(e) => {
-                        e.stopPropagation(); e.preventDefault();
-                        if (ultLiteCd.locked) return;
-                        ultLiteCd.trigger(() => onSquadUltimate('lite'));
-                    }}
-                    disabled={omenxBalance < 5 || omenxPurchasesDisabled || ultLiteCd.locked}
-                    className="bg-[#0b0416]/90 px-2 py-1 md:px-4 md:py-3 rounded-lg md:rounded-xl border md:border-2 border-purple-500/80 hover:bg-purple-900 hover:border-purple-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_10px_rgba(168,85,247,0.25)] md:shadow-[0_0_15px_rgba(168,85,247,0.3)]"
-                    style={{ touchAction: 'none' }}
-                    title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : ultLiteCd.locked ? 'Just a sec…' : 'Squad Lite — capped clone power (5 OMENX)'}
-                >
-                    <span className="text-[10px] md:text-sm font-black text-purple-300 tracking-wider md:tracking-widest uppercase leading-tight">ULT LITE</span>
-                    <span className="text-[8px] md:text-xs font-bold text-slate-300 leading-tight">
-                        {ultLiteCd.locked ? `${(ultLiteCd.remainingMs / 1000).toFixed(1)}s` : '5 OMENX'}
-                    </span>
-                </button>
-                <button
-                    id="squad-ult-full-btn"
-                    onPointerDown={(e) => {
-                        e.stopPropagation(); e.preventDefault();
-                        if (ultFullCd.locked) return;
-                        ultFullCd.trigger(() => onSquadUltimate('full'));
-                    }}
-                    disabled={omenxBalance < 10 || omenxPurchasesDisabled || ultFullCd.locked}
-                    className="bg-[#0b0416]/90 px-2 py-1 md:px-4 md:py-3 rounded-lg md:rounded-xl border md:border-2 border-fuchsia-500/80 hover:bg-fuchsia-900 hover:border-fuchsia-400 transition-all flex flex-col items-center justify-center touch-none disabled:opacity-50 disabled:border-slate-700 disabled:bg-slate-900 shadow-[0_0_10px_rgba(217,70,239,0.25)] md:shadow-[0_0_15px_rgba(217,70,239,0.3)]"
-                    style={{ touchAction: 'none' }}
-                    title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : ultFullCd.locked ? 'Just a sec…' : 'Squad Ultimate — scales with your full upgrades (10 OMENX)'}
-                >
-                    <span className="text-[10px] md:text-sm font-black text-fuchsia-300 tracking-wider md:tracking-widest uppercase leading-tight">ULT FULL</span>
-                    <span className="text-[8px] md:text-xs font-bold text-slate-300 leading-tight">
-                        {ultFullCd.locked ? `${(ultFullCd.remainingMs / 1000).toFixed(1)}s` : '10 OMENX'}
-                    </span>
-                </button>
-            </div>
-
-            {/* Bottom: XP Bar — centered, leaving room for the floating ULT buttons on the right */}
+            {/* Bottom: XP Bar — Squad ULTs were moved to the Pause menu (2026-06-15)
+                so accidental in-run taps can't burn OMENX. */}
             <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-center px-2 md:px-0 flex-col gap-1.5">
                 <div className={`bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border w-full max-w-2xl transition-colors ${xpBuffActive ? 'border-emerald-400/60 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'border-cyan-500/30'}`}>
                     <div className="flex justify-between items-end mb-1 gap-2">
