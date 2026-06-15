@@ -169,11 +169,21 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
         try {
             const res = await base44.functions.invoke('leaderboardPayoutConfig', { action: 'get' });
             const cfg = res.data?.config;
+            const defaults = res.data?.default;
             if (cfg) {
                 setTopN(cfg.top_n);
                 setWeeklyTiers(cfg.weekly_tiers || []);
                 setSeasonalTiers(cfg.seasonal_tiers || []);
-                setKillTiers(cfg.weekly_kill_tiers || []);
+                // Backfill kill tiers from the backend defaults when the saved config
+                // is missing them or stored an empty array (config was saved before
+                // the kill leaderboard existed). Without this, the table renders
+                // blank and the live preview shows 0.00 OMENX for every rank.
+                const savedKillTiers = cfg.weekly_kill_tiers;
+                if (Array.isArray(savedKillTiers) && savedKillTiers.length > 0) {
+                    setKillTiers(savedKillTiers);
+                } else {
+                    setKillTiers(defaults?.weekly_kill_tiers || []);
+                }
                 if (cfg.weekly_pool_pct !== undefined) setWeeklyPoolPct(Number(cfg.weekly_pool_pct));
                 if (cfg.seasonal_pool_pct !== undefined) setSeasonalPoolPct(Number(cfg.seasonal_pool_pct));
                 if (cfg.kill_pool_pct !== undefined) setKillPoolPct(Number(cfg.kill_pool_pct));
