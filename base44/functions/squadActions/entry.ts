@@ -960,15 +960,21 @@ Deno.serve(async (req) => {
                 return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
             })();
 
-            // Lazy expiry — if the active buff is from a past week, treat it as cleared.
-            const liveBuffTier = (squad.active_buff_week_id === currentWeekId) ? (squad.active_buff_tier || '') : '';
+            // Lazy expiry — buff is "live" if it's stamped for the current week
+            // OR a future week. Previously the check only matched currentWeekId
+            // exactly, so a buff bought during W25 (which applies to W26) was
+            // shown as "not active" to anyone else opening the panel — letting a
+            // second officer buy it AGAIN (Waeoo bug 2026-06-15).
+            const stampedWeek = squad.active_buff_week_id || '';
+            const isLiveBuff = squad.active_buff_tier && stampedWeek && stampedWeek >= currentWeekId;
+            const liveBuffTier = isLiveBuff ? (squad.active_buff_tier || '') : '';
 
             if (action === 'getTreasury') {
                 return Response.json({
                     treasury_gold: squad.treasury_gold || 0,
                     treasury_total_donated: squad.treasury_total_donated || 0,
                     active_buff_tier: liveBuffTier,
-                    active_buff_week_id: liveBuffTier ? squad.active_buff_week_id : '',
+                    active_buff_week_id: liveBuffTier ? stampedWeek : '',
                     current_week_id: currentWeekId,
                 });
             }
@@ -1050,46 +1056,69 @@ Deno.serve(async (req) => {
                 const tier = TREASURY_TIERS[tierKey];
                 if (!tier) return Response.json({ error: 'Invalid buff tier.' }, { status: 400 });
 
-                // Tier-upgrade support (Texxy request 2026-05-19): if a buff is already
-                // active for the current week, allow swapping to a HIGHER tier by paying
-                // the cost DIFFERENCE only. The previously-spent gold is treated as already
-                // paid in. Downgrades and same-tier reactivations are blocked.
-                const treasury = squad.treasury_gold || 0;
+                // CONCURRENCY GUARD (Waeoo bug 2026-06-15 — "2 players shouldnt be
+                // able to buy the buff twice"). The `squad` row was read way back at
+                // line ~948 before the action branch. If two officers click Activate
+                // near-simultaneously, both stale reads showed active_buff_tier='' and
+                // both writes went through — squad got double-charged and posted two
+                // SYSTEM messages (Texxy + Waeoo both bought Platinum for W26).
+                //
+                // Fix: re-fetch the squad row RIGHT before the write and re-derive
+                // liveBuffTier from the fresh data. If another writer beat us to it
+                // for the SAME target week, return 409 instead of charging again.
+                const freshSquad = await base44.asServiceRole.entities.Squad.get(squadId);
+                if (!freshSquad) return Response.json({ error: 'This squad no longer exists.' }, { status: 404 });
+
+                // Compute the week the buff would land on if it activated now (mirrors
+                // the locked rule: new buff applies to NEXT week, upgrade stays on the
+                // active buff's existing week).
+                const computeNextWeek = (wk) => {
+                    const m = wk.match(/^(\d{4})-W(\d{2})$/);
+                    if (!m) return wk;
+                    const year = parseInt(m[1], 10);
+                    const w = parseInt(m[2], 10);
+                    if (w >= 52) return `${year + 1}-W01`;
+                    return `${year}-W${String(w + 1).padStart(2, '0')}`;
+                };
+
+                // Live buff = any buff stamped for the current week OR a future week.
+                // The previous lazy-expiry check only matched currentWeekId exactly,
+                // so a buff stamped for next week (W26 while we're in W25) was
+                // treated as "not live" → second officer was free to buy AGAIN.
+                const freshStampedWeek = freshSquad.active_buff_week_id || '';
+                const freshIsLive = freshSquad.active_buff_tier
+                    && freshStampedWeek
+                    && freshStampedWeek >= currentWeekId;
+                const freshLiveBuffTier = freshIsLive ? freshSquad.active_buff_tier : '';
+
+                const treasury = freshSquad.treasury_gold || 0;
                 let chargeAmount = tier.cost;
-                if (liveBuffTier) {
-                    const liveCost = TREASURY_TIERS[liveBuffTier]?.cost || 0;
-                    if (liveBuffTier === tierKey) {
-                        return Response.json({ error: 'That buff is already active for this week.' }, { status: 409 });
+                let nextWeekId;
+
+                if (freshLiveBuffTier) {
+                    const liveCost = TREASURY_TIERS[freshLiveBuffTier]?.cost || 0;
+                    if (freshLiveBuffTier === tierKey) {
+                        return Response.json({
+                            error: `Your squad already activated a ${tier.label} buff for ${freshStampedWeek}.`,
+                            alreadyActive: true,
+                        }, { status: 409 });
                     }
                     if (tier.cost <= liveCost) {
                         return Response.json({ error: 'You can only upgrade to a higher-tier buff (no downgrades).' }, { status: 400 });
                     }
                     chargeAmount = tier.cost - liveCost;
+                    // Upgrade keeps the existing buff's target week.
+                    nextWeekId = freshStampedWeek;
+                } else {
+                    // Fresh activation — applies to next ISO week.
+                    nextWeekId = computeNextWeek(currentWeekId);
                 }
 
                 if (treasury < chargeAmount) {
                     return Response.json({
-                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${chargeAmount.toLocaleString()} ${liveBuffTier ? 'to upgrade' : `for ${tier.label}`}.`
+                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${chargeAmount.toLocaleString()} ${freshLiveBuffTier ? 'to upgrade' : `for ${tier.label}`}.`
                     }, { status: 400 });
                 }
-
-                // Buff applies to NEXT week (per master plan §5c locked decision —
-                // donations made during week N apply to all of week N+1's wars).
-                // EXCEPTION: tier-upgrade swaps an EXISTING active buff, so we keep
-                // the same active_buff_week_id (i.e. the swap takes effect on the
-                // same week the original buff applied to).
-                const nextWeekId = liveBuffTier
-                    ? squad.active_buff_week_id
-                    : (() => {
-                        const m = currentWeekId.match(/^(\d{4})-W(\d{2})$/);
-                        if (!m) return currentWeekId; // shouldn't happen; safe fallback
-                        const year = parseInt(m[1], 10);
-                        const wk = parseInt(m[2], 10);
-                        // Assume <=52 weeks per ISO year for simplicity. Edge week 53 still
-                        // works — overflow rolls into year+1 W01 below.
-                        if (wk >= 52) return `${year + 1}-W01`;
-                        return `${year}-W${String(wk + 1).padStart(2, '0')}`;
-                    })();
 
                 await base44.asServiceRole.entities.Squad.update(squadId, {
                     treasury_gold: treasury - chargeAmount,
@@ -1102,7 +1131,7 @@ Deno.serve(async (req) => {
                         squad_id: squadId,
                         wallet_address: 'system',
                         player_name: 'SYSTEM',
-                        content: liveBuffTier
+                        content: freshLiveBuffTier
                             ? `⭐ ${authoritativeName} upgraded the treasury buff to ${tier.label} for ${nextWeekId} (paid ${chargeAmount.toLocaleString()} difference)!`
                             : `⭐ ${authoritativeName} activated a ${tier.label} treasury buff for ${nextWeekId}!`,
                     });
@@ -1113,7 +1142,7 @@ Deno.serve(async (req) => {
                     treasury_gold: treasury - chargeAmount,
                     active_buff_tier: tierKey,
                     active_buff_week_id: nextWeekId,
-                    upgraded: !!liveBuffTier,
+                    upgraded: !!freshLiveBuffTier,
                 });
             }
         }
