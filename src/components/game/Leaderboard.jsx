@@ -282,9 +282,11 @@ export default function Leaderboard() {
             // backend function. Doesn't use RunScore (gets soft-deleted by the
             // keep-top-scores cron, would under-count).
             if (view === 'all_time') {
+                let playersList = [];
                 try {
                     const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: 1000 });
-                    setScores(res?.data?.players || []);
+                    playersList = res?.data?.players || [];
+                    setScores(playersList);
                 } catch (e) {
                     console.error('[Leaderboard] weekly kills fetch failed:', e?.message);
                     setScores([]);
@@ -293,7 +295,11 @@ export default function Leaderboard() {
                 // fetches the weekly TokenPool for the all_time view (kill pool is
                 // funded from the same weekly OMENX spend). Resetting it to 0 made
                 // the kill pool banner always read 0 after a refresh.
-                setTotalRankedPlayers(0);
+                // totalRankedPlayers must reflect the displayed list size (capped
+                // at top_n) so tier rewards render non-zero amounts. Previously
+                // hardcoded to 0, which made every player's tier reward show
+                // 0.00 OMENX even though the pool banner was populated.
+                setTotalRankedPlayers(Math.min(payoutCfg.top_n, playersList.length));
                 setLastUpdated(Date.now());
 
                 // Squad badge lookup for the displayed players (same pattern as below).
