@@ -289,7 +289,10 @@ export default function Leaderboard() {
                     console.error('[Leaderboard] weekly kills fetch failed:', e?.message);
                     setScores([]);
                 }
-                setCurrentPool(0);
+                // Don't reset currentPool here — the useQuery hook above already
+                // fetches the weekly TokenPool for the all_time view (kill pool is
+                // funded from the same weekly OMENX spend). Resetting it to 0 made
+                // the kill pool banner always read 0 after a refresh.
                 setTotalRankedPlayers(0);
                 setLastUpdated(Date.now());
 
