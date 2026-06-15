@@ -894,12 +894,15 @@ export default function Game() {
         const skuId = tier === 'lite' ? IN_GAME_SKUS.squadUltimateLite : IN_GAME_SKUS.squadUltimateFull;
         if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= cost && engineRef.current && !engineRef.current.isPaused) {
+            // `force: true` — ULT buttons sit over the in-run playfield, so
+            // players were accidentally triggering them mid-fight when the
+            // 24h "don't show again" skip was active. Always show the modal.
             confirmPurchase(cost, itemName, () => {
                 // Grant immediately, pay in background
                 engineRef.current.triggerSquadUltimate(tier);
                 purchaseSku(skuId);
                 refreshBalance();
-            });
+            }, { force: true });
         }
     };
 

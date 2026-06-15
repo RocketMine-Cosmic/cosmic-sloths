@@ -19,7 +19,12 @@ export function useOmenXConfirmation(pageId) {
         return Date.now() < parseInt(disabledUntil);
     }, [pageId]);
 
-    const confirm = useCallback((amount, itemName, onConfirmCallback) => {
+    const confirm = useCallback((amount, itemName, onConfirmCallback, options = {}) => {
+        // `force: true` — ALWAYS show the modal, even if the player ticked
+        // "don't show for 24h" on a previous purchase. Used for accidental-
+        // click-sensitive in-run buttons (Squad ULTs) that sit over the
+        // playfield where players panic-tap during fights.
+        const force = !!options.force;
         const proceed = () => {
             // Block entirely if the kill-switch is on, regardless of 24h-skip.
             if (disabledRef.current) {
@@ -35,7 +40,8 @@ export function useOmenXConfirmation(pageId) {
                 return;
             }
             // Fast path — user opted into 24h skip and purchases are enabled.
-            if (isDisabledFor24h()) {
+            // Skipped when `force` is set (in-run ULTs).
+            if (!force && isDisabledFor24h()) {
                 onConfirmCallback();
                 return;
             }
