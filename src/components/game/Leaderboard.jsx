@@ -166,9 +166,22 @@ export default function Leaderboard() {
 
     // Fetch live payout config once on mount (public read — no auth needed).
     // If it fails or returns nothing we just use the built-in defaults.
+    // Backfill any empty tier arrays with defaults so older saved configs (which
+    // never had weekly_kill_tiers) still render rewards instead of 0.00 OMENX.
     useEffect(() => {
         base44.functions.invoke('leaderboardPayoutConfig', { action: 'get' })
-            .then(r => { if (r.data?.config) setPayoutCfg(r.data.config); })
+            .then(r => {
+                if (!r.data?.config) return;
+                const cfg = r.data.config;
+                const defaults = r.data.default || DEFAULT_PAYOUT_CONFIG;
+                const fillIfEmpty = (key) => (Array.isArray(cfg[key]) && cfg[key].length > 0) ? cfg[key] : defaults[key];
+                setPayoutCfg({
+                    ...cfg,
+                    weekly_tiers: fillIfEmpty('weekly_tiers'),
+                    seasonal_tiers: fillIfEmpty('seasonal_tiers'),
+                    weekly_kill_tiers: fillIfEmpty('weekly_kill_tiers'),
+                });
+            })
             .catch(() => {});
     }, []);
 
