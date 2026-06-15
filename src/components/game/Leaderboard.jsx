@@ -295,10 +295,13 @@ export default function Leaderboard() {
             // backend function. Doesn't use RunScore (gets soft-deleted by the
             // keep-top-scores cron, would under-count).
             if (view === 'all_time') {
+                // Weekly Sector Kills is hard-capped at top 20 regardless of the
+                // global payoutCfg.top_n (which other boards use).
+                const KILL_BOARD_LIMIT = 20;
                 let playersList = [];
                 try {
-                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n });
-                    playersList = res?.data?.players || [];
+                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: KILL_BOARD_LIMIT });
+                    playersList = (res?.data?.players || []).slice(0, KILL_BOARD_LIMIT);
                     setScores(playersList);
                 } catch (e) {
                     console.error('[Leaderboard] weekly kills fetch failed:', e?.message);
@@ -312,12 +315,12 @@ export default function Leaderboard() {
                 // at top_n) so tier rewards render non-zero amounts. Previously
                 // hardcoded to 0, which made every player's tier reward show
                 // 0.00 OMENX even though the pool banner was populated.
-                setTotalRankedPlayers(Math.min(payoutCfg.top_n, playersList.length));
+                setTotalRankedPlayers(Math.min(KILL_BOARD_LIMIT, playersList.length));
                 setLastUpdated(Date.now());
 
                 // Squad badge lookup for the displayed players (same pattern as below).
                 try {
-                    const players = (await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n }))?.data?.players || [];
+                    const players = playersList;
                     const wallets = [...new Set(players.map(p => (p.wallet_address || '').toLowerCase()).filter(Boolean))];
                     if (wallets.length > 0) {
                         const members = await base44.entities.SquadMember.filter({ wallet_address: { $in: wallets } });
