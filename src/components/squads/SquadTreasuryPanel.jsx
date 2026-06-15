@@ -28,8 +28,12 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
     const [treasury, setTreasury] = useState({
         treasury_gold: squad?.treasury_gold || 0,
         treasury_total_donated: squad?.treasury_total_donated || 0,
+        // Buff currently in effect THIS week (display only — doesn't block new purchases).
         active_buff_tier: '',
         active_buff_week_id: '',
+        // Buff pre-purchased for NEXT week (blocks new buys, allows upgrades).
+        pending_buff_tier: '',
+        pending_buff_week_id: '',
         current_week_id: '',
     });
     const [donateAmount, setDonateAmount] = useState('');
@@ -118,11 +122,14 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                 setError(res.data?.error || 'Activation failed');
                 return;
             }
+            // Server returns the tier + the week it now applies to. That's
+            // always a FUTURE week (next-week fresh activation or the existing
+            // pending-buff's week on upgrade), so update the pending fields.
             setTreasury(t => ({
                 ...t,
                 treasury_gold: res.data.treasury_gold,
-                active_buff_tier: res.data.active_buff_tier,
-                active_buff_week_id: res.data.active_buff_week_id,
+                pending_buff_tier: res.data.active_buff_tier,
+                pending_buff_week_id: res.data.active_buff_week_id,
             }));
             const tier = TREASURY_TIERS.find(t => t.key === tierKey);
             toast({
@@ -152,8 +159,13 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
         );
     }
 
+    // Buff currently in effect this week (display badge only).
     const activeTier = treasury.active_buff_tier
         ? TREASURY_TIERS.find(t => t.key === treasury.active_buff_tier)
+        : null;
+    // Buff pre-purchased for next week (drives the tier-card lock / upgrade logic).
+    const pendingTier = treasury.pending_buff_tier
+        ? TREASURY_TIERS.find(t => t.key === treasury.pending_buff_tier)
         : null;
 
     return (
@@ -264,19 +276,22 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                 <div className="text-[11px] text-amber-200/90 bg-amber-950/30 border border-amber-700/40 rounded p-2 mb-3 leading-snug">
                     ℹ️ <span className="font-bold">Only one buff is active at a time</span> — the highest tier you've bought. You can <span className="font-bold text-cyan-300">upgrade</span> later by buying the next tier and only paying the <em>difference</em> in cost (not the full price).
                 </div>
-                {canActivate && !!treasury.active_buff_tier && (
+                {canActivate && !!pendingTier && (
                     <p className="text-[11px] text-cyan-300/90 mb-2">💡 Tap a higher tier to upgrade — you'll only be charged the difference.</p>
                 )}
-                {!treasury.active_buff_tier && (
-                    <p className="text-[11px] text-slate-400 mb-2">No buff active yet for next week's wars. Pick a tier below ↓</p>
+                {!pendingTier && (
+                    <p className="text-[11px] text-slate-400 mb-2">No buff bought yet for next week's wars. Pick a tier below ↓</p>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {TREASURY_TIERS.map(tier => {
-                        const isActive = treasury.active_buff_tier === tier.key;
-                        const activeTierObj = treasury.active_buff_tier
-                            ? TREASURY_TIERS.find(t => t.key === treasury.active_buff_tier)
-                            : null;
+                        // Tier-card state is driven by the PENDING (next-week) buff
+                        // only — not the active (this-week) buff. Briantjeuh bug
+                        // 2026-06-15: previously this used active_buff_tier so the
+                        // tier card stayed locked all week even after the buff
+                        // started running, blocking next-week purchases.
+                        const isActive = treasury.pending_buff_tier === tier.key;
+                        const activeTierObj = pendingTier;
                         const isUpgrade = !!activeTierObj && !isActive && tier.cost > activeTierObj.cost;
                         const isDowngrade = !!activeTierObj && !isActive && tier.cost <= activeTierObj.cost;
                         const chargeCost = isUpgrade ? tier.cost - activeTierObj.cost : tier.cost;
@@ -333,9 +348,9 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
             {/* Confirmation modal — prevents accidental activations (Texxy bug 2026-05-19) */}
             {confirmTier && (() => {
                 const tier = TREASURY_TIERS.find(t => t.key === confirmTier);
-                const activeTierObj = treasury.active_buff_tier
-                    ? TREASURY_TIERS.find(t => t.key === treasury.active_buff_tier)
-                    : null;
+                // Confirmation flow keys off PENDING (next-week) buff, matching
+                // the tier-card buy logic above.
+                const activeTierObj = pendingTier;
                 const isUpgrade = !!activeTierObj && tier.cost > activeTierObj.cost;
                 const chargeCost = isUpgrade ? tier.cost - activeTierObj.cost : tier.cost;
                 return (
@@ -370,7 +385,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                                 </div>
                             </div>
                             <p className="text-[11px] text-slate-500 italic mb-4">
-                                This buff is <span className="text-amber-300 font-bold">active only during next week's squad wars</span> (week <span className="text-slate-300 font-bold">{activeTierObj ? treasury.active_buff_week_id : (treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next')}</span>).
+                                This buff is <span className="text-amber-300 font-bold">active only during next week's squad wars</span> (week <span className="text-slate-300 font-bold">{activeTierObj ? treasury.pending_buff_week_id : (treasury.current_week_id ? incrementWeek(treasury.current_week_id) : 'next')}</span>).
                             </p>
                             <div className="flex gap-2">
                                 <button
