@@ -119,11 +119,8 @@ export default function AdminRewards({ walletAddress }) {
                                 { label: 'Score Pool', value: `${previewData.reward_pool?.toFixed(2)} OMENX`, color: 'text-sky-400' },
                                 ...(previewData.kill_reward_pool > 0 ? [{ label: 'Kill Pool', value: `${previewData.kill_reward_pool?.toFixed(2)} OMENX`, color: 'text-orange-400' }] : []),
                                 { label: 'Player Payout', value: `${previewData.total_payout?.toFixed(2)} OMENX`, color: 'text-emerald-400' },
-                                ...(previewData.staff_payout > 0 ? [{ label: 'Staff Payout', value: `${previewData.staff_payout?.toFixed(2)} OMENX`, color: 'text-amber-400' }] : []),
                                 ...(previewData.kill_payout > 0 ? [{ label: 'Kill Payout', value: `${previewData.kill_payout?.toFixed(2)} OMENX`, color: 'text-orange-400' }] : []),
-                                ...(previewData.grand_total !== undefined ? [{ label: 'Grand Total', value: `${previewData.grand_total?.toFixed(2)} OMENX`, color: 'text-fuchsia-400' }] : []),
-                                { label: 'Recipients', value: `${previewData.player_count}${previewData.staff_count ? ` + ${previewData.staff_count} staff` : ''}${previewData.kill_count ? ` + ${previewData.kill_count} kills` : ''}`, color: 'text-white' },
-                                ...(previewData.uses_new_pools !== undefined ? [{ label: 'Pool Model', value: previewData.uses_new_pools ? 'S7+ (config-driven)' : 'Pre-S7 (legacy)', color: previewData.uses_new_pools ? 'text-cyan-400' : 'text-slate-400' }] : []),
+                                { label: 'Recipients', value: `${previewData.player_count}${previewData.kill_count ? ` + ${previewData.kill_count} kills` : ''}`, color: 'text-white' },
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
                                     <div className="text-[10px] text-slate-500 uppercase">{s.label}</div>
