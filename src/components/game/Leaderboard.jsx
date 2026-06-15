@@ -297,7 +297,7 @@ export default function Leaderboard() {
             if (view === 'all_time') {
                 let playersList = [];
                 try {
-                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: 1000 });
+                    const res = await base44.functions.invoke('getWeeklyKillLeaderboard', { limit: payoutCfg.top_n });
                     playersList = res?.data?.players || [];
                     setScores(playersList);
                 } catch (e) {
