@@ -723,6 +723,23 @@ Deno.serve(async (req) => {
                 safePatch.current_day = canonicalDay;
             }
 
+            // Treasury buff rollover (2026-06-16): if the active buff's week has
+            // passed, clear it. If a pending buff is stamped for the current
+            // (or any past-or-equal) week, roll it into the active slot.
+            const activeBuffWeek = squad.active_buff_week_id || '';
+            if (squad.active_buff_tier && activeBuffWeek && activeBuffWeek < canonicalWeek) {
+                safePatch.active_buff_tier = '';
+                safePatch.active_buff_week_id = '';
+            }
+            const pendingBuffWeek = squad.pending_buff_week_id || '';
+            if (squad.pending_buff_tier && pendingBuffWeek && pendingBuffWeek <= canonicalWeek) {
+                // Pending buff is now current (or overdue) — promote it.
+                safePatch.active_buff_tier = squad.pending_buff_tier;
+                safePatch.active_buff_week_id = pendingBuffWeek;
+                safePatch.pending_buff_tier = '';
+                safePatch.pending_buff_week_id = '';
+            }
+
             if (Object.keys(safePatch).length === 0) {
                 // Nothing to reset — squad is already on the canonical period.
                 return Response.json({ success: true, squad });
@@ -960,21 +977,19 @@ Deno.serve(async (req) => {
                 return `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
             })();
 
-            // Buff lifecycle (Briantjeuh bug 2026-06-15 — "button said activated
-            // all week, couldn't buy for next week"):
-            //   - "active" = stamped for the CURRENT week → in effect right now,
-            //     shown in the UI, but DOES NOT block buying next week's buff.
-            //   - "pending" = stamped for a FUTURE week → already pre-purchased
-            //     for next week, BLOCKS new purchases until that week arrives.
-            //   - stamped for a past week → expired, ignored entirely.
-            // Previously both states were lumped together as "live" and the
-            // purchase button stayed locked for the entire active week.
-            const stampedWeek = squad.active_buff_week_id || '';
-            const hasStamp = !!(squad.active_buff_tier && stampedWeek);
-            const isActiveThisWeek = hasStamp && stampedWeek === currentWeekId;
-            const isPendingNextWeek = hasStamp && stampedWeek > currentWeekId;
-            const activeBuffTier = isActiveThisWeek ? squad.active_buff_tier : '';
-            const pendingBuffTier = isPendingNextWeek ? squad.active_buff_tier : '';
+            // Two real storage slots (2026-06-16 refactor — Cosmic Sloths bug):
+            //   - active_buff_*  = buff currently in effect THIS week.
+            //   - pending_buff_* = buff pre-purchased for a FUTURE week.
+            // Pending → active rollover happens in `resetPeriods` when week advances.
+            // We still self-heal here: if active_* points to a past week we treat
+            // it as empty (display only — no destructive write from this read path).
+            const activeStampedWeek = squad.active_buff_week_id || '';
+            const activeIsLive = !!(squad.active_buff_tier && activeStampedWeek === currentWeekId);
+            const activeBuffTier = activeIsLive ? squad.active_buff_tier : '';
+
+            const pendingStampedWeek = squad.pending_buff_week_id || '';
+            const pendingIsFuture = !!(squad.pending_buff_tier && pendingStampedWeek > currentWeekId);
+            const pendingBuffTier = pendingIsFuture ? squad.pending_buff_tier : '';
 
             if (action === 'getTreasury') {
                 return Response.json({
@@ -982,10 +997,10 @@ Deno.serve(async (req) => {
                     treasury_total_donated: squad.treasury_total_donated || 0,
                     // Buff currently in effect this week (display only — does not block new purchases).
                     active_buff_tier: activeBuffTier,
-                    active_buff_week_id: activeBuffTier ? stampedWeek : '',
+                    active_buff_week_id: activeBuffTier ? activeStampedWeek : '',
                     // Buff already pre-purchased for a future week (blocks new buys / allows upgrade).
                     pending_buff_tier: pendingBuffTier,
-                    pending_buff_week_id: pendingBuffTier ? stampedWeek : '',
+                    pending_buff_week_id: pendingBuffTier ? pendingStampedWeek : '',
                     current_week_id: currentWeekId,
                 });
             }
@@ -1092,26 +1107,27 @@ Deno.serve(async (req) => {
                     return `${year}-W${String(w + 1).padStart(2, '0')}`;
                 };
 
-                // A buff stamped for the CURRENT week is "in effect now" — it
-                // does NOT block buying next week's buff (Briantjeuh bug
-                // 2026-06-15). Only a buff stamped for a FUTURE week blocks a
-                // new purchase or triggers the upgrade path. Past-week stamps
-                // are expired and ignored.
-                const freshStampedWeek = freshSquad.active_buff_week_id || '';
-                const freshHasStamp = !!(freshSquad.active_buff_tier && freshStampedWeek);
-                const freshIsPending = freshHasStamp && freshStampedWeek > currentWeekId;
-                const freshPendingBuffTier = freshIsPending ? freshSquad.active_buff_tier : '';
+                // Re-derive both slots from the fresh row.
+                const freshActiveWeek = freshSquad.active_buff_week_id || '';
+                const freshActiveTier = (freshSquad.active_buff_tier && freshActiveWeek === currentWeekId)
+                    ? freshSquad.active_buff_tier
+                    : '';
+                const freshPendingWeek = freshSquad.pending_buff_week_id || '';
+                const freshPendingTier = (freshSquad.pending_buff_tier && freshPendingWeek > currentWeekId)
+                    ? freshSquad.pending_buff_tier
+                    : '';
 
                 const treasury = freshSquad.treasury_gold || 0;
                 let chargeAmount = tier.cost;
-                let nextWeekId;
+                let targetWeek;
+                let writeSlot; // 'active' or 'pending'
 
-                if (freshPendingBuffTier) {
-                    // There's already a buff pre-purchased for a future week — block or upgrade.
-                    const liveCost = TREASURY_TIERS[freshPendingBuffTier]?.cost || 0;
-                    if (freshPendingBuffTier === tierKey) {
+                if (freshPendingTier) {
+                    // Already pre-purchased for a future week — block duplicate / upgrade only.
+                    const liveCost = TREASURY_TIERS[freshPendingTier]?.cost || 0;
+                    if (freshPendingTier === tierKey) {
                         return Response.json({
-                            error: `Your squad already activated a ${tier.label} buff for ${freshStampedWeek}.`,
+                            error: `Your squad already activated a ${tier.label} buff for ${freshPendingWeek}.`,
                             alreadyActive: true,
                         }, { status: 409 });
                     }
@@ -1119,44 +1135,54 @@ Deno.serve(async (req) => {
                         return Response.json({ error: 'You can only upgrade to a higher-tier buff (no downgrades).' }, { status: 400 });
                     }
                     chargeAmount = tier.cost - liveCost;
-                    // Upgrade keeps the pending buff's target week.
-                    nextWeekId = freshStampedWeek;
+                    targetWeek = freshPendingWeek;
+                    writeSlot = 'pending';
+                } else if (freshActiveTier) {
+                    // Current-week buff already running — new purchase goes into the pending slot for next week.
+                    targetWeek = computeNextWeek(currentWeekId);
+                    writeSlot = 'pending';
                 } else {
-                    // No pending buff — fresh activation for next ISO week. Any
-                    // current-week or past-week stamp is overwritten (that buff
-                    // is either in effect now or already expired).
-                    nextWeekId = computeNextWeek(currentWeekId);
+                    // No active or pending buff — this purchase activates THIS week immediately.
+                    targetWeek = currentWeekId;
+                    writeSlot = 'active';
                 }
 
                 if (treasury < chargeAmount) {
                     return Response.json({
-                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${chargeAmount.toLocaleString()} ${freshPendingBuffTier ? 'to upgrade' : `for ${tier.label}`}.`
+                        error: `Treasury holds ${treasury.toLocaleString()} — needs ${chargeAmount.toLocaleString()} ${freshPendingTier ? 'to upgrade' : `for ${tier.label}`}.`
                     }, { status: 400 });
                 }
 
-                await base44.asServiceRole.entities.Squad.update(squadId, {
-                    treasury_gold: treasury - chargeAmount,
-                    active_buff_tier: tierKey,
-                    active_buff_week_id: nextWeekId,
-                });
+                const patch = { treasury_gold: treasury - chargeAmount };
+                if (writeSlot === 'active') {
+                    patch.active_buff_tier = tierKey;
+                    patch.active_buff_week_id = targetWeek;
+                } else {
+                    patch.pending_buff_tier = tierKey;
+                    patch.pending_buff_week_id = targetWeek;
+                }
+                await base44.asServiceRole.entities.Squad.update(squadId, patch);
 
                 try {
                     await base44.asServiceRole.entities.SquadMessage.create({
                         squad_id: squadId,
                         wallet_address: 'system',
                         player_name: 'SYSTEM',
-                        content: freshPendingBuffTier
-                            ? `⭐ ${authoritativeName} upgraded the treasury buff to ${tier.label} for ${nextWeekId} (paid ${chargeAmount.toLocaleString()} difference)!`
-                            : `⭐ ${authoritativeName} activated a ${tier.label} treasury buff for ${nextWeekId}!`,
+                        content: freshPendingTier
+                            ? `⭐ ${authoritativeName} upgraded the treasury buff to ${tier.label} for ${targetWeek} (paid ${chargeAmount.toLocaleString()} difference)!`
+                            : `⭐ ${authoritativeName} activated a ${tier.label} treasury buff for ${targetWeek}!`,
                     });
                 } catch {}
 
                 return Response.json({
                     success: true,
                     treasury_gold: treasury - chargeAmount,
-                    active_buff_tier: tierKey,
-                    active_buff_week_id: nextWeekId,
-                    upgraded: !!freshPendingBuffTier,
+                    // Return BOTH slots so the UI updates correctly regardless of which we wrote.
+                    active_buff_tier: writeSlot === 'active' ? tierKey : freshActiveTier,
+                    active_buff_week_id: writeSlot === 'active' ? targetWeek : (freshActiveTier ? freshActiveWeek : ''),
+                    pending_buff_tier: writeSlot === 'pending' ? tierKey : freshPendingTier,
+                    pending_buff_week_id: writeSlot === 'pending' ? targetWeek : (freshPendingTier ? freshPendingWeek : ''),
+                    upgraded: !!freshPendingTier,
                 });
             }
         }
