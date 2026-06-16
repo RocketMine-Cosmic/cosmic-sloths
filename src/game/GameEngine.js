@@ -1406,11 +1406,13 @@ export class GameEngine {
         }
 
         const executeThreshold = this.masteryAbilityBoost?.executeThreshold ?? 0.2;
-        // Execute exempts bosses, elites, and tier-7+ enemies — high-tier enemies have
-        // inflated HP pools that NeonVortex was vaporising at 20% HP, causing runaway
-        // snowballing in late sectors and endless. (Balance pass 2026-05-02 — leaderboard
-        // showed NeonVortex dominating top 30 scores.)
-        if (this.characterId === 'neonvortex' && !enemy.isBoss && !enemy.isElite && (enemy.tier || 0) < 7 && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
+        // Execute exempts bosses, elites, and tier-12+ enemies (Outer Galaxy mythics).
+        // Previous cutoff was tier 7 which killed the skill entirely in Outer Galaxy
+        // sectors 11-20 where almost every enemy is tier 11+. Raised to tier 12 so the
+        // skill stays useful on standard Outer Galaxy grunts while still preventing
+        // NeonVortex from vaporising the apex mythic-tier enemies that were causing
+        // the original snowball (balance pass 2026-05-02 → revised 2026-06-16).
+        if (this.characterId === 'neonvortex' && !enemy.isBoss && !enemy.isElite && (enemy.tier || 0) < 12 && enemy.hp > 0 && enemy.hp <= enemy.maxHp * executeThreshold) {
             enemy.hp = 0;
             this.addDamageText(enemy.x, enemy.y - 20, "EXECUTED", '#7A00FF');
             for(let i=0; i<3; i++) {
