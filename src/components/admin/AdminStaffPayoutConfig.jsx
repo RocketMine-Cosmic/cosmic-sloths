@@ -2,19 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Settings, Loader2, Save, AlertTriangle } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
+import StaffPayoutAllocationPreview, { SOFT_CAP_PCT, HARD_CAP_PCT } from './StaffPayoutAllocationPreview';
 
-// Allocation breakdown of total weekly OMENX spend (see distributeRewards.js + distributeSquadChampions.js):
-//   • Weekly player rewards   = 20% of weekly spend
-//   • Weekly staff payouts    = staff_count × pct (this widget controls pct)
-//   • Seasonal player rewards = 30% of seasonal spend (≈ same as weekly spend over the season)
-//   • Squad Champions pool    = 10% of seasonal spend
-// Combined fixed allocation (non-staff) = 20 + 30 + 10 = 60%.
-const WEEKLY_PLAYER_PCT = 0.20;
-const SEASONAL_PLAYER_PCT = 0.30;
+// Pool %s are loaded LIVE from leaderboardPayoutConfig at mount — the previous
+// hardcoded constants (20/30/10) were the S6 numbers; S7+ uses 15/20/5 + 10%
+// champions, so showing static figures was misleading. Squad Champions pct is
+// still hardcoded — it lives in distributeSquadChampions, not in
+// leaderboardPayoutConfig — so we mirror its constant here.
 const SQUAD_CHAMPIONS_PCT = 0.10;
-const FIXED_ALLOCATION_PCT = WEEKLY_PLAYER_PCT + SEASONAL_PLAYER_PCT + SQUAD_CHAMPIONS_PCT; // 0.60
-const SOFT_CAP_PCT = 0.75; // warn above this
-const HARD_CAP_PCT = 0.85; // block save above this
 
 // Owner-only widget: read & update the per-staff weekly payout percentage.
 // Stored in AppConfig under key 'staff_pct_per_wallet' via setStaffPayoutPct fn.
@@ -27,6 +22,12 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     const [notes, setNotes] = useState('');
     const [current, setCurrent] = useState(null);
     const [staffCount, setStaffCount] = useState(0);
+    // Live pool %s pulled from leaderboardPayoutConfig (see DEFAULT_CONFIG there)
+    const [poolPcts, setPoolPcts] = useState({
+        weekly: 0.15,
+        seasonal: 0.20,
+        kill: 0.05,
+    });
     const [msg, setMsg] = useState('');
 
     const adminKey = sessionStorage.getItem('admin_key') || undefined;
@@ -36,23 +37,30 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
         Promise.all([
             base44.functions.invoke('setStaffPayoutPct', { action: 'get', adminKey }),
             base44.functions.invoke('getAdminData', { type: 'adminWallets' }),
+            base44.functions.invoke('leaderboardPayoutConfig', { action: 'get' }),
         ])
-            .then(([cfgRes, walletsRes]) => {
+            .then(([cfgRes, walletsRes, lbRes]) => {
                 if (cfgRes.data?.error) throw new Error(cfgRes.data.error);
                 setCurrent(cfgRes.data);
                 setPctInput(((cfgRes.data.pct ?? 0.02) * 100).toFixed(2));
                 const wallets = walletsRes.data?.records || [];
                 setStaffCount(wallets.filter(w => w.wallet_address).length);
+                const lbCfg = lbRes.data?.config || {};
+                setPoolPcts({
+                    weekly:   lbCfg.weekly_pool_pct   ?? 0.15,
+                    seasonal: lbCfg.seasonal_pool_pct ?? 0.20,
+                    kill:     lbCfg.kill_pool_pct     ?? 0.05,
+                });
             })
             .catch(e => setMsg(`✗ ${e.message}`))
             .finally(() => setLoading(false));
     }, [isOwner]);
 
     const numericPct = Number(pctInput) / 100;
-    const staffTotalPct = staffCount * numericPct; // total share going to staff
-    const grandTotalPct = FIXED_ALLOCATION_PCT + staffTotalPct; // weekly players + staff + seasonal players + champions
-    const isOverHardCap = grandTotalPct > HARD_CAP_PCT;
-    const isOverSoftCap = grandTotalPct > SOFT_CAP_PCT && !isOverHardCap;
+    const staffTotalPct = staffCount * numericPct; // total share of WEEKLY spend going to staff
+    // Cap check applies to the WEEKLY bar only (where staff payouts come from)
+    const weeklyAllocPct = poolPcts.weekly + poolPcts.kill + staffTotalPct;
+    const isOverHardCap = weeklyAllocPct > HARD_CAP_PCT;
     const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10 && !isOverHardCap;
     const changed = current && Math.abs(numericPct - current.pct) > 0.00001;
 
@@ -115,51 +123,14 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         </div>
                     </div>
 
-                    {/* Total pool allocation — live preview using the value in the input */}
-                    <div className="bg-slate-900/60 border border-slate-700 rounded p-3 mb-3">
-                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                            <div className="text-[10px] text-slate-500 uppercase font-bold">Total Weekly Spend Allocation (preview)</div>
-                            <div className={`text-xs font-mono font-bold ${isOverHardCap ? 'text-red-400' : isOverSoftCap ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                {(grandTotalPct * 100).toFixed(2)}% of weekly spend
-                            </div>
-                        </div>
-                        {/* Stacked bar with cap markers */}
-                        <div className="relative h-3 w-full bg-slate-950 rounded overflow-hidden flex border border-slate-800">
-                            <div className="bg-cyan-600 h-full" style={{ width: `${WEEKLY_PLAYER_PCT * 100}%` }} title={`Weekly players: ${(WEEKLY_PLAYER_PCT * 100).toFixed(0)}%`} />
-                            <div className="bg-indigo-600 h-full" style={{ width: `${SEASONAL_PLAYER_PCT * 100}%` }} title={`Seasonal players: ${(SEASONAL_PLAYER_PCT * 100).toFixed(0)}%`} />
-                            <div className="bg-purple-600 h-full" style={{ width: `${SQUAD_CHAMPIONS_PCT * 100}%` }} title={`Squad Champions: ${(SQUAD_CHAMPIONS_PCT * 100).toFixed(0)}%`} />
-                            <div className={`${isOverHardCap ? 'bg-red-600' : isOverSoftCap ? 'bg-amber-500' : 'bg-emerald-500'} h-full`}
-                                style={{ width: `${Math.min(staffTotalPct, Math.max(0, 1 - FIXED_ALLOCATION_PCT)) * 100}%` }}
-                                title={`Staff: ${(staffTotalPct * 100).toFixed(2)}%`} />
-                            {/* Soft cap line (75%) */}
-                            <div className="absolute top-0 bottom-0 w-px bg-amber-300/80" style={{ left: `${SOFT_CAP_PCT * 100}%` }} title="Soft cap 75%" />
-                            {/* Hard cap line (85%) */}
-                            <div className="absolute top-0 bottom-0 w-px bg-red-400" style={{ left: `${HARD_CAP_PCT * 100}%` }} title="Hard cap 85%" />
-                        </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[10px] font-mono">
-                            <span className="text-cyan-400">■ Weekly players {(WEEKLY_PLAYER_PCT * 100).toFixed(0)}%</span>
-                            <span className="text-indigo-400">■ Seasonal players {(SEASONAL_PLAYER_PCT * 100).toFixed(0)}%</span>
-                            <span className="text-purple-400">■ Squad Champions {(SQUAD_CHAMPIONS_PCT * 100).toFixed(0)}%</span>
-                            <span className={isOverHardCap ? 'text-red-400' : isOverSoftCap ? 'text-amber-400' : 'text-emerald-400'}>
-                                ■ Staff {(staffTotalPct * 100).toFixed(2)}% ({staffCount} × {(numericPct * 100).toFixed(2)}%)
-                            </span>
-                            <span className="text-amber-300">┊ Soft cap {(SOFT_CAP_PCT * 100).toFixed(0)}%</span>
-                            <span className="text-red-400">┊ Hard cap {(HARD_CAP_PCT * 100).toFixed(0)}%</span>
-                            <span className="text-slate-500">
-                                ■ Retained {Math.max(0, (1 - grandTotalPct) * 100).toFixed(2)}%
-                            </span>
-                        </div>
-                        {isOverHardCap && (
-                            <div className="mt-2 text-xs text-red-400 flex items-center gap-1.5 font-bold">
-                                <AlertTriangle size={12} /> Hard cap exceeded ({(HARD_CAP_PCT * 100).toFixed(0)}%) — save blocked. Lower % or remove staff wallets.
-                            </div>
-                        )}
-                        {isOverSoftCap && (
-                            <div className="mt-2 text-xs text-amber-400 flex items-center gap-1.5">
-                                <AlertTriangle size={12} /> Above soft cap ({(SOFT_CAP_PCT * 100).toFixed(0)}%) — proceed with caution.
-                            </div>
-                        )}
-                    </div>
+                    <StaffPayoutAllocationPreview
+                        weeklyPlayerPct={poolPcts.weekly}
+                        seasonalPlayerPct={poolPcts.seasonal}
+                        killPoolPct={poolPcts.kill}
+                        squadChampionsPct={SQUAD_CHAMPIONS_PCT}
+                        staffCount={staffCount}
+                        numericPct={numericPct}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 items-end">
                         <label className="flex flex-col gap-1">
