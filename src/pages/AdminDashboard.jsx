@@ -9,7 +9,7 @@ import AdminPlayers from '../components/admin/AdminPlayers';
 import AdminRunScoreLookup from '../components/admin/AdminRunScoreLookup';
 import AdminEconomy from '../components/admin/AdminEconomy';
 import AdminRewards from '../components/admin/AdminRewards';
-import AdminSquads from '../components/admin/AdminSquads';
+import AdminSquadManager from '../components/admin/AdminSquadManager';
 import AdminRaid from '../components/admin/AdminRaid';
 import AdminLeaderboard from '../components/admin/AdminLeaderboard';
 import AdminSkus from '../components/admin/AdminSkus';
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
             );
             case 'grant':       return <AdminGrantPanel walletAddress={adminWallet} />;
             case 'nft_refresh': return <AdminRefreshPlayerNFTs />;
-            case 'squads':      return <AdminSquads walletAddress={adminWallet} />;
+            case 'squads':      return <AdminSquadManager walletAddress={adminWallet} />;
             case 'raid':        return <AdminRaid walletAddress={adminWallet} />;
             case 'economy':     return <AdminEconomy walletAddress={adminWallet} />;
             case 'suspicious':  return <AdminSuspiciousRuns walletAddress={adminWallet} />;
