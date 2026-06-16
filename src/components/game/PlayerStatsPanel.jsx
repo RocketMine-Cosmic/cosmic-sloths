@@ -74,6 +74,25 @@ export default function PlayerStatsPanel({ engineRef }) {
                         )}
                     </div>
                 </div>
+                {/* Pandypaws-only: scrap armor stack (hidden from HUD before this — players
+                    couldn't see their +0.1 pickups accumulating. Each scrap = +0.1 armor,
+                    capped at +10 per run. Shows stack count + bonus value next to base armor. */}
+                {engine.characterId === 'pandypaws' && (
+                    <div className="flex items-center justify-between bg-slate-900/60 px-2 py-1 rounded border border-amber-700/50 col-span-2">
+                        <span className="text-amber-300 flex items-center gap-1">⚙️ Scrap Armor</span>
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-white font-mono font-bold">
+                                ×{Math.round((engine.characterMechanics?.scrapArmor || 0) * 10)}
+                            </span>
+                            <span className="text-[10px] font-bold text-emerald-400">
+                                +{(engine.characterMechanics?.scrapArmor || 0).toFixed(1)} armor
+                            </span>
+                            {(engine.characterMechanics?.scrapArmor || 0) >= 10 && (
+                                <span className="text-[10px] font-bold text-amber-400">MAX</span>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
             <div className="text-[10px] text-slate-500 mt-2 text-center italic">
                 Green = gained from upgrades, talents, relics & mastery
