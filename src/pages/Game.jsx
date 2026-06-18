@@ -893,18 +893,21 @@ export default function Game() {
         const itemName = tier === 'lite' ? 'Squad Lite (capped power)' : 'Squad Ultimate (full power)';
         const skuId = tier === 'lite' ? IN_GAME_SKUS.squadUltimateLite : IN_GAME_SKUS.squadUltimateFull;
         if (omenxPurchasesDisabled) return;
-        // NOTE: ULT buttons now live inside PauseModal, so the engine IS paused
-        // when this fires. Previously this branch had `!engineRef.current.isPaused`
-        // which silently blocked every press after the move (no spawn, no charge).
+        // NOTE: ULT buttons now live inside PauseModal — engine IS paused when
+        // this fires. PauseModal no longer calls onResume() itself, so the game
+        // stays cleanly paused while the OMENX confirm prompt is up (Anubis bug
+        // 2026-06-18 — game was running in background behind the confirm popup).
         if ((omenxBalance ?? 0) >= cost && engineRef.current) {
-            // `force: true` — ULT confirm prompt should always show even when the
-            // 24h "don't show again" skip is active, since it's a meaningful spend.
+            // No `force` — the "don't show for 24h" skip is now respected so
+            // repeat ULT presses don't get spammed with the confirm modal.
             confirmPurchase(cost, itemName, () => {
                 // Grant immediately, pay in background
                 engineRef.current.triggerSquadUltimate(tier);
                 purchaseSku(skuId);
                 refreshBalance();
-            }, { force: true });
+                // Drop the player straight back into the run with their ULT live.
+                handleResume();
+            });
         }
     };
 

@@ -99,7 +99,7 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                     {onSquadUltimate && (
                         <div className="grid grid-cols-2 gap-2">
                             <button
-                                onClick={() => { onSquadUltimate('lite'); onResume(); }}
+                                onClick={() => onSquadUltimate('lite')}
                                 disabled={omenxBalance < ULT_LITE_COST || omenxPurchasesDisabled}
                                 className="bg-purple-700 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-3 rounded-lg font-bold text-sm md:text-base transition-colors shadow-[0_0_15px_rgba(168,85,247,0.35)] flex flex-col items-center justify-center gap-0.5 border-2 border-purple-500"
                                 title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Spawn a capped-power squad clone'}
@@ -108,7 +108,7 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                                 <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{ULT_LITE_COST} OMENX</span>
                             </button>
                             <button
-                                onClick={() => { onSquadUltimate('full'); onResume(); }}
+                                onClick={() => onSquadUltimate('full')}
                                 disabled={omenxBalance < ULT_FULL_COST || omenxPurchasesDisabled}
                                 className="bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-3 rounded-lg font-bold text-sm md:text-base transition-colors shadow-[0_0_15px_rgba(217,70,239,0.35)] flex flex-col items-center justify-center gap-0.5 border-2 border-fuchsia-500"
                                 title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Spawn a full-power squad clone scaled to your upgrades'}
