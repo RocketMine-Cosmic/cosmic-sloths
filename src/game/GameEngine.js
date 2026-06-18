@@ -876,10 +876,18 @@ export class GameEngine {
         //   S7 §4g: per-difficulty params — Normal/Hard now also ramp so the new
         //     §4f HEAT score bonus has something to reward. Easy stays at 1.0×
         //     (no DD).
+        // Speed caps lowered (2026-06-18 Anubis bug — "base speed for some mobs
+        // is way too high once DD kicks in"). The previous caps (1.5/2.0/2.5)
+        // stacked on Cosmic's 1.25× base difficulty multiplier let fast mobs hit
+        // ~8 units/frame — well over 2× the fastest player character (Glitch
+        // 3.6) — making them mathematically unkiteable. New caps keep DD as a
+        // meaningful spawn-density ramp (spawnCap unchanged) but ensure even at
+        // peak DD on Cosmic, the fastest enemies stay within ~1.4× of the
+        // fastest character so kiting/dashing still works.
         const S7_DD_PARAMS = this._isS7 ? ({
-            normal: { spawnCap: 1.75, speedCap: 1.5, upStep: 0.20 },
-            hard:   { spawnCap: 2.5,  speedCap: 2.0, upStep: 0.25 },
-            cosmic: { spawnCap: 3.5,  speedCap: 2.5, upStep: 0.30 },
+            normal: { spawnCap: 1.75, speedCap: 1.2,  upStep: 0.20 },
+            hard:   { spawnCap: 2.5,  speedCap: 1.35, upStep: 0.25 },
+            cosmic: { spawnCap: 3.5,  speedCap: 1.5,  upStep: 0.30 },
         })[this.difficulty.id] : null;
         const ddEnabled = this._isS7
             ? !!S7_DD_PARAMS
