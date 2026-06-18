@@ -893,10 +893,12 @@ export default function Game() {
         const itemName = tier === 'lite' ? 'Squad Lite (capped power)' : 'Squad Ultimate (full power)';
         const skuId = tier === 'lite' ? IN_GAME_SKUS.squadUltimateLite : IN_GAME_SKUS.squadUltimateFull;
         if (omenxPurchasesDisabled) return;
-        if ((omenxBalance ?? 0) >= cost && engineRef.current && !engineRef.current.isPaused) {
-            // `force: true` — ULT buttons sit over the in-run playfield, so
-            // players were accidentally triggering them mid-fight when the
-            // 24h "don't show again" skip was active. Always show the modal.
+        // NOTE: ULT buttons now live inside PauseModal, so the engine IS paused
+        // when this fires. Previously this branch had `!engineRef.current.isPaused`
+        // which silently blocked every press after the move (no spawn, no charge).
+        if ((omenxBalance ?? 0) >= cost && engineRef.current) {
+            // `force: true` — ULT confirm prompt should always show even when the
+            // 24h "don't show again" skip is active, since it's a meaningful spend.
             confirmPurchase(cost, itemName, () => {
                 // Grant immediately, pay in background
                 engineRef.current.triggerSquadUltimate(tier);
