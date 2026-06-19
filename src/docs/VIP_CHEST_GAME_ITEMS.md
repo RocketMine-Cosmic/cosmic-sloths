@@ -1,0 +1,261 @@
+# VIP Chest — Game Items Design Doc
+
+**Status:** Draft / Brainstorm  
+**Author:** Cosmic Sloth dev (Hugo)  
+**Date:** 2026-06-19  
+**Context:** OmenX is launching **VIP Chests** (Bronze → Elite, 7 tiers) as an OmenX **platform** reward. Chests roll from a pool of categories:
+
+1. Asset Manager Packs
+2. Faucet Manager Packs
+3. OMENX Tokens
+4. VIP Points
+5. **Game Items** ← *this doc*
+
+This doc covers ONLY the Game Items slot — what Cosmic Sloth contributes when a chest rolls a game-item reward.
+
+---
+
+## Design Principles
+
+1. **Game items are the "fun bonus" tier.** Real value lives in the on-chain rolls (Asset/Faucet/OMENX). Game items must feel exciting on the open, not be a primary driver of chest EV.
+2. **No item bypasses the leaderboard.** All stat-affecting items are capped. No silent score multipliers, no per-run damage buffs that show on the LB. (We killed silent buffs at S6 for a reason.)
+3. **Cosmetics must be spectacular.** The cosmetics we ship today (basic emoji icons, plain titles, jukebox tracks) are forgettable. Chest cosmetics must be **animated, exclusive, and visibly different** — something a player would screenshot.
+4. **Reuse existing systems.** Every item below already plugs into Forge / Meteor / Squads / Loadouts / Cosmetics. No new game subsystems required.
+5. **Inventory model.** Game items grant directly to PlayerSave (gold, fragments, tokens, cosmetic unlocks) — no NFT-bound game items at this stage. The chest itself is the NFT.
+
+---
+
+## The Shortlist — 12 Items
+
+Tight, shippable, and covers every chest tier.
+
+### 💰 Currency Drops (4 items — Common → Rare)
+
+| # | Item | Rarity | Effect |
+|---|---|---|---|
+| 1 | **Gold Cache** | Common | 10k / 25k / 50k / 100k gold (tier-scaled) |
+| 2 | **Relic Fragment Cache** | Common | 10 / 25 / 50 / 100 fragments (tier-scaled) |
+| 3 | **Star Fragment Cache** | Uncommon | 1 / 3 / 5 / 10 star fragments (tier-scaled) |
+| 4 | **Squad Treasury Voucher** | Uncommon | Auto-donates 50k gold to the player's squad treasury (player still gets the donation credit) |
+
+These are the safe baseline. Every chest tier has a chance at one of these — guarantees a non-empty game-item roll.
+
+### 🎯 Convenience Tokens (3 items — Uncommon → Rare)
+
+| # | Item | Rarity | Effect |
+|---|---|---|---|
+| 5 | **Talent Respec Token** | Uncommon | One free full talent respec |
+| 6 | **Pool Bias Respec Token** | Uncommon | One free Pool Bias respec (skips the escalating gold cost) |
+| 7 | **Mystery Forge Reroll** | Rare | Reroll one Mystery Forge augment for free |
+
+Already-existing actions, just gifted. Zero new code beyond inventory grants.
+
+### ⚡ Power Tokens (3 items — Rare → Legendary, all capped)
+
+| # | Item | Rarity | Effect | Cap |
+|---|---|---|---|---|
+| 8 | **Bonus Meteor Attack** | Rare | +1 Squad Meteor attack on top of the daily 3 | Max 2 banked at a time |
+| 9 | **Loadout Slot Unlock** | Epic | Permanent +1 saved loadout slot | Hard cap at 10 total slots |
+| 10 | **Permanent Stat Pip** | Legendary | +1% to one stat (player picks: Gold / Damage / AoE / CDR / XP) | **Hard cap 10 pips total across all stats**, lifetime |
+
+Item #10 is the only "permanent power" item. Capped tightly at 10 pips (max +10% to any single stat, max +10% spread across stats) so chest stacking can't break balance. Leaderboards stay fair because the cap is identical for every player who buys chests.
+
+### 💎 Cosmetics (2 items — Epic → Mythic)
+
+| # | Item | Rarity | Effect |
+|---|---|---|---|
+| 11 | **VIP Cosmetic Drop** | Epic | One chest-exclusive cosmetic (rotating pool — see **Cosmetics Overhaul** below) |
+| 12 | **VIP Mythic Cosmetic Drop** | Mythic | One Mythic-tier cosmetic — only available in Legend / Elite chests |
+
+---
+
+## Per-Chest-Tier Game-Item Pools
+
+When a chest rolls "Game Items," the chest tier dictates the pool. Higher tiers can roll lower-tier items, but with smaller weight.
+
+| Chest | Pool | Weight on Cosmetic Roll |
+|---|---|---|
+| 🥉 **Bronze** | Items 1, 2, 5 | 0% Mythic, 0% Epic cosmetic |
+| 🥈 **Silver** | + 3, 4, 6 | 0% Mythic, 5% Epic cosmetic |
+| 🥇 **Gold** | + 7, 8 | 0% Mythic, 15% Epic cosmetic |
+| 💎 **Platinum** | + 9 | 0% Mythic, 30% Epic cosmetic |
+| 💠 **Diamond** | + 11 (Epic cosmetic) | 5% Mythic, 45% Epic cosmetic |
+| 🟣 **Legend** | + 10 (Stat Pip) | 15% Mythic, 60% Epic cosmetic |
+| 👑 **Elite** | + 12 (Mythic cosmetic) | 35% Mythic, 65% Epic cosmetic |
+
+---
+
+## 🌟 Cosmetics Overhaul — REQUIRED
+
+> **The current cosmetics are meh.** Plain emoji icons, static titles, jukebox tracks. None of it screenshots well. None of it makes another player go "wait, where did you get THAT."
+>
+> Chest cosmetics need to fix this — or chests will feel like a flop on the cosmetic roll.
+
+### What "Spectacular" means
+
+Every chest cosmetic must hit at least one of:
+
+- **Animated** (not a static emoji)
+- **Visible in-game during a run** (not just on the menu)
+- **Visibly chest-exclusive** (other players can tell at a glance)
+- **One-of-a-kind per season** (Mythic tier only)
+
+### New Cosmetic Categories to Build
+
+#### 1. Animated Pilot Icons ⭐ (Epic)
+- Looping animated sprites (8–16 frame loops) instead of static emoji
+- Examples: a slowly rotating black hole, a flickering hologram skull, a pulsing star, a blinking robot eye
+- Shown next to player name on **leaderboard, squad chat, squad page, in-run HUD, end-of-run modal**
+- **Implementation:** add `pilot_icon_animated_url` field on PlayerSave.profile — render as `<img>` when present, fall back to emoji
+
+#### 2. Leaderboard Banner Frames ⭐⭐ (Epic / Mythic)
+- An animated frame that wraps the player's row on the weekly leaderboard
+- Examples: golden flame border, electric arc border, swirling nebula border, glitch border
+- **Visible on the leaderboard to everyone** — pure flex
+- **Implementation:** add `lb_frame_id` field on PlayerSave.profile; LeaderboardPage maps id → CSS class
+
+#### 3. Title Flair / Title Gradients ⭐ (Epic)
+- Player titles get **animated gradient text**, **glow effects**, or **particle trails** on hover
+- Today's titles are flat white text. Chest titles are alive.
+- Examples: rainbow shimmer, blue-flame outline, gold leaf, glitched RGB split
+- **Implementation:** add `title_style_id` field; map to a CSS class in title rendering
+
+#### 4. Weapon Trails / Projectile Skins ⭐⭐ (Mythic)
+- Cosmetic-only visual upgrade to the player's projectiles in-game
+- Examples: gold projectile trails, neon-pink lasers, void-purple blasts, fire trails
+- **Visible during gameplay** — every other player who watches a Discord clip sees it
+- **Implementation:** add `weapon_trail_id` on PlayerSave; ProjectileRenderer picks color/particle based on id
+- **No damage impact** — purely visual
+
+#### 5. Death FX / Kill Effect Skins ⭐⭐ (Mythic)
+- When you kill an enemy, the death effect changes
+- Examples: gold coin burst, neon shatter, void implosion, fireworks
+- **Visible in-game on every kill** — high screenshot value
+- **Implementation:** add `kill_fx_id` on PlayerSave; ParticleManager branches on id
+
+#### 6. Squad Meteor Strike FX ⭐⭐ (Mythic)
+- Your meteor attacks render with a custom strike effect for the whole squad to see in the activity feed
+- Examples: gold lightning, void rift, supernova flash
+- **Implementation:** stored on SquadMeteorAttack record; rendered on the activity feed line
+
+#### 7. Custom Title ⭐⭐⭐ (Mythic, Elite-only)
+- Player types their own title, mod-approved (anti-slur filter + manual review)
+- Already-existing moderation pipeline (we have admin tools for chat moderation)
+- **Implementation:** new `custom_title_pending` field + admin approval UI
+
+---
+
+## Cosmetic Inventory Plan
+
+Every Epic / Mythic cosmetic drop pulls from a **per-season pool**. New cosmetics ship each season — old chest cosmetics become "vintage" and unobtainable, increasing the value of older chest contents.
+
+**Rough Season-1-of-chests pool (20 cosmetics):**
+
+| Cosmetic | Category | Tier | Notes |
+|---|---|---|---|
+| Animated icon: Orbiting Moon | Pilot Icon | Epic | |
+| Animated icon: Glitch Skull | Pilot Icon | Epic | |
+| Animated icon: Pulsing Heart | Pilot Icon | Epic | |
+| Animated icon: Rotating Blackhole | Pilot Icon | Epic | |
+| Animated icon: Cosmic Egg | Pilot Icon | Epic | |
+| LB Frame: Gold Flame | Banner Frame | Epic | |
+| LB Frame: Electric Arc | Banner Frame | Epic | |
+| LB Frame: Nebula Swirl | Banner Frame | Epic | |
+| Title Flair: Rainbow Shimmer | Title Style | Epic | |
+| Title Flair: Blue Flame | Title Style | Epic | |
+| Title Flair: Gold Leaf | Title Style | Epic | |
+| Weapon Trail: Gold | Projectile FX | Mythic | |
+| Weapon Trail: Void | Projectile FX | Mythic | |
+| Weapon Trail: Neon Pink | Projectile FX | Mythic | |
+| Kill FX: Coin Burst | Death FX | Mythic | |
+| Kill FX: Neon Shatter | Death FX | Mythic | |
+| Kill FX: Fireworks | Death FX | Mythic | |
+| Meteor Strike: Gold Lightning | Meteor FX | Mythic | |
+| Meteor Strike: Supernova | Meteor FX | Mythic | |
+| LB Frame: Glitch RGB | Banner Frame | Mythic | Elite-only |
+
+20 cosmetics is enough for launch. Players opening 5–10 chests will collect 2–3 cosmetics, leaving plenty of chase items.
+
+---
+
+## Anti-Duplicate Logic
+
+When a chest rolls a cosmetic the player already owns:
+
+- **Silver / Gold / Platinum chests:** convert to a Star Fragment cache (3-5 fragments) so the slot isn't wasted
+- **Diamond / Legend / Elite chests:** force-roll an unowned cosmetic from the player's chest tier pool. If the player owns ALL cosmetics from their tier's pool, fall back to Star Fragment cache (15 fragments) + a small consolation gold drop (100k)
+
+This prevents whales from feeling robbed after their 5th duplicate.
+
+---
+
+## Implementation Surface (rough scope)
+
+### Backend
+- 1× new function: `claimVipChest({ chestId })` — verifies NFT ownership, rolls reward pool, grants game items
+- 1× automation listener: maintains `vip_chest_cosmetics_owned` field on PlayerSave
+- Reuses: `spendGold` plumbing for grants, existing cosmetic plumbing
+
+### Save Schema additions on PlayerSave.save_data
+```js
+{
+  // existing fields...
+  vipChestStatPips: {
+    gold: 0,      // max 10 total across all keys
+    damage: 0,
+    aoe: 0,
+    cdr: 0,
+    xp: 0,
+  },
+  loadoutSlotBonus: 0,        // additional slots above the default
+  bonusMeteorAttacks: 0,      // banked, max 2
+  ownedAnimatedIcons: [],     // ids
+  ownedLBFrames: [],          // ids
+  ownedTitleStyles: [],       // ids
+  ownedWeaponTrails: [],      // ids
+  ownedKillFX: [],            // ids
+  ownedMeteorFX: [],          // ids
+  equippedCosmetics: {
+    pilotIconAnimated: null,
+    lbFrame: null,
+    titleStyle: null,
+    weaponTrail: null,
+    killFX: null,
+    meteorFX: null,
+  },
+}
+```
+
+### Frontend
+- 1× new page: **VIP Chest Inventory** (`/vip-chests`) — list owned-but-unopened chests, open animation, reveal modal
+- 1× **Cosmetic Wardrobe** section on Profile page — equip/preview the owned animated icons, frames, trails, FX
+- Render updates in: LeaderboardPage (frame), ProjectileRenderer (trail), ParticleManager (kill FX), squad meteor activity feed (meteor FX)
+
+### Where stat pips plug in
+- Game engine reads `save.vipChestStatPips.gold` → adds to gold multiplier
+- `save.vipChestStatPips.damage` → small flat damage bonus on the multiplier stack
+- `save.vipChestStatPips.cdr` → small flat CDR bonus
+- All applied at the same layer as relic / NFT perks, capped before sector caps trigger
+
+---
+
+## Open Questions for Marco / Team
+
+1. **Are chests soulbound or tradable?** Affects how aggressive we can make the per-chest game-item EV. Tradable = lower EV. Soulbound = higher EV is fine.
+2. **One-time open or rip-multiple animation?** Affects UX scope — single-open is faster to ship.
+3. **Asset Manager Pack + Game Item — can a single chest roll multiple categories**, or strictly one? Determines whether game items are common or rare on average.
+4. **Cosmetic seasons** — are chest cosmetics permanent rotating pool, or do they sunset and become vintage? Recommend sunset (drives chest demand on each new season).
+5. **Custom Title moderation pipeline** — who reviews? Mod team via Discord-linked form, or in-game admin queue?
+
+---
+
+## Summary
+
+**12 game items, 5 cosmetic categories, 1 cap (stat pips × 10).** Reuses existing systems. Cosmetics overhaul is the biggest delta — we'd be building animated icons, leaderboard frames, title flair, weapon trails, death FX, and meteor strike FX as net-new visual systems. **Without the cosmetic overhaul, the chest game-item slot will feel flat. With it, chests become a flex piece.**
+
+Estimated dev time:
+- Game item plumbing + inventory: **3–5 days**
+- Cosmetics overhaul (5 new categories, 20 launch cosmetics): **2–3 weeks**
+- VIP Chest Inventory page + reveal animation: **3–5 days**
+
+Total: **~4 weeks** for a polished launch.
