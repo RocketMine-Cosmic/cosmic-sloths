@@ -1,8 +1,8 @@
 # VIP Chest — Game Items Design Doc
 
-**Status:** Draft / Brainstorm  
-**Author:** Cosmic Sloth dev (Hugo)  
-**Date:** 2026-06-19  
+**Status:** Updated with OmenX integration spec (2026-06-19 PM)
+**Author:** Cosmic Sloth dev (Hugo)
+**Date:** 2026-06-19
 **Context:** OmenX is launching **VIP Chests** (Bronze → Elite, 7 tiers) as an OmenX **platform** reward. Chests roll from a pool of categories:
 
 1. Asset Manager Packs
@@ -12,6 +12,122 @@
 5. **Game Items** ← *this doc*
 
 This doc covers ONLY the Game Items slot — what Cosmic Sloth contributes when a chest rolls a game-item reward.
+
+---
+
+## 🆕 2026-06-19 PM — Update from Marco (Discord)
+
+Marco shared concrete details on the OmenX-side architecture. **This changes how we ship.**
+
+### Key facts confirmed
+
+1. **Battle Pass is shipping too.** Chests will appear as rewards on the Battle Pass tracks (free and paid presumably). So our game items will flow through TWO surfaces:
+   - VIP Chest purchases (OMENX + GMT)
+   - Battle Pass progression rewards
+   Both go through the same chest-grant pipeline.
+
+2. **Developer portal is the source of truth.** OmenX added two new pages to the dev portal:
+   - **VIP Chests** — manage our game-item reward rows per chest tier
+   - **Battle Pass** — manage rewards on each BP tier
+   Marco's screenshot shows the bronze chest already has 7 platform reward rows (weight sum 100) and an empty `Your game rewards (weight sum: 0)` row — that's our slot to fill.
+
+3. **Weighted loot table model.** Each game item I add is a row with a **weight**. Higher weight = more frequent roll. Bronze chest example weights:
+   ```
+   Common Pack + 500 OMENX     weight 1   (rarest)
+   Common Pack + 1000 VIP Pts  weight 4
+   Common Pack                 weight 5
+   500 OMENX                   weight 10
+   2000 VIP Points             weight 20
+   300 OMENX                   weight 25
+   200 OMENX                   weight 35  (most common)
+   ```
+   Our 12-item shortlist needs to be expressed as weighted rows per chest tier. The framework is already designed for this — no custom drop logic needed on our side.
+
+4. **Webhook-driven grants.** When a chest rolls one of our game items:
+   - OmenX backend calls a webhook on OUR backend
+   - Signed with **HMAC SHA-256** (header: `X-OmenX-Webhook-Signature: sha256=…`, timestamp header + raw body)
+   - Signing secret provided in dev portal (one-click regenerate)
+   - We verify the signature, grant the item to the player's PlayerSave, return 200
+   - Event type: `vip_chest.reward_granted`
+   - We pick the webhook URL (e.g. `https://cosmic-sloth-app.base44.app/functions/onVipChestRewardGranted`)
+
+5. **Confirmed chest pricing** (Bronze → Elite):
+
+   | Chest | GMT | OMENX |
+   |---|---|---|
+   | Bronze | 15 | 0 |
+   | Silver | 30 | 100 |
+   | Gold | 70 | 200 |
+   | Platinum | 150 | 300 |
+   | Diamond | 300 | 500 |
+   | Legend | 500 | 1000 |
+   | Elite | 750 | 1500 |
+
+   This gives us hard data on EV — a Bronze chest at 15 GMT (~$0.50?) and an Elite chest at 750 GMT + 1500 OMENX is a real money sink. Our game-item rewards must scale to feel proportional.
+
+### What this means for the doc
+
+- **My "Per-Chest-Tier Game-Item Pools" table needs to be reformatted as weight rows** so it's drop-in compatible with the dev portal.
+- **No need to build a chest-rolling backend on our side** — OmenX handles the RNG.
+- **We do need to build a webhook handler.** New Base44 function: `onVipChestRewardGranted`.
+- **Battle Pass requires the same webhook.** Marco's wording suggests the same `reward_granted` event covers BP rewards too — but worth confirming.
+- **Cosmetics overhaul scope is unchanged** — still the biggest delta.
+
+### Updated implementation surface
+
+#### Backend (new)
+- **`onVipChestRewardGranted`** — public webhook function
+  - Verifies HMAC SHA-256 using the OmenX signing secret (stored as `OMENX_VIP_CHEST_WEBHOOK_SECRET`)
+  - Parses payload: `{ wallet, reward_key, chest_key, tx_id }`
+  - Looks up reward grant by `reward_key` → applies to PlayerSave
+  - Logs to a new `VipChestGrantLog` entity for audit + dedup (idempotent by `tx_id`)
+  - Returns 200 even on duplicate, 4xx only on signature failure / unknown reward_key
+- New secret: `OMENX_VIP_CHEST_WEBHOOK_SECRET`
+- New entity: `VipChestGrantLog` (wallet, reward_key, chest_key, tx_id unique, amount/metadata, granted_at)
+
+#### Backend (already covered)
+- `spendGold` plumbing handles grants — no change needed
+- Cosmetic ownership fields on PlayerSave — same as before
+
+#### Frontend
+- **No new pages needed for chest opening** — chest opening happens on OmenX, not in our app
+- Profile page wardrobe (for equipping cosmetics) — still needed
+- VIP Chest reward history page (optional) — show what you've been granted from OmenX
+
+### Reward weights — bronze tier example (our slot)
+
+To match the OmenX format, our weight rows for Bronze chest's Game Items slot:
+
+| Label | Key | Weight |
+|---|---|---|
+| 10,000 Gold | `gold_10k` | 35 |
+| 25,000 Gold | `gold_25k` | 25 |
+| 10 Relic Fragments | `relic_10` | 20 |
+| Talent Respec Token | `respec_talent` | 15 |
+| 1 Star Fragment | `star_1` | 5 |
+
+Weight sum 100. Mirrors the OmenX platform reward distribution shape.
+
+(Per-tier weight tables for all 7 tiers are below in the original shortlist section — needs to be converted to this row format before submitting to Marco.)
+
+### Updated open questions
+
+6. **Does the OmenX webhook also fire for Battle Pass rewards?** Or is BP a separate event type?
+7. **What does the webhook payload actually look like?** Need a sample to confirm field names before building the handler.
+8. **Replay/retry policy?** If our webhook 500s, does OmenX retry? With what backoff? Do we get a dead-letter queue?
+9. **Test harness?** Is there a dev portal "fire test webhook" button so we can integrate without buying real chests?
+10. **Battle Pass details** — how many tiers, how is progress earned (XP from runs? Sector clears? Time-based season?), can we configure BP XP from our game events?
+
+### Action items
+
+- [ ] Reply to Marco confirming we're ready to integrate and asking Q6–Q10 above
+- [ ] Build `onVipChestRewardGranted` webhook function + signature verification
+- [ ] Create `VipChestGrantLog` entity for audit / idempotency
+- [ ] Convert the per-tier game-item shortlist below into weighted rows per chest tier
+- [ ] Submit reward rows for all 7 chest tiers in the OmenX dev portal
+- [ ] Battle Pass scoping kick-off — separate doc once we have BP details from Marco
+
+---
 
 ---
 
