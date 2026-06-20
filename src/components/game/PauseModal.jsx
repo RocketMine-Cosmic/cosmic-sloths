@@ -12,6 +12,7 @@ const ULT_FULL_COST = 10;
 export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, onSquadUltimate, omenxBalance = 0, xpBuffExpiry = 0, omenxPurchasesDisabled = false }) {
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
+    const [confirmQuit, setConfirmQuit] = useState(false);
     const [showStats, setShowStats] = useState(false);
     const [lowFx, setLowFx] = useState(() => {
         try { return localStorage.getItem('cosmic_low_fx_mode') === '1'; } catch { return false; }
@@ -174,12 +175,32 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                             </button>
                         )
                     )}
-                    <button
-                        onClick={onQuit}
-                        className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors border border-slate-600"
-                    >
-                        Quit to Lounge
-                    </button>
+                    {confirmQuit ? (
+                        <div className="flex flex-col gap-2 bg-red-950/40 border border-red-500/40 rounded-lg p-3">
+                            <p className="text-red-300 text-sm font-bold">Quit this run? All progress will be lost.</p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={onQuit}
+                                    className="flex-1 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold transition-colors"
+                                >
+                                    Yes, Quit
+                                </button>
+                                <button
+                                    onClick={() => setConfirmQuit(false)}
+                                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-bold border border-slate-600 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setConfirmQuit(true)}
+                            className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-bold text-lg md:text-xl transition-colors border border-slate-600"
+                        >
+                            Quit to Lounge
+                        </button>
+                    )}
                 </div>
             </motion.div>
 
