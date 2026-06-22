@@ -377,24 +377,39 @@ export default function Leaderboard() {
 
             // One entry per player. RunScore is sorted by -score, so the first row
             // we keep for each player is automatically their best run for the period.
-            // Dedup key prefers wallet_address (the canonical identity per RunScore
-            // schema), falls back to user_id, then player_name — covers every row
-            // shape we've ever written. Caps at 20 unique players for payout math.
+            // Dedup tracks ALL identifiers we've seen (wallet, user_id, AND
+            // normalised player_name) — so a player who has one row with a
+            // wallet_address and another row without (legacy / cross-device runs)
+            // still collapses into a single leaderboard entry instead of showing up
+            // twice with different scores (Bitchick #6 + #10 bug 2026-06-22).
+            // Caps at payoutCfg.top_n unique players for payout math.
             const allUnique = [];
-            const seenKeys = new Set();
+            const seenWallets = new Set();
+            const seenUserIds = new Set();
+            const seenNames = new Set();
+
+            const normName = (n) => (n || '').trim().toLowerCase();
 
             for (const score of data) {
                 if (view !== 'endless' && score.arena_id === 'endless') continue;
 
-                const key = (score.wallet_address || '').toLowerCase()
-                    || score.user_id
-                    || score.player_name;
-                if (!key || seenKeys.has(key)) {
-                    if (key) continue;
-                    // No identifier at all — extremely rare; skip rather than risk a dup.
+                const wallet = (score.wallet_address || '').toLowerCase();
+                const userId = score.user_id || '';
+                const name = normName(score.player_name);
+
+                // Treat as duplicate if ANY identifier has already been seen.
+                if ((wallet && seenWallets.has(wallet))
+                    || (userId && seenUserIds.has(userId))
+                    || (name && seenNames.has(name))) {
                     continue;
                 }
-                seenKeys.add(key);
+
+                // Must have at least one identifier to keep.
+                if (!wallet && !userId && !name) continue;
+
+                if (wallet) seenWallets.add(wallet);
+                if (userId) seenUserIds.add(userId);
+                if (name) seenNames.add(name);
                 allUnique.push(score);
 
                 if (allUnique.length >= payoutCfg.top_n) break;
