@@ -5,6 +5,7 @@ import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
 import { base44 } from '@/api/base44Client';
 import AdminRetention from '../components/admin/AdminRetention';
+import AdminDeepMetrics from '../components/admin/AdminDeepMetrics';
 
 // Dedicated player-metrics page. Sits outside the AdminDashboard tab system so
 // it can grow (cohorts, funnels, segmentation) without crowding the admin nav.
@@ -101,6 +102,8 @@ export default function AdminMetrics() {
                 </header>
 
                 <AdminRetention />
+                <div className="h-6" />
+                <AdminDeepMetrics />
             </div>
         </div>
     );
