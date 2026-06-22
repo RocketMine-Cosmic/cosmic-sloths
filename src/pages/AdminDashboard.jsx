@@ -53,7 +53,7 @@ import AdminGlobalXpBuff from '../components/admin/AdminGlobalXpBuff';
 import AdminS6LaunchTools from '../components/admin/AdminS6LaunchTools';
 import AdminResyncWarKills from '../components/admin/AdminResyncWarKills';
 import AdminLeaderboardPayoutConfig from '../components/admin/AdminLeaderboardPayoutConfig';
-import AdminRetention from '../components/admin/AdminRetention';
+
 
 const TAB_GROUPS = [
     {
@@ -61,7 +61,6 @@ const TAB_GROUPS = [
         label: '📊 Insights',
         tabs: [
             { id: 'overview',    label: 'Overview',         icon: BarChart3, perm: 'view_data' },
-            { id: 'retention',   label: '📈 Retention',     icon: Users,     perm: 'view_data' },
             { id: 'balance',     label: '⚖️ Balance',        icon: BarChart3, perm: 'view_data' },
             { id: 'health',      label: '🩺 Health',        icon: BarChart3, perm: 'view_data' },
             { id: 'leaderboard', label: 'Leaderboard',      icon: Trophy,    perm: 'view_data' },
@@ -320,7 +319,6 @@ export default function AdminDashboard() {
     const renderActiveTab = () => {
         switch (activeTab) {
             case 'overview':    return <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />;
-            case 'retention':   return <AdminRetention />;
             case 'balance':     return <AdminBalance walletAddress={adminWallet} />;
             case 'health':      return <AdminHealthCheck walletAddress={adminWallet} />;
             case 'leaderboard': return <AdminLeaderboard walletAddress={adminWallet} />;
@@ -424,6 +422,13 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                         <MyStaffIncomeCard walletAddress={adminWallet} isEmergencyKey={isEmergencyKey} />
+                        <button
+                            onClick={() => { SoundManager.playUIClick(); navigate('/admin-metrics'); }}
+                            className="text-xs font-bold uppercase tracking-wider text-cyan-300 hover:text-white bg-cyan-950/40 hover:bg-cyan-700 border border-cyan-700/60 px-3 py-1 rounded transition-colors flex items-center gap-1.5"
+                            title="View dedicated player metrics dashboard"
+                        >
+                            <BarChart3 className="w-3 h-3" /> Player Metrics
+                        </button>
                         <button
                             onClick={() => {
                                 sessionStorage.removeItem('admin_wallet');

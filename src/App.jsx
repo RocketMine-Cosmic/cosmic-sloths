@@ -27,6 +27,7 @@ const Dailys = React.lazy(() => import('./pages/Dailys'));
 const GlobalRaid = React.lazy(() => import('./pages/GlobalRaid'));
 const Mastery = React.lazy(() => import('./pages/Mastery'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard.jsx'));
+const AdminMetrics = React.lazy(() => import('./pages/AdminMetrics'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
 const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 const Titles = React.lazy(() => import('./pages/Titles'));
@@ -94,6 +95,7 @@ const MainApp = () => {
           <Route path="/credits" element={<Credits />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin-metrics" element={<AdminMetrics />} />
           <Route path="/sku-editor" element={<SkuEditor />} />
           <Route path="/loadouts" element={<Loadouts />} />
           <Route path="/squad-wars" element={<SquadWars />} />
@@ -142,6 +144,7 @@ const MainApp = () => {
       <Route path="/credits" element={<Credits />} />
       <Route path="/achievements" element={<Achievements />} />
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin-metrics" element={<AdminMetrics />} />
       <Route path="/sku-editor" element={<SkuEditor />} />
       <Route path="/loadouts" element={<Loadouts />} />
       <Route path="/squad-wars" element={<SquadWars />} />
