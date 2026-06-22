@@ -53,6 +53,7 @@ import AdminGlobalXpBuff from '../components/admin/AdminGlobalXpBuff';
 import AdminS6LaunchTools from '../components/admin/AdminS6LaunchTools';
 import AdminResyncWarKills from '../components/admin/AdminResyncWarKills';
 import AdminLeaderboardPayoutConfig from '../components/admin/AdminLeaderboardPayoutConfig';
+import AdminRetention from '../components/admin/AdminRetention';
 
 const TAB_GROUPS = [
     {
@@ -60,6 +61,7 @@ const TAB_GROUPS = [
         label: '📊 Insights',
         tabs: [
             { id: 'overview',    label: 'Overview',         icon: BarChart3, perm: 'view_data' },
+            { id: 'retention',   label: '📈 Retention',     icon: Users,     perm: 'view_data' },
             { id: 'balance',     label: '⚖️ Balance',        icon: BarChart3, perm: 'view_data' },
             { id: 'health',      label: '🩺 Health',        icon: BarChart3, perm: 'view_data' },
             { id: 'leaderboard', label: 'Leaderboard',      icon: Trophy,    perm: 'view_data' },
@@ -318,6 +320,7 @@ export default function AdminDashboard() {
     const renderActiveTab = () => {
         switch (activeTab) {
             case 'overview':    return <AdminOverview walletAddress={adminWallet} canViewFinance={canViewFinance} />;
+            case 'retention':   return <AdminRetention />;
             case 'balance':     return <AdminBalance walletAddress={adminWallet} />;
             case 'health':      return <AdminHealthCheck walletAddress={adminWallet} />;
             case 'leaderboard': return <AdminLeaderboard walletAddress={adminWallet} />;
