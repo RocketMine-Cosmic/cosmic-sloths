@@ -89,6 +89,42 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
     return payments;
 }
 
+// Checks whether the weekly TokenPool for `period_id` has logs for all
+// expected payout types (players + staff + kills for S7+, players + staff
+// for legacy weeks). If so, flips `distributed: true`. Idempotent — safe to
+// call from any of the three split functions; whichever finishes last closes
+// the pool. Returns true if it flipped the flag (or it was already true), false otherwise.
+async function maybeMarkWeeklyPoolDistributed(db, period_id) {
+    try {
+        const pools = await db.entities.TokenPool.filter({ period_id, period_type: 'weekly' });
+        const pool = pools[0];
+        if (!pool) return false;
+        if (pool.distributed) return true;
+
+        const [playerLogs, staffLogs, killLogs] = await Promise.all([
+            db.entities.PayoutLog.filter({ period_id, period_type: 'weekly' }, '-created_date', 1),
+            db.entities.PayoutLog.filter({ period_id, period_type: 'staff_weekly' }, '-created_date', 1),
+            db.entities.PayoutLog.filter({ period_id, period_type: 'weekly_kills' }, '-created_date', 1),
+        ]);
+
+        const isS7Plus = isNewPoolPeriod(period_id);
+        const hasPlayers = playerLogs.length > 0;
+        const hasStaff = staffLogs.length > 0;
+        const hasKills = killLogs.length > 0;
+
+        const allDone = isS7Plus
+            ? (hasPlayers && hasStaff && hasKills)
+            : (hasPlayers && hasStaff);
+
+        if (!allDone) return false;
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
+        return true;
+    } catch (err) {
+        console.warn('[maybeMarkWeeklyPoolDistributed]', err?.message);
+        return false;
+    }
+}
+
 function rankTierLabel(rank) {
     if (rank === 1) return { key: 'r1',   label: 'Rank #1' };
     if (rank === 2) return { key: 'r2',   label: 'Rank #2' };
@@ -239,7 +275,15 @@ Deno.serve(async (req) => {
             });
         } catch {}
 
+        // Auto-flip the pool to `distributed: true` if all three weekly payout
+        // types now have logs. This is what the score-payout fn normally does,
+        // but when the three split fns are run separately, none of them flip
+        // the flag — so the pool stays "pending" forever. Whichever of the
+        // three runs last (typically this one) closes the loop.
+        const poolDistributed = await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, period_id);
+
         return Response.json({
+            pool_marked_distributed: poolDistributed,
             success: true,
             period_id,
             paid: walletsPaid,

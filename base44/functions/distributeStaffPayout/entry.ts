@@ -12,6 +12,45 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 
+// S7+ gate — must match the version in distributeKillPool / distributeRewards.
+function isNewPoolPeriod(period_id) {
+    const m = String(period_id || '').match(/^(\d{4})-W(\d{1,2})$/);
+    if (!m) return false;
+    const year = Number(m[1]);
+    const seasonNum = Math.floor((Number(m[2]) - 1) / 4) + 1;
+    if (year > 2026) return true;
+    if (year < 2026) return false;
+    return seasonNum >= 7;
+}
+
+// Mirror of the helper in distributeKillPool — see comment there.
+async function maybeMarkWeeklyPoolDistributed(db, period_id) {
+    try {
+        const pools = await db.entities.TokenPool.filter({ period_id, period_type: 'weekly' });
+        const pool = pools[0];
+        if (!pool) return false;
+        if (pool.distributed) return true;
+
+        const [playerLogs, staffLogs, killLogs] = await Promise.all([
+            db.entities.PayoutLog.filter({ period_id, period_type: 'weekly' }, '-created_date', 1),
+            db.entities.PayoutLog.filter({ period_id, period_type: 'staff_weekly' }, '-created_date', 1),
+            db.entities.PayoutLog.filter({ period_id, period_type: 'weekly_kills' }, '-created_date', 1),
+        ]);
+
+        const isS7Plus = isNewPoolPeriod(period_id);
+        const allDone = isS7Plus
+            ? (playerLogs.length > 0 && staffLogs.length > 0 && killLogs.length > 0)
+            : (playerLogs.length > 0 && staffLogs.length > 0);
+
+        if (!allDone) return false;
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
+        return true;
+    } catch (err) {
+        console.warn('[maybeMarkWeeklyPoolDistributed]', err?.message);
+        return false;
+    }
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -111,6 +150,9 @@ Deno.serve(async (req) => {
             });
         } catch {}
 
+        // Close the pool if players + staff (+ kills on S7+) all have logs now.
+        const poolDistributed = await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, period_id);
+
         return Response.json({
             success: true,
             period_id,
@@ -118,6 +160,7 @@ Deno.serve(async (req) => {
             skipped_already_paid: alreadyPaid.size,
             totalOmenx: remaining.reduce((s, p) => s + p.amount, 0),
             tx_id: txId,
+            pool_marked_distributed: poolDistributed,
         });
     } catch (error) {
         console.error('[distributeStaffPayout]', error);
