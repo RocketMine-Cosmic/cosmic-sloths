@@ -82,6 +82,33 @@ export default function AdminRewards({ walletAddress }) {
         setDistributing(false);
     };
 
+    // Standalone kill-pool payout. Split out from the main distribute fn because
+    // doing players + staff + kills in one HTTP call hits the gateway 504 timeout.
+    const handleDistributeKills = async () => {
+        if (!distributePeriod) { setDistributeMsg('Select a weekly period'); return; }
+        if (distributeType !== 'weekly') { setDistributeMsg('Kill pool only applies to weekly periods'); return; }
+        setDistributing(true); setDistributeMsg('');
+        try {
+            const res = await base44.functions.invoke('distributeKillPool', { period_id: distributePeriod });
+            setDistributeMsg(`✓ Kill pool: paid ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
+            setTimeout(() => setDistributeMsg(''), 8000);
+        } catch (err) { setDistributeMsg(`✗ Kill pool: ${err.message}`); }
+        setDistributing(false);
+    };
+
+    // Standalone staff payout — same reason.
+    const handleDistributeStaff = async () => {
+        if (!distributePeriod) { setDistributeMsg('Select a weekly period'); return; }
+        if (distributeType !== 'weekly') { setDistributeMsg('Staff payout only applies to weekly periods'); return; }
+        setDistributing(true); setDistributeMsg('');
+        try {
+            const res = await base44.functions.invoke('distributeStaffPayout', { period_id: distributePeriod });
+            setDistributeMsg(`✓ Staff: paid ${res.data?.paid} wallets — ${res.data?.totalOmenx} OMENX (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
+            setTimeout(() => setDistributeMsg(''), 8000);
+        } catch (err) { setDistributeMsg(`✗ Staff: ${err.message}`); }
+        setDistributing(false);
+    };
+
     return (
         <div className="space-y-4">
             <AdminKillSnapshotBackfill />
@@ -277,8 +304,25 @@ export default function AdminRewards({ walletAddress }) {
                     </div>
                     <button onClick={handleDistribute} disabled={distributing}
                         className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-sm flex items-center gap-2">
-                        <Send size={14} /> {distributing ? 'Distributing...' : 'Distribute'}
+                        <Send size={14} /> {distributing ? 'Distributing...' : 'Distribute (Players)'}
                     </button>
+                    {distributeType === 'weekly' && (
+                        <>
+                            <button onClick={handleDistributeStaff} disabled={distributing}
+                                title="Standalone staff payout — run separately to avoid 504 timeouts"
+                                className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-sm flex items-center gap-2">
+                                <Send size={14} /> Staff Only
+                            </button>
+                            <button onClick={handleDistributeKills} disabled={distributing}
+                                title="Standalone weekly kill-pool payout — S7+ only. Run separately to avoid 504 timeouts."
+                                className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white px-4 py-1.5 rounded font-bold text-sm flex items-center gap-2">
+                                <Send size={14} /> Kill Pool Only
+                            </button>
+                        </>
+                    )}
+                </div>
+                <div className="text-[11px] text-slate-500 mt-2 leading-snug">
+                    Run the three buttons separately for weekly periods — combined they hit the gateway 504 timeout. All three are resume-safe.
                 </div>
                 {distributeMsg && <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{distributeMsg}</div>}
             </div>
