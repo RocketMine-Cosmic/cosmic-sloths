@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Gift, Eye, Send, Trophy } from 'lucide-react';
 import moment from 'moment';
 import { getCurrentWeekId, getCurrentSeasonId } from './useAvailablePeriods';
+import AdminKillSnapshotBackfill from './AdminKillSnapshotBackfill';
 
 // Canonical ISO 8601 (Mon-start, Sun 23:59 UTC end) — must match the rest of the app.
 // The previous local calc here used a Sun-start formula that returned the wrong week
@@ -83,6 +84,7 @@ export default function AdminRewards({ walletAddress }) {
 
     return (
         <div className="space-y-4">
+            <AdminKillSnapshotBackfill />
             {/* Preview */}
             <div className="bg-[#0b0416]/80 border border-sky-900/50 rounded-xl p-4">
                 <h2 className="text-base font-bold text-sky-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Eye size={16} /> Preview Payouts (Dry Run)</h2>
