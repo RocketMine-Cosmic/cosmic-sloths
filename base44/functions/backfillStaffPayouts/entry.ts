@@ -9,6 +9,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //   adminKey?: string                — emergency master key (matches AdminDash secret)
 //   periodIds?: string[]             — optional list of week_ids to backfill (default: all closed weekly pools without staff_weekly logs)
 //   dryRun?: boolean                 — if true, computes & returns what WOULD be paid without sending OMENX
+//   logsOnly?: boolean               — if true, SKIP the OmenX grant-batch and ONLY write the staff_weekly PayoutLog audit rows.
+//                                      Use this when OmenX already paid the staff (e.g. distributeStaffPayout sent the tokens but
+//                                      threw before writing logs) and you only need to reconcile the audit trail. tx_id is set to
+//                                      'backfill-logs-only' so it's easy to spot in the log table.
 //
 // Auth: emergency adminKey OR Base44 session with 'owner' permission.
 
@@ -66,7 +70,7 @@ async function grantBatchChunked(payments, apiBaseUrl, rewardsKeys, note) {
 
 Deno.serve(async (req) => {
     try {
-        const { adminKey, periodIds, dryRun = false } = await req.json();
+        const { adminKey, periodIds, dryRun = false, logsOnly = false } = await req.json();
 
         const base44 = createClientFromRequest(req);
         const db = base44.asServiceRole;
@@ -170,12 +174,23 @@ Deno.serve(async (req) => {
             }
 
             try {
-                const { txId, chunks } = await grantBatchChunked(
-                    staffPayments,
-                    apiBaseUrl,
-                    rewardsKeys,
-                    `staff backfill ${pool.period_id}`
-                );
+                // logsOnly mode: OmenX already paid these wallets out-of-band
+                // (e.g. distributeStaffPayout sent the tokens but crashed before
+                // writing logs). Skip the grant-batch and just create the audit rows.
+                let txId, chunks;
+                if (logsOnly) {
+                    txId = 'backfill-logs-only';
+                    chunks = 0;
+                } else {
+                    const r = await grantBatchChunked(
+                        staffPayments,
+                        apiBaseUrl,
+                        rewardsKeys,
+                        `staff backfill ${pool.period_id}`
+                    );
+                    txId = r.txId;
+                    chunks = r.chunks;
+                }
 
                 // Write staff_weekly PayoutLog rows in chunks to avoid 429 burst
                 for (let i = 0; i < staffPayments.length; i += 10) {
@@ -198,6 +213,7 @@ Deno.serve(async (req) => {
                     chunks,
                     total_paid: staffPayments.reduce((s, p) => s + p.amount, 0),
                     tx_id: txId,
+                    logs_only: logsOnly,
                 });
             } catch (err) {
                 console.error(`[backfillStaffPayouts] ${pool.period_id} FAILED:`, err.message);
