@@ -9,11 +9,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //
 // For each player, the canonical value comes from (in priority order):
 //   1. Existing WeeklyKillSnapshot row for (week_id, wallet) — already frozen, keep it.
-//   2. PlayerSave.weekly_sector_kills if weekly_sector_kills_week === target week_id
+//   2. Sum of SquadWarMemberKill.kills across all wars in week_id — these are
+//      incremented in-place by saveScore (alongside the live counter) and survive
+//      RunScore cleanup. Authoritative for any player who was in a war that week.
+//      A wallet can have multiple rows (one per war they participated in); we sum
+//      them so a player who switched squads mid-week still gets full credit.
+//   3. PlayerSave.weekly_sector_kills if weekly_sector_kills_week === target week_id
 //      (player hasn't played in the new week yet — live counter is authoritative).
-//   3. Sum of RunScore.kills for sector-run rows in week_id (best-effort recovery
-//      for players who already rolled over; may undercount if
-//      cleanupKeepTopScoresPerPlayer already pruned, but it's the best we have).
+//   4. Sum of RunScore.kills for sector-run rows in week_id (last-resort recovery
+//      for players not in a war who already rolled over; will undercount if
+//      cleanupKeepTopScoresPerPlayer already pruned).
 //
 // Idempotent: re-running for the same week is safe — existing snapshots are
 // preserved unless dry_run=false AND force=true, in which case live/RunScore
@@ -51,7 +56,24 @@ Deno.serve(async (req) => {
             if (w) snapshotByWallet.set(w, s);
         }
 
-        // Step 2 — live counter from PlayerSave (anyone still on this week).
+        // Step 2 — SquadWarMemberKill sums (authoritative, survives RunScore cleanup).
+        // A wallet may have multiple rows if they swapped squads mid-week; sum across all wars.
+        const warMemberRows = await base44.asServiceRole.entities.SquadWarMemberKill.filter(
+            { week_id },
+            '-kills',
+            1000
+        );
+        const warKillsByWallet = new Map(); // wallet -> { kills, player_name }
+        for (const r of warMemberRows) {
+            const w = (r.wallet_address || '').toLowerCase();
+            if (!w) continue;
+            const prev = warKillsByWallet.get(w) || { kills: 0, player_name: r.player_name || '' };
+            prev.kills += Number(r.kills) || 0;
+            if (!prev.player_name && r.player_name) prev.player_name = r.player_name;
+            warKillsByWallet.set(w, prev);
+        }
+
+        // Step 3 — live counter from PlayerSave (anyone still on this week).
         const livePlayers = await base44.asServiceRole.entities.PlayerSave.filter(
             { weekly_sector_kills_week: week_id },
             '-weekly_sector_kills',
@@ -67,7 +89,7 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Step 3 — RunScore sum for everyone who has W25 rows (catches rolled-over players).
+        // Step 4 — RunScore sum (last-resort; undercounts after cleanup cron).
         // Page by created_date so we cover all rows even if a week had thousands of runs.
         const runScoreByWallet = new Map(); // wallet -> { kills, player_name }
         let lastDate = null;
@@ -101,9 +123,10 @@ Deno.serve(async (req) => {
             pages++;
         }
 
-        // Step 4 — merge into a single per-wallet view + decide what to write.
+        // Step 5 — merge into a single per-wallet view + decide what to write.
         const allWallets = new Set([
             ...snapshotByWallet.keys(),
+            ...warKillsByWallet.keys(),
             ...liveByWallet.keys(),
             ...runScoreByWallet.keys(),
         ]);
@@ -111,14 +134,27 @@ Deno.serve(async (req) => {
         const actions = []; // { wallet, action: 'keep'|'create'|'update'|'skip_zero', source, kills, prev_kills?, player_name }
         for (const wallet of allWallets) {
             const existing = snapshotByWallet.get(wallet);
+            const war = warKillsByWallet.get(wallet);
             const live = liveByWallet.get(wallet);
             const runScore = runScoreByWallet.get(wallet);
 
-            // Priority: live counter (authoritative) > runScore sum (recovery).
-            // If no live and no runScore, we have nothing new to add — keep existing.
+            // Priority: SquadWarMemberKill sum (highest — survives RunScore cleanup
+            // AND week rollover) > live counter (authoritative for non-war players
+            // who haven't rolled over) > RunScore sum (last-resort recovery, may
+            // undercount). Pick the MAX of war + live when both exist, in case a
+            // player accrued kills outside the war window that weren't credited
+            // to a war row (legacy edge case).
             let candidate = null;
             let source = null;
-            if (live) {
+            if (war && war.kills > 0) {
+                if (live && live.kills > war.kills) {
+                    candidate = { kills: live.kills, player_name: live.player_name || war.player_name };
+                    source = 'live_counter_over_war';
+                } else {
+                    candidate = { kills: war.kills, player_name: war.player_name || (live?.player_name) };
+                    source = 'war_member_kill_sum';
+                }
+            } else if (live) {
                 candidate = { kills: live.kills, player_name: live.player_name };
                 source = 'live_counter';
             } else if (runScore && runScore.kills > 0) {
@@ -157,6 +193,8 @@ Deno.serve(async (req) => {
             dry_run,
             force,
             existing_snapshots: snapshotByWallet.size,
+            war_member_rows: warMemberRows.length,
+            war_unique_players: warKillsByWallet.size,
             live_players: liveByWallet.size,
             run_score_rows_scanned: rowsScanned,
             run_score_unique_players: runScoreByWallet.size,
