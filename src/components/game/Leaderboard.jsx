@@ -151,7 +151,14 @@ export default function Leaderboard() {
     const seasonMatch = season_id?.match(/^(\d{4})-S(\d{1,2})$/);
     const isS7OrLater = seasonMatch && (Number(seasonMatch[1]) > 2026 || (Number(seasonMatch[1]) === 2026 && Number(seasonMatch[2]) >= 7));
     
-    const poolQueryKey = view === 'weekly' ? ['tokenPool', week_id, 'weekly'] : ['tokenPool', season_id, 'seasonal'];
+    // `all_time` (Weekly Sector Kills) is funded from the SAME weekly OMENX pool,
+    // so it MUST share the weekly query key. Previously fell into the `else`
+    // branch and used the seasonal cache key while fetching with a weekly filter —
+    // which made the kill-pool banner display the seasonal pool × kill_pool_pct
+    // (e.g. 22,380 × 0.05 = 1,119 OMENX showing after a fresh weekly reset).
+    const poolQueryKey = (view === 'weekly' || view === 'all_time')
+        ? ['tokenPool', week_id, 'weekly']
+        : ['tokenPool', season_id, 'seasonal'];
     const fetchTimeoutRef = useRef(null);
 
     const [lastUpdated, setLastUpdated] = useState(Date.now());
