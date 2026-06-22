@@ -322,7 +322,7 @@ export default function AdminRewards({ walletAddress }) {
                     )}
                 </div>
                 <div className="text-[11px] text-slate-500 mt-2 leading-snug">
-                    Run the three buttons separately for weekly periods — combined they hit the gateway 504 timeout. All three are resume-safe.
+                    Run the three buttons separately for weekly periods to avoid gateway 504 timeouts — all three are resume-safe and idempotent.
                 </div>
                 {distributeMsg && <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{distributeMsg}</div>}
             </div>
