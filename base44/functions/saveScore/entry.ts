@@ -707,11 +707,61 @@ Deno.serve(async (req) => {
         const { week_id: _currentWeekId } = getCurrentPeriodIds();
         const isSectorRun = !validation.isEndless && !validation.isRaidRun && !validation.isMeteorRun;
         const storedKillsWeek = saveRecord.weekly_sector_kills_week || '';
+        const previousKills = Number(saveRecord.weekly_sector_kills) || 0;
+        const isWeekRollover = storedKillsWeek && storedKillsWeek !== _currentWeekId && previousKills > 0;
         let weeklySectorKills = storedKillsWeek === _currentWeekId
-            ? (Number(saveRecord.weekly_sector_kills) || 0)
+            ? previousKills
             : 0;
         // Hold W21 at 0 until rollover; resume counting on W22+
         if (isSectorRun && _currentWeekId !== '2026-W21') weeklySectorKills += validation.killsForLedger;
+
+        // Freeze the OLD week's kill total before we overwrite it. Without this,
+        // the kill-leaderboard payout for the just-ended week silently drops any
+        // player who plays a sector run in the new week before payouts run
+        // (Hugo bug 2026-06-22 — Zebrina309 was #1-ish in W25, started a W26
+        // run a few minutes after rollover, and disappeared from the W25 preview).
+        // Idempotent: snapshot is keyed on (week_id, wallet_address); we update
+        // in place if one already exists for this wallet+week.
+        if (isWeekRollover) {
+            try {
+                const existing = await with429Retry(
+                    () => base44.asServiceRole.entities.WeeklyKillSnapshot.filter({
+                        week_id: storedKillsWeek,
+                        wallet_address: walletLower,
+                    }, '-created_date', 1),
+                    'WeeklyKillSnapshot.filter'
+                );
+                const snapshotName = (saveData.player_name || saveRecord.player_name || `Pilot_${walletAddress.slice(-8).toUpperCase()}`).trim();
+                if (existing && existing.length > 0) {
+                    // Take the higher of the two (defends against stale rows from a
+                    // partial earlier write). previousKills is the latest authoritative value.
+                    const keep = Math.max(Number(existing[0].kills) || 0, previousKills);
+                    if (keep > (Number(existing[0].kills) || 0)) {
+                        await with429Retry(
+                            () => base44.asServiceRole.entities.WeeklyKillSnapshot.update(existing[0].id, {
+                                kills: keep,
+                                player_name: snapshotName,
+                            }),
+                            'WeeklyKillSnapshot.update'
+                        );
+                    }
+                } else {
+                    await with429Retry(
+                        () => base44.asServiceRole.entities.WeeklyKillSnapshot.create({
+                            week_id: storedKillsWeek,
+                            wallet_address: walletLower,
+                            player_name: snapshotName,
+                            kills: previousKills,
+                            source: 'saveScore_rollover',
+                        }),
+                        'WeeklyKillSnapshot.create'
+                    );
+                }
+                console.log(`[saveScore] Snapshotted ${storedKillsWeek} kills=${previousKills} for ${walletLower} (rollover to ${_currentWeekId})`);
+            } catch (snapErr) {
+                console.error('[saveScore] WeeklyKillSnapshot write failed (non-fatal):', snapErr.message);
+            }
+        }
 
         await with429Retry(
             () => base44.asServiceRole.entities.PlayerSave.update(saveRecord.id, {

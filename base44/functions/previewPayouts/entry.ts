@@ -176,25 +176,56 @@ Deno.serve(async (req) => {
                 }))
                 .filter(p => p.amount >= 1);
 
-            // S7+ only: weekly kill leaderboard pool. Uses PlayerSave.weekly_sector_kills
-            // (server-authoritative, sector runs only, endless/raid/meteor excluded).
+            // S7+ only: weekly kill leaderboard pool. Uses WeeklyKillSnapshot
+            // (frozen at week rollover) merged with the live PlayerSave counter
+            // for anyone who hasn't rolled over yet. The snapshot is the source
+            // of truth for any player who's already played a run in the new week
+            // — their PlayerSave.weekly_sector_kills no longer holds the old
+            // week's total (it gets reset on the first run of the new week).
             if (useNewPools) {
                 const killPoolPct = Number.isFinite(Number(payoutCfg.kill_pool_pct)) ? Number(payoutCfg.kill_pool_pct) : 0.05;
                 killRewardPool = Math.floor(pool.total_spent * killPoolPct);
                 if (killRewardPool > 0) {
-                    const killRows = await base44.asServiceRole.entities.PlayerSave.filter(
-                        { weekly_sector_kills_week: period_id },
-                        '-weekly_sector_kills',
-                        100
-                    );
-                    const killCandidates = killRows
-                        .filter(p => (p.weekly_sector_kills || 0) > 0 && p.wallet_address)
-                        .map(p => ({
-                            wallet_address: p.wallet_address,
-                            player_name: p.player_name || `Pilot_${p.wallet_address.slice(-8).toUpperCase()}`,
-                            score: p.weekly_sector_kills,
+                    const [snapshotRows, liveRows] = await Promise.all([
+                        base44.asServiceRole.entities.WeeklyKillSnapshot.filter(
+                            { week_id: period_id },
+                            '-kills',
+                            500
+                        ),
+                        base44.asServiceRole.entities.PlayerSave.filter(
+                            { weekly_sector_kills_week: period_id },
+                            '-weekly_sector_kills',
+                            500
+                        ),
+                    ]);
+
+                    // Merge: snapshot wins per wallet (it's the frozen final total).
+                    // Anyone still on the live counter (never rolled over yet) gets
+                    // included too. Keyed by lowercase wallet to avoid case-mismatch dupes.
+                    const merged = new Map();
+                    for (const s of snapshotRows) {
+                        const w = (s.wallet_address || '').toLowerCase();
+                        if (!w || (s.kills || 0) <= 0) continue;
+                        merged.set(w, {
+                            wallet_address: w,
+                            player_name: s.player_name || `Pilot_${w.slice(-8).toUpperCase()}`,
+                            score: Number(s.kills) || 0,
                             user_id: null,
-                        }));
+                        });
+                    }
+                    for (const p of liveRows) {
+                        const w = (p.wallet_address || '').toLowerCase();
+                        if (!w || (p.weekly_sector_kills || 0) <= 0) continue;
+                        if (merged.has(w)) continue; // snapshot wins
+                        merged.set(w, {
+                            wallet_address: w,
+                            player_name: p.player_name || `Pilot_${w.slice(-8).toUpperCase()}`,
+                            score: Number(p.weekly_sector_kills) || 0,
+                            user_id: null,
+                        });
+                    }
+
+                    const killCandidates = [...merged.values()].sort((a, b) => b.score - a.score);
                     killPayments = buildRankedPayments(
                         killCandidates,
                         killRewardPool,

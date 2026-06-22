@@ -356,25 +356,51 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
         .filter(p => p.amount >= 1);
 
     // S7+ weekly kill leaderboard pool — paid in addition to score + staff.
-    // Uses PlayerSave.weekly_sector_kills (server-authoritative, sector runs only).
+    // Reads from WeeklyKillSnapshot (frozen at week rollover) merged with the
+    // live PlayerSave counter for anyone who hasn't rolled over yet. Snapshot is
+    // authoritative — the live counter resets on the first run of a new week,
+    // so by the time payouts run, anyone who already played in the new week
+    // would be silently dropped without the snapshot fallback.
     let killPayments = [];
     if (useNewPools) {
         const killPoolPct = Number.isFinite(Number(cfg.kill_pool_pct)) ? Number(cfg.kill_pool_pct) : 0.05;
         const killRewardPool = Math.floor(pool.total_spent * killPoolPct);
         if (killRewardPool > 0) {
-            const killRows = await db.entities.PlayerSave.filter(
-                { weekly_sector_kills_week: pool.period_id },
-                '-weekly_sector_kills',
-                100
-            );
-            const killCandidates = killRows
-                .filter(p => (p.weekly_sector_kills || 0) > 0 && p.wallet_address)
-                .map(p => ({
-                    wallet_address: p.wallet_address,
-                    player_name: p.player_name || p.wallet_address,
-                    score: p.weekly_sector_kills,
+            const [snapshotRows, liveRows] = await Promise.all([
+                db.entities.WeeklyKillSnapshot.filter(
+                    { week_id: pool.period_id },
+                    '-kills',
+                    500
+                ),
+                db.entities.PlayerSave.filter(
+                    { weekly_sector_kills_week: pool.period_id },
+                    '-weekly_sector_kills',
+                    500
+                ),
+            ]);
+            const merged = new Map();
+            for (const s of snapshotRows) {
+                const w = (s.wallet_address || '').toLowerCase();
+                if (!w || (s.kills || 0) <= 0) continue;
+                merged.set(w, {
+                    wallet_address: w,
+                    player_name: s.player_name || w,
+                    score: Number(s.kills) || 0,
                     user_id: null,
-                }));
+                });
+            }
+            for (const p of liveRows) {
+                const w = (p.wallet_address || '').toLowerCase();
+                if (!w || (p.weekly_sector_kills || 0) <= 0) continue;
+                if (merged.has(w)) continue; // snapshot wins
+                merged.set(w, {
+                    wallet_address: w,
+                    player_name: p.player_name || w,
+                    score: Number(p.weekly_sector_kills) || 0,
+                    user_id: null,
+                });
+            }
+            const killCandidates = [...merged.values()].sort((a, b) => b.score - a.score);
             killPayments = buildRankedPayments(
                 killCandidates,
                 killRewardPool,
