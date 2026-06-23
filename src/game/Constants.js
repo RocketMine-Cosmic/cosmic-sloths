@@ -622,7 +622,16 @@ export const getWeaponStatsAndMastery = (save, wId, isOuterGalaxy = false) => {
     const forgeAugments = Array.from(new Set(allForgeAugments));
     const forgeAugmentCounts = {};
     for (const a of allForgeAugments) forgeAugmentCounts[a] = (forgeAugmentCounts[a] || 0) + 1;
-    const tier3Mult = (id) => isOuterGalaxy ? Math.min(2, forgeAugmentCounts[id] || 0) : 1;
+    // Overforge multiplier: a 2nd copy of a tier-3 augment grants +0.5 bonus (not +1).
+    // Nerfed from 2× → 1.5× on 2026-06-23 because S7's STACK_FACTOR fix didn't account
+    // for Overforge stacking on top of permanent/weekly/seasonal — at 2× the CD overforge
+    // (-70%) was producing S7-style runaway DPS in Outer Galaxy. Fragment cost is still
+    // 2× the base tier-3 cost, so value is preserved but the power curve is flattened.
+    const tier3Mult = (id) => {
+        const owned = forgeAugmentCounts[id] || 0;
+        if (!isOuterGalaxy || owned <= 1) return Math.min(1, owned);
+        return 1.5; // overforged (2 copies) on Outer Galaxy
+    };
     const lookupId = parents[0]; // for compatibility — only used by isMastered check below
     
     // Diminishing returns when all 3 period tiers stack. Tightened from 0.66 → 0.5
