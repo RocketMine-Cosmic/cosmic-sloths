@@ -383,10 +383,10 @@ export default function ForgePanel({ save, setSave }) {
                                         Tier-3 alone grants basePct; overforging (Outer Galaxy only) adds +50% of that. */}
                                     {isOverforged ? (
                                         (() => {
-                                            const baseByStat = { damage: 60, area: 60, cooldown: 35 };
+                                            const baseByStat = { damage: 60, area: 60, cd: 35 };
                                             const basePct = baseByStat[aug.weaponStat] || 0;
                                             const overforgedPct = Math.round(basePct * 1.5);
-                                            const statLabel = aug.weaponStat === 'cooldown' ? 'cooldown reduction' : aug.weaponStat;
+                                            const statLabel = aug.weaponStat === 'cd' ? 'cooldown reduction' : aug.weaponStat;
                                             return (
                                                 <div
                                                     className="text-[11px] font-bold text-violet-300 text-center bg-violet-900/40 py-1.5 px-2 rounded-lg border border-violet-500/60 shadow-[0_0_10px_rgba(139,92,246,0.3)] leading-tight"
@@ -401,10 +401,10 @@ export default function ForgePanel({ save, setSave }) {
                                         <>
                                             <div className="text-xs font-bold text-yellow-400 text-center bg-yellow-900/30 py-1 rounded-lg border border-yellow-500/50">✓ FORGED</div>
                                             {canOverforge && (() => {
-                                                const baseByStat = { damage: 60, area: 60, cooldown: 35 };
+                                                const baseByStat = { damage: 60, area: 60, cd: 35 };
                                                 const basePct = baseByStat[aug.weaponStat] || 0;
                                                 const overforgedPct = Math.round(basePct * 1.5);
-                                                const statLabel = aug.weaponStat === 'cooldown' ? 'cooldown reduction' : aug.weaponStat;
+                                                const statLabel = aug.weaponStat === 'cd' ? 'cooldown reduction' : aug.weaponStat;
                                                 return (
                                                     <button
                                                         onClick={() => handleForgeWeaponAugment(aug, true)}
