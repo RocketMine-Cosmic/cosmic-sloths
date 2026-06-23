@@ -390,10 +390,10 @@ export default function ForgePanel({ save, setSave }) {
                                             return (
                                                 <div
                                                     className="text-[11px] font-bold text-violet-300 text-center bg-violet-900/40 py-1.5 px-2 rounded-lg border border-violet-500/60 shadow-[0_0_10px_rgba(139,92,246,0.3)] leading-tight"
-                                                    title={`Overforged: ${overforgedPct}% ${statLabel} on Outer Galaxy (S11+) instead of ${basePct}%.`}
+                                                    title={`Overforged: ${overforgedPct}% ${statLabel} on Outer Galaxy (S11+) sectors.`}
                                                 >
                                                     ★★ OVERFORGED
-                                                    <div className="text-[9px] text-violet-400 font-mono mt-0.5">S11+: {overforgedPct}% {statLabel} (was {basePct}%)</div>
+                                                    <div className="text-[9px] text-violet-400 font-mono mt-0.5">S11+: {overforgedPct}% {statLabel}</div>
                                                 </div>
                                             );
                                         })()
@@ -409,13 +409,13 @@ export default function ForgePanel({ save, setSave }) {
                                                     <button
                                                         onClick={() => handleForgeWeaponAugment(aug, true)}
                                                         disabled={!canAffordOverforge}
-                                                        title={`Outer Galaxy (S11+) only — boosts this augment from ${basePct}% to ${overforgedPct}% ${statLabel}.`}
+                                                        title={`Outer Galaxy (S11+) only — boosts this augment to ${overforgedPct}% ${statLabel}.`}
                                                         className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-colors flex flex-col items-center justify-center gap-0.5 ${canAffordOverforge ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_8px_rgba(139,92,246,0.4)]' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}
                                                     >
                                                         <span className="flex items-center gap-1.5">
                                                             <Star className="w-3 h-3 fill-current" /> Overforge · {overforgeCost} <span className="text-[8px] opacity-80 font-black tracking-wider">S11+</span>
                                                         </span>
-                                                        <span className="text-[9px] font-mono opacity-90">{basePct}% → {overforgedPct}% {statLabel}</span>
+                                                        <span className="text-[9px] font-mono opacity-90">{overforgedPct}% {statLabel}</span>
                                                     </button>
                                                 );
                                             })()}
