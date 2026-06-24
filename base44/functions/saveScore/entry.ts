@@ -773,6 +773,32 @@ Deno.serve(async (req) => {
             'PlayerSave.update'
         );
 
+        // DailyActivityLog upsert — immutable per-day activity record so the
+        // admin retention chart's historical bars don't shrink as players
+        // come back on later days. PlayerSave.updated_at is a single
+        // overwriting timestamp per player (no good for historical charts),
+        // and RunScore gets soft-deleted by the keep-top-scores cron — so
+        // this dedicated entity is the only stable source. Idempotent:
+        // first save of the day creates a row, every subsequent save same
+        // day is a no-op. Wrapped in try/catch — telemetry only, must not
+        // affect score save.
+        try {
+            const dateKey = new Date().toISOString().split('T')[0];
+            const existingDay = await base44.asServiceRole.entities.DailyActivityLog.filter({
+                wallet_address: walletLower,
+                date_key: dateKey,
+            }, '-created_date', 1);
+            if (!existingDay || existingDay.length === 0) {
+                await base44.asServiceRole.entities.DailyActivityLog.create({
+                    wallet_address: walletLower,
+                    date_key: dateKey,
+                    first_seen_ms: Date.now(),
+                });
+            }
+        } catch (logErr) {
+            console.warn('[saveScore] DailyActivityLog upsert failed (non-fatal):', logErr.message);
+        }
+
         // Build RunScore record
         const { week_id, season_id } = getCurrentPeriodIds();
 

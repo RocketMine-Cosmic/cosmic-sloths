@@ -48,7 +48,9 @@ Deno.serve(async (req) => {
         }
 
         const db = base44.asServiceRole;
-        // One bounded read: everyone active in the last 30 days.
+        // PlayerSave read — powers DAU/WAU/MAU (moving-window metrics where
+        // the single overwriting updated_at is correct) + top_active +
+        // stale_signups + all_time_players fallback.
         const since30 = now - 30 * DAY;
         const recent = await db.entities.PlayerSave.filter(
             { updated_at: { $gte: since30 } },
@@ -62,15 +64,14 @@ Deno.serve(async (req) => {
             return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
         };
 
-        // Bucket sets — Set of wallets per day so we count unique players.
-        const dayBuckets = new Map(); // dateKey -> Set<wallet>
-        const newSignupsByDay = new Map(); // dateKey -> Set<wallet>
-        const hourBuckets = new Map(); // hourIndex (0..23, where 0 = 23h ago) -> Set<wallet>
-
-        let dau = 0, wau = 0, mau = 0;
+        // DAU/WAU/MAU from PlayerSave (single timestamp per player is fine —
+        // these are "active in the last N hours" moving windows).
         const dauSet = new Set();
         const wauSet = new Set();
         const mauSet = new Set();
+        // First-seen by day (last 14 days) — uses PlayerSave.created_date which
+        // for nearly every player matches their first session.
+        const newSignupsByDay = new Map();
 
         for (const ps of recent) {
             const w = (ps.wallet_address || '').toLowerCase();
@@ -83,26 +84,6 @@ Deno.serve(async (req) => {
             if (age <= 7 * DAY) wauSet.add(w);
             if (age <= 30 * DAY) mauSet.add(w);
 
-            // Per-day bucket (last 14 days)
-            if (age <= 14 * DAY) {
-                const key = toDateKey(ts);
-                if (!dayBuckets.has(key)) dayBuckets.set(key, new Set());
-                dayBuckets.get(key).add(w);
-            }
-
-            // Hourly bucket — rolling last 24h
-            if (age <= 24 * HOUR) {
-                const hoursAgo = Math.floor(age / HOUR); // 0 = current hour, 23 = 23h ago
-                const idx = 23 - hoursAgo; // so index 23 = "now", index 0 = "23h ago"
-                if (idx >= 0 && idx <= 23) {
-                    if (!hourBuckets.has(idx)) hourBuckets.set(idx, new Set());
-                    hourBuckets.get(idx).add(w);
-                }
-            }
-
-            // First-seen day (uses created_date — built-in attribute on every record).
-            // Note: PlayerSave.created_date reflects when the row first appeared in
-            // the DB, which for nearly every player matches their first session.
             if (ps.created_date) {
                 const createdMs = new Date(ps.created_date).getTime();
                 if (now - createdMs <= 14 * DAY) {
@@ -113,9 +94,50 @@ Deno.serve(async (req) => {
             }
         }
 
-        dau = dauSet.size;
-        wau = wauSet.size;
-        mau = mauSet.size;
+        const dau = dauSet.size;
+        const wau = wauSet.size;
+        const mau = mauSet.size;
+
+        // 14-day daily activity chart + 24h hourly chart — read from
+        // DailyActivityLog, which is an immutable per-(wallet, day) log
+        // written by saveScore. PlayerSave.updated_at can't power historical
+        // bars (single overwriting timestamp), RunScore gets soft-deleted by
+        // the keep-top-scores cleanup cron, so the dedicated log is the only
+        // stable source. Bounded read: only the last 14 days.
+        const since14Iso = new Date(now - 14 * DAY).toISOString().split('T')[0];
+        let activityLogs = [];
+        try {
+            activityLogs = await db.entities.DailyActivityLog.filter(
+                { date_key: { $gte: since14Iso } },
+                '-date_key',
+                10000
+            );
+        } catch (logErr) {
+            console.warn('[getPlayerRetention] DailyActivityLog read failed:', logErr.message);
+        }
+
+        const dayBuckets = new Map();  // dateKey -> Set<wallet>
+        const hourBuckets = new Map(); // hourIndex (0..23, 23 = "now") -> Set<wallet>
+        for (const log of activityLogs) {
+            const w = (log.wallet_address || '').toLowerCase();
+            const dateKey = log.date_key;
+            if (!w || !dateKey) continue;
+            if (!dayBuckets.has(dateKey)) dayBuckets.set(dateKey, new Set());
+            dayBuckets.get(dateKey).add(w);
+
+            // Hourly bucket — only entries whose first_seen_ms falls inside the
+            // rolling last 24h. first_seen_ms is the time of the player's first
+            // save on that UTC day, which is a stable per-player anchor.
+            const firstMs = Number(log.first_seen_ms) || 0;
+            if (firstMs && now - firstMs <= 24 * HOUR) {
+                const hoursAgo = Math.floor((now - firstMs) / HOUR);
+                const idx = 23 - hoursAgo;
+                if (idx >= 0 && idx <= 23) {
+                    if (!hourBuckets.has(idx)) hourBuckets.set(idx, new Set());
+                    hourBuckets.get(idx).add(w);
+                }
+            }
+        }
 
         // Build 14-day daily series (oldest → newest)
         const daily = [];
