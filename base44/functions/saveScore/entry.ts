@@ -856,6 +856,21 @@ Deno.serve(async (req) => {
                 console.error('[saveScore] RunScore save failed:', err.message);
                 // Save was already applied; return success with warning
             }
+            // Immutable run history log — tiny mirror of (wallet, character,
+            // arena, date_key) that survives the keep-top-scores cleanup cron.
+            // Admin metrics "top characters / top arenas" reads from this so
+            // the totals don't shrink when RunScore rows get pruned.
+            // Telemetry only — failure must not block save.
+            try {
+                await base44.asServiceRole.entities.RunHistoryLog.create({
+                    wallet_address: walletLower,
+                    character_id: charId,
+                    arena_id: scoreData.arena_id,
+                    date_key: new Date().toISOString().split('T')[0],
+                });
+            } catch (logErr) {
+                console.warn('[saveScore] RunHistoryLog create failed (non-fatal):', logErr.message);
+            }
         }
 
         // Update squad kills if applicable — use ledger-capped kills (endless capped, others raw)

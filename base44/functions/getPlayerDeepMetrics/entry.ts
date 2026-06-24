@@ -2,8 +2,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Deep player metrics — cohort retention, level distribution, top characters/arenas,
 // and squad membership rate. Built to be CHEAP and rate-limit-safe:
-//   - 4 bounded reads max per refresh (PlayerSave x1, RunScore x1 with 14d window,
-//     SquadMember x1). All capped at 5000–10000 rows.
+//   - PlayerSave x1 (60d window, cap 5000) — level distribution + cohort signups.
+//   - DailyActivityLog x1 (60d window, cap 30000) — TRUE cohort retention
+//     (per-week activity rows, not approximated from a single updated_at).
+//   - RunHistoryLog x1 (14d window, cap 20000) — top characters / arenas
+//     (immutable mirror of RunScore that survives the keep-top-scores cleanup
+//     cron, so historical totals don't shrink).
+//   - SquadMember x1 — squad membership rate (full list, cap 10000).
 //   - All bucket math done in-memory.
 //   - 5-minute server-side cache (these metrics shift slowly — DAU/MAU is on the
 //     other endpoint with 60s cache for the more time-sensitive numbers).
@@ -77,15 +82,23 @@ Deno.serve(async (req) => {
         );
 
         // --- COHORT RETENTION ---
-        // Cohort = ISO week of created_date. For each cohort, count signups and
-        // how many were still active in W+0 (their join week), W+1, W+2, W+3.
-        const cohorts = new Map(); // cohort_week -> { signups: Set, w0: Set, w1: Set, w2: Set, w3: Set }
+        // Cohort = ISO week of created_date. For each cohort: count signups,
+        // then count wallets that have a DailyActivityLog row falling inside
+        // each of W+0, W+1, W+2, W+3. This is TRUE per-week retention — the
+        // previous "lastSeen >= weekStart" approximation made any returning
+        // player retroactively count as retained in every prior week, which
+        // is why the numbers shifted every day.
+        const cohorts = new Map(); // cohort_week -> { signups: Set, w0: Set, w1: Set, w2: Set, w3: Set, startMs }
         const ensureCohort = (key) => {
             if (!cohorts.has(key)) {
-                cohorts.set(key, { signups: new Set(), w0: new Set(), w1: new Set(), w2: new Set(), w3: new Set() });
+                cohorts.set(key, {
+                    signups: new Set(), w0: new Set(), w1: new Set(), w2: new Set(), w3: new Set(),
+                    startMs: new Date(key + 'T00:00:00Z').getTime(),
+                });
             }
             return cohorts.get(key);
         };
+        const walletCohort = new Map(); // wallet -> cohort_week (for fast lookup during DailyActivityLog pass)
 
         const nowWeekStart = new Date(isoWeekStart(now) + 'T00:00:00Z').getTime();
 
@@ -96,21 +109,35 @@ Deno.serve(async (req) => {
             if (now - createdMs > 60 * DAY) continue; // only cohorts in our window
 
             const cohortKey = isoWeekStart(createdMs);
-            const cohortStartMs = new Date(cohortKey + 'T00:00:00Z').getTime();
             const c = ensureCohort(cohortKey);
             c.signups.add(w);
+            walletCohort.set(w, cohortKey);
+        }
 
-            const lastSeen = Number(p.updated_at) || createdMs;
-            // For each week offset, did the player have activity within that week?
-            // We can only know "last activity", not full history, so we treat a
-            // player as "retained in week N" if their lastSeen is >= start of week N.
-            // This is the standard approximation when we don't store per-day events.
-            for (let n = 0; n <= 3; n++) {
-                const weekStart = cohortStartMs + n * WEEK;
-                if (weekStart > now) break; // future week — not yet measurable
-                if (lastSeen >= weekStart) {
-                    c[`w${n}`].add(w);
-                }
+        // Pull DailyActivityLog rows for the cohort window (60d) and assign
+        // each row to its wallet's cohort's W0/W1/W2/W3 bucket based on the
+        // log's date_key. Bounded read — 60d × ~MAU rows per day, capped 30k.
+        const since60Iso = new Date(now - 60 * DAY).toISOString().split('T')[0];
+        let cohortLogs = [];
+        try {
+            cohortLogs = await db.entities.DailyActivityLog.filter(
+                { date_key: { $gte: since60Iso } },
+                '-date_key',
+                30000
+            );
+        } catch (logErr) {
+            console.warn('[getPlayerDeepMetrics] DailyActivityLog read failed:', logErr.message);
+        }
+        for (const log of cohortLogs) {
+            const w = (log.wallet_address || '').toLowerCase();
+            const cohortKey = walletCohort.get(w);
+            if (!cohortKey) continue;
+            const c = cohorts.get(cohortKey);
+            if (!c) continue;
+            const logMs = new Date(log.date_key + 'T00:00:00Z').getTime();
+            const weekOffset = Math.floor((logMs - c.startMs) / WEEK);
+            if (weekOffset >= 0 && weekOffset <= 3) {
+                c[`w${weekOffset}`].add(w);
             }
         }
 
@@ -125,8 +152,7 @@ Deno.serve(async (req) => {
                 const w1 = c.w1.size;
                 const w2 = c.w2.size;
                 const w3 = c.w3.size;
-                const cohortStartMs = new Date(cohort_week + 'T00:00:00Z').getTime();
-                const ageWeeks = Math.floor((nowWeekStart - cohortStartMs) / WEEK);
+                const ageWeeks = Math.floor((nowWeekStart - c.startMs) / WEEK);
                 return {
                     cohort_week,
                     age_weeks: ageWeeks,
@@ -156,15 +182,17 @@ Deno.serve(async (req) => {
             count: levelCounts.get(bucket) || 0,
         }));
 
-        // --- READ 2: RunScore activity in the last 14 days (top characters / arenas) ---
-        // We sort by created_date desc and cap at 10000 — at current volumes that's
-        // weeks of data; if play volume ever exceeds that we'll naturally get a
-        // rolling window of the most recent 10k runs which is still representative.
-        const cutoffIso = new Date(now - 14 * DAY).toISOString();
-        const runs = await db.entities.RunScore.filter(
-            { created_date: { $gte: cutoffIso } },
-            '-created_date',
-            10000
+        // --- READ 2: RunHistoryLog — last 14 days (top characters / arenas) ---
+        // Reads from the immutable RunHistoryLog (written by saveScore alongside
+        // every RunScore.create) instead of RunScore itself — RunScore rows get
+        // soft-deleted by the keep-top-scores cleanup cron, so historical totals
+        // pulled from it shrink over time. The log entity carries only the four
+        // fields we need (wallet, character, arena, date_key) so the read is small.
+        const since14Key = new Date(now - 14 * DAY).toISOString().split('T')[0];
+        const runs = await db.entities.RunHistoryLog.filter(
+            { date_key: { $gte: since14Key } },
+            '-date_key',
+            20000
         );
 
         const charCounts = new Map();

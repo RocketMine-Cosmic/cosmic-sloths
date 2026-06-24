@@ -213,7 +213,7 @@ export default function AdminRetention() {
             </div>
 
             <div className="text-[10px] text-slate-600 italic px-1">
-                Built from PlayerSave.updated_at (set on every save). One bounded DB read per refresh, cached 60s — costs roughly one entity list per minute.
+                DAU/WAU/MAU read from PlayerSave (moving windows — accurate). 14-day chart + 24h heartbeat read from DailyActivityLog (immutable per-(wallet,day) rows written on first save of each day, so historical bars don't shift). Two bounded reads per refresh, cached 60s.
             </div>
         </div>
     );

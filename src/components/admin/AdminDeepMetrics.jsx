@@ -226,8 +226,7 @@ export default function AdminDeepMetrics() {
             </div>
 
             <div className="text-[10px] text-slate-600 italic px-1">
-                Based on {top_run_count.toLocaleString()} runs in the last 14 days. Cohorts: 60-day window.
-                3 bounded DB reads per refresh, cached server-side 5 min — roughly one set of reads per 5 min regardless of admin traffic.
+                Cohort retention reads DailyActivityLog (true per-week activity, not approximated from a single timestamp). Top characters/arenas read RunHistoryLog — an immutable per-run mirror that survives the keep-top-scores cleanup cron, so totals don't shrink. Based on {top_run_count.toLocaleString()} runs in the last 14 days. Cohorts: 60-day window. 4 bounded DB reads per refresh, cached server-side 5 min.
             </div>
         </div>
     );
