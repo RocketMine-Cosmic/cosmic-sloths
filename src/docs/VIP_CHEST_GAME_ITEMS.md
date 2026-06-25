@@ -24,7 +24,7 @@ Confirmed by inspecting the OmenX dev portal "VIP Chests" page directly (screens
 1. **Three-tab structure per game.** Each integrated game has tabs for:
    - **Reward rows** — our weighted loot table per chest tier (this is where the bronze→elite tables go).
    - **Reward webhook** — currently flagged "Setup required" for Cosmic Sloths. This is the blocker.
-   - **Revenue** — presumably shows our cut of OMENX/GMT chest revenue from rolls that hit our game. **New question for Marco: what is the revenue split?** Not mentioned in the 06-19 update.
+   - **Revenue** — display-only dashboard of our chest revenue. **Payouts flow OmenX → dev wallet directly, NOT through our app/backend.** Confirmed by Hugo 2026-06-25. So nothing for us to build here — no accounting entity, no reconciliation function, no payout webhook. The tab is purely informational on the OmenX side.
 
 2. **Game selector dropdown.** Cosmic Sloths is listed as an option — the platform-side game registration is already done.
 
@@ -56,10 +56,9 @@ https://cosmic-sloths.base44.app/functions/onVipChestRewardGranted
 
 ### Updated open questions (06-25)
 
-11. **Revenue tab — what's our split?** Per chest tier? Per category roll? Need clarity before launch comms.
-12. **URL change policy.** If we move from base44 to a custom domain later, can the URL be edited without invalidating the signing secret?
-13. **Webhook test fire** — there's no visible "Send test event" button in the screenshot. Did I miss it on another tab, or do we have to wait for a real chest open to validate the integration? If the latter, we need a fake chest open in OmenX staging.
-14. **Webhook concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 simultaneous webhook calls, or queue them? Affects whether we need any rate-limit handling on the receiver.
+11. **URL change policy.** If we move from base44 to a custom domain later, can the URL be edited without invalidating the signing secret?
+12. **Webhook test fire** — there's no visible "Send test event" button in the screenshot. Did I miss it on another tab, or do we have to wait for a real chest open to validate the integration? If the latter, we need a fake chest open in OmenX staging.
+13. **Webhook concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 simultaneous webhook calls, or queue them? Affects whether we need any rate-limit handling on the receiver.
 
 ### Implementation status
 
@@ -69,7 +68,7 @@ https://cosmic-sloths.base44.app/functions/onVipChestRewardGranted
 - [ ] **NEXT:** Build `onVipChestRewardGranted` backend function with HMAC SHA-256 verification
 - [ ] Add `OMENX_VIP_CHEST_WEBHOOK_SECRET` to secrets (waiting until handler is being built — secret only needs to exist when we paste the URL into the portal)
 - [ ] Create `VipChestGrantLog` entity (tx_id unique, used for idempotency)
-- [ ] Reply to Marco with Q11–Q14 plus the original Q6–Q10
+- [ ] Reply to Marco with Q11–Q13 plus the original Q6–Q10
 - [ ] Submit reward rows once webhook is verified live
 
 ---
