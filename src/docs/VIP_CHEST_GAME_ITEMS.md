@@ -48,15 +48,17 @@ Confirmed by inspecting the OmenX dev portal "VIP Chests" page directly (screens
 
 ### Webhook URL planning
 
-The portal expects an HTTPS endpoint. Base44 backend functions are exposed at:
+The portal expects an HTTPS endpoint. **We're already on our custom domain**, so the webhook URL should point at the custom domain directly — NOT the `*.base44.app` fallback. That way, if we ever migrate the backend off Base44 entirely down the road, we can repoint the same domain at the new host and the webhook URL stays valid (no need to update OmenX dev portal config, no risk of rotating the signing secret).
+
+Format will be:
 ```
-https://cosmic-sloths.base44.app/functions/onVipChestRewardGranted
+https://<custom-domain>/functions/onVipChestRewardGranted
 ```
-(Need to confirm the exact host — check `api/base44Client.js` baseUrl before pasting into the portal.)
+(Need to grab the exact custom domain from `api/base44Client.js` baseUrl before pasting into the portal.)
 
 ### Updated open questions (06-25)
 
-11. **URL change policy.** If we move from base44 to a custom domain later, can the URL be edited without invalidating the signing secret?
+11. **URL change policy.** We're already on our custom domain, so day-1 is fine. But IF we migrate off Base44 entirely later (different backend host behind the same domain), can the URL be edited in the portal without invalidating the signing secret? Best case: domain-pointing change only, zero portal work.
 12. **Webhook test fire** — there's no visible "Send test event" button in the screenshot. Did I miss it on another tab, or do we have to wait for a real chest open to validate the integration? If the latter, we need a fake chest open in OmenX staging.
 13. **Webhook concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 simultaneous webhook calls, or queue them? Affects whether we need any rate-limit handling on the receiver.
 
