@@ -63,6 +63,67 @@ Any Bluetooth or USB controller that the browser exposes via the Gamepad API —
 
 ---
 
+## Desktop deep dive
+
+### Browser-specific notes
+
+| Browser | Status | Notes |
+|---|---|---|
+| **Chrome / Edge / Brave / Opera** (Chromium) | ✅ Best | Reference target. Hardware acceleration on by default. Full WebGL2, full Gamepad API, smoothest audio. |
+| **Firefox** | ✅ Great | WebGL2 perf is ~5–10% behind Chromium on the same machine, mostly invisible. Gamepad API works but rumble is sometimes ignored on Linux. |
+| **Safari (macOS)** | ✅ Good | 16.4+ required for full WebGL2 perf. Audio has slightly higher latency (~30 ms vs Chrome's ~10 ms) — noticeable only on rhythm-heavy Synthbeats builds. PlayStation controllers connect cleanly; Xbox controllers need macOS Sonoma+. |
+| **Arc** | ✅ Works | Same as Chromium. |
+| **Internet Explorer** | ❌ No | Doesn't exist anymore. |
+| **In-app browsers** (Discord desktop overlay, Steam overlay) | ⚠️ Avoid | Render loop throttling, missing Gamepad API. Always "Open in browser." |
+
+### Multi-monitor / ultrawide / non-standard aspect
+
+- The game canvas is **fixed 16:9 internally** and letterboxes on ultrawide (21:9, 32:9) or 16:10 laptops. Black bars on the sides, but no functionality is cropped.
+- 1440p, 4K, and 5K all render natively — we respect `devicePixelRatio` for HUD crispness, capped at 2x to keep particle-heavy scenes smooth on 4K.
+- Multi-monitor: drag the tab to your fastest display (the one with the highest refresh rate). Chrome composites at the refresh rate of whichever monitor the tab is on, even in windowed mode.
+- 120 Hz / 144 Hz / 240 Hz: game logic is decoupled from render rate, so high-refresh displays just look smoother — no gameplay advantage or disadvantage.
+
+### Linux
+
+Works on all major distros with no special setup:
+- **Chrome / Chromium / Firefox** — full perf, identical to Windows.
+- **WebGL2** requires the proprietary or Mesa 22+ drivers. Steam Deck / SteamOS works out of the box.
+- **Gamepad rumble** is hit-and-miss on Firefox+Linux — switch to Chrome if your controller doesn't rumble.
+- **Wayland vs X11** — both work. Wayland sometimes has v-sync hiccups in Firefox; Chrome is fine.
+
+### Streaming / recording (OBS, Streamlabs, Twitch Studio)
+
+A lot of top-tier players stream their runs. Recommended capture setup:
+
+| Setting | Recommended |
+|---|---|
+| **Capture method** | Browser Source (best quality, low CPU) **or** Window Capture |
+| **Resolution** | 1920 × 1080 — matches our internal render target |
+| **Frame rate** | 60 fps |
+| **Encoder** | NVENC / AV1 / QuickSync (hardware) — avoid x264 software encode while playing |
+| **Bitrate** | 6000 kbps for Twitch 1080p60, 12000 kbps for YouTube |
+| **Audio capture** | Capture the tab audio separately if possible — avoids picking up Discord notifications |
+
+OBS itself can use significant GPU. If you see frame drops only while streaming, lower OBS to 30 fps capture or use the NVENC P1 preset.
+
+### Reference machines (actually tested)
+
+What we've benchmarked. Sustained fps in S20 Cosmic with a maxed Synthbeats build (worst case for particles):
+
+| Machine | S20 Cosmic | Endless 30+ min | Notes |
+|---|---|---|---|
+| **MacBook Air M1** (2020, 8GB) | 60 locked | 60 locked | Fanless, doesn't even warm up |
+| **MacBook Pro M3** (2023) | 60 locked | 60 locked | Headroom for streaming + Discord on the side |
+| **Desktop, Ryzen 5 5600 + RTX 3060** | 60 locked | 60 locked | Reference dev box |
+| **Steam Deck** (LCD, desktop mode, Chrome) | 55–60 | 50–55 | Plays great with controller; battery ~3 hrs |
+| **ROG Ally** (Z1 Extreme) | 60 locked | 60 locked | High-refresh display feels excellent |
+| **Lenovo ThinkPad T14 (2019, i5-8365U, Intel UHD 620)** | 50–55 | 45–55 | Integrated GPU, mild dips in big AoE |
+| **Chromebook (Intel N4500, 2022)** | 40–50 | 40–50 | Playable, occasional dips |
+| **Old MacBook Pro 2015 (Intel Iris)** | 35–45 | 30–40 | Min spec territory — works but feels heavy |
+| **Raspberry Pi 4** | ❌ Don't | ❌ Don't | WebGL2 perf is too low; ~15 fps at best |
+
+---
+
 ## What actually affects performance
 
 In rough order of impact:
