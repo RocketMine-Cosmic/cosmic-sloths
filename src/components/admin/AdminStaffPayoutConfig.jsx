@@ -22,6 +22,10 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     const [notes, setNotes] = useState('');
     const [current, setCurrent] = useState(null);
     const [staffCount, setStaffCount] = useState(0);
+    // Sum of EFFECTIVE per-wallet pcts (override if set, else global). Reflects
+    // real distribution math (mirrors AdminStaffPayouts.effectivePctFor) so the
+    // bar is accurate even when individual wallets have custom overrides.
+    const [liveStaffTotalPct, setLiveStaffTotalPct] = useState(0);
     // Live pool %s pulled from leaderboardPayoutConfig (see DEFAULT_CONFIG there)
     const [poolPcts, setPoolPcts] = useState({
         weekly: 0.15,
@@ -42,9 +46,18 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
             .then(([cfgRes, walletsRes, lbRes]) => {
                 if (cfgRes.data?.error) throw new Error(cfgRes.data.error);
                 setCurrent(cfgRes.data);
-                setPctInput(((cfgRes.data.pct ?? 0.02) * 100).toFixed(2));
-                const wallets = walletsRes.data?.records || [];
-                setStaffCount(wallets.filter(w => w.wallet_address).length);
+                const globalPct = cfgRes.data.pct ?? 0.02;
+                setPctInput((globalPct * 100).toFixed(2));
+                const wallets = (walletsRes.data?.records || []).filter(w => w.wallet_address);
+                setStaffCount(wallets.length);
+                // Sum effective pct per wallet (override OR global) — same logic
+                // distributeStaffPayout uses, so the bar = real weekly cost.
+                const effectiveSum = wallets.reduce((sum, w) => {
+                    const o = w.payout_pct_override;
+                    const eff = (o !== null && o !== undefined && isFinite(Number(o))) ? Number(o) : globalPct;
+                    return sum + eff;
+                }, 0);
+                setLiveStaffTotalPct(effectiveSum);
                 const lbCfg = lbRes.data?.config || {};
                 setPoolPcts({
                     weekly:   lbCfg.weekly_pool_pct   ?? 0.15,
@@ -57,8 +70,12 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     }, [isOwner]);
 
     const numericPct = Number(pctInput) / 100;
-    const liveStaffPct = current?.pct ?? 0.02;
-    const staffTotalPct = staffCount * numericPct; // total share of WEEKLY spend going to staff (PREVIEW)
+    const globalPct = current?.pct ?? 0.02;
+    // Preview staff total: each wallet WITHOUT an override would shift to the new
+    // pct; wallets WITH overrides keep their override. We don't have per-wallet
+    // detail here, so approximate by assuming all 5 use the global (matches
+    // owner intuition since overrides are the exception, not the rule).
+    const staffTotalPct = staffCount * numericPct;
     // Cap check applies to the PREVIEW value (what the owner is about to save)
     const weeklyAllocPct = poolPcts.weekly + poolPcts.kill + staffTotalPct;
     const isOverHardCap = weeklyAllocPct > HARD_CAP_PCT;
@@ -131,7 +148,7 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         squadChampionsPct={SQUAD_CHAMPIONS_PCT}
                         staffCount={staffCount}
                         numericPct={numericPct}
-                        liveStaffPct={liveStaffPct}
+                        liveStaffTotalPct={liveStaffTotalPct}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 items-end">

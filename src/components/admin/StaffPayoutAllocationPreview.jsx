@@ -19,11 +19,10 @@ export default function StaffPayoutAllocationPreview({
     killPoolPct,
     squadChampionsPct,
     staffCount,
-    numericPct,    // per-staff weekly % from the INPUT (preview only)
-    liveStaffPct,  // per-staff weekly % currently SAVED (drives real payouts)
+    numericPct,         // per-staff weekly % from the INPUT (preview only)
+    liveStaffTotalPct,  // SUMMED effective pct across all staff (drives real payouts; respects per-wallet overrides)
 }) {
     // Live (saved) values — what the bar reflects.
-    const liveStaffTotalPct = staffCount * (liveStaffPct ?? numericPct);
     const liveCommittedPct = weeklyPlayerPct + killPoolPct + liveStaffTotalPct + seasonalPlayerPct + squadChampionsPct;
     const liveAvailablePct = Math.max(0, 1 - liveCommittedPct);
 
@@ -62,7 +61,7 @@ export default function StaffPayoutAllocationPreview({
                 <span className="text-cyan-400">■ Weekly players {(weeklyPlayerPct * 100).toFixed(2)}%</span>
                 <span className="text-pink-400">■ Kill pool {(killPoolPct * 100).toFixed(2)}%</span>
                 <span className="text-amber-400">
-                    ■ Staff {(liveStaffTotalPct * 100).toFixed(2)}% ({staffCount} × {((liveStaffPct ?? numericPct) * 100).toFixed(2)}%)
+                    ■ Staff {(liveStaffTotalPct * 100).toFixed(2)}% ({staffCount} wallet{staffCount === 1 ? '' : 's'}, incl. overrides)
                 </span>
                 <span className="text-indigo-400">■ Seasonal players {(seasonalPlayerPct * 100).toFixed(2)}%</span>
                 <span className="text-purple-400">■ Squad Champions {(squadChampionsPct * 100).toFixed(2)}%</span>
