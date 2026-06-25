@@ -2,7 +2,7 @@
 
 **Status:** Planning doc, not committed. Goal: identify new compelling OMENX sinks to lift weekly spend (which feeds the leaderboard pool, staff payouts, kill pool, squad champions, etc.).
 
-**Date:** 2026-06-24 · **Code review pass:** 2026-06-25 (read `purchaseSku`, `spendGold`, `LevelUpModal`, `GameOverModal`, `skuMap.js`)
+**Date:** 2026-06-24 · **Code review pass:** 2026-06-25 (read `purchaseSku`, `spendGold`, `LevelUpModal`, `GameOverModal`, `skuMap.js`, `forgeAction`, `MysteryForgeCard`, `Loadouts.jsx`, `GameEngine.js` damage/death/revive paths)
 
 ---
 
@@ -55,66 +55,86 @@
 - OMENX balance already displayed top-right (line 222) — reuse for cost preview.
 - **Skip the separate OmenXConfirmation modal** — Reroll and Banish currently use direct-tap confirmation (no modal). Match that pattern; modal-on-every-pick would feel heavy on a level-up screen.
 
-**Open question to resolve before build:** when Pick 2 / Pick All is active, does the engine call `onSelect` multiple times in sequence, or do we need a new `onSelectMany(choices[])` callback? The current `onSelect(choice)` handler in `GameEngine` runs the full upgrade-apply pipeline (evolution checks, synergy unlocks, etc.) — calling it N times back-to-back may be fine but needs an engine read.
+**Engine integration — VERIFIED (GameEngine.js read 2026-06-25):**
+- `applyUpgrade(upgrade)` (line 1239) delegates to `applyUpgradeLogic`, which runs evolution + synergy checks and decrements `pendingStarterLevelUps` for Squad Meteor's 10-stack pattern.
+- **There's already a working precedent for multi-pick chains:** `pendingStarterLevelUps` (line 469) hands out 10 sequential level-ups in Squad Meteor. Each pick fires the modal again via `engine.levelUp()`. So Pick 2 / Pick All can reuse this exact pattern: set `pendingPickBoostPicks = 1` (for Pick 2) or `2` (for Pick All — first pick is free, next N are bonus), decrement on each `applyUpgrade`, re-call `levelUp()` from the same choice pool.
+- **Choice pool re-roll question:** Squad Meteor re-rolls choices each chained pick. For Pick 2 / Pick All we should NOT re-roll — the player paid for the 3 they SAW. This means storing the original choices on the engine (`this._lockedMultiPickChoices`) and bypassing `generateChoicesLogic` for the chained picks. Cleaner than it sounds.
+- **Banished-upgrade interaction:** `banishedUpgrades` (line 444) is a Set — already filters subsequent picks. Pick All cleanly avoids dupes because each pick removes from the offered set.
 
 **Estimated dev:** 1–1.5 days. Touches `LevelUpModal` (UI + state), `purchaseSku.applyGrant` (new case), `saveScore` (per-run reset), PlayerSave schema (+3 fields: `pickBoostsUsedThisRun`, `weekly_pick_boosts`, `weekly_pick_boosts_week`). **Also** needs the new SKU IDs registered in the OmenX dev portal first (otherwise `purchaseSku` returns 404 SKU_NOT_FOUND — line 661).
 
 ---
 
-### 2. 🥈 Run Resurrection
-**The pitch:** After dying mid-run, spend OMENX to revive at the spot with **50% HP** and **3s i-frames**. Once per run.
+### 2. 🥈 Run Resurrection — **ALREADY FULLY WIRED**
+**The pitch:** After dying mid-run, spend OMENX to revive at the spot with full HP and i-frames.
 
-> ⚠️ **`ingame-revive` already exists** in `skuMap.IN_GAME_SKUS` at **4 OMENX**. Need to check the codebase whether it's wired up to actually revive (probably yes given Hub purchase logs from earlier this season). If it is, this isn't a new sink — it's a **pricing + UX refresh**. Read `GameEngine.js` for `revive`/`reviveCount` before building.
+> ✅ **Verified in `GameEngine.js` (lines 673–679, 2026-06-25):** when `player.hp <= 0`, if `omenxBalance >= 4` AND `!hasRevivedWithTokens`, the engine pauses and fires `callbacks.onDeathPrompt`. The 4 OMENX cost is hard-coded. One revive per run is already enforced via the `hasRevivedWithTokens` flag. **This is shipped, not new work.**
 
-**If the existing revive is unwired:** ship the wiring. UX hooks into `GameOverModal` (currently shows save spinner → "Sloth Lounge" / "Try Again" buttons at line 70). Insert a "💀 Revive — N OMENX" button between save-confirmed and the two existing buttons. The modal already waits for `stats._serverConfirmed` before showing buttons — revive needs to fire BEFORE save commits (save would close the run), so it has to be in a separate pre-save modal phase.
+**What's actually shippable here:**
 
-**If it's already wired but flat-priced at 4 OMENX:** the proposed escalating curve makes sense for long endless runs, but needs server validation in a new `reviveRun` function (not the SKU's `applyGrant` — that runs after the player is already dead, no engine state to resume).
+**A. Escalating cost curve.** Current 4 OMENX flat is great for sector runs but trivial for a 45-minute endless save. The escalation could attach to `engine.time` directly:
+```js
+const reviveCost = engine.time < 300 ? 4
+                 : engine.time < 600 ? 8
+                 : engine.time < 1500 ? 15
+                 : 25;
+```
+Requires updating the `>= 4` check at line 675 and the `onDeathPrompt` callback signature to carry the cost. Plus a new SKU `ingame-revive-tier-2/3/4` in OmenX dev portal (or just one SKU with quantity multipliers — needs an OmenX docs read on quantity semantics).
 
-**Pricing (revised — assuming existing 4 OMENX flat is the floor):**
-- Sector run, < 5 min in: **4 OMENX** (current)
-- Sector run, > 5 min OR endless < 10 min: **10 OMENX**
-- Endless 10–25 min: **25 OMENX**
-- Endless 25 min+: **50 OMENX**
+**B. Cap per WEEK across runs.** Currently it's only per-run. A weekly cap (e.g. 5 revives/week) prevents whales auto-reviving every Cosmic death. Lives on PlayerSave (`weekly_revives` + `weekly_revives_week`, same pattern as `weekly_sector_kills`).
 
-The earlier "50/100/200" suggestion was off by an order of magnitude — out of band with every other in-run SKU.
+**C. Disable in Squad Wars / Raid / Meteor.** Currently the engine doesn't check arena before offering revive — needs an arena-id guard at line 675 (Raid is `world_boss_arena`, Meteor is `quantum_meteor`).
 
-**Caps:** 1 per run (currently presumed enforced client-side; if not, server-enforced via PlayerSave). Per-week cap: 10.
+**Pricing:** Recommendations above. Cap: 5/week.
 
-**Disabled in:** Squad Wars, Raid, Meteor.
-
-**Estimated dev:** 0.5 day if existing revive is wired (just pricing + GameOverModal copy); 2–3 days if we need to build the resume-from-death engine pathway from scratch. **Verify state of existing `ingame-revive` SKU before estimating.**
+**Estimated dev:** 0.5 day for the cost curve + arena guard + weekly cap. Most of the work is the SKU registration + UI copy. **No engine-resume rebuild needed — it already works.**
 
 ---
 
 ### 3. 🥉 Pre-Run Loadout Re-roll
 **The pitch:** Before a run starts, your loadout's pool bias and starting upgrade are fixed. Spend OMENX to **re-roll your starting weapon** (random from any unlocked) OR **swap arena modifier** (e.g. +50% gold, +25% XP, +1 weapon slot at start).
 
-> ⚠️ **Overlaps with `bias-respec`** (`IN_GAME_SKUS.biasRespec`, ~10 OMENX, "clears all allocated pool-bias points"). Existing players already pay OMENX to mess with pool bias pre-run. The new sink needs to be *additive* — a starting-weapon re-roll, not another bias clear, or this just splits existing spend.
+> ⚠️ **Overlaps with `bias-respec`** (`IN_GAME_SKUS.biasRespec`, ~10 OMENX, "clears all allocated pool-bias points"). Existing players already pay OMENX to mess with pool bias pre-run.
+>
+> ⚠️ **Loadouts.jsx has zero OmenX integration today** (verified 2026-06-25). It's pure local-state preset save/swap — `SaveManager.save` only, no `purchaseSku` calls. The pool-bias respec lives in a sibling component (`PoolBiasPanel`). So this isn't a "small addition" — we'd be introducing the first OMENX charge to Loadouts.
 
-**Why it works:**
-- Pure variety play, no power creep.
-- Lets players experiment without grinding to unlock everything.
+**Scope discipline:** drop the "arena modifier swap" idea entirely (extending arenas is a feature on its own). Stick to **one** specific addition: a "🎲 Random starting weapon — 5 OMENX" button next to the existing "Apply & Go" on each loadout slot. Single SKU, single button, no other state changes.
 
-**Pricing:** **5–8 OMENX** per re-roll (not 20 — `bias-respec` is ~10 and is a bigger commitment). 5 per week.
+**Pricing:** **5 OMENX** per re-roll. No weekly cap needed at this price — natural cap is "you have to play a run to use it again."
 
-**Implementation:** lives in `pages/Loadouts.jsx`. New SKU `ingame-loadout-reroll`. Falls under the in-run SKU prefix list (or add a new prefix `ingame-loadout-`).
+**Implementation:**
+- New SKU `ingame-loadout-reroll` registered in OmenX dev portal.
+- `Loadouts.jsx` `handleApply` augmented with optional `randomizeStartingWeapon: true` that calls `purchaseSku` first, then on success picks a random weapon from `effectiveUnlockedCharacters`'s available weapon pool before nav to `/?slide=1`.
+- Falls under existing `ingame-` prefix in `purchaseSku.IN_RUN_SKU_PREFIXES` — automatically gets the 1-attempt retry + circuit-breaker fail-open.
 
-**Estimated dev:** 1 day. Lives in Loadouts page.
+**Estimated dev:** 0.5 day (smaller than originally claimed — UI change is minimal, no new server function).
 
 ---
 
 ## Tier 2 — Strong candidates (medium dev, high engagement)
 
-### 4. Weekly Forge Lottery — Star Fragment Gamble
-**The pitch:** Existing MysteryForgeCard is gold → fragment chance. Add an OMENX version with **better odds + higher max payout** (e.g. 1–20 fragments instead of 0–5).
+### 4. Weekly Forge Lottery — Star Fragment Gamble — **PROPOSAL WAS WRONG**
 
-> 📌 **Need to read `MysteryForgeCard` + `forgeAction` before estimating.** I claimed 0.5 day without reading either — the odds table, the daily cap, and the existing roll UI all live somewhere I haven't audited. **Caveat the estimate until that read happens.**
+**Original premise:** "Existing MysteryForgeCard is gold → fragment chance." **This is wrong.** (Read 2026-06-25.)
 
-**Pricing:** **20–30 OMENX** per pull, 7 pulls per week. Calibrate after seeing the existing gold-pull odds.
+What actually exists:
+- **`MysteryForgeCard.jsx`** = the **Astral Lab** UI (component name is legacy). Gold → random permanent stat buff with hard caps. Endgame whale prestige sink. S6+ only.
+- **`forgeAction` action: `mysteryForge`** = the real Mystery Forge. 5,000 gold OR 50 fragments → one random unlocked weapon augment T1/T2/T3 (weighted 60/30/10) for a chosen weapon. S6+ only. Tier prereqs enforced (rolling T3 when you only own T1 gives T2). UI lives somewhere we haven't located in this pass.
+- **Convert flow** in `ForgePanel`: 10,000 gold → 1 fragment, capped 30/day.
 
-**Why:** Whales chase the 20-fragment jackpot. Casuals get a steady drip. Existing infrastructure — just a new sku id and weighted table.
+So we already have TWO gold-driven lottery-style forge sinks. **The OMENX angle that's actually missing:** an OMENX → **fragments directly** flow, bypassing the 30/day convert cap. That's a legitimately new sink because right now whales who want to forge augments faster are gated entirely by the 30/day gold-conversion cap.
 
-**Estimated dev:** TBD — read `MysteryForgeCard` and `forgeAction` first. Likely 0.5–1 day.
+**Revised proposal:** "OMENX → Star Fragments express lane"
+- 1 OMENX = 1 fragment, NO daily cap (or weekly cap of 100).
+- Adds a parallel button on the Convert tab in `ForgePanel.jsx`.
+- New SKU `ingame-fragments-buy` (under `ingame-` prefix → free-grant on outage protection).
+- New grant `type: 'fragments_buy'` in `purchaseSku.applyGrant` — increments `save.starFragments`.
+
+**Pricing:** 1 OMENX per fragment, weekly cap 100.
+
+**Why:** whales who already converted their daily 30 still want to forge faster. Currently they hit the wall and stop spending. This unblocks them.
+
+**Estimated dev:** 0.5 day. One SKU, one grant case, one button on `ForgePanel`.
 
 ---
 
@@ -183,10 +203,11 @@ The earlier "50/100/200" suggestion was off by an order of magnitude — out of 
 
 | When | Ship | Why |
 |---|---|---|
-| **This week** | #1 Pick 2 / Pick All | Player-requested, contained, instant satisfaction. Easy win. |
-| **Next week** | #2 Run Resurrection | Highest impulse-buy potential. Complements #1. |
-| **W27 / S7 mid-season** | #4 Weekly Forge Lottery + #5 Squad Buffs | Recurring sinks, lift weekly spend baseline. |
-| **W28** | #3 Loadout Re-roll + #6 NFT Re-Skin | Lower priority but cheap to build. |
+| **This week** | #1 Pick 2 / Pick All (NEW) | Player-requested, contained, instant satisfaction. Easy win. |
+| **This week (bonus)** | #2 Revive escalation (EXISTS) + #4 Fragments express lane (NEW) | Both are 0.5d. Together with #1 = three sinks in one patch. |
+| **Next week** | #3 Loadout Re-roll (NEW) | 0.5d cleanup ship. |
+| **W27 / S7 mid-season** | #5 Squad Buffs | Extend existing `Squad.active_buff_tier` field set. |
+| **W28** | #6 NFT Re-Skin | Cosmetic-only, low priority. |
 | **S8 launch** | #7 Battle Pass | Big seasonal anchor. Plan now, build during S7. |
 | **Polish/filler** | #8–10 | Whenever there's idle capacity. |
 
@@ -228,15 +249,19 @@ Everything else here flows from the same principle: **make spending OMENX feel l
 
 ## What changed in this code-review pass (2026-06-25)
 
-Read `purchaseSku.js`, `spendGold.js`, `LevelUpModal.jsx`, `GameOverModal.jsx`, `skuMap.js`. Findings that updated the doc:
+Two-pass read. First pass: `purchaseSku.js`, `spendGold.js`, `LevelUpModal.jsx`, `GameOverModal.jsx`, `skuMap.js`. Second pass: `forgeAction.js`, `MysteryForgeCard.jsx`, `pages/Loadouts.jsx`, `GameEngine.js` lines 300–1570.
 
-1. **Pricing overhauled.** Original suggestions (Pick 2 ~25, Pick All ~75, Revive 50/100/200, Loadout reroll 20, Squad Buffs 200–500) were 3–10× out of band with the existing OMENX SKU price ladder (banish 2–6, reroll 2, revive 4, xp-buff 10, squad-ult-full 10, bias-respec ~10). Whales would never touch the new SKUs at those prices. Revised everything down.
-2. **`ingame-revive` already exists at 4 OMENX** — #2 may be a UX refresh, not a new sink. Need to verify whether it's already wired in `GameEngine`.
-3. **`bias-respec` already exists** — #3 Loadout Reroll needs to be *additive* (starting-weapon reroll, not another bias clear).
-4. **Squad already has buff fields** (`active_buff_tier`, `pending_buff_tier`, etc.) — #5 must extend that schema, not duplicate it.
-5. **In-run SKU routing matters.** All new SKU IDs must use the `ingame-` prefix (or be added to `IN_RUN_SKU_PREFIXES` in `purchaseSku.js` line 85) so they get the 1-attempt retry, 8s timeout, and circuit-breaker free-grant fallback. Otherwise an OmenX outage during a fight = bad UX.
-6. **SKU registration in OmenX dev portal is a prerequisite** — `purchaseSku` returns 404 SKU_NOT_FOUND for unknown SKUs (line 661). Always register before shipping client UI.
-7. **`OmenXConfirmation` modal was suggested for #1 but the existing Reroll/Banish flow doesn't use it** — went with single-tap + 2s anti-mash to match the pattern.
-8. **Open questions added** about engine integration with multi-pick and circuit-breaker free-grant patch-note copy.
+Findings that changed the doc:
 
-Net: same Tier 1 ranking, but the implementation plans are now grounded in the actual code paths and pricing.
+1. **Pricing overhauled.** Original suggestions (Pick 2 ~25, Pick All ~75, Revive 50/100/200, Loadout reroll 20, Squad Buffs 200–500) were 3–10× out of band with the existing ladder. Revised everything down.
+2. **#2 Revive is ALREADY FULLY WIRED** in `GameEngine.js` lines 673–679 — `omenxBalance >= 4`, `hasRevivedWithTokens` flag, `onDeathPrompt` callback. The original doc treated this as new work; it's an ESCALATION + arena-guard refresh only.
+3. **`bias-respec` already exists** — #3 Loadout Reroll is now scoped to *starting-weapon randomization only*, not another bias clear. Also confirmed `Loadouts.jsx` has zero existing OmenX integration (first OMENX charge there).
+4. **#4 was FACTUALLY WRONG.** The "Mystery Forge" component name is misleading — `MysteryForgeCard.jsx` is actually the **Astral Lab** (gold → permanent stat buff). The real Mystery Forge lives in `forgeAction.js` (`action: 'mysteryForge'`, 5k gold or 50 frags → random augment). Both already exist. Replaced the proposal with a genuinely missing sink: **OMENX → fragments express lane** that bypasses the 30/day gold-convert cap.
+5. **Squad already has buff fields** — #5 must extend `Squad.active_buff_tier` / `pending_buff_tier`, not duplicate.
+6. **Engine multi-pick pattern verified.** `pendingStarterLevelUps` (GameEngine line 469, Squad Meteor) is the exact mechanism Pick 2 / Pick All should reuse — decrement-then-re-call-`levelUp()`. With one critical tweak: don't re-roll the choice pool between chained picks (Pick 2 = pay for the 3 you SAW, not a fresh roll).
+7. **`banishedUpgrades` is already a Set** — Pick All naturally dedupes without extra work.
+8. **In-run SKU routing matters.** All new SKU IDs must use the `ingame-` prefix in `purchaseSku.IN_RUN_SKU_PREFIXES` (line 85) for the 1-attempt retry, 8s timeout, and circuit-breaker free-grant fallback.
+9. **OmenX dev portal registration is a prerequisite** — `purchaseSku` returns 404 SKU_NOT_FOUND for unknown SKUs (line 661).
+10. **Total Tier 1 dev cost dropped from ~3 days to ~2 days** — because revive is shipped and the fragment express lane is shorter than the lottery proposal.
+
+Net: Tier 1 ranking changed. Original = #1 / #2 (revive) / #3 (loadout). New = **#1 Pick 2 (1.5d) + #2 Revive escalation (0.5d) + #4 Fragments express lane (0.5d) shipped together**, all three in a single patch.
