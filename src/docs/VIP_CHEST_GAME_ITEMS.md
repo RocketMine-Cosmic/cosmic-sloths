@@ -68,7 +68,7 @@ https://cosmic-sloths.base44.app/functions/onVipChestRewardGranted
 - [ ] **NEXT:** Build `onVipChestRewardGranted` backend function with HMAC SHA-256 verification
 - [ ] Add `OMENX_VIP_CHEST_WEBHOOK_SECRET` to secrets (waiting until handler is being built — secret only needs to exist when we paste the URL into the portal)
 - [ ] Create `VipChestGrantLog` entity (tx_id unique, used for idempotency)
-- [ ] Reply to Marco with Q11–Q13 plus the original Q6–Q10
+- [ ] Reply to Marco with Q11–Q13 plus the original Q7–Q9 (Q6 + Q10 deferred with BP)
 - [ ] Submit reward rows once webhook is verified live
 
 ---
@@ -79,10 +79,9 @@ Marco shared concrete details on the OmenX-side architecture. **This changes how
 
 ### Key facts confirmed
 
-1. **Battle Pass is shipping too.** Chests will appear as rewards on the Battle Pass tracks (free and paid presumably). So our game items will flow through TWO surfaces:
-   - VIP Chest purchases (OMENX + GMT)
-   - Battle Pass progression rewards
-   Both go through the same chest-grant pipeline.
+1. **Battle Pass is on the roadmap, but NOT shipping alongside chests.** Confirmed by Hugo 2026-06-25 — BP is "a way off yet," won't be needed at the same time as chests. Chest launch can proceed standalone; BP integration is a separate workstream later.
+   - VIP Chest purchases (OMENX + GMT) ← **launch scope**
+   - Battle Pass progression rewards ← **deferred, separate doc when it gets closer**
 
 2. **Developer portal is the source of truth.** OmenX added two new pages to the dev portal:
    - **VIP Chests** — manage our game-item reward rows per chest tier
@@ -128,7 +127,7 @@ Marco shared concrete details on the OmenX-side architecture. **This changes how
 - **My "Per-Chest-Tier Game-Item Pools" table needs to be reformatted as weight rows** so it's drop-in compatible with the dev portal.
 - **No need to build a chest-rolling backend on our side** — OmenX handles the RNG.
 - **We do need to build a webhook handler.** New Base44 function: `onVipChestRewardGranted`.
-- **Battle Pass requires the same webhook.** Marco's wording suggests the same `reward_granted` event covers BP rewards too — but worth confirming.
+- ~~**Battle Pass requires the same webhook.**~~ Deferred — BP isn't part of chest launch.
 - **Cosmetics overhaul scope is unchanged** — still the biggest delta.
 
 ### Updated implementation surface
@@ -170,20 +169,20 @@ Weight sum 100. Mirrors the OmenX platform reward distribution shape.
 
 ### Updated open questions
 
-6. **Does the OmenX webhook also fire for Battle Pass rewards?** Or is BP a separate event type?
+6. ~~Battle Pass webhook event~~ — deferred with BP itself.
 7. **What does the webhook payload actually look like?** Need a sample to confirm field names before building the handler.
 8. **Replay/retry policy?** If our webhook 500s, does OmenX retry? With what backoff? Do we get a dead-letter queue?
 9. **Test harness?** Is there a dev portal "fire test webhook" button so we can integrate without buying real chests?
-10. **Battle Pass details** — how many tiers, how is progress earned (XP from runs? Sector clears? Time-based season?), can we configure BP XP from our game events?
+10. ~~Battle Pass details~~ — deferred; separate scoping doc when BP gets closer.
 
 ### Action items
 
-- [ ] Reply to Marco confirming we're ready to integrate and asking Q6–Q10 above
+- [ ] Reply to Marco confirming we're ready to integrate and asking Q7–Q9 above
 - [ ] Build `onVipChestRewardGranted` webhook function + signature verification
 - [ ] Create `VipChestGrantLog` entity for audit / idempotency
 - [ ] Convert the per-tier game-item shortlist below into weighted rows per chest tier
 - [ ] Submit reward rows for all 7 chest tiers in the OmenX dev portal
-- [ ] Battle Pass scoping kick-off — separate doc once we have BP details from Marco
+- ~~Battle Pass scoping~~ — deferred until BP launch gets closer (Hugo 06-25)
 
 ---
 
