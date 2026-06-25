@@ -8,9 +8,9 @@
 
 ## TL;DR
 
-This is **not a Base44 DB constraint**. RocketMine's reply was a red herring — the server side just stores whatever `damage` number the client submits (sanity-capped at 100M). The variance is **100% on the client engine side**, and it's caused by **at least 7 legitimate sources of run-to-run randomness**, even with an identical loadout.
+The variance is **100% on the client engine side** — not a server/DB issue. The server just stores whatever `damage` number the client submits (sanity-capped at 100M). Same loadout produces different totals because of **at least 7 legitimate sources of run-to-run randomness**.
 
-The server is doing exactly what it should: taking the engine's final `runMeteorDamage` total and applying it. We can't fix this by "migrating somewhere else."
+(Note: the "Base44 DB constraint" comment in the same Discord thread was about a different topic — unrelated to this damage variance question.)
 
 ---
 
@@ -111,14 +111,11 @@ Lets the player SEE that their 7.8M run had 14% crit rate while their 12M run ha
 - Make weak-spot guaranteed every Nth hit in meteor.
 - **Not recommended** — variance is part of the chase. Players who hit big damage feel rewarded. Removing it makes meteor feel sterile.
 
-### Option D — Tell RocketMine to drop the "Base44 DB constraint" framing
-This wasn't a DB issue and committing publicly to "migrate somewhere else" sets an expectation that won't fix anything for Briantjeuh — because the variance is in the engine, not the storage. Better to be upfront that it's RNG + buff-level + run-length variance.
-
 ---
 
 ## Recommendation
 
-**Ship Option A this week** (1-minute tooltip change), **plan Option B for next patch**. Skip C and D as written.
+**Ship Option A this week** (1-minute tooltip change), **plan Option B for next patch**. Skip C.
 
 The "Damage breakdown" modal (Option B) is a strong fit because:
 - It's transparent — players understand the game better
