@@ -57,8 +57,9 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
     }, [isOwner]);
 
     const numericPct = Number(pctInput) / 100;
-    const staffTotalPct = staffCount * numericPct; // total share of WEEKLY spend going to staff
-    // Cap check applies to the WEEKLY bar only (where staff payouts come from)
+    const liveStaffPct = current?.pct ?? 0.02;
+    const staffTotalPct = staffCount * numericPct; // total share of WEEKLY spend going to staff (PREVIEW)
+    // Cap check applies to the PREVIEW value (what the owner is about to save)
     const weeklyAllocPct = poolPcts.weekly + poolPcts.kill + staffTotalPct;
     const isOverHardCap = weeklyAllocPct > HARD_CAP_PCT;
     const isValid = isFinite(numericPct) && numericPct >= 0 && numericPct <= 0.10 && !isOverHardCap;
@@ -130,6 +131,7 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                         squadChampionsPct={SQUAD_CHAMPIONS_PCT}
                         staffCount={staffCount}
                         numericPct={numericPct}
+                        liveStaffPct={liveStaffPct}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 items-end">
