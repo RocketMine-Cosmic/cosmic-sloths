@@ -62,6 +62,57 @@ https://<custom-domain>/functions/onVipChestRewardGranted
 12. **Webhook test fire** — there's no visible "Send test event" button in the screenshot. Did I miss it on another tab, or do we have to wait for a real chest open to validate the integration? If the latter, we need a fake chest open in OmenX staging.
 13. **Webhook concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 simultaneous webhook calls, or queue them? Affects whether we need any rate-limit handling on the receiver.
 
+### 🆕 Edge case — wallet has never played Cosmic Sloths
+
+**The scenario:** an OmenX user buys/opens a chest, the roll lands on our Game Items slot, and the wallet has never logged into Cosmic Sloths. There's no PlayerSave row for them. What does the webhook handler do?
+
+This isn't hypothetical — Cosmic Sloths is one of multiple games on the platform. Plenty of chest buyers will be users from other titles who never tried ours. Every chest tier that includes our slot will hit this case eventually.
+
+**Three sub-cases to handle:**
+
+1. **Wallet has never touched Cosmic Sloths (no PlayerSave row).**
+   - Option A — *Reject the grant.* Returns a non-200 to OmenX, which presumably re-rolls or refunds. Cleanest but wastes the player's chest slot through no fault of theirs.
+   - Option B — *Create an empty PlayerSave with the grant baked in.* Player logs in for the first time and finds 10k gold / fragments / cosmetic already on the account. Strong onboarding hook — chest doubles as a "come try the game" funnel.
+   - Option C — *Pending-grant queue.* Webhook logs the grant in a `PendingChestGrant` entity keyed by wallet, returns 200. First time the wallet logs in (or links a wallet), we drain the queue into their PlayerSave. Safer than B because no half-baked PlayerSave rows pile up if the player never visits.
+
+   **Recommendation: Option C.** Reasons:
+   - Idempotent + survives schema changes (the grant is data, not a partial save).
+   - No risk of polluting PlayerSave queries (active player counts, leaderboard reads) with ghost rows.
+   - Drain happens in a place we already control (the `linkWalletToUser` / first-load flow).
+   - Marketing angle: we can show a "🎁 You have N unclaimed chest rewards waiting" badge on first login, which is a fantastic first-run experience.
+
+2. **Wallet exists but the player hasn't logged in for weeks.**
+   - Grant just lands on the existing PlayerSave. They see it next time they open the app — same flow as any other server-side update (existing `loadSave` already returns the latest state). Nothing special to build.
+
+3. **Wallet is blacklisted (`BlacklistedWallet` entity).**
+   - Webhook handler checks blacklist before granting. Logs the rejected grant to `VipChestGrantLog` with a `rejected_reason: 'blacklisted'` field for audit, returns 200 (we don't want OmenX to retry).
+   - Open question: do we want OmenX-side awareness of our blacklist so the chest re-rolls a non-game-item, or is silently consuming the roll acceptable? Silent is simpler; only matters at policy level if blacklist is large.
+
+**New entity needed: `PendingChestGrant`**
+
+```
+{
+  wallet_address: string (lowercase),  // not unique — multiple grants can stack
+  reward_key: string,                   // e.g. 'gold_10k', 'cosmetic_animated_orbiting_moon'
+  chest_key: string,                    // e.g. 'bronze', 'platinum'
+  tx_id: string (unique),               // OmenX transaction id — idempotency key
+  granted_at: ISO datetime,
+  applied: boolean (default false),     // flipped true when drained into PlayerSave
+  applied_at: ISO datetime,             // when drain happened
+}
+```
+
+**Drain trigger points (in order of preference):**
+1. **`linkWalletToUser`** — fires when an OmenX-authenticated user first lands in our app. Natural spot to check `PendingChestGrant.filter({ wallet_address, applied: false })` and apply.
+2. **`loadSave`** — defensive backstop. Cheap query (indexed wallet lookup), happens on every save load.
+3. **Admin tool** — one-button "drain pending chest grants for wallet X" for support cases.
+
+**Idempotency rule:** the same `tx_id` must not grant twice, even if the webhook fires multiple times AND the wallet is drained mid-retry. Strict unique-index on `tx_id`, drain only applies rows where `applied=false`, flip-and-grant in a single update.
+
+**Estimated extra dev:** 0.5 day on top of the base webhook handler. One entity, ~30 lines in the webhook handler, ~10 lines on the drain path in `linkWalletToUser`/`loadSave`.
+
+---
+
 ### Implementation status
 
 - [x] Spec'd reward rows per tier (weighted format) — see below
@@ -70,6 +121,8 @@ https://<custom-domain>/functions/onVipChestRewardGranted
 - [ ] **NEXT:** Build `onVipChestRewardGranted` backend function with HMAC SHA-256 verification
 - [ ] Add `OMENX_VIP_CHEST_WEBHOOK_SECRET` to secrets (waiting until handler is being built — secret only needs to exist when we paste the URL into the portal)
 - [ ] Create `VipChestGrantLog` entity (tx_id unique, used for idempotency)
+- [ ] Create `PendingChestGrant` entity for never-played wallets (see edge case section above)
+- [ ] Wire drain step into `linkWalletToUser` + defensive backstop in `loadSave`
 - [ ] Reply to Marco with Q11–Q13 plus the original Q7–Q9 (Q6 + Q10 deferred with BP)
 - [ ] Submit reward rows once webhook is verified live
 
