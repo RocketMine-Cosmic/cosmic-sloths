@@ -56,9 +56,16 @@ https://<custom-domain>/functions/onVipChestRewardGranted
 ```
 (Need to grab the exact custom domain from `api/base44Client.js` baseUrl before pasting into the portal.)
 
-### Updated open questions (06-25)
+### Q&A status (06-25 PM update)
 
-→ All open questions are now consolidated in the **[📋 Open Questions — Master List](#-open-questions--master-list)** section below.
+→ **All 12 questions have been answered by Marco.** Full Q&A captured in [`VIP_CHEST_QUESTIONS_FOR_OMENX.md`](./VIP_CHEST_QUESTIONS_FOR_OMENX.md). Build-impact summary:
+
+- **Webhook handler must never return 5xx.** OmenX does not retry — we own retries internally. New architecture: handler verifies signature → persists raw event to a new `VipChestWebhookEvent` entity (idempotent on `tx_id`) → returns 200 immediately. A scheduled automation drains the queue and applies grants with our own retry/backoff.
+- **Payload is an ARRAY of granted items**, not a single reward. One Elite chest can grant currency + NFT + cosmetic together — handler must iterate.
+- **Test tool not yet available.** Marco is building a "send test event" button in the dev portal. We can scaffold the handler against assumed field names and finalise parsing once it ships. ⏳ **Only real blocker** for going live with reward rows.
+- **No platform throttling** on concurrent webhooks. The persist-then-process pattern above handles this for free.
+- **Cosmetic/title moderation is our problem.** Sunset cosmetic seasons + in-game admin custom-title queue, confirmed.
+- **Blacklist policy:** OmenX credits the item regardless. We persist the grant but the drain step at login enforces the block (grant stays in queue / gets moved to audit table).
 
 ### 🆕 Edge case — wallet has never played Cosmic Sloths
 
@@ -116,12 +123,18 @@ This isn't hypothetical — Cosmic Sloths is one of multiple games on the platfo
 - [x] Spec'd reward rows per tier (weighted format) — see below
 - [x] Identified webhook contract (HMAC SHA-256, header format, event type)
 - [x] Confirmed dev portal flow + ordering constraint
-- [ ] **NEXT:** Build `onVipChestRewardGranted` backend function with HMAC SHA-256 verification
-- [ ] Add `OMENX_VIP_CHEST_WEBHOOK_SECRET` to secrets (waiting until handler is being built — secret only needs to exist when we paste the URL into the portal)
-- [ ] Create `VipChestGrantLog` entity (tx_id unique, used for idempotency)
-- [ ] Create `PendingChestGrant` entity for never-played wallets (see edge case section above)
+- [x] Marco answered all 12 open questions (2026-06-25)
+- [ ] **NEXT:** Build `onVipChestRewardGranted` backend function
+  - Signature: HMAC SHA-256 verification → 401 on failure
+  - Iterate items array, persist each to `VipChestWebhookEvent` (idempotent on per-item tx_id), return 200 immediately
+  - **Must never return 5xx** — OmenX doesn't retry, we own retries
+- [ ] Create `VipChestWebhookEvent` entity (raw event store, per-item tx_id unique)
+- [ ] Create `PendingChestGrant` entity (player-facing grant queue, drained on login)
+- [ ] Create scheduled automation: drain `VipChestWebhookEvent` → apply grant → write to `PendingChestGrant` if wallet not yet linked, else apply directly to PlayerSave
+- [ ] Add `OMENX_VIP_CHEST_WEBHOOK_SECRET` to secrets (only when ready to paste URL into portal)
 - [ ] Wire drain step into `linkWalletToUser` + defensive backstop in `loadSave`
-- [ ] Reply to Marco with consolidated open questions (Q1–Q11 in the master list)
+- [ ] Register reward SKUs in dev portal (mostly non-purchasable / non-tradable)
+- [ ] Wait for Marco's test-webhook tool → finalise payload field names
 - [ ] Submit reward rows once webhook is verified live
 
 ---
@@ -461,37 +474,11 @@ This prevents whales from feeling robbed after their 5th duplicate.
 
 ---
 
-## 📋 Open Questions — Master List
+## 📋 Open Questions — RESOLVED
 
-Single source of truth for everything we need answers on before / during build. Ordered by category and priority. Numbers are stable so I can reference them in Discord replies to Marco without renumbering every time something gets answered.
+All 12 questions answered by Marco on 2026-06-25. Full Q&A archived in [`VIP_CHEST_QUESTIONS_FOR_OMENX.md`](./VIP_CHEST_QUESTIONS_FOR_OMENX.md).
 
-### A. Webhook contract (need before building handler)
-
-- **Q1 — Sample payload.** What does the `vip_chest.reward_granted` body actually look like? Need exact field names (`wallet` vs `wallet_address`, `reward_key` vs `reward_id`, etc.) before I can write the parser.
-- **Q2 — Retry policy.** If our handler returns 500, does OmenX retry? With what backoff? Is there a dead-letter queue or do failed grants just vanish?
-- **Q3 — Test harness.** Is there a "send test event" button somewhere in the dev portal? Couldn't spot one on the Webhooks tab. If not, what's the staging path — do we have to buy real chests to validate?
-- **Q4 — Concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 parallel webhook calls or queue them? Affects whether we need rate-limit handling on the receiver.
-- **Q5 — URL change policy.** We're already on our custom domain, so day-1 is fine. But IF we migrate off Base44 entirely later (different backend host behind the same domain), can the URL be edited in the portal without invalidating the signing secret? Best case: domain-pointing change only, no portal work.
-
-### B. Chest mechanics (affect EV tuning + UX scope)
-
-- **Q6 — Soulbound or tradable?** Affects how aggressive we can make per-chest game-item EV. Tradable = lower EV. Soulbound = higher EV is fine.
-- **Q7 — Single open vs rip-multiple animation.** Affects UX scope on our side — single-open is faster to ship.
-- **Q8 — Can a single chest roll multiple categories** (e.g. Asset Manager Pack *and* a Game Item), or strictly one? Determines how common game-item slots are on average and therefore how lean our weighted rows can be.
-
-### C. Cosmetics policy
-
-- **Q9 — Cosmetic seasons.** Are chest cosmetics a permanent rotating pool, or do they sunset and become "vintage"? **Recommend sunset** — drives chest demand on each new season.
-- **Q10 — Custom Title moderation pipeline.** Who reviews submissions? Mod team via Discord-linked form, or in-game admin queue?
-
-### D. Edge cases
-
-- **Q11 — Blacklist visibility.** Do we want OmenX-side awareness of our `BlacklistedWallet` list so the chest re-rolls a non-game-item for banned wallets, or is silently consuming the roll acceptable? Silent is simpler; only matters at policy level if our blacklist gets large.
-
-### E. Deferred (Battle Pass)
-
-- ~~Q12 — Battle Pass webhook event~~ — deferred with BP itself (confirmed 06-25, BP isn't shipping with chests).
-- ~~Q13 — Battle Pass progression payload~~ — deferred; separate scoping doc when BP gets closer.
+**Remaining blocker:** waiting on Marco's "send test event" tool in the dev portal so we can lock in the exact payload field names. We can scaffold against assumed names in the meantime.
 
 ---
 

@@ -2,63 +2,144 @@
 
 **To:** Marco / OmenX dev team
 **From:** Cosmic Sloths dev team
-**Date:** 2026-06-25
-**Context:** We've inspected the dev portal "VIP Chests" page and are ready to build our `onVipChestRewardGranted` webhook handler. A few things need clarifying from your side before / during build. Grouped by category, numbered for easy reference.
+**Date sent:** 2026-06-25
+**Answered:** 2026-06-25 (Marco, Discord)
+**Status:** ✅ All 12 answered. Ready to start handler build.
+
+> Marco's replies are inlined under each question in **green-quoted blocks**. Build-impact notes (what each answer changes in our plan) follow each one.
 
 ---
 
 ## A. Webhook contract (need before we start the handler)
 
-**Q1 — Sample payload.** What does the `vip_chest.reward_granted` body actually look like? Need exact field names (`wallet` vs `wallet_address`, `reward_key` vs `reward_id`, etc.) before we can write the parser. A copy-pasteable JSON example would be ideal.
+**Q1 — Sample payload.** What does the `vip_chest.reward_granted` body actually look like? Need exact field names (`wallet` vs `wallet_address`, `reward_key` vs `reward_id`, etc.) before we can write the parser.
+
+> **Marco:** Working on a tool in the developer Webhooks section that lets you test a webhook without opening a chest, so you can see and work with the various payloads.
+
+**Build impact:** ⏳ **Blocker until the test tool ships.** We don't have to wait — we can scaffold the handler against assumed field names and finalise once the tool is live. We'll check the portal periodically; ping Marco if it takes more than a week.
+
+---
 
 **Q2 — Retry policy.** If our handler returns 500, does OmenX retry? With what backoff? Is there a dead-letter queue, or do failed grants just vanish?
 
-**Q3 — Test harness.** Is there a "send test event" button somewhere in the dev portal? We couldn't spot one on the Webhooks tab. If not, what's the staging path — do we have to buy real chests to validate?
+> **Marco:** You should never return a 500 to our service from the webhook. Retries should be tracked and performed on your side.
 
-**Q4 — Concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 parallel webhook calls or queue them? Affects whether we need rate-limit handling on the receiver.
+**Build impact:** 🔴 **Important — changes the handler architecture.** We MUST always return 200 (or 4xx for genuinely bad payloads like signature failure) and own retries internally. Plan:
+- Webhook handler does signature check → if invalid, return 401. If valid, immediately persist the raw event to a new `VipChestWebhookEvent` entity (idempotent on `tx_id`) and return 200.
+- A separate background process (scheduled automation, every 1–5 min) consumes unprocessed events and applies grants. Failures retry with backoff. Permanently-failed events get flagged for admin review.
+- This decouples "received" from "applied" — exactly the right shape given OmenX doesn't retry for us.
 
-**Q5 — URL change policy.** We're already on our own custom domain so day-1 is fine. But IF we ever move our backend host behind the same domain later, can the URL be edited in the portal without invalidating the signing secret? Best case for us is a domain-pointing change with zero portal work.
+---
+
+**Q3 — Test harness.** Is there a "send test event" button somewhere in the dev portal?
+
+> **Marco:** See Q1 — that's what we're making.
+
+**Build impact:** Same as Q1. Until it ships, we can mock test events locally by hand-crafting payloads + signing them with our own secret in dev. Not blocking.
+
+---
+
+**Q4 — Concurrency.** If 100 chests open in the same second, does OmenX fan out 100 parallel webhook calls or queue them?
+
+> **Marco:** We do not queue them, so you need to handle all requests coming in without rate limiting. Because of large loot tables it's very unlikely you'd get this many concurrent.
+
+**Build impact:** ✅ Fine. The "persist raw event → return 200 → process async" pattern from Q2 already handles concurrent fan-out cleanly — the only contended write is the `tx_id` uniqueness check, which is cheap. No throttling needed.
+
+---
+
+**Q5 — URL change policy.** Can the URL be edited later without invalidating the signing secret?
+
+> **Marco:** I don't believe the signing secret changes with URL changes.
+
+**Build impact:** ✅ Confirmed. Custom domain is the right call — future host migrations stay cheap.
 
 ---
 
 ## B. Chest mechanics (affect how we tune EV)
 
-**Q6 — Soulbound or tradable?** Affects how aggressive we can make per-chest game-item EV. Tradable = lower EV. Soulbound = higher EV is fine.
+**Q6 — Soulbound or tradable?**
 
-**Q7 — Single open vs rip-multiple animation.** Does the chest UX on your side open one at a time, or rip-multiple in a single animation? Affects how we present grant reveals if we ever build a "grant history" view.
+> **Marco:** This is up to you. You can list NFTs which are tradable, you can also make product SKUs for non-purchasable, non-tradable, and just represents an item a player can gain through natural progression. But it does need to be defined in the products section.
 
-**Q8 — Can a single chest roll multiple categories** (e.g. Asset Manager Pack *and* a Game Item), or strictly one category per chest? Determines how common game-item slots are on average and therefore how lean our weighted rows can be.
+**Build impact:** ✅ Our call per item. **Plan:** Stat pips, talent/respec tokens, and pending-grant currencies → non-purchasable / non-tradable SKUs (soulbound). Cosmetics → also non-tradable (Mythic tier in particular should never be transferable, or we lose the chase). Currency drops (gold/fragments) → no SKU needed since they're not items, they're balance bumps applied by our handler.
+
+We'll need to register each reward as a Product SKU on the OmenX side before it can appear in a reward row.
+
+---
+
+**Q7 — Single open vs rip-multiple animation.**
+
+> **Marco:** I believe chests can only be open one at a time.
+
+**Build impact:** ✅ Simplifies our (eventual) grant-history view. One reveal per webhook event. No batching UI required.
+
+---
+
+**Q8 — Can a single chest roll multiple categories?**
+
+> **Marco:** Yes, if you define it that way you can add multiple category items in the chest reward. For example you can give a currency + an NFT at the same time as a single reward. But this would reflect in the payload sent to the webhook. All items granted to the player will be in the payload.
+
+**Build impact:** 🟡 **Payload is an ARRAY, not a single item.** Plan adjusts:
+- Webhook payload will carry a list of granted items (we'd previously assumed one). Our handler iterates the list and applies each grant individually.
+- Each item in the list still has its own `reward_key` + `tx_id`-equivalent for idempotency. (Need to confirm whether idempotency keys are per-item or per-chest in Q1's test tool.)
+- The `PendingChestGrant` table needs a `chest_event_id` group field so we can reconstruct "this player got these 3 items from one Elite chest" when we eventually build the reveal screen.
 
 ---
 
 ## C. Cosmetics policy
 
-**Q9 — Cosmetic seasons.** Should chest cosmetics be a permanent rotating pool, or do they sunset and become "vintage" after a season? Our preference is **sunset** — drives chest demand on each new season.
+**Q9 — Cosmetic seasons.**
 
-**Q10 — Custom Title moderation.** For our Mythic-tier "custom title" reward, who reviews submissions? Is moderation expected on our side (Discord-linked form or in-game admin queue), or does OmenX have a shared moderation surface?
+> **Marco:** I think that is up to you and not at the platform level. We do not dictate anything in the games.
+
+**Build impact:** ✅ Decision: **sunset model.** Per-season cosmetic pool, old cosmetics retire as "vintage" — drives chest demand each new season. Confirmed in the implementation doc.
+
+---
+
+**Q10 — Custom Title moderation.**
+
+> **Marco:** I think that is up to you and not at the platform level. We do not dictate anything in the games.
+
+**Build impact:** ✅ Decision: handled entirely on our side. Mythic Elite-only custom title submissions queue in a new admin moderation panel. We already have the admin chat-moderation infrastructure (see `AdminSquadChatModeration`), so this is a small extension, not net-new tooling.
 
 ---
 
 ## D. Edge case — wallets that have never played Cosmic Sloths
 
-**Q11 — Never-played wallet.** A chest buyer who's never logged into Cosmic Sloths has no save data on our side. Our plan is to queue the grant in a `PendingChestGrant` table and apply it on their first login (with a "🎁 N unclaimed rewards waiting" prompt — also a nice onboarding hook).
+**Q11 — Never-played wallet.** Can we return 200 + queue the grant for first-login redemption? Any way to surface "not activated yet" back to OmenX?
 
-Two things to confirm:
-- (a) Is it OK for our webhook to return 200 even when the player hasn't onboarded yet? (We don't want OmenX retrying the grant — we'll hold it and apply it later ourselves.)
-- (b) Is there a way to surface "this wallet hasn't activated Cosmic Sloths yet" back to OmenX so you can prompt them in your UI? Not a blocker either way — purely a UX-improvement question.
+> **Marco:** The player's wallet address will be defined in the payload, but if that player is not in your system, you would have to keep track of the rewards for when that player enters your game so they can be granted to the player. This is also a form of user acquisition for games — because they'll get an item for a game they're not playing and then suddenly want to play the game so they can see the item.
 
-**Q12 — Blacklist visibility.** We maintain a `BlacklistedWallet` list for cheaters/exploiters. When a banned wallet rolls a game-item slot, do you want OmenX-side awareness so the chest re-rolls a non-game-item, or is silently consuming the roll acceptable? Silent is simpler on our side; only really matters at policy level if the list gets large.
+**Build impact:** ✅ Confirms our `PendingChestGrant` plan is exactly what Marco expects. Always return 200; queue the grant; drain on first login. The "user acquisition" framing is good — we should surface a "🎁 You have unclaimed chest rewards waiting" banner aggressively on first-time login from a wallet with pending grants. No backchannel signal to OmenX needed.
 
 ---
 
-## Quick summary of what we'd love to have
+**Q12 — Blacklist visibility.**
 
-1. A sample payload for `vip_chest.reward_granted` (Q1)
-2. Retry/DLQ behaviour (Q2)
-3. Some way to fire a test webhook without real chest opens (Q3)
-4. Yes/no on the "single chest = single category" question (Q8)
-5. Confirmation that returning 200 for never-played wallets is the right contract (Q11a)
+> **Marco:** That must be handled on your side. We do not care or control that. But that account should still be credited the item, even if that player cannot access the account.
 
-The rest are policy/UX clarifications we can resolve over the next week or two — they don't block the webhook handler build.
+**Build impact:** 🟡 **Policy refined.** OmenX credits the grant either way — we can't reject. Plan:
+- Webhook still returns 200 + persists the grant for blacklisted wallets (we don't lie about receipt).
+- Drain step at login is the enforcement point: if the wallet is on `BlacklistedWallet`, the grant stays in `PendingChestGrant` permanently (or is moved to a `BlockedChestGrant` audit table). Login is blocked anyway, so the player never sees the item.
+- This matches Marco's wording: "the account is credited the item, even if the player cannot access the account."
 
-Cheers!
+---
+
+## Resolved blockers + remaining unknowns
+
+| Item | Status |
+|---|---|
+| Exact payload field names (Q1) | ⏳ Waiting on test tool |
+| Retry/DLQ behaviour (Q2) | ✅ Owned by us — must return 200, retries internal |
+| Test harness (Q3) | ⏳ Waiting on test tool |
+| Concurrency (Q4) | ✅ Handle parallel, no throttling |
+| URL change policy (Q5) | ✅ Secret persists across URL changes |
+| Soulbound vs tradable (Q6) | ✅ Our call per SKU — soulbound for most |
+| Open animation (Q7) | ✅ One chest at a time |
+| Multi-category rewards (Q8) | ✅ Payload is array — handler iterates |
+| Cosmetic seasons (Q9) | ✅ Sunset model, our policy |
+| Custom title moderation (Q10) | ✅ Our side |
+| Never-played wallet (Q11) | ✅ Always 200, queue, drain on login |
+| Blacklist policy (Q12) | ✅ Credit but block on drain |
+
+**Only true blocker is the payload sample (Q1).** We can begin handler scaffolding against assumed field names today and finalise the parser when the test tool ships.
