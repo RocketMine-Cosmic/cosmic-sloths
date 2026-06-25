@@ -1,7 +1,7 @@
 # VIP Chest Integration — Open Questions for OmenX
 
-**From:** Hugo (Cosmic Sloths)
 **To:** Marco / OmenX dev team
+**From:** Cosmic Sloths dev team
 **Date:** 2026-06-25
 **Context:** We've inspected the dev portal "VIP Chests" page and are ready to build our `onVipChestRewardGranted` webhook handler. A few things need clarifying from your side before / during build. Grouped by category, numbered for easy reference.
 
@@ -62,4 +62,3 @@ Two things to confirm:
 The rest are policy/UX clarifications we can resolve over the next week or two — they don't block the webhook handler build.
 
 Cheers!
-— Hugo

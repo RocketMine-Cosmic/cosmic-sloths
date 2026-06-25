@@ -1,7 +1,7 @@
 # VIP Chest — Game Items Design Doc
 
 **Status:** Dev portal UI live & inspected (2026-06-25). Webhook handler is next implementation step.
-**Author:** Cosmic Sloth dev (Hugo)
+**Owner:** Cosmic Sloths dev team
 **Date:** 2026-06-19 · **Last update:** 2026-06-25
 **Context:** OmenX is launching **VIP Chests** (Bronze → Elite, 7 tiers) as an OmenX **platform** reward. Chests roll from a pool of categories:
 
@@ -24,7 +24,7 @@ Confirmed by inspecting the OmenX dev portal "VIP Chests" page directly (screens
 1. **Three-tab structure per game.** Each integrated game has tabs for:
    - **Reward rows** — our weighted loot table per chest tier (this is where the bronze→elite tables go).
    - **Reward webhook** — currently flagged "Setup required" for Cosmic Sloths. This is the blocker.
-   - **Revenue** — display-only dashboard of our chest revenue. **Payouts flow OmenX → dev wallet directly, NOT through our app/backend.** Confirmed by Hugo 2026-06-25. So nothing for us to build here — no accounting entity, no reconciliation function, no payout webhook. The tab is purely informational on the OmenX side.
+   - **Revenue** — display-only dashboard of our chest revenue. **Payouts flow OmenX → dev wallet directly, NOT through our app/backend.** Confirmed 2026-06-25. So nothing for us to build here — no accounting entity, no reconciliation function, no payout webhook. The tab is purely informational on the OmenX side.
 
 2. **Game selector dropdown.** Cosmic Sloths is listed as an option — the platform-side game registration is already done.
 
@@ -132,7 +132,7 @@ Marco shared concrete details on the OmenX-side architecture. **This changes how
 
 ### Key facts confirmed
 
-1. **Battle Pass is on the roadmap, but NOT shipping alongside chests.** Confirmed by Hugo 2026-06-25 — BP is "a way off yet," won't be needed at the same time as chests. Chest launch can proceed standalone; BP integration is a separate workstream later.
+1. **Battle Pass is on the roadmap, but NOT shipping alongside chests.** Confirmed internally 2026-06-25 — BP is "a way off yet," won't be needed at the same time as chests. Chest launch can proceed standalone; BP integration is a separate workstream later.
    - VIP Chest purchases (OMENX + GMT) ← **launch scope**
    - Battle Pass progression rewards ← **deferred, separate doc when it gets closer**
 
@@ -231,7 +231,7 @@ Weight sum 100. Mirrors the OmenX platform reward distribution shape.
 - [ ] Create `VipChestGrantLog` entity for audit / idempotency
 - [ ] Convert the per-tier game-item shortlist below into weighted rows per chest tier
 - [ ] Submit reward rows for all 7 chest tiers in the OmenX dev portal
-- ~~Battle Pass scoping~~ — deferred until BP launch gets closer (Hugo 06-25)
+- ~~Battle Pass scoping~~ — deferred until BP launch gets closer (06-25)
 
 ---
 
@@ -490,7 +490,7 @@ Single source of truth for everything we need answers on before / during build. 
 
 ### E. Deferred (Battle Pass)
 
-- ~~Q12 — Battle Pass webhook event~~ — deferred with BP itself (Hugo confirmed 06-25, BP isn't shipping with chests).
+- ~~Q12 — Battle Pass webhook event~~ — deferred with BP itself (confirmed 06-25, BP isn't shipping with chests).
 - ~~Q13 — Battle Pass progression payload~~ — deferred; separate scoping doc when BP gets closer.
 
 ---
