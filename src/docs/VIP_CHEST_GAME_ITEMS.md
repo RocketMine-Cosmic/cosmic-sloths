@@ -1,8 +1,8 @@
 # VIP Chest — Game Items Design Doc
 
-**Status:** Updated with OmenX integration spec (2026-06-19 PM)
+**Status:** Dev portal UI live & inspected (2026-06-25). Webhook handler is next implementation step.
 **Author:** Cosmic Sloth dev (Hugo)
-**Date:** 2026-06-19
+**Date:** 2026-06-19 · **Last update:** 2026-06-25
 **Context:** OmenX is launching **VIP Chests** (Bronze → Elite, 7 tiers) as an OmenX **platform** reward. Chests roll from a pool of categories:
 
 1. Asset Manager Packs
@@ -12,6 +12,65 @@
 5. **Game Items** ← *this doc*
 
 This doc covers ONLY the Game Items slot — what Cosmic Sloth contributes when a chest rolls a game-item reward.
+
+---
+
+## 🆕 2026-06-25 — Dev portal UI is LIVE
+
+Confirmed by inspecting the OmenX dev portal "VIP Chests" page directly (screenshot captured). Several things from the 06-19 spec are now nailed down with concrete UI evidence.
+
+### Confirmed from the dev portal screen
+
+1. **Three-tab structure per game.** Each integrated game has tabs for:
+   - **Reward rows** — our weighted loot table per chest tier (this is where the bronze→elite tables go).
+   - **Reward webhook** — currently flagged "Setup required" for Cosmic Sloths. This is the blocker.
+   - **Revenue** — presumably shows our cut of OMENX/GMT chest revenue from rolls that hit our game. **New question for Marco: what is the revenue split?** Not mentioned in the 06-19 update.
+
+2. **Game selector dropdown.** Cosmic Sloths is listed as an option — the platform-side game registration is already done.
+
+3. **Webhook contract — exact details from the UI:**
+   - Event type: `vip_chest.reward_granted` *(matches 06-19 spec ✓)*
+   - Signing header: `X-OmenX-Webhook-Signature: sha256=…` *(confirmed exact format)*
+   - Verification: **HMAC SHA-256** over `timestamp header + raw body` *(confirmed)*
+   - Signing secret format: `whsec_…` (64 hex chars). One-click "Regenerate secret" available.
+   - **Webhook must be saved AND enabled BEFORE we can add reward rows.** This means our backend handler has to ship first — we can't even populate the loot table until the webhook is verified live.
+
+4. **Ordering constraint we missed.** The UI text reads:
+   > "You must save a URL and enable the webhook before adding reward rows."
+   
+   So the dependency order for shipping is:
+   1. Build `onVipChestRewardGranted` handler.
+   2. Deploy it to production at a stable URL.
+   3. Paste the URL, save, enable, copy signing secret into `OMENX_VIP_CHEST_WEBHOOK_SECRET`.
+   4. Only then submit the reward rows for all 7 chest tiers.
+
+   This is the opposite of what I'd assumed (I had reward rows as parallel work). It's actually a hard sequence.
+
+### Webhook URL planning
+
+The portal expects an HTTPS endpoint. Base44 backend functions are exposed at:
+```
+https://cosmic-sloths.base44.app/functions/onVipChestRewardGranted
+```
+(Need to confirm the exact host — check `api/base44Client.js` baseUrl before pasting into the portal.)
+
+### Updated open questions (06-25)
+
+11. **Revenue tab — what's our split?** Per chest tier? Per category roll? Need clarity before launch comms.
+12. **URL change policy.** If we move from base44 to a custom domain later, can the URL be edited without invalidating the signing secret?
+13. **Webhook test fire** — there's no visible "Send test event" button in the screenshot. Did I miss it on another tab, or do we have to wait for a real chest open to validate the integration? If the latter, we need a fake chest open in OmenX staging.
+14. **Webhook concurrency.** If 100 chests open in the same second (big payout event), does OmenX fan out 100 simultaneous webhook calls, or queue them? Affects whether we need any rate-limit handling on the receiver.
+
+### Implementation status
+
+- [x] Spec'd reward rows per tier (weighted format) — see below
+- [x] Identified webhook contract (HMAC SHA-256, header format, event type)
+- [x] Confirmed dev portal flow + ordering constraint
+- [ ] **NEXT:** Build `onVipChestRewardGranted` backend function with HMAC SHA-256 verification
+- [ ] Add `OMENX_VIP_CHEST_WEBHOOK_SECRET` to secrets (waiting until handler is being built — secret only needs to exist when we paste the URL into the portal)
+- [ ] Create `VipChestGrantLog` entity (tx_id unique, used for idempotency)
+- [ ] Reply to Marco with Q11–Q14 plus the original Q6–Q10
+- [ ] Submit reward rows once webhook is verified live
 
 ---
 
