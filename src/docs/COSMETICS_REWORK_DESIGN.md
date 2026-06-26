@@ -5,8 +5,10 @@
 **Date:** 2026-06-26
 **Scope confirmed (06-26):**
 1. **Full rework of every existing cosmetic** — pilot icons, weapon trails, kill effects, character skins, titles flair, jukebox tracks.
-2. **VIP Chest cosmetics live on a new dedicated page** — separated from the Cosmic Armoury (which sells the standard cosmetics).
-3. **Two visual identities — Epic vs Mythic.** Epics share one elevated baseline style; Mythics get a distinct, "this person spent" elevated look.
+2. **ONE unified Wardrobe page for ALL cosmetics** — old standard cosmetics + new chest cosmetics live in the same place. The Cosmic Armoury's cosmetic tabs are retired; cosmetics leave the Armoury entirely.
+3. **Old gold/OMENX cosmetics are disabled to purchase** — they're moving to GMT-only pricing soon, so for now they show as "Purchase coming soon (GMT)" with a disabled button. Already-owned cosmetics stay equipped + previewable.
+4. **Preview works for every cosmetic** — owned, locked, and disabled-to-purchase alike. Click any tile → live in-canvas preview (reuses `CosmeticPreview` for trails/kill FX; new preview components for icons/frames/flair).
+5. **Two visual identities — Epic vs Mythic.** Epics share one elevated baseline style; Mythics get a distinct, "this person spent" elevated look.
 
 ---
 
@@ -133,45 +135,68 @@ Lives on a **new dedicated page** (see Page Structure section below). NOT for sa
 
 ## Page structure
 
-### New page: **Chest Wardrobe** (`/wardrobe`)
+### New page: **Wardrobe** (`/wardrobe`) — unified home for ALL cosmetics
 
-Standalone page, slide added to the WarpMenu carousel between Profile and Jukebox (slide 13a / slide 14 renumber).
+One standalone page that owns every cosmetic in the game. Replaces the Cosmetic tabs in the Cosmic Armoury. Added as a new carousel slide (between Profile and Jukebox).
+
+**Categories (tabs):**
+1. Pilot Icon (emoji + uploaded URL + animated chest icons)
+2. Character Skin (per-character skins — Armoury-style grid keyed by selected char)
+3. Weapon Trail (standard tiers + Mythic chest variants)
+4. Kill Effect (standard tiers + Mythic chest variants)
+5. LB Banner Frame (chest-only)
+6. Title Flair (chest-only)
+7. Meteor Strike FX (chest-only)
+
+**Source filter (independent of category tabs):**
+- All
+- Owned
+- Standard (Armoury-tier — disabled to purchase)
+- Chest (Epic + Mythic)
+- Locked
 
 **Layout:**
 
 ```
-┌─ Chest Wardrobe ───────────────────────────────────────────────┐
+┌─ Wardrobe ────────────────────────────────────────────────────┐
 │  [← Back]                                  [Currency Header]   │
 │                                                                │
-│  ┌─ Tabs ─────────────────────────────────────────────────┐   │
-│  │ Pilot Icon │ LB Frame │ Title Flair │ Weapon Trail │ … │   │
-│  └────────────────────────────────────────────────────────┘   │
+│  ┌─ Category tabs ───────────────────────────────────────┐    │
+│  │ Pilot Icon │ Skin │ Trail │ Kill FX │ Frame │ Flair │ … │   │
+│  └─────────────────────────────────────────────────────────┘   │
 │                                                                │
-│  ┌─ Rarity filter ──────────────────────┐                     │
-│  │ All  │  Epic  │  Mythic  │  Locked   │                     │
-│  └──────────────────────────────────────┘                     │
+│  ┌─ Source filter ─────────────────────────────────────┐      │
+│  │ All │ Owned │ Standard │ Chest │ Locked              │      │
+│  └─────────────────────────────────────────────────────┘      │
 │                                                                │
-│  ┌── Cosmetic grid (4 cols) ──────────────────────────┐       │
-│  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐           │       │
-│  │  │ live │  │ live │  │ 🔒    │  │ 🔒    │  …        │       │
-│  │  │ preview│  │ preview│  │ locked│  │ locked│            │       │
-│  │  └──────┘  └──────┘  └──────┘  └──────┘           │       │
-│  │   Epic       Epic      Mythic    Mythic            │       │
-│  │   [Equip]    [Owned]   [Chest    [Chest            │       │
-│  │                         only]     only]            │       │
+│  ┌── Cosmetic grid (responsive 2-4 cols) ─────────────┐       │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐             │       │
+│  │  │ thumb   │  │ thumb   │  │ thumb   │  …          │       │
+│  │  │ Epic    │  │ Standard│  │ Mythic  │             │       │
+│  │  │[Equipped]│ │[Preview]│  │[Preview]│             │       │
+│  │  │         │  │ "GMT    │  │ "Chest  │             │       │
+│  │  │         │  │ soon"   │  │ only"   │             │       │
+│  │  └─────────┘  └─────────┘  └─────────┘             │       │
 │  └────────────────────────────────────────────────────┘       │
+│                                                                │
+│  Click any tile → opens live preview modal                    │
+│   (canvas / sprite / CSS demo, depending on category)         │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Why a dedicated page (vs. extending the Armoury):**
-1. Chest cosmetics are never purchaseable with gold/OMENX — different UX from the Armoury's price grid.
-2. Locked chest cosmetics still need a "preview + how to get this" CTA, which the Armoury doesn't support.
-3. Equipping multiple categories (frame, flair, animated icon, trail, kill FX simultaneously) needs per-category tabs — not how the Armoury's character-skin model works.
-4. Avoids cluttering the Armoury for free-to-play players who'll never see chest cosmetics.
+**Purchase states for each tile:**
+| State | When | Button |
+|---|---|---|
+| Owned + equipped | already owned, currently equipped | "Equipped — tap to unequip" |
+| Owned + unequipped | already owned | "Equip" |
+| Standard (not owned) | Armoury cosmetic, gold/OMENX flow paused | Disabled — "Purchase coming soon (GMT)" |
+| Chest (not owned) | Epic/Mythic chest reward | Disabled — "Drops from {chest tier}+ chests" |
 
-### Cosmic Armoury (existing)
+**Preview always works** regardless of state. Click the tile (not the button) to open the preview modal.
 
-Stays as-is for the reworked standard cosmetics. Only the art changes — code structure unchanged.
+### Cosmic Armoury → Upgrades only
+
+The Armoury page keeps stat / weapon / talent upgrades. **Its cosmetic tabs (Trails / Kill Effects / Skins) get removed** — those cosmetics relocate to the Wardrobe with purchase disabled.
 
 ### Profile page
 
@@ -264,13 +289,15 @@ Reference plan for once design is signed off. Do not start any of this until the
 Before any code is written, decide:
 
 1. **Animated pilot icons on the leaderboard** — performance budget? 50 rows × 6-frame sprite at 1.5s loop = 300 frames decoded. Fine on desktop, possibly heavy on low-end mobile. Decision: render animated icons only on the top 10 LB rows; rest fall back to static frame 1. ✅ assumed; confirm.
-2. **Existing Armoury art swap** — do we sunset purchases during the swap so players don't buy a soon-to-be-replaced look, or hot-swap and let players keep what they bought?
-3. **Title flair pricing** — sold via chest only, or also via Armoury for OMENX (separate from the title itself)?
-4. **Mythic seasonality** — chest doc has a season-rotation model. First "season" = launch. When is season 2 art needed?
-5. **Squad icons** — same emoji+upload as today, or also get an animated chest-tier upgrade path? Doc currently leaves Squad icons untouched. Confirm.
+2. **GMT migration timeline for old cosmetics** — when does GMT pricing actually land? While disabled, do we show the future GMT price as a teaser, or just "coming soon"?
+3. **Already-owned standard cosmetics during disable window** — confirm they stay equipped + previewable (assumed yes, this is the obvious behaviour).
+4. **Title flair pricing post-launch** — chest-only forever, or eventually purchaseable in some form?
+5. **Mythic seasonality** — chest doc has a season-rotation model. First "season" = launch. When is season 2 art needed?
+6. **Squad icons** — same emoji+upload as today, or also get an animated chest-tier upgrade path? Doc currently leaves Squad icons untouched. Confirm.
+7. **Armoury page after cosmetics leave** — the Upgrades page is currently called "Cosmic Armoury". Rename to "Upgrade Bay" / "Forge" / keep the name? Cosmetics being the namesake-fitting items, "Armoury" without them feels off.
 
 ---
 
 ## Summary
 
-20 chest cosmetics split 13 Epic / 7 Mythic + a parallel rework of the existing Armoury art. New dedicated Wardrobe page. Save schema extends `profile` with 6 equipped-cosmetic slots and one owned-cosmetic array. ~half the chest catalogue is code-only (title flair, trails, kill FX), ~half is AI-generated art. Existing systems (pilot icon, titles, squads, armoury) get art upgrades but no breaking schema changes.
+ONE unified Wardrobe page that owns every cosmetic — standard (Armoury-style trails / kill FX / skins, purchase disabled pending GMT migration) + chest (13 Epic + 7 Mythic). The Cosmic Armoury page loses its cosmetic tabs entirely; cosmetics relocate to Wardrobe. Live preview works for every tile regardless of ownership / purchase state. Save schema extends `profile` with 6 equipped chest-cosmetic slots + one owned-chest-cosmetic array; existing trail / kill / skin schema fields stay untouched. ~half the chest catalogue is code-only (title flair, trails, kill FX), ~half is AI-generated art.
