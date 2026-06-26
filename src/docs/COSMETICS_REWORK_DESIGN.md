@@ -292,9 +292,13 @@ Before any code is written, decide:
 2. **GMT migration timeline for old cosmetics** — when does GMT pricing land? (Purchase buttons just stay disabled in the meantime —  label Coming Soon.)
 3. ~~Already-owned standard cosmetics during disable window~~ — confirmed: stay equippable, swappable, and previewable.
 4. **Title flair pricing post-launch** — chest-only forever, or eventually purchaseable in some form?
+chest only might be purchaseable later but that be a lot later.
 5. **Mythic seasonality** — chest doc has a season-rotation model. First "season" = launch. When is season 2 art needed?
+no clue not going to think about that now
 6. **Squad icons** — same emoji+upload as today, or also get an animated chest-tier upgrade path? Doc currently leaves Squad icons untouched. Confirm.
+confirm
 7. **Armoury page after cosmetics leave** — the Upgrades page is currently called "Cosmic Armoury". Rename to "Upgrade Bay" / "Forge" / keep the name? Cosmetics being the namesake-fitting items, "Armoury" without them feels off.
+unchanged
 
 ---
 
