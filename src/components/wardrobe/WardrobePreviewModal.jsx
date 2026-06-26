@@ -14,23 +14,21 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
 
     const renderPreview = () => {
         if (item.category === 'trail' || item.category === 'kill_fx') {
-            // CosmeticPreview is a fixed 640×320 canvas — wrap it in a 2:1 box
-            // so it actually has a height to fill (modal had no height before,
-            // so the canvas collapsed and nothing rendered).
+            // Render exactly like the old Armoury did — no wrapper. CosmeticPreview
+            // owns its own 640×320 canvas; wrapping it in aspect-* / overflow-hidden
+            // boxes confuses the canvas's intrinsic sizing and produces a blank.
             return (
-                <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden">
-                    <CosmeticPreview
-                        trailId={item.category === 'trail' ? item.id : (save?.cosmetics?.trail || 'default')}
-                        killEffectId={item.category === 'kill_fx' ? item.id : (save?.cosmetics?.killEffect || 'none')}
-                        charId={charId}
-                        playerColor="#00cfff"
-                    />
-                </div>
+                <CosmeticPreview
+                    trailId={item.category === 'trail' ? item.id : (save?.cosmetics?.trail || 'default')}
+                    killEffectId={item.category === 'kill_fx' ? item.id : (save?.cosmetics?.killEffect || 'none')}
+                    charId={charId}
+                    playerColor="#00cfff"
+                />
             );
         }
         if (item.category === 'skin') {
             return (
-                <div className="w-full aspect-[2/1] bg-slate-950 rounded-lg flex items-center justify-center">
+                <div className="w-full bg-slate-950 rounded-lg flex items-center justify-center py-10">
                     <div
                         className="w-32 h-32 rounded-full border-8"
                         style={{ background: item.color, borderColor: item.color + '80', boxShadow: `0 0 60px ${item.color}` }}
@@ -40,7 +38,7 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
         }
         // Chest-only categories — placeholder until assets ship.
         return (
-            <div className="w-full aspect-[2/1] bg-slate-950 rounded-lg flex flex-col items-center justify-center gap-3 text-center px-4">
+            <div className="w-full bg-slate-950 rounded-lg flex flex-col items-center justify-center gap-3 text-center px-4 py-10">
                 <div className="text-6xl opacity-70">{item.icon}</div>
                 <div className="text-amber-300/80 text-sm flex items-center gap-2">
                     <Lock className="w-4 h-4" />
