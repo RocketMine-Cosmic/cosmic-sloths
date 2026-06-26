@@ -86,9 +86,10 @@ These are the existing Armoury cosmetics, **repositioned** as a small-donation v
 **Pricing:** **flat 15 GMT per item** across every category and rarity. One price, no tiers — keeps the "donation" framing clean and the UI simple (no per-item price lookups, no rarity-based price math).
 
 **SKU strategy:**
-- Existing SKU IDs in `lib/skuMap.js` and existing save schema (`save.cosmetics.*`, `save.unlockedCosmetics[]`, etc.) stay 100% intact. Already-owned cosmetics keep working.
-- New SKU IDs added for GMT pricing — gold/OMENX rows in `skuMap.js` go untouched, a parallel GMT row is added per cosmetic, all priced at 15 GMT.
-- The existing gold tier label (Basic/Advanced/Epic/Legendary) stays as a *visual rarity* indicator only — it no longer maps to a price. Players see rarity badges but pay the same 15 GMT regardless.
+- **Save schema stays 100% intact** — `save.cosmetics.*` and `save.unlockedCosmetics[]` keep the same cosmetic IDs. Already-owned cosmetics equip / swap / preview exactly as today.
+- **All cosmetic entries in `lib/skuMap.js` get replaced with the new GMT-only SKUs** registered in the OmenX dev portal. The old gold-tier / OMENX SKUs are dead — they can't be purchased anymore so the mapping is useless. One GMT SKU per cosmetic ID, all priced at 15 GMT in the portal.
+- `getCosmeticSku(...)` keeps the same signature but now returns GMT SKUs only. Gold-cost / OMENX purchase paths for cosmetics are removed from the Armoury (which is losing its cosmetic tabs anyway).
+- The existing rarity label (Basic/Advanced/Epic/Legendary) survives as a *visual badge only* — it no longer drives any price logic. Players see the badge but pay the same 15 GMT regardless.
 
 **⚠️ Blocker:** the GMT integration needs the `price:read` API scope before we can show / charge GMT prices live. Currently not granted on our key. **Action:** request `price:read` scope from OmenX before Phase 4 (webhook / GMT activation).
 
@@ -133,7 +134,7 @@ Roughly doubles the standard pool so backers always have unbought options. Reuse
 - 115 paid items lets a heavy backer buy one cosmetic per week for ~2 years before running out — enough headroom that catalogue exhaustion isn't a near-term risk.
 - New skins per character (10× v3) are the most expensive expansion item but also the highest-flex. Keep the count tight (one per char) — quality over quantity.
 
-**No SKU code changes required for A.1** — `getCosmeticSku(type, name, goldCost)` already keys off the rarity tier. **A.2 needs new SKU IDs added** to `skuMap.js` alongside the existing ones.
+**SKU code:** every cosmetic in A.1 + A.2 gets one new GMT SKU registered in the OmenX dev portal at 15 GMT. The old gold/OMENX cosmetic rows in `skuMap.js` are deleted and replaced — there's no parallel-coexistence period since pre-GMT the cosmetics aren't purchaseable at all (just "Coming soon"). `getCosmeticSku(...)` is simplified to a flat ID → GMT SKU lookup.
 
 ### B. New Chest cosmetics — Epic line (13 launch items)
 
