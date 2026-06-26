@@ -182,12 +182,14 @@ export default function Wardrobe({ isCarousel }) {
                     const killName  = KILL_COSMETICS.find(k => k.id === killId)?.name   || killId;
                     return (
                         <div className="mb-4">
-                            <CosmeticPreview
-                                trailId={trailId}
-                                killEffectId={killId}
-                                charId={currentSkinChar.id}
-                                playerColor={playerColor}
-                            />
+                            <div className="w-full aspect-[2/1] max-h-80">
+                                <CosmeticPreview
+                                    trailId={trailId}
+                                    killEffectId={killId}
+                                    charId={currentSkinChar.id}
+                                    playerColor={playerColor}
+                                />
+                            </div>
                             <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center flex-wrap">
                                 <span>Trail: <strong className={previewTrailId ? 'text-amber-400' : 'text-pink-400'}>{trailName}</strong>{previewTrailId && <span className="text-amber-500/70 ml-1">(previewing)</span>}</span>
                                 <span>Kill Effect: <strong className={previewKillId ? 'text-amber-400' : 'text-pink-400'}>{killName}</strong>{previewKillId && <span className="text-amber-500/70 ml-1">(previewing)</span>}</span>
