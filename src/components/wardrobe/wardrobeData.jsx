@@ -78,32 +78,35 @@ const skinToItem = (s) => ({
 
 // Chest-tier placeholders (LOCKED until chest webhook → grant pipeline + assets).
 // Matches the catalogue in docs/COSMETICS_REWORK_DESIGN.md sections B + C.
+// Locked 2026-06-26 — see COSMETICS_REWORK_DESIGN.md § B. Cuts: Pulsing Heart,
+// Cosmic Egg, Starfield (too generic / too close to the game's own background).
 const CHEST_PILOT_ICONS_EPIC = [
-    { id: 'animated_pilot_orbiting_moon',   name: 'Orbiting Moon',   desc: 'A small moon orbits a planet.' },
-    { id: 'animated_pilot_glitch_skull',    name: 'Glitch Skull',    desc: 'Cyan skull with RGB-split glitch.' },
-    { id: 'animated_pilot_pulsing_heart',   name: 'Pulsing Heart',   desc: 'Pixel heart pulsing in cyan.' },
-    { id: 'animated_pilot_rotating_blackhole', name: 'Black Hole',   desc: 'Slow-spin accretion disc.' },
-    { id: 'animated_pilot_cosmic_egg',      name: 'Cosmic Egg',      desc: 'Pulsing cyan-glow egg.' },
-    { id: 'animated_pilot_starfield',       name: 'Starfield',       desc: 'Twinkling starfield in a circle.' },
+    { id: 'animated_pilot_orbiting_moon',      name: 'Orbiting Moon',  desc: 'A small moon orbits a planet.' },
+    { id: 'animated_pilot_glitch_skull',       name: 'Glitch Skull',   desc: 'Cyan skull with RGB-split glitch.' },
+    { id: 'animated_pilot_rotating_blackhole', name: 'Black Hole',     desc: 'Slow-spin accretion disc.' },
+    { id: 'animated_pilot_phoenix_wing',       name: 'Phoenix Wing',   desc: 'A single glowing wing emerges and retracts.' },
+    { id: 'animated_pilot_eye_of_void',        name: 'Eye of the Void', desc: 'Slit-pupil eye that blinks and tracks.' },
+    { id: 'animated_pilot_plasma_core',        name: 'Plasma Core',    desc: 'Pulsing cyan orb wrapped in arcing lightning.' },
 ];
 
 const CHEST_LB_FRAMES_EPIC = [
     { id: 'lb_frame_gold_filigree', name: 'Gold Filigree', desc: 'Thin gold filigree border + cyan inner glow.' },
     { id: 'lb_frame_electric_arc',  name: 'Electric Arc',  desc: 'Animated arcs travelling around the border.' },
-    { id: 'lb_frame_nebula_swirl',  name: 'Nebula Swirl',  desc: 'Subtle nebula gradient drift.' },
+    { id: 'lb_frame_nebula_swirl',  name: 'Nebula Swirl',  desc: 'Thick nebula gradient with stars travelling around the border.' },
     { id: 'lb_frame_glitch_rgb',    name: 'RGB Glitch',    desc: 'RGB-split border that pulses.' },
 ];
 
+// "Gold Leaf" (static) cut — a font colour isn't a chest reward.
 const CHEST_TITLE_FLAIR_EPIC = [
     { id: 'title_style_rainbow_shimmer', name: 'Rainbow Shimmer', desc: 'Hue-shift gradient across the title text.' },
     { id: 'title_style_blue_flame',      name: 'Blue Flame',      desc: 'Flickering blue-flame outline.' },
-    { id: 'title_style_gold_leaf',       name: 'Gold Leaf',       desc: 'Static gold-leaf gradient.' },
+    { id: 'title_style_liquid_chrome',   name: 'Liquid Chrome',   desc: 'Animated chrome reflection travelling across the text.' },
 ];
 
 const CHEST_MYTHIC = [
-    { id: 'weapon_trail_void',     category: 'trail',     name: 'Void Trail',     desc: 'Deep violet with golden sparks.' },
-    { id: 'weapon_trail_solar',    category: 'trail',     name: 'Solar Trail',    desc: 'Solar-flare orange with white-hot core.' },
-    { id: 'weapon_trail_eclipse',  category: 'trail',     name: 'Eclipse Trail',  desc: 'Black trail with bright ring highlights.' },
+    { id: 'weapon_trail_void',          category: 'trail', name: 'Void Trail',         desc: 'Deep violet with golden sparks.' },
+    { id: 'weapon_trail_solar',         category: 'trail', name: 'Solar Trail',        desc: 'Solar-flare orange with white-hot core.' },
+    { id: 'weapon_trail_phoenix_fire',  category: 'trail', name: 'Phoenix Fire Trail', desc: 'Orange→white→cyan gradient with feather particles.' },
     { id: 'kill_fx_coin_burst',    category: 'kill_fx',   name: 'Coin Burst',     desc: 'Gold coin shower on every kill.' },
     { id: 'kill_fx_supernova',     category: 'kill_fx',   name: 'Supernova',      desc: 'Bright white ring + golden shards.' },
     { id: 'meteor_fx_gold_lightning', category: 'meteor_fx', name: 'Gold Lightning', desc: 'Animated gold bolt on your strike line.' },

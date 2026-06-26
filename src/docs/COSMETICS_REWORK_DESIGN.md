@@ -140,21 +140,23 @@ Roughly doubles the standard pool so backers always have unbought options. Reuse
 
 Lives on a **new dedicated page** (see Page Structure section below). NOT for sale in the Armoury — chest-only.
 
+**Locked 2026-06-26** after a brutal cull of the original 13. Cuts: Pulsing Heart (Twitch-button vibe), Cosmic Egg (joke item), Starfield (looks like the game's own background), Static Gold Leaf (just a font color). Reframed Nebula Swirl with a higher-contrast brief.
+
 | # | ID | Category | Visible where | Description |
 |---|---|---|---|---|
 | 1 | `animated_pilot_orbiting_moon` | Animated Pilot Icon | LB row, squad chat, end-of-run | A small moon orbits a planet. 6-frame loop. |
 | 2 | `animated_pilot_glitch_skull` | Animated Pilot Icon | Same | Cyan skull with intermittent RGB-split glitch. |
-| 3 | `animated_pilot_pulsing_heart` | Animated Pilot Icon | Same | Pixel heart pulsing in cyan + soft white halo. |
-| 4 | `animated_pilot_rotating_blackhole` | Animated Pilot Icon | Same | Slow-spin black hole with accretion disc. |
-| 5 | `animated_pilot_cosmic_egg` | Animated Pilot Icon | Same | Egg with a soft cyan glow that pulses. |
-| 6 | `lb_frame_gold_filigree` | LB Banner Frame | Weekly LB row | Thin gold filigree border + soft cyan inner glow. |
-| 7 | `lb_frame_electric_arc` | LB Banner Frame | Same | Animated electric arcs travelling around the border. |
-| 8 | `lb_frame_nebula_swirl` | LB Banner Frame | Same | Subtle nebula gradient that drifts. |
-| 9 | `title_style_rainbow_shimmer` | Title Flair | Wherever title renders | Hue-shift gradient across the title text. |
-| 10 | `title_style_blue_flame` | Title Flair | Same | Blue-flame outline that flickers. |
-| 11 | `title_style_gold_leaf` | Title Flair | Same | Static gold-leaf gradient, no animation. |
-| 12 | `lb_frame_glitch_rgb` | LB Banner Frame | Same | RGB-split border that pulses. |
-| 13 | `animated_pilot_starfield` | Animated Pilot Icon | Same | Twinkling starfield inside a circular mask. |
+| 3 | `animated_pilot_rotating_blackhole` | Animated Pilot Icon | Same | Slow-spin black hole with accretion disc. |
+| 4 | `animated_pilot_phoenix_wing` | Animated Pilot Icon | Same | Single glowing wing emerging and retracting from a dark circle. Orange-gold gradient. |
+| 5 | `animated_pilot_eye_of_void` | Animated Pilot Icon | Same | Unsettling slit-pupil eye that blinks slowly inside a black circle. Pupil tracks subtly. |
+| 6 | `animated_pilot_plasma_core` | Animated Pilot Icon | Same | Pulsing cyan energy orb with arcing electric lightning around it. |
+| 7 | `lb_frame_gold_filigree` | LB Banner Frame | Weekly LB row | Thin gold filigree border + soft cyan inner glow. |
+| 8 | `lb_frame_electric_arc` | LB Banner Frame | Same | Animated electric arcs travelling around the border. |
+| 9 | `lb_frame_nebula_swirl` | LB Banner Frame | Same | Thick nebula gradient with bright stars travelling along the border (high-contrast — was previously too subtle). |
+| 10 | `lb_frame_glitch_rgb` | LB Banner Frame | Same | RGB-split border that pulses. Pairs with the Glitch Skull pilot icon as a set. |
+| 11 | `title_style_rainbow_shimmer` | Title Flair | Wherever title renders | Hue-shift gradient across the title text. |
+| 12 | `title_style_blue_flame` | Title Flair | Same | Blue-flame outline that flickers. |
+| 13 | `title_style_liquid_chrome` | Title Flair | Same | Animated chrome reflection that travels across the text. |
 
 ### C. New Chest cosmetics — Mythic line (7 launch items)
 
@@ -162,7 +164,7 @@ Lives on a **new dedicated page** (see Page Structure section below). NOT for sa
 |---|---|---|---|---|
 | 14 | `weapon_trail_void` | Weapon Trail (Mythic) | In-run projectiles | Deep violet trail with golden particle sparks. |
 | 15 | `weapon_trail_solar` | Weapon Trail (Mythic) | Same | Solar-flare orange with white-hot core. |
-| 16 | `weapon_trail_eclipse` | Weapon Trail (Mythic) | Same | Black trail with bright ring-shaped highlights. |
+| 16 | `weapon_trail_phoenix_fire` | Weapon Trail (Mythic) | Same | Orange→white→cyan gradient with feather-shaped particles. Replaced the original Eclipse Trail — black-on-black read too poorly. |
 | 17 | `kill_fx_coin_burst` | Kill Effect (Mythic) | On every kill | Gold coin shower with screen-shake-free particle pop. |
 | 18 | `kill_fx_supernova` | Kill Effect (Mythic) | Same | Bright white expansion ring + golden shards. |
 | 19 | `meteor_fx_gold_lightning` | Meteor Strike FX (Mythic) | Squad activity feed line for your strikes | Animated gold lightning bolt on the line. |
