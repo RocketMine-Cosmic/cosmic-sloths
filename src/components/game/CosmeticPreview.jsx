@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ParticleManager } from '../../game/ParticleManager';
+import { drawTrailAura } from '../../game/CosmeticRenderer';
 import { CHARACTERS } from '../../game/Constants';
 
 export default function CosmeticPreview({ trailId = 'default', killEffectId = 'none', playerColor = '#00cfff', charId }) {
@@ -97,6 +98,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             ctx.lineWidth = 1;
             for (let gx = 0; gx < W; gx += 50) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
             for (let gy = 0; gy < H; gy += 50) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+            // Persistent trail aura ring (locked to player, always visible).
+            drawTrailAura(ctx, px, py, 16, trailId, time);
 
             // Draw trail particles (tagged _cosmeticLayer='trail' — skipped by the
             // default null-filter pass; need an explicit layer call).

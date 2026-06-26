@@ -178,8 +178,12 @@ export default function Wardrobe({ isCarousel }) {
                     const playerColor = SKIN_COSMETICS.find(s => s.id === equippedSkinId)?.color
                                        || currentSkinChar.color
                                        || '#00cfff';
-                    const trailName = TRAIL_COSMETICS.find(t => t.id === trailId)?.name || trailId;
-                    const killName  = KILL_COSMETICS.find(k => k.id === killId)?.name   || killId;
+                    const trailName = TRAIL_COSMETICS.find(t => t.id === trailId)?.name
+                                     || ALL_WARDROBE_ITEMS.find(i => i.id === trailId)?.name
+                                     || trailId;
+                    const killName  = KILL_COSMETICS.find(k => k.id === killId)?.name
+                                     || ALL_WARDROBE_ITEMS.find(i => i.id === killId)?.name
+                                     || killId;
                     return (
                         <div className="mb-4">
                             <CosmeticPreview

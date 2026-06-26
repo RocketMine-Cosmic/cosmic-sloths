@@ -613,6 +613,25 @@ export class ParticleManager {
                 this.addParticle(x, y, '#ffec6e', 10, 'spark', 1.5, { speed: 200, gravity: true });
                 this.addParticle(x, y, '#ffffff', 1, 'flash', 2.0, { speed: 0 });
                 break;
+
+            // MYTHIC CHEST KILL FX -----------------------------------------
+            // Coin Burst: golden shockwave ring + dense gold coin spray + bright core.
+            case 'kill_fx_coin_burst':
+                this.addParticle(x, y, '#ffd700', 1, 'shockwave', 1.5, { speed: 0, lineWidth: 6, growthRate: 350 });
+                this.addParticle(x, y, '#ffd700', 20, 'star', 2.4, { speed: 380, gravity: true });
+                this.addParticle(x, y, '#ffec6e', 12, 'spark', 1.8, { speed: 260, gravity: true });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 3.0, { speed: 0 });
+                this.addAnim(x, y, 'magic_impact', 2.0, 0, '#ffd700');
+                break;
+            // Supernova: white ring, golden shards, full explosion anim.
+            case 'kill_fx_supernova':
+                this.addAnim(x, y, 'explosion_anim', 3.5, Math.random() * Math.PI * 2, '#ffffff');
+                this.addParticle(x, y, '#ffffff', 1, 'shockwave', 2.0, { speed: 0, lineWidth: 8, growthRate: 450 });
+                this.addParticle(x, y, '#ffd700', 1, 'shockwave', 1.5, { speed: 0, lineWidth: 5, growthRate: 300 });
+                this.addParticle(x, y, '#ffffff', 16, 'spark', 2.0, { speed: 420 });
+                this.addParticle(x, y, '#ffd700', 12, 'shatter', 2.0, { speed: 300, gravity: true });
+                this.addParticle(x, y, '#ffffff', 1, 'flash', 3.5, { speed: 0 });
+                break;
         }
         for (let i = startLen; i < this.particles.length; i++) {
             this.particles[i]._cosmeticLayer = 'killfx';
@@ -620,30 +639,70 @@ export class ParticleManager {
     }
 
     createTrail(x, y, trailId, frameCount) {
+        // Visibility-first redesign: each trail has a distinctive PARTICLE SHAPE
+        // (not just a recolour of star/spark), bigger sizes, and a brighter
+        // "core" particle every few frames to punch through busy combat VFX.
+        // The persistent aura ring drawn in CosmeticRenderer handles the "always
+        // visible no matter what" job — these particles are the flavour layer.
         const trailConfigs = {
-            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame', count: 2, size: 1.8, options: { speed: 30, lifeBonus: 0.2 } },
-            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter', count: 2, size: 1.2, options: { speed: 40, gravity: true, lifeBonus: 0.5 } },
-            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 1, size: 1.5, options: { speed: 10, lifeBonus: 0.8 } },
-            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke', count: 1, size: 2.0, options: { speed: 15, lifeBonus: 0.7 } },
-            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star', count: 2, size: 1.8, options: { speed: 30, gravity: true, lifeBonus: 0.4 } },
-            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark', count: 2, size: 1.5, options: { speed: 50, lifeBonus: 0.3 } },
-            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 2, size: 2.5, options: { speed: 5, lifeBonus: 1.0 } },
-            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood', count: 2, size: 1.6, options: { speed: 20, gravity: true, lifeBonus: 0.5 } },
-            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash', count: 2, size: 1.4, options: { speed: 40, rotSpeed: 10, lifeBonus: 0.3 } },
-            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke', count: 1, size: 1.8, options: { speed: 10, lifeBonus: 0.9 } },
-            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 2, size: 1.5, options: { speed: 40, lifeBonus: 0.5 } },
+            // STANDARD TIER ------------------------------------------------
+            'fire':    { colors: ['#ff4500', '#ff7700', '#ffaa00'], type: 'flame',      count: 3, size: 2.2, options: { speed: 50,  lifeBonus: 0.3 }, coreType: 'star',      coreColor: '#fff4a0' },
+            'ice':     { colors: ['#00cfff', '#aaf0ff', '#ffffff'], type: 'shatter',    count: 3, size: 1.6, options: { speed: 60,  gravity: true,  lifeBonus: 0.5 }, coreType: 'spark',     coreColor: '#ffffff' },
+            'toxic':   { colors: ['#39ff14', '#00ff88', '#aaff00'], type: 'smoke',      count: 2, size: 2.4, options: { speed: 25,  lifeBonus: 0.8 }, coreType: 'spark',     coreColor: '#ccff66' },
+            'void':    { colors: ['#4b0082', '#6600cc', '#cc00ff'], type: 'dark_smoke', count: 2, size: 1.9, options: { speed: 20,  lifeBonus: 0.9 }, coreType: 'star',      coreColor: '#cc88ff' },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5', '#ffffff'], type: 'spark',      count: 3, size: 1.8, options: { speed: 70,  lifeBonus: 0.4 }, coreType: 'shockwave', coreColor: '#00e5ff', coreOpts: { lineWidth: 3, growthRate: 120 } },
+            'shadow':  { colors: ['#1a1a2e', '#222244', '#0a0a20'], type: 'dark_smoke', count: 3, size: 2.8, options: { speed: 10,  lifeBonus: 1.1 }, coreType: 'dark_implode', coreColor: '#000000', coreOpts: { speed: 40, targetX: x, targetY: y } },
+            'blood':   { colors: ['#8a0303', '#ff0000', '#5c0000'], type: 'blood',      count: 3, size: 2.0, options: { speed: 30,  gravity: true,  lifeBonus: 0.6 }, coreType: 'spark',     coreColor: '#ff4444' },
+            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash',      count: 3, size: 1.8, options: { speed: 50,  rotSpeed: 12,   lifeBonus: 0.4 }, coreType: 'slash',     coreColor: '#ffffff' },
+            'gold':    { colors: ['#ffd700', '#ffec6e', '#fff4a0'], type: 'star',       count: 3, size: 2.2, options: { speed: 40,  gravity: true,  lifeBonus: 0.5 }, coreType: 'flash',     coreColor: '#ffffff', coreOpts: { speed: 0 } },
+            'nebula':  { colors: ['#ff99cc', '#cc99ff', '#99ccff'], type: 'smoke',      count: 2, size: 2.2, options: { speed: 15,  lifeBonus: 1.0 }, coreType: 'star',      coreColor: '#ffffff' },
+            'rainbow': { colors: ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'], type: 'star', count: 4, size: 1.8, options: { speed: 60, lifeBonus: 0.6 }, coreType: 'shockwave', coreColor: '#ffffff', coreOpts: { lineWidth: 2, growthRate: 100 } },
+
+            // MYTHIC CHEST TIER --------------------------------------------
+            // Void Trail: gold sparks against a deep violet smoke ribbon.
+            'weapon_trail_void': {
+                colors: ['#1a0033', '#3a0066', '#5500aa'], type: 'dark_smoke', count: 3, size: 2.6,
+                options: { speed: 18, lifeBonus: 1.1 },
+                coreType: 'star', coreColor: '#ffd700',
+                extra: { type: 'spark', color: '#ffd700', count: 2, size: 1.4, options: { speed: 80, gravity: true, lifeBonus: 0.6 } },
+            },
+            // Solar Trail: white-hot core wrapped in orange flame.
+            'weapon_trail_solar': {
+                colors: ['#ff2200', '#ff7700', '#ffaa00'], type: 'flame', count: 4, size: 2.6,
+                options: { speed: 60, lifeBonus: 0.4 },
+                coreType: 'flash', coreColor: '#ffffff', coreOpts: { speed: 0 },
+                extra: { type: 'spark', color: '#ffffff', count: 2, size: 1.6, options: { speed: 100, lifeBonus: 0.3 } },
+            },
+            // Eclipse Trail: black smoke crowned with bright white rings.
+            'weapon_trail_eclipse': {
+                colors: ['#0a0a20', '#1a1a2e', '#000000'], type: 'dark_smoke', count: 3, size: 2.8,
+                options: { speed: 12, lifeBonus: 1.2 },
+                coreType: 'shockwave', coreColor: '#ffffff', coreOpts: { lineWidth: 4, growthRate: 180 },
+                extra: { type: 'ring', color: '#ffffff', count: 1, size: 2.0, options: { speed: 0, lineWidth: 2, growthRate: 100, lifeBonus: 0.3 } },
+            },
         };
         const config = trailConfigs[trailId];
-        if (config) {
-            const color = config.colors[frameCount % config.colors.length];
-            // Tag the trail particles so they render in the dedicated late
-            // 'trail' pass — visible through bullets/AoE but behind the player
-            // sprite so the skin stays the focal point.
-            const startLen = this.particles.length;
-            this.addParticle(x, y, color, config.count, config.type, config.size, config.options);
-            for (let i = startLen; i < this.particles.length; i++) {
-                this.particles[i]._cosmeticLayer = 'trail';
-            }
+        if (!config) return;
+
+        const startLen = this.particles.length;
+        const color = config.colors[frameCount % config.colors.length];
+        this.addParticle(x, y, color, config.count, config.type, config.size, config.options);
+
+        // Bright "core" particle every 3rd spawn — punches through enemy VFX
+        // so the trail is always readable, not just a faint background wash.
+        if (config.coreType && frameCount % 3 === 0) {
+            this.addParticle(x, y, config.coreColor, 1, config.coreType, 1.4, config.coreOpts || { speed: 0 });
+        }
+
+        // Optional second-layer particle (mythic trails get this — gold sparks
+        // on Void, white sparks on Solar, bright rings on Eclipse).
+        if (config.extra) {
+            const e = config.extra;
+            this.addParticle(x, y, e.color, e.count, e.type, e.size, e.options);
+        }
+
+        for (let i = startLen; i < this.particles.length; i++) {
+            this.particles[i]._cosmeticLayer = 'trail';
         }
     }
 }
