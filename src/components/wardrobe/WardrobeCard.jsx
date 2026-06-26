@@ -2,18 +2,15 @@ import React from 'react';
 import { Lock, Eye } from 'lucide-react';
 
 const RARITY_STYLES = {
-    free:             { label: 'Free',      ring: 'border-slate-700',   text: 'text-slate-400' },
-    basic:            { label: 'Basic',     ring: 'border-slate-600',   text: 'text-slate-300' },
-    advanced:         { label: 'Advanced',  ring: 'border-cyan-700/60', text: 'text-cyan-300' },
-    'epic-look':      { label: 'Epic',      ring: 'border-fuchsia-700/60', text: 'text-fuchsia-300' },
-    'legendary-look': { label: 'Legendary', ring: 'border-amber-700/60',   text: 'text-amber-300' },
-    epic:             { label: 'Epic',      ring: 'border-cyan-500/70',    text: 'text-cyan-300' },
-    mythic:           { label: 'Mythic',    ring: 'border-amber-500/80',   text: 'text-amber-200' },
-    reward:           { label: 'Reward',    ring: 'border-yellow-600/70',  text: 'text-yellow-300' },
+    free:     { label: 'Free',     ring: 'border-slate-700',      text: 'text-slate-400' },
+    standard: { label: 'Standard', ring: 'border-slate-600',      text: 'text-slate-300' },
+    epic:     { label: 'Epic',     ring: 'border-cyan-500/70',    text: 'text-cyan-300' },
+    mythic:   { label: 'Mythic',   ring: 'border-amber-500/80',   text: 'text-amber-200' },
+    reward:   { label: 'Reward',   ring: 'border-yellow-600/70',  text: 'text-yellow-300' },
 };
 
 export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip }) {
-    const rarity = RARITY_STYLES[item.rarity] || RARITY_STYLES.basic;
+    const rarity = RARITY_STYLES[item.rarity] || RARITY_STYLES.standard;
 
     // Three primary action states:
     //   1. Owned + equipped  → "Equipped" pill

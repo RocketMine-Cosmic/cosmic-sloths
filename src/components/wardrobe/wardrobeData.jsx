@@ -30,14 +30,12 @@ export const SOURCE_FILTERS = [
     { id: 'locked', label: 'Locked' },
 ];
 
-// Map a goldCost tier to its "rarity" badge (purely visual — pricing is flat
-// 15 GMT at GMT launch regardless).
+// All standard (soon-to-be-GMT) cosmetics share one flat tier — they'll all
+// cost the same at GMT launch, so showing varied rarity badges just confuses
+// players into thinking some are pricier than others.
 const goldCostToRarity = (goldCost) => {
     if (goldCost === 0) return 'free';
-    if (goldCost <= 3000) return 'basic';
-    if (goldCost <= 12000) return 'advanced';
-    if (goldCost <= 20000) return 'epic-look';
-    return 'legendary-look';
+    return 'standard';
 };
 
 // Convert an existing TRAIL_COSMETICS / KILL_COSMETICS entry into a Wardrobe
