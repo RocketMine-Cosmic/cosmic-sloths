@@ -6,7 +6,7 @@
 **Scope confirmed (06-26):**
 1. **Full rework of every existing cosmetic** — pilot icons, weapon trails, kill effects, character skins, titles flair, jukebox tracks.
 2. **ONE unified Wardrobe page for ALL cosmetics** — old standard cosmetics + new chest cosmetics live in the same place. The Cosmic Armoury's cosmetic tabs are retired; cosmetics leave the Armoury entirely.
-3. **Old gold/OMENX cosmetics are disabled to purchase** — they're moving to GMT-only pricing soon, so for now they show as "Purchase coming soon (GMT)" with a disabled button. Already-owned cosmetics stay equipped + previewable.
+3. **Old gold/OMENX cosmetics are disabled to purchase** — purchase buttons are simply disabled. No label, no "coming soon" text. Already-owned standard cosmetics behave exactly as today: equip, unequip, swap between owned ones, preview.
 4. **Preview works for every cosmetic** — owned, locked, and disabled-to-purchase alike. Click any tile → live in-canvas preview (reuses `CosmeticPreview` for trails/kill FX; new preview components for icons/frames/flair).
 5. **Two visual identities — Epic vs Mythic.** Epics share one elevated baseline style; Mythics get a distinct, "this person spent" elevated look.
 
@@ -187,9 +187,9 @@ One standalone page that owns every cosmetic in the game. Replaces the Cosmetic 
 **Purchase states for each tile:**
 | State | When | Button |
 |---|---|---|
-| Owned + equipped | already owned, currently equipped | "Equipped — tap to unequip" |
+| Owned + equipped | already owned, currently equipped | "Equipped" (tap again to unequip if category allows) |
 | Owned + unequipped | already owned | "Equip" |
-| Standard (not owned) | Armoury cosmetic, gold/OMENX flow paused | Disabled — "Purchase coming soon (GMT)" |
+| Standard (not owned) | Armoury cosmetic, gold/OMENX flow paused | Disabled button (no label) |
 | Chest (not owned) | Epic/Mythic chest reward | Disabled — "Drops from {chest tier}+ chests" |
 
 **Preview always works** regardless of state. Click the tile (not the button) to open the preview modal.
@@ -289,8 +289,8 @@ Reference plan for once design is signed off. Do not start any of this until the
 Before any code is written, decide:
 
 1. **Animated pilot icons on the leaderboard** — leaderboard is capped at `payoutCfg.top_n` (default 20, admin-configurable via Leaderboard Payout Config) for Weekly / Seasonal / Endless, and a hardcoded `KILL_BOARD_LIMIT = 20` for Weekly Sector Kills. Worst case is ~20 animated icons on screen at once — trivial perf budget, no top-10 fallback needed. ✅ confirmed from code.
-2. **GMT migration timeline for old cosmetics** — when does GMT pricing actually land? While disabled, do we show the future GMT price as a teaser, or just "coming soon"?
-3. **Already-owned standard cosmetics during disable window** — confirm they stay equipped + previewable (assumed yes, this is the obvious behaviour).
+2. **GMT migration timeline for old cosmetics** — when does GMT pricing land? (Purchase buttons just stay disabled in the meantime — no label.)
+3. ~~Already-owned standard cosmetics during disable window~~ — confirmed: stay equippable, swappable, and previewable.
 4. **Title flair pricing post-launch** — chest-only forever, or eventually purchaseable in some form?
 5. **Mythic seasonality** — chest doc has a season-rotation model. First "season" = launch. When is season 2 art needed?
 6. **Squad icons** — same emoji+upload as today, or also get an animated chest-tier upgrade path? Doc currently leaves Squad icons untouched. Confirm.
