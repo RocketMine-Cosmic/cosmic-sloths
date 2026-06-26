@@ -288,6 +288,35 @@ A single array keyed by cosmetic id covers all categories. The category is decod
 
 Generation happens via `functions/generateCosmeticAsset` (already built + tested 2026-06-26). Admin-only.
 
+### Production status (resume point)
+
+**Pipeline locked 2026-06-26:** FLUX.1-dev via fal-ai (HF Inference Providers router, billed against `HF_INFERENCE_PROVIDERS_TOKEN`). FLUX.1-schnell still available in the studio dropdown for cheap iteration but the default for all chest-tier work is FLUX.1-dev. Generation is synchronous (`sync_mode: true`) — ~3–8s per image, no polling.
+
+**Chest Epic — Animated Pilot Icons (6/6 approved ✅ — category complete):**
+
+| # | ID | Status | Asset ID |
+|---|---|---|---|
+| 1 | `animated_pilot_orbiting_moon` | ✅ approved | `6a3e83f416a004285f5ab76c` |
+| 2 | `animated_pilot_glitch_skull` | ✅ approved | `6a3e83eee6e90c77450b6406` |
+| 3 | `animated_pilot_rotating_blackhole` | ✅ approved | `6a3e83ed1a455b9670cbd72f` |
+| 4 | `animated_pilot_phoenix_wing` | ✅ approved | `6a3e83ef910abde24e7aa858` |
+| 5 | `animated_pilot_eye_of_void` | ✅ approved | `6a3e83eda1967d84b2eeb957` |
+| 6 | `animated_pilot_plasma_core` | ✅ approved | `6a3e83edff5c37ed89545970` |
+
+**Note on animation:** these are all hero/keyframe stills. The 6-frame loops promised in section B (CSS `steps(6)` sprite sheets) will be generated as follow-up passes against the approved hero frame, or hand-composed in code. Hero asset is the canonical "this is what the cosmetic looks like" image.
+
+**Next session — resume here:**
+1. **Chest Epic — LB Banner Frames (4 items):** `lb_frame_gold_filigree`, `lb_frame_electric_arc`, `lb_frame_nebula_swirl`, `lb_frame_glitch_rgb`. FLUX.1-dev, 1024×96. Need wide-aspect prompts with transparent / black inner cutout.
+2. **Chest Epic — Title Flair (3 items):** `title_style_rainbow_shimmer`, `title_style_blue_flame`, `title_style_liquid_chrome`. **Code-only** (pure CSS) — no studio generation needed, design in `index.css` directly.
+3. **Chest Mythic — Weapon Trails (3 items):** code-only ParticleManager configs.
+4. **Chest Mythic — Kill FX (2 items):** code-only ParticleManager configs.
+5. **Chest Mythic — Meteor FX (1 item):** `meteor_fx_gold_lightning`. FLUX.1-dev, 256×128.
+6. **Chest Mythic — LB Frame (1 item):** `lb_frame_eclipse_crown`. FLUX.1-dev, 1024×96.
+
+**Remaining AI-generated assets:** 4 Epic LB frames + 1 Mythic meteor FX + 1 Mythic LB frame = **6 images**. Everything else in the chest catalogue is code-only.
+
+
+
 | Category | Model | Output | Render strategy |
 |---|---|---|---|
 | Animated Pilot Icon | FLUX.1-schnell, 256×256 | 6 PNG frames | CSS `steps(6)` sprite sheet, 1.5s loop |
