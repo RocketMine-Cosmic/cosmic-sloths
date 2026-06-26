@@ -6,7 +6,7 @@
 **Scope confirmed (06-26):**
 1. **Full rework of every existing cosmetic** — pilot icons, weapon trails, kill effects, character skins, titles flair, jukebox tracks.
 2. **ONE unified Wardrobe page for ALL cosmetics** — old standard cosmetics + new chest cosmetics live in the same place. The Cosmic Armoury's cosmetic tabs are retired; cosmetics leave the Armoury entirely.
-3. **Old gold/OMENX cosmetics are disabled to purchase** — purchase buttons are simply disabled. No label, no "coming soon" text. Already-owned standard cosmetics behave exactly as today: equip, unequip, swap between owned ones, preview.
+3. **Old gold/OMENX cosmetics are disabled to purchase** — purchase buttons disabled, labelled "Coming soon". Already-owned standard cosmetics behave exactly as today: equip, unequip, swap between owned ones, preview.
 4. **Preview works for every cosmetic** — owned, locked, and disabled-to-purchase alike. Click any tile → live in-canvas preview (reuses `CosmeticPreview` for trails/kill FX; new preview components for icons/frames/flair).
 5. **Two visual identities — Epic vs Mythic.** Epics share one elevated baseline style; Mythics get a distinct, "this person spent" elevated look.
 
@@ -189,7 +189,7 @@ One standalone page that owns every cosmetic in the game. Replaces the Cosmetic 
 |---|---|---|
 | Owned + equipped | already owned, currently equipped | "Equipped" (tap again to unequip if category allows) |
 | Owned + unequipped | already owned | "Equip" |
-| Standard (not owned) | Armoury cosmetic, gold/OMENX flow paused | Disabled button (no label) |
+| Standard (not owned) | Armoury cosmetic, gold/OMENX flow paused | Disabled — "Coming soon" |
 | Chest (not owned) | Epic/Mythic chest reward | Disabled — "Drops from {chest tier}+ chests" |
 
 **Preview always works** regardless of state. Click the tile (not the button) to open the preview modal.
