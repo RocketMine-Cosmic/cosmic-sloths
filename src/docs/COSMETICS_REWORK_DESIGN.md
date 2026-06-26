@@ -284,21 +284,17 @@ Reference plan for once design is signed off. Do not start any of this until the
 
 ---
 
-## Open design questions
+## Resolved design decisions
 
-Before any code is written, decide:
+All seven open questions answered 2026-06-26. Locked in for build phase:
 
-1. **Animated pilot icons on the leaderboard** — leaderboard is capped at `payoutCfg.top_n` (default 20, admin-configurable via Leaderboard Payout Config) for Weekly / Seasonal / Endless, and a hardcoded `KILL_BOARD_LIMIT = 20` for Weekly Sector Kills. Worst case is ~20 animated icons on screen at once — trivial perf budget, no top-10 fallback needed. ✅ confirmed from code.
-2. **GMT migration timeline for old cosmetics** — when does GMT pricing land? (Purchase buttons just stay disabled in the meantime —  label Coming Soon.)
-3. ~~Already-owned standard cosmetics during disable window~~ — confirmed: stay equippable, swappable, and previewable.
-4. **Title flair pricing post-launch** — chest-only forever, or eventually purchaseable in some form?
-chest only might be purchaseable later but that be a lot later.
-5. **Mythic seasonality** — chest doc has a season-rotation model. First "season" = launch. When is season 2 art needed?
-no clue not going to think about that now
-6. **Squad icons** — same emoji+upload as today, or also get an animated chest-tier upgrade path? Doc currently leaves Squad icons untouched. Confirm.
-confirm
-7. **Armoury page after cosmetics leave** — the Upgrades page is currently called "Cosmic Armoury". Rename to "Upgrade Bay" / "Forge" / keep the name? Cosmetics being the namesake-fitting items, "Armoury" without them feels off.
-unchanged
+1. **Animated pilot icons on leaderboard** — ✅ no perf concern. LB is hard-capped at 20 rows (`payoutCfg.top_n` default 20 + `KILL_BOARD_LIMIT = 20`). Animate freely, no top-10 fallback.
+2. **GMT migration timeline** — TBD. Until then, standard cosmetic purchase buttons stay disabled with label **"Coming soon"**. No teaser pricing.
+3. **Already-owned standard cosmetics during disable window** — ✅ stay equippable, swappable, and previewable. Only the *purchase* path is disabled.
+4. **Title flair pricing post-launch** — **Chest-only at launch.** May become purchaseable much later — explicitly out of scope for this rework.
+5. **Mythic seasonality** — Not decided yet. Build season 1 (launch) only. Season 2 art planning deferred — no S2 placeholders in the catalogue or schema.
+6. **Squad icons** — ✅ confirmed untouched. Emoji + upload only, no animated chest-tier squad icons.
+7. **Armoury page rename** — ✅ keep the name "Cosmic Armoury" even after cosmetics leave.
 
 ---
 
