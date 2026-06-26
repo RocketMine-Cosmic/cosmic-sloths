@@ -289,7 +289,7 @@ Reference plan for once design is signed off. Do not start any of this until the
 Before any code is written, decide:
 
 1. **Animated pilot icons on the leaderboard** — leaderboard is capped at `payoutCfg.top_n` (default 20, admin-configurable via Leaderboard Payout Config) for Weekly / Seasonal / Endless, and a hardcoded `KILL_BOARD_LIMIT = 20` for Weekly Sector Kills. Worst case is ~20 animated icons on screen at once — trivial perf budget, no top-10 fallback needed. ✅ confirmed from code.
-2. **GMT migration timeline for old cosmetics** — when does GMT pricing land? (Purchase buttons just stay disabled in the meantime — no label.)
+2. **GMT migration timeline for old cosmetics** — when does GMT pricing land? (Purchase buttons just stay disabled in the meantime —  label Coming Soon.)
 3. ~~Already-owned standard cosmetics during disable window~~ — confirmed: stay equippable, swappable, and previewable.
 4. **Title flair pricing post-launch** — chest-only forever, or eventually purchaseable in some form?
 5. **Mythic seasonality** — chest doc has a season-rotation model. First "season" = launch. When is season 2 art needed?
