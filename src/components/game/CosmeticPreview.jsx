@@ -98,8 +98,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
             for (let gx = 0; gx < W; gx += 50) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
             for (let gy = 0; gy < H; gy += 50) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
-            // Draw particles
-            pm.draw(ctx, 0, 0, W, H);
+            // Draw trail particles (tagged _cosmeticLayer='trail' — skipped by the
+            // default null-filter pass; need an explicit layer call).
+            pm.draw(ctx, 0, 0, W, H, 'trail');
 
             // Dummies
             ctx.globalCompositeOperation = 'source-over';
@@ -173,6 +174,9 @@ export default function CosmeticPreview({ trailId = 'default', killEffectId = 'n
                 ctx.fill();
             }
             ctx.restore();
+
+            // Kill-effect particles render ON TOP of the player sprite.
+            pm.draw(ctx, 0, 0, W, H, 'killfx');
 
             // Label
             ctx.fillStyle = 'rgba(255,255,255,0.25)';
