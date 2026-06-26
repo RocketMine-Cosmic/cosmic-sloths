@@ -9,6 +9,7 @@ import CurrencyHeader from '@/components/game/CurrencyHeader';
 import OmenXGate from '@/components/game/OmenXGate';
 import WardrobeCard from '@/components/wardrobe/WardrobeCard';
 import WardrobePreviewModal from '@/components/wardrobe/WardrobePreviewModal';
+import CosmeticPreview from '@/components/game/CosmeticPreview';
 import {
     ALL_WARDROBE_ITEMS,
     CATEGORY_TABS,
@@ -16,6 +17,7 @@ import {
     isItemOwned,
     getEquippedId,
 } from '@/components/wardrobe/wardrobeData';
+import { TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS } from '@/game/Constants';
 
 export default function Wardrobe({ isCarousel }) {
     const navigate = useNavigate();
@@ -157,6 +159,32 @@ export default function Wardrobe({ isCarousel }) {
                         </button>
                     ))}
                 </div>
+
+                {/* Live preview canvas — same big preview the Armoury used to show.
+                    Renders for trail / kill_fx categories. Skins get their own
+                    selector below; chest categories don't have a render path yet. */}
+                {(activeCategory === 'trail' || activeCategory === 'kill_fx') && (() => {
+                    const equippedTrail = save.cosmetics?.trail || 'default';
+                    const equippedKill  = save.cosmetics?.killEffect || 'none';
+                    const equippedSkinId = save.cosmetics?.skins?.[currentSkinChar.id] || `${currentSkinChar.id}_default`;
+                    const playerColor = SKIN_COSMETICS.find(s => s.id === equippedSkinId)?.color
+                                       || currentSkinChar.color
+                                       || '#00cfff';
+                    return (
+                        <div className="mb-4">
+                            <CosmeticPreview
+                                trailId={equippedTrail}
+                                killEffectId={equippedKill}
+                                charId={currentSkinChar.id}
+                                playerColor={playerColor}
+                            />
+                            <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
+                                <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name || equippedTrail}</strong></span>
+                                <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name || equippedKill}</strong></span>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* Skin tab character selector */}
                 {activeCategory === 'skin' && (
