@@ -647,22 +647,22 @@ export class ParticleManager {
         // signal premium, not a full second cloud.
         const trailConfigs = {
             // STANDARD TIER -- count=1, modest size, short life ------------
-            'fire':    { colors: ['#ff7700', '#ffaa00'],            type: 'flame',      size: 1.0, options: { speed: 30,  lifeBonus: -0.1 } },
-            'ice':     { colors: ['#aaf0ff', '#ffffff'],            type: 'spark',      size: 0.9, options: { speed: 25,  lifeBonus: 0.0 } },
-            'toxic':   { colors: ['#aaff00', '#39ff14'],            type: 'smoke',      size: 1.1, options: { speed: 15,  lifeBonus: 0.1 } },
-            'void':    { colors: ['#cc00ff', '#6600cc'],            type: 'dark_smoke', size: 1.0, options: { speed: 15,  lifeBonus: 0.2 } },
-            'plasma':  { colors: ['#00e5ff', '#ff00e5'],            type: 'spark',      size: 0.9, options: { speed: 35,  lifeBonus: 0.0 } },
-            'shadow':  { colors: ['#1a1a2e', '#000000'],            type: 'dark_smoke', size: 1.2, options: { speed: 10,  lifeBonus: 0.3 } },
-            'blood':   { colors: ['#ff0000', '#8a0303'],            type: 'blood',      size: 1.0, options: { speed: 20,  gravity: true, lifeBonus: 0.0 } },
-            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash',      size: 1.0, options: { speed: 30,  lifeBonus: 0.0 } },
-            'gold':    { colors: ['#ffd700', '#fff4a0'],            type: 'star',       size: 1.0, options: { speed: 25,  gravity: true, lifeBonus: 0.0 } },
-            'nebula':  { colors: ['#ff99cc', '#99ccff'],            type: 'smoke',      size: 1.1, options: { speed: 12,  lifeBonus: 0.2 } },
-            'rainbow': { colors: ['#ff0000', '#ffaa00', '#ffff00', '#00ff88', '#0088ff', '#cc00ff'], type: 'star', size: 1.0, options: { speed: 30, lifeBonus: 0.0 } },
+            'fire':    { colors: ['#ff7700', '#ffaa00'],            type: 'flame',      size: 1.4, options: { speed: 30,  lifeBonus: -0.1 } },
+            'ice':     { colors: ['#aaf0ff', '#ffffff'],            type: 'spark',      size: 1.3, options: { speed: 25,  lifeBonus: 0.0 } },
+            'toxic':   { colors: ['#aaff00', '#39ff14'],            type: 'smoke',      size: 1.5, options: { speed: 15,  lifeBonus: 0.1 } },
+            'void':    { colors: ['#cc00ff', '#6600cc'],            type: 'dark_smoke', size: 1.4, options: { speed: 15,  lifeBonus: 0.2 } },
+            'plasma':  { colors: ['#00e5ff', '#ff00e5'],            type: 'spark',      size: 1.3, options: { speed: 35,  lifeBonus: 0.0 } },
+            'shadow':  { colors: ['#1a1a2e', '#000000'],            type: 'dark_smoke', size: 1.6, options: { speed: 10,  lifeBonus: 0.3 } },
+            'blood':   { colors: ['#ff0000', '#8a0303'],            type: 'blood',      size: 1.4, options: { speed: 20,  gravity: true, lifeBonus: 0.0 } },
+            'pixel':   { colors: ['#00ffcc', '#ff00ff', '#ffff00'], type: 'slash',      size: 1.4, options: { speed: 30,  lifeBonus: 0.0 } },
+            'gold':    { colors: ['#ffd700', '#fff4a0'],            type: 'star',       size: 1.4, options: { speed: 25,  gravity: true, lifeBonus: 0.0 } },
+            'nebula':  { colors: ['#ff99cc', '#99ccff'],            type: 'smoke',      size: 1.5, options: { speed: 12,  lifeBonus: 0.2 } },
+            'rainbow': { colors: ['#ff0000', '#ffaa00', '#ffff00', '#00ff88', '#0088ff', '#cc00ff'], type: 'star', size: 1.4, options: { speed: 30, lifeBonus: 0.0 } },
 
             // MYTHIC CHEST TIER -- ONE accent spark, no second cloud -------
-            'weapon_trail_void':    { colors: ['#3a0066', '#5500aa'], type: 'dark_smoke', size: 1.1, options: { speed: 15, lifeBonus: 0.2 }, accent: { type: 'star',  color: '#ffd700', size: 0.7, options: { speed: 50, gravity: true, lifeBonus: -0.1 }, every: 4 } },
-            'weapon_trail_solar':   { colors: ['#ff2200', '#ffaa00'], type: 'flame',      size: 1.1, options: { speed: 35, lifeBonus: -0.1 }, accent: { type: 'spark', color: '#ffffff', size: 0.7, options: { speed: 60, lifeBonus: -0.1 }, every: 3 } },
-            'weapon_trail_eclipse': { colors: ['#0a0a20', '#000000'], type: 'dark_smoke', size: 1.2, options: { speed: 10, lifeBonus: 0.3 }, accent: { type: 'spark', color: '#ffffff', size: 0.6, options: { speed: 40, lifeBonus: -0.1 }, every: 4 } },
+            'weapon_trail_void':    { colors: ['#3a0066', '#5500aa'], type: 'dark_smoke', size: 1.5, options: { speed: 15, lifeBonus: 0.2 }, accent: { type: 'star',  color: '#ffd700', size: 0.9, options: { speed: 50, gravity: true, lifeBonus: -0.1 }, every: 4 } },
+            'weapon_trail_solar':   { colors: ['#ff2200', '#ffaa00'], type: 'flame',      size: 1.5, options: { speed: 35, lifeBonus: -0.1 }, accent: { type: 'spark', color: '#ffffff', size: 0.9, options: { speed: 60, lifeBonus: -0.1 }, every: 3 } },
+            'weapon_trail_eclipse': { colors: ['#0a0a20', '#000000'], type: 'dark_smoke', size: 1.6, options: { speed: 10, lifeBonus: 0.3 }, accent: { type: 'spark', color: '#ffffff', size: 0.8, options: { speed: 40, lifeBonus: -0.1 }, every: 4 } },
         };
         const config = trailConfigs[trailId];
         if (!config) return;
