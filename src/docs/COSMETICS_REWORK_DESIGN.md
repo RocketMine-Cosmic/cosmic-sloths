@@ -83,10 +83,14 @@ These are the existing Armoury cosmetics, **repositioned** as a small-donation v
 
 **Positioning:** below Epic. Visually clean and pleasant but never elevated. The pitch is "throw the devs a few GMT, get a permanent unlock you can swap to whenever". The catalogue intentionally has *many* small items so a regular backer always has something fresh to grab.
 
+**Pricing:** **flat 15 GMT per item** across every category and rarity. One price, no tiers — keeps the "donation" framing clean and the UI simple (no per-item price lookups, no rarity-based price math).
+
 **SKU strategy:**
 - Existing SKU IDs in `lib/skuMap.js` and existing save schema (`save.cosmetics.*`, `save.unlockedCosmetics[]`, etc.) stay 100% intact. Already-owned cosmetics keep working.
-- New SKU IDs added for GMT pricing — gold/OMENX rows in `skuMap.js` go untouched, a parallel GMT row is added per cosmetic.
-- The existing gold tier label (Basic/Advanced/Epic/Legendary) stays as a *visual rarity* indicator inside the GMT tier — it no longer maps to a gold cost.
+- New SKU IDs added for GMT pricing — gold/OMENX rows in `skuMap.js` go untouched, a parallel GMT row is added per cosmetic, all priced at 15 GMT.
+- The existing gold tier label (Basic/Advanced/Epic/Legendary) stays as a *visual rarity* indicator only — it no longer maps to a price. Players see rarity badges but pay the same 15 GMT regardless.
+
+**⚠️ Blocker:** the GMT integration needs the `price:read` API scope before we can show / charge GMT prices live. Currently not granted on our key. **Action:** request `price:read` scope from OmenX before Phase 4 (webhook / GMT activation).
 
 #### A.1 — Existing catalogue (kept as-is, repriced for GMT)
 
@@ -226,7 +230,7 @@ One standalone page that owns every cosmetic in the game. Replaces the Cosmetic 
 | Owned + equipped | already owned, currently equipped | "Equipped" (tap again to unequip if category allows) |
 | Owned + unequipped | already owned | "Equip" |
 | Standard (not owned, pre-GMT) | Armoury cosmetic, GMT not yet live | Disabled — "Coming soon" |
-| Standard (not owned, post-GMT) | Armoury cosmetic, GMT live | "Support the Devs — {price} GMT" |
+| Standard (not owned, post-GMT) | Armoury cosmetic, GMT live | "Support the Devs — 15 GMT" |
 | Chest (not owned) | Epic/Mythic chest reward | Disabled — "Drops from {chest tier}+ chests" |
 
 **Preview always works** regardless of state. Click the tile (not the button) to open the preview modal.
@@ -326,7 +330,7 @@ Reference plan for once design is signed off. Do not start any of this until the
 All seven open questions answered 2026-06-26. Locked in for build phase:
 
 1. **Animated pilot icons on leaderboard** — ✅ no perf concern. LB is hard-capped at 20 rows (`payoutCfg.top_n` default 20 + `KILL_BOARD_LIMIT = 20`). Animate freely, no top-10 fallback.
-2. **GMT migration timeline** — TBD. Until then, standard cosmetic purchase buttons stay disabled with label **"Coming soon"**. No teaser pricing. At GMT launch the standard pool reactivates as the "Support the Devs" donation tier (see Section A).
+2. **GMT migration timeline** — TBD, blocked on `price:read` API scope from OmenX. Until then, standard cosmetic purchase buttons stay disabled with label **"Coming soon"**. No teaser pricing. At GMT launch the standard pool reactivates as the "Support the Devs" donation tier — **flat 15 GMT per item** (see Section A).
 3. **Already-owned standard cosmetics during disable window** — ✅ stay equippable, swappable, and previewable. Only the *purchase* path is disabled.
 4. **Title flair pricing post-launch** — **Chest-only at launch.** May become purchaseable much later — explicitly out of scope for this rework.
 5. **Mythic seasonality** — Not decided yet. Build season 1 (launch) only. Season 2 art planning deferred — no S2 placeholders in the catalogue or schema.
