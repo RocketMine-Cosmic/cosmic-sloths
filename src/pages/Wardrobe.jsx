@@ -25,6 +25,11 @@ export default function Wardrobe({ isCarousel }) {
     const [activeCategory, setActiveCategory] = useState('pilot_icon');
     const [activeSource, setActiveSource] = useState('all');
     const [previewItem, setPreviewItem] = useState(null);
+    // Temp-equipped trail / kill_fx ids for the big top preview canvas.
+    // Mirrors the old Armoury behaviour: clicking Preview on an unowned card
+    // shows it live in the top canvas without actually saving anything.
+    const [previewTrailId, setPreviewTrailId] = useState(null);
+    const [previewKillId, setPreviewKillId] = useState(null);
 
     // Skin tab is per-character — track which character is being browsed.
     const unlockedChars = useMemo(() => {
@@ -131,7 +136,7 @@ export default function Wardrobe({ isCarousel }) {
                     {CATEGORY_TABS.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => { SoundManager.playUIClick(); setActiveCategory(tab.id); setActiveSource('all'); }}
+                            onClick={() => { SoundManager.playUIClick(); setActiveCategory(tab.id); setActiveSource('all'); setPreviewTrailId(null); setPreviewKillId(null); }}
                             className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black tracking-widest uppercase text-[10px] md:text-xs transition-all flex items-center gap-1.5 ${
                                 activeCategory === tab.id
                                     ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
@@ -161,26 +166,39 @@ export default function Wardrobe({ isCarousel }) {
                 </div>
 
                 {/* Live preview canvas — same big preview the Armoury used to show.
-                    Renders for trail / kill_fx categories. Skins get their own
-                    selector below; chest categories don't have a render path yet. */}
+                    Renders for trail / kill_fx categories. Temp-previewed ids
+                    (set by clicking a card's Preview button) override the
+                    equipped values without saving. */}
                 {(activeCategory === 'trail' || activeCategory === 'kill_fx') && (() => {
                     const equippedTrail = save.cosmetics?.trail || 'default';
                     const equippedKill  = save.cosmetics?.killEffect || 'none';
+                    const trailId = previewTrailId || equippedTrail;
+                    const killId  = previewKillId  || equippedKill;
                     const equippedSkinId = save.cosmetics?.skins?.[currentSkinChar.id] || `${currentSkinChar.id}_default`;
                     const playerColor = SKIN_COSMETICS.find(s => s.id === equippedSkinId)?.color
                                        || currentSkinChar.color
                                        || '#00cfff';
+                    const trailName = TRAIL_COSMETICS.find(t => t.id === trailId)?.name || trailId;
+                    const killName  = KILL_COSMETICS.find(k => k.id === killId)?.name   || killId;
                     return (
                         <div className="mb-4">
                             <CosmeticPreview
-                                trailId={equippedTrail}
-                                killEffectId={equippedKill}
+                                trailId={trailId}
+                                killEffectId={killId}
                                 charId={currentSkinChar.id}
                                 playerColor={playerColor}
                             />
-                            <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center">
-                                <span>Trail: <strong className="text-pink-400">{TRAIL_COSMETICS.find(t => t.id === equippedTrail)?.name || equippedTrail}</strong></span>
-                                <span>Kill Effect: <strong className="text-pink-400">{KILL_COSMETICS.find(k => k.id === equippedKill)?.name || equippedKill}</strong></span>
+                            <div className="flex gap-3 mt-2 text-xs text-slate-400 justify-center flex-wrap">
+                                <span>Trail: <strong className={previewTrailId ? 'text-amber-400' : 'text-pink-400'}>{trailName}</strong>{previewTrailId && <span className="text-amber-500/70 ml-1">(previewing)</span>}</span>
+                                <span>Kill Effect: <strong className={previewKillId ? 'text-amber-400' : 'text-pink-400'}>{killName}</strong>{previewKillId && <span className="text-amber-500/70 ml-1">(previewing)</span>}</span>
+                                {(previewTrailId || previewKillId) && (
+                                    <button
+                                        onClick={() => { SoundManager.playUIClick(); setPreviewTrailId(null); setPreviewKillId(null); }}
+                                        className="text-slate-500 hover:text-white underline"
+                                    >
+                                        clear preview
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );
@@ -234,7 +252,19 @@ export default function Wardrobe({ isCarousel }) {
                                         item={item}
                                         owned={owned}
                                         equipped={equipped}
-                                        onPreview={() => { SoundManager.playUIClick(); setPreviewItem(item); }}
+                                        onPreview={() => {
+                                            SoundManager.playUIClick();
+                                            // Trails / kill FX: temp-equip on the top preview canvas
+                                            // (no modal — exactly like the old Armoury).
+                                            if (item.category === 'trail') {
+                                                setPreviewTrailId(prev => prev === item.id ? null : item.id);
+                                            } else if (item.category === 'kill_fx') {
+                                                setPreviewKillId(prev => prev === item.id ? null : item.id);
+                                            } else {
+                                                // Everything else still uses the modal (skin colour, chest categories).
+                                                setPreviewItem(item);
+                                            }
+                                        }}
                                         onEquip={() => handleEquip(item)}
                                     />
                                 );
