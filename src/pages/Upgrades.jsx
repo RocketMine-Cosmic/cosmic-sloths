@@ -1478,14 +1478,11 @@ export default function Upgrades({ isCarousel }) {
                         🔨 Forge
                     </button>
                     <button
-                        onClick={() => { SoundManager.playUIClick(); setActiveCategory('cosmetics'); }}
-                        className={`px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all ${
-                            activeCategory === 'cosmetics' 
-                            ? 'bg-pink-500/20 border border-pink-400 text-pink-300 shadow-[0_0_15px_rgba(236,72,153,0.3)]' 
-                            : 'bg-[#0b0416]/80 border border-slate-700/50 text-slate-400 hover:border-pink-500/50 hover:text-pink-200'
-                        }`}
+                        onClick={() => { SoundManager.playUIClick(); navigate('/wardrobe'); }}
+                        className="px-3 py-2 md:px-5 md:py-2.5 rounded-xl font-black tracking-widest uppercase text-xs md:text-sm transition-all bg-[#0b0416]/80 border border-cyan-500/40 text-cyan-300 hover:border-cyan-400 hover:text-cyan-200"
+                        title="Cosmetics moved to the Wardrobe"
                     >
-                        Cosmetics
+                        🪞 Wardrobe →
                     </button>
                 </div>
 
@@ -1516,7 +1513,7 @@ export default function Upgrades({ isCarousel }) {
                         <ForgePanel save={save} setSave={setSave} />
                     ) : activeCategory === 'relics' ? (
                         renderRelics()
-                    ) : activeCategory !== 'cosmetics' ? (
+                    ) : (
                         <>
                             <div className="flex flex-wrap gap-2 mb-3 border-b border-slate-800 pb-2">
                                 {['stats', 'armory', 'talents'].map(sub => (
@@ -1535,8 +1532,6 @@ export default function Upgrades({ isCarousel }) {
                             {subCategory === 'armory' && renderArmory()}
                             {subCategory === 'talents' && renderTalents()}
                         </>
-                    ) : (
-                        renderCosmetics()
                     )}
                     
                 </div>

@@ -26,6 +26,7 @@ const SLIDE_GROUPS = [
         border: 'border-fuchsia-500/30',
         slides: [
             { idx: 3, name: 'Cosmic Armory', icon: '⚡', color: 'from-fuchsia-700 to-fuchsia-950', border: 'border-fuchsia-400/50' },
+            { idx: 16, name: 'Wardrobe', icon: '🪞', color: 'from-cyan-700 to-purple-950', border: 'border-cyan-400/50' },
             { idx: 9, name: 'Pilot Mastery', icon: '🎖️', color: 'from-amber-600 to-yellow-900', border: 'border-yellow-400/50' },
             { idx: 2, name: 'Star Ops', icon: '🎯', color: 'from-emerald-700 to-emerald-950', border: 'border-emerald-400/50' },
             { idx: 10, name: 'Cosmic Mutations', icon: '🧬', color: 'from-red-700 to-red-950', border: 'border-red-400/50' },

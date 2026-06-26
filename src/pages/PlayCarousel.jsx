@@ -24,6 +24,7 @@ import NFTDashboard from './NFTDashboard';
 import Profile from './Profile';
 import Jukebox from './Jukebox';
 import Titles from './Titles';
+import Wardrobe from './Wardrobe';
 import SquadWars from './SquadWars';
 
 const SLIDE_LABELS = [
@@ -43,6 +44,7 @@ const SLIDE_LABELS = [
     { name: 'Pilot Profile', color: 'text-violet-300' },
     { name: 'Stellar Jukebox', color: 'text-fuchsia-300' },
     { name: 'Star Callsigns', color: 'text-amber-300' },
+    { name: 'Wardrobe', color: 'text-cyan-300' },
 ];
 
 // Renders a slide ONLY when it's active or adjacent. Off-screen slides stay
@@ -71,7 +73,7 @@ export default function PlayCarousel() {
     // Initialize from ?slide= so deep-links and the back button restore the right page.
     const initialSlide = (() => {
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        return Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
+        return Number.isFinite(raw) && raw >= 0 && raw < 17 ? raw : 0;
     })();
     const [selectedIndex, setSelectedIndex] = useState(initialSlide);
     // Tracks whether a slide change came from the URL (popstate / back button)
@@ -106,7 +108,7 @@ export default function PlayCarousel() {
     useEffect(() => {
         if (!emblaApi) return;
         const raw = parseInt(searchParams.get('slide') || '0', 10);
-        const target = Number.isFinite(raw) && raw >= 0 && raw < 16 ? raw : 0;
+        const target = Number.isFinite(raw) && raw >= 0 && raw < 17 ? raw : 0;
         if (target !== emblaApi.selectedScrollSnap()) {
             syncingFromUrlRef.current = true;
             emblaApi.scrollTo(target, true);
@@ -198,6 +200,7 @@ export default function PlayCarousel() {
                     <LazySlide shouldMount={isNear(13)}><Profile isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(14)}><Jukebox isCarousel={true} /></LazySlide>
                     <LazySlide shouldMount={isNear(15)}><Titles isCarousel={true} /></LazySlide>
+                    <LazySlide shouldMount={isNear(16)}><Wardrobe isCarousel={true} /></LazySlide>
                 </div>
             </div>
 

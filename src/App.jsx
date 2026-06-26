@@ -32,6 +32,7 @@ const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
 const CosmeticStudio = React.lazy(() => import('./pages/CosmeticStudio'));
 const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 const Titles = React.lazy(() => import('./pages/Titles'));
+const Wardrobe = React.lazy(() => import('./pages/Wardrobe'));
 const Loadouts = React.lazy(() => import('./pages/Loadouts'));
 const SquadWars = React.lazy(() => import('./pages/SquadWars'));
 const WarArchive = React.lazy(() => import('./pages/WarArchive'));
@@ -91,6 +92,7 @@ const MainApp = () => {
           <Route path="/profile" element={<Navigate to="/?slide=13" replace />} />
           <Route path="/jukebox" element={<Navigate to="/?slide=14" replace />} />
           <Route path="/titles" element={<Navigate to="/?slide=15" replace />} />
+          <Route path="/wardrobe" element={<Navigate to="/?slide=16" replace />} />
           <Route path="/game" element={<Game />} />
           <Route path="/info" element={<Info />} />
           <Route path="/credits" element={<Credits />} />
@@ -141,6 +143,7 @@ const MainApp = () => {
       <Route path="/profile" element={<Navigate to="/?slide=13" replace />} />
       <Route path="/jukebox" element={<Navigate to="/?slide=14" replace />} />
       <Route path="/titles" element={<Navigate to="/?slide=15" replace />} />
+      <Route path="/wardrobe" element={<Navigate to="/?slide=16" replace />} />
       <Route path="/game" element={<Game />} />
       <Route path="/info" element={<Info />} />
       <Route path="/credits" element={<Credits />} />
