@@ -11,12 +11,16 @@ const MODELS = [
     { id: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
 ];
 
+// All chest-tier cosmetics default to FLUX.1-dev — sharper, better prompt
+// adherence on colour palettes. Schnell is faster but gave us muddy
+// "blue thing on dark" results for Pilot Icons; the gallery-quality bar
+// for chest assets makes the extra ~10s/credit cost a no-brainer.
 const CATEGORIES = [
-    { id: 'animated_pilot_icon', label: 'Pilot Icon', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-schnell' },
+    { id: 'animated_pilot_icon', label: 'Pilot Icon', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-dev' },
     { id: 'lb_frame', label: 'LB Frame', w: 1024, h: 96, model: 'black-forest-labs/FLUX.1-dev' },
-    { id: 'meteor_fx', label: 'Meteor FX', w: 256, h: 128, model: 'black-forest-labs/FLUX.1-schnell' },
-    { id: 'skin', label: 'Skin', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-schnell' },
-    { id: 'other', label: 'Other', w: 512, h: 512, model: 'black-forest-labs/FLUX.1-schnell' },
+    { id: 'meteor_fx', label: 'Meteor FX', w: 256, h: 128, model: 'black-forest-labs/FLUX.1-dev' },
+    { id: 'skin', label: 'Skin', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-dev' },
+    { id: 'other', label: 'Other', w: 512, h: 512, model: 'black-forest-labs/FLUX.1-dev' },
 ];
 
 const RARITIES = ['standard', 'epic', 'mythic'];
