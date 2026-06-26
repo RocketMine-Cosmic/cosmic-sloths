@@ -4,7 +4,6 @@ import { drawPickups } from './PickupRenderer';
 import { drawProjectiles } from './ProjectileRenderer';
 import { getWeaponStatsAndMastery } from './Constants';
 import { drawBuffAuras } from './BuffAuraRenderer';
-import { drawTrailAura } from './CosmeticRenderer';
 
 export function renderGame() {
     // Reset composite operation to prevent stuck states from previous frames
@@ -396,11 +395,10 @@ export function renderGame() {
         this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
     }
 
-    // COSMETIC LAYER A — persistent trail aura ring + trail particles.
-    // The aura is a cheap radial-gradient halo locked to the player, drawn
-    // EVERY frame so the equipped trail is readable even when particle
-    // sprays get buried under enemy explosions / AoE pools.
-    drawTrailAura(this.ctx, this.player.x, this.player.y, this.player.radius, this.player.trail, this.time);
+    // COSMETIC LAYER A — trail particles. Rendered AFTER enemies / pickups but
+    // BEFORE the player sprite so the trail reads as coming from the player
+    // without obscuring the skin underneath. The dedicated render pass is the
+    // visibility fix — no halo / aura needed.
     this.particleManager.draw(this.ctx, camX, camY, vWidth, vHeight, 'trail');
 
     if (this.squadClones) {
