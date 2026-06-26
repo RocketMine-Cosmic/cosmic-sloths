@@ -3,24 +3,23 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
+// Only models with working provider routing. SDXL / Playground were
+// deprecated on hf-inference 2026-06-26 and aren't proxied by the HF router.
 const MODELS = [
-    { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 schnell (fast)' },
-    { id: 'black-forest-labs/FLUX.1-dev', label: 'FLUX.1 dev (slower, sharper)' },
-    { id: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
-    { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL base' },
-    { id: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
+    { id: 'black-forest-labs/FLUX.1-dev', label: 'FLUX.1 dev (gallery quality, via fal-ai)' },
+    { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 schnell (fast, free)' },
 ];
 
-// FLUX.1-schnell only — Hugging Face's hf-inference endpoint quietly
-// deprecated FLUX.1-dev, SDXL, Playground v2.5 and SDXL Turbo (confirmed
-// 410/400 in test_backend_function 2026-06-26). Schnell is the last model
-// still hosted on the shared endpoint. Prompt harder to compensate.
+// All chest-tier cosmetics default to FLUX.1-dev via fal-ai (HF deprecated
+// it on the shared hf-inference endpoint 2026-06-26; we now route through
+// the Inference Providers router with a Pro token — see generateCosmeticAsset).
+// Schnell still available in the dropdown for quick / cheap iteration.
 const CATEGORIES = [
-    { id: 'animated_pilot_icon', label: 'Pilot Icon', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-schnell' },
-    { id: 'lb_frame', label: 'LB Frame', w: 1024, h: 96, model: 'black-forest-labs/FLUX.1-schnell' },
-    { id: 'meteor_fx', label: 'Meteor FX', w: 256, h: 128, model: 'black-forest-labs/FLUX.1-schnell' },
-    { id: 'skin', label: 'Skin', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-schnell' },
-    { id: 'other', label: 'Other', w: 512, h: 512, model: 'black-forest-labs/FLUX.1-schnell' },
+    { id: 'animated_pilot_icon', label: 'Pilot Icon', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-dev' },
+    { id: 'lb_frame', label: 'LB Frame', w: 1024, h: 96, model: 'black-forest-labs/FLUX.1-dev' },
+    { id: 'meteor_fx', label: 'Meteor FX', w: 256, h: 128, model: 'black-forest-labs/FLUX.1-dev' },
+    { id: 'skin', label: 'Skin', w: 256, h: 256, model: 'black-forest-labs/FLUX.1-dev' },
+    { id: 'other', label: 'Other', w: 512, h: 512, model: 'black-forest-labs/FLUX.1-dev' },
 ];
 
 const RARITIES = ['standard', 'epic', 'mythic'];
