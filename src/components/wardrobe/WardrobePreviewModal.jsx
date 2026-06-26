@@ -27,13 +27,16 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
             );
         }
         if (item.category === 'skin') {
+            // Render the live character sprite tinted with the skin's colour —
+            // a flat circle didn't tell the player what the skin actually looks
+            // like in-game. Reuses the same canvas trails / kill FX use.
             return (
-                <div className="w-full bg-slate-950 rounded-lg flex items-center justify-center py-10">
-                    <div
-                        className="w-32 h-32 rounded-full border-8"
-                        style={{ background: item.color, borderColor: item.color + '80', boxShadow: `0 0 60px ${item.color}` }}
-                    />
-                </div>
+                <CosmeticPreview
+                    trailId={save?.cosmetics?.trail || 'default'}
+                    killEffectId={save?.cosmetics?.killEffect || 'none'}
+                    charId={item.charId || charId}
+                    playerColor={item.color || '#00cfff'}
+                />
             );
         }
         // Chest-only categories — placeholder until assets ship.
