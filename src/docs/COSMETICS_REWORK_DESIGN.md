@@ -6,9 +6,10 @@
 **Scope confirmed (06-26):**
 1. **Full rework of every existing cosmetic** — pilot icons, weapon trails, kill effects, character skins, titles flair, jukebox tracks.
 2. **ONE unified Wardrobe page for ALL cosmetics** — old standard cosmetics + new chest cosmetics live in the same place. The Cosmic Armoury's cosmetic tabs are retired; cosmetics leave the Armoury entirely.
-3. **Old gold/OMENX cosmetics are disabled to purchase** — purchase buttons disabled, labelled "Coming soon". Already-owned standard cosmetics behave exactly as today: equip, unequip, swap between owned ones, preview.
-4. **Preview works for every cosmetic** — owned, locked, and disabled-to-purchase alike. Click any tile → live in-canvas preview (reuses `CosmeticPreview` for trails/kill FX; new preview components for icons/frames/flair).
-5. **Two visual identities — Epic vs Mythic.** Epics share one elevated baseline style; Mythics get a distinct, "this person spent" elevated look.
+3. **Old cosmetics become GMT-only "Support the Devs" tier** — purchase buttons disabled in the meantime, labelled "Coming soon". At GMT launch they reactivate, paid in GMT only (no gold, no OMENX). Framed as a donation tier — small permanent vanity rewards for backing the devs. Already-owned standard cosmetics behave exactly as today: equip, unequip, swap between owned ones, preview.
+4. **Standard cosmetic catalogue expands** — since GMT support cosmetics are a recurring revenue stream, the standard pool grows so backers always have something new to pick up. Target ~2× the current catalogue size at GMT launch (see Section A).
+5. **Preview works for every cosmetic** — owned, locked, and disabled-to-purchase alike. Click any tile → live in-canvas preview (reuses `CosmeticPreview` for trails/kill FX; new preview components for icons/frames/flair).
+6. **Two visual identities — Epic vs Mythic.** Epics share one elevated baseline style; Mythics get a distinct, "this person spent" elevated look. (GMT support cosmetics sit *below* Epic — they're the "thanks for the donation" floor.)
 
 ---
 
@@ -76,24 +77,59 @@ Reserved for the top ~15% of cosmetic rolls. Visibly elevated. Players should sc
 
 ## Full cosmetic catalogue — design specs
 
-### A. Reworked existing cosmetics (the Cosmic Armoury rebuild)
+### A. Standard cosmetics — the GMT "Support the Devs" tier
 
-Stays on the existing Cosmic Armoury / Upgrades page. Gold + OMENX purchase model unchanged. The art is upgraded; the SKU IDs in `lib/skuMap.js` and the save schema stay identical so we don't break already-purchased cosmetics.
+These are the existing Armoury cosmetics, **repositioned** as a small-donation vanity tier paid in GMT at GMT launch. Until then, purchase buttons stay disabled with "Coming soon".
 
-| ID | Category | Tier (gold cost) | Visual direction |
+**Positioning:** below Epic. Visually clean and pleasant but never elevated. The pitch is "throw the devs a few GMT, get a permanent unlock you can swap to whenever". The catalogue intentionally has *many* small items so a regular backer always has something fresh to grab.
+
+**SKU strategy:**
+- Existing SKU IDs in `lib/skuMap.js` and existing save schema (`save.cosmetics.*`, `save.unlockedCosmetics[]`, etc.) stay 100% intact. Already-owned cosmetics keep working.
+- New SKU IDs added for GMT pricing — gold/OMENX rows in `skuMap.js` go untouched, a parallel GMT row is added per cosmetic.
+- The existing gold tier label (Basic/Advanced/Epic/Legendary) stays as a *visual rarity* indicator inside the GMT tier — it no longer maps to a gold cost.
+
+#### A.1 — Existing catalogue (kept as-is, repriced for GMT)
+
+| ID | Category | Visual tier | Visual direction |
 |---|---|---|---|
 | `pilot_icon_*` (20 emoji) | Pilot Icon | Free | Keep emoji. No rework — emoji is the right "default" floor. |
-| `trail_basic_*` (5 variants) | Weapon Trail | Basic (3k) | Solid colour, low particle density. Clean. |
-| `trail_advanced_*` (5) | Weapon Trail | Advanced (10k) | Two-colour gradient, mild glow. |
-| `trail_epic_*` (5) | Weapon Trail | Epic (20k) | Animated colour shift, particle puffs. |
-| `trail_legendary_*` (5) | Weapon Trail | Legendary (30k) | Beam-style with sparks. |
-| `kill_basic_*` (5) | Kill Effect | Basic (3k) | Single-colour burst. |
-| `kill_advanced_*` (5) | Kill Effect | Advanced (12k) | Multi-particle ring burst. |
-| `kill_epic_*` (5) | Kill Effect | Epic (25k) | Themed shapes (coin burst, shard burst). |
-| `skin_basic_*` (per char, 10 chars) | Character Skin | Basic (5k) | Re-colour of base sprite. |
-| `skin_advanced_*` (per char, 10 chars) | Character Skin | Advanced (20k) | Outfit / armour swap. |
+| `trail_basic_*` (5 variants) | Weapon Trail | Basic | Solid colour, low particle density. Clean. |
+| `trail_advanced_*` (5) | Weapon Trail | Advanced | Two-colour gradient, mild glow. |
+| `trail_epic_*` (5) | Weapon Trail | Epic-look | Animated colour shift, particle puffs. |
+| `trail_legendary_*` (5) | Weapon Trail | Legendary-look | Beam-style with sparks. |
+| `kill_basic_*` (5) | Kill Effect | Basic | Single-colour burst. |
+| `kill_advanced_*` (5) | Kill Effect | Advanced | Multi-particle ring burst. |
+| `kill_epic_*` (5) | Kill Effect | Epic-look | Themed shapes (coin burst, shard burst). |
+| `skin_basic_*` (per char, 10 chars) | Character Skin | Basic | Re-colour of base sprite. |
+| `skin_advanced_*` (per char, 10 chars) | Character Skin | Advanced | Outfit / armour swap. |
 
-**No SKU changes required** — `getCosmeticSku(type, name, goldCost)` already keys off gold cost tier.
+#### A.2 — Expansion catalogue (NEW, ships at GMT launch)
+
+Roughly doubles the standard pool so backers always have unbought options. Reuses the existing render systems — **no new render code**, just more configs.
+
+| New IDs | Category | Visual tier | Count | Visual direction |
+|---|---|---|---|---|
+| `trail_basic_v2_*` | Weapon Trail | Basic | 5 | Alt colour palettes — pastel, monochrome, neon. |
+| `trail_advanced_v2_*` | Weapon Trail | Advanced | 5 | New two-tone gradients (sunset, aurora, ocean, magma, frost). |
+| `trail_epic_v2_*` | Weapon Trail | Epic-look | 5 | Themed (autumn leaves, snowflakes, embers, bubbles, petals). |
+| `trail_legendary_v2_*` | Weapon Trail | Legendary-look | 5 | Beam-style with new spark palettes (electric, ghostly, holy, void, prism). |
+| `kill_basic_v2_*` | Kill Effect | Basic | 5 | Alt-colour single bursts. |
+| `kill_advanced_v2_*` | Kill Effect | Advanced | 5 | New ring patterns (heart-ring, star-ring, square-burst, double-ring, slowmo-puff). |
+| `kill_epic_v2_*` | Kill Effect | Epic-look | 5 | Themed (snowflake burst, leaf burst, bubble pop, music notes, hearts). |
+| `skin_v3_*` (per char) | Character Skin | Advanced | 10 | Third skin per character — alt outfit (winter / summer / festival / void / militia variants). |
+| `pilot_icon_pack2_*` | Pilot Icon | Free addition | 20 | 20 new static emoji/icon options added to the picker. |
+
+**Totals:**
+- Existing: 70 paid items + 20 free pilot icons.
+- Expansion: 45 paid items + 20 free pilot icons.
+- **GMT-launch catalogue: 115 paid standard cosmetics + 40 free pilot icons.**
+
+**Why ~2×, not more?**
+- Each "v2" variant only needs a particle config / colour palette, not new render code. Cheap to ship.
+- 115 paid items lets a heavy backer buy one cosmetic per week for ~2 years before running out — enough headroom that catalogue exhaustion isn't a near-term risk.
+- New skins per character (10× v3) are the most expensive expansion item but also the highest-flex. Keep the count tight (one per char) — quality over quantity.
+
+**No SKU code changes required for A.1** — `getCosmeticSku(type, name, goldCost)` already keys off the rarity tier. **A.2 needs new SKU IDs added** to `skuMap.js` alongside the existing ones.
 
 ### B. New Chest cosmetics — Epic line (13 launch items)
 
@@ -189,7 +225,8 @@ One standalone page that owns every cosmetic in the game. Replaces the Cosmetic 
 |---|---|---|
 | Owned + equipped | already owned, currently equipped | "Equipped" (tap again to unequip if category allows) |
 | Owned + unequipped | already owned | "Equip" |
-| Standard (not owned) | Armoury cosmetic, gold/OMENX flow paused | Disabled — "Coming soon" |
+| Standard (not owned, pre-GMT) | Armoury cosmetic, GMT not yet live | Disabled — "Coming soon" |
+| Standard (not owned, post-GMT) | Armoury cosmetic, GMT live | "Support the Devs — {price} GMT" |
 | Chest (not owned) | Epic/Mythic chest reward | Disabled — "Drops from {chest tier}+ chests" |
 
 **Preview always works** regardless of state. Click the tile (not the button) to open the preview modal.
@@ -289,7 +326,7 @@ Reference plan for once design is signed off. Do not start any of this until the
 All seven open questions answered 2026-06-26. Locked in for build phase:
 
 1. **Animated pilot icons on leaderboard** — ✅ no perf concern. LB is hard-capped at 20 rows (`payoutCfg.top_n` default 20 + `KILL_BOARD_LIMIT = 20`). Animate freely, no top-10 fallback.
-2. **GMT migration timeline** — TBD. Until then, standard cosmetic purchase buttons stay disabled with label **"Coming soon"**. No teaser pricing.
+2. **GMT migration timeline** — TBD. Until then, standard cosmetic purchase buttons stay disabled with label **"Coming soon"**. No teaser pricing. At GMT launch the standard pool reactivates as the "Support the Devs" donation tier (see Section A).
 3. **Already-owned standard cosmetics during disable window** — ✅ stay equippable, swappable, and previewable. Only the *purchase* path is disabled.
 4. **Title flair pricing post-launch** — **Chest-only at launch.** May become purchaseable much later — explicitly out of scope for this rework.
 5. **Mythic seasonality** — Not decided yet. Build season 1 (launch) only. Season 2 art planning deferred — no S2 placeholders in the catalogue or schema.
@@ -300,4 +337,4 @@ All seven open questions answered 2026-06-26. Locked in for build phase:
 
 ## Summary
 
-ONE unified Wardrobe page that owns every cosmetic — standard (Armoury-style trails / kill FX / skins, purchase disabled pending GMT migration) + chest (13 Epic + 7 Mythic). The Cosmic Armoury page loses its cosmetic tabs entirely; cosmetics relocate to Wardrobe. Live preview works for every tile regardless of ownership / purchase state. Save schema extends `profile` with 6 equipped chest-cosmetic slots + one owned-chest-cosmetic array; existing trail / kill / skin schema fields stay untouched. ~half the chest catalogue is code-only (title flair, trails, kill FX), ~half is AI-generated art.
+ONE unified Wardrobe page that owns every cosmetic — **standard** (Armoury-style trails / kill FX / skins, becoming the GMT-paid "Support the Devs" donation tier at GMT launch; expanded to ~115 paid items so backers always have something fresh) + **chest** (13 Epic + 7 Mythic). Purchase disabled in the interim with "Coming soon". The Cosmic Armoury page loses its cosmetic tabs entirely; cosmetics relocate to Wardrobe. Live preview works for every tile regardless of ownership / purchase state. Save schema extends `profile` with 6 equipped chest-cosmetic slots + one owned-chest-cosmetic array; existing trail / kill / skin schema fields stay untouched. ~half the chest catalogue is code-only (title flair, trails, kill FX), ~half is AI-generated art; the standard expansion is entirely config-only (no new render code).
