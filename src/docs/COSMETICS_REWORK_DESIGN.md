@@ -288,7 +288,7 @@ Reference plan for once design is signed off. Do not start any of this until the
 
 Before any code is written, decide:
 
-1. **Animated pilot icons on the leaderboard** — performance budget? 50 rows × 6-frame sprite at 1.5s loop = 300 frames decoded. Fine on desktop, possibly heavy on low-end mobile. Decision: render animated icons only on the top 10 LB rows; rest fall back to static frame 1. ✅ assumed; confirm.
+1. **Animated pilot icons on the leaderboard** — leaderboard is capped at `payoutCfg.top_n` (default 20, admin-configurable via Leaderboard Payout Config) for Weekly / Seasonal / Endless, and a hardcoded `KILL_BOARD_LIMIT = 20` for Weekly Sector Kills. Worst case is ~20 animated icons on screen at once — trivial perf budget, no top-10 fallback needed. ✅ confirmed from code.
 2. **GMT migration timeline for old cosmetics** — when does GMT pricing actually land? While disabled, do we show the future GMT price as a teaser, or just "coming soon"?
 3. **Already-owned standard cosmetics during disable window** — confirm they stay equipped + previewable (assumed yes, this is the obvious behaviour).
 4. **Title flair pricing post-launch** — chest-only forever, or eventually purchaseable in some form?
