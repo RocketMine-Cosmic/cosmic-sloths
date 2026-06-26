@@ -29,6 +29,7 @@ const Mastery = React.lazy(() => import('./pages/Mastery'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard.jsx'));
 const AdminMetrics = React.lazy(() => import('./pages/AdminMetrics'));
 const SkuEditor = React.lazy(() => import('./pages/SkuEditor'));
+const CosmeticStudio = React.lazy(() => import('./pages/CosmeticStudio'));
 const Jukebox = React.lazy(() => import('./pages/Jukebox'));
 const Titles = React.lazy(() => import('./pages/Titles'));
 const Loadouts = React.lazy(() => import('./pages/Loadouts'));
@@ -97,6 +98,7 @@ const MainApp = () => {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin-metrics" element={<AdminMetrics />} />
           <Route path="/sku-editor" element={<SkuEditor />} />
+          <Route path="/cosmetic-studio" element={<CosmeticStudio />} />
           <Route path="/loadouts" element={<Loadouts />} />
           <Route path="/squad-wars" element={<SquadWars />} />
           <Route path="/war-archive" element={<WarArchive />} />
@@ -146,6 +148,7 @@ const MainApp = () => {
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin-metrics" element={<AdminMetrics />} />
       <Route path="/sku-editor" element={<SkuEditor />} />
+      <Route path="/cosmetic-studio" element={<CosmeticStudio />} />
       <Route path="/loadouts" element={<Loadouts />} />
       <Route path="/squad-wars" element={<SquadWars />} />
       <Route path="/war-archive" element={<WarArchive />} />
