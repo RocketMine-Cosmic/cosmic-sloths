@@ -4,35 +4,54 @@ import { getLBFrameStyle } from '@/lib/lbFrameStyles';
 
 // Wraps a leaderboard row with a chest-tier LB Banner Frame.
 //
-// Render approach: the frame PNG is positioned absolutely BEHIND the row
-// content, sized to cover the full row box (`object-fit: fill`). The PNG was
-// generated as a complete painted picture-frame around a dark centre — so we
-// use the whole asset as a background plate. The row content sits on top of
-// the painted dark centre with comfortable padding so it lands inside the
-// frame's inner "window", not over the corner ornaments.
-//
-// We tried 9-slice first — it captured the corners cleanly but stretched the
-// PNG's inner painted border across the top/bottom edges, producing a visible
-// amber band. The full-image approach trades a tiny bit of corner distortion
-// at wide row aspects for a clean read of the whole frame.
-//
-// Pass `frameId` (e.g. 'lb_frame_gold_filigree'). Resolves to a URL via the
-// shared chest-asset cache. If the asset isn't loaded yet or the id is falsy,
-// renders children with no decoration so the row never blanks out.
+// Source PNGs are square 1024×1024 ornate picture frames. To avoid squashing
+// the corners into an 8:1 row, we use background-image with `auto 100%` size
+// + `left`/`right` background-position on two end-caps. The PNG scales to the
+// cap's height at natural aspect, and the cap's WIDTH controls how much of
+// the source's left or right portion shows. The middle fills with the dark
+// centre tone so corners read crisp and the row content sits on a clean band.
 export default function LBFrame({ frameId, children, className = '' }) {
     const url = frameId ? getChestAssetUrl(frameId) : null;
     if (!url) return <>{children}</>;
     const { anim } = getLBFrameStyle(frameId);
+    // Cap width is a fraction of the row height — picked so each cap shows
+    // roughly the corner third of the source at natural aspect on any row size.
+    // Two caps + middle = full coverage with no horizontal stretch on the art.
+    const capStyle = {
+        backgroundImage: `url(${url})`,
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'auto 100%',
+    };
     return (
-        <div className={`relative lb-frame-wrap ${anim} ${className}`}>
-            <img
-                src={url}
-                alt=""
+        <div
+            className={`relative lb-frame-wrap overflow-hidden ${anim} ${className}`}
+            style={{ backgroundColor: '#0a0e1a' }}
+        >
+            {/* Left cap — shows the left ~third of the source PNG */}
+            <div
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full pointer-events-none select-none"
-                style={{ objectFit: 'fill' }}
+                className="absolute left-0 top-0 bottom-0 pointer-events-none"
+                style={{
+                    width: '20%',
+                    minWidth: 90,
+                    maxWidth: 160,
+                    ...capStyle,
+                    backgroundPosition: 'left center',
+                }}
             />
-            <div className="relative z-10 px-12 py-3">
+            {/* Right cap — shows the right ~third */}
+            <div
+                aria-hidden="true"
+                className="absolute right-0 top-0 bottom-0 pointer-events-none"
+                style={{
+                    width: '20%',
+                    minWidth: 90,
+                    maxWidth: 160,
+                    ...capStyle,
+                    backgroundPosition: 'right center',
+                }}
+            />
+            <div className="relative z-10 py-3" style={{ paddingLeft: '22%', paddingRight: '22%' }}>
                 {children}
             </div>
         </div>
