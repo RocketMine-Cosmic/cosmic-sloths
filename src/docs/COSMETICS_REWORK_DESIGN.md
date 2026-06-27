@@ -379,6 +379,67 @@ Every Epic + Mythic LB frame generates with this shared spec:
 
 **Resume here next session if interrupted:** Generate frames 7→10 against the locked brief above. Review in Cosmetic Studio. Reroll any that bleed the decoration into the centre band (most likely failure mode) by adding `, dark centre, contained border decoration` to the prompt.
 
+---
+
+### LB Frame responsive scaling (resolved 2026-06-27)
+
+The LB row stretches with viewport — desktop ~720px wide, tablet ~500px, mobile ~340px. A naive `background-size: 100% 100%` stretch on a 1024×96 PNG squashes the corner ornaments horizontally and looks awful on mobile.
+
+**Solution: CSS `border-image` 9-slice.** Standard technique for ornate UI borders. The browser slices the PNG into 9 regions — 4 corners stay fixed pixel size, 4 edges stretch (or tile) along their own axis only, centre is discarded. Corners never distort regardless of row width.
+
+**Slice geometry — locked across all 5 frames:**
+
+```
+   ┌─────────────────────────────────────────┐
+80 │ TL  │        top edge          │  TR    │  ← 24px tall
+   ├─────┼─────────────────────────┼────────┤
+   │     │                          │        │
+48 │  L  │     centre (discarded)   │   R    │  ← 48px tall
+   │     │                          │        │
+   ├─────┼─────────────────────────┼────────┤
+24 │ BL  │      bottom edge         │   BR   │  ← 24px tall
+   └─────┴─────────────────────────┴────────┘
+     80           864                 80
+```
+
+- **Corner regions: 80×24 px** (top corners) and 80×24 px (bottom corners). Big enough to hold meaningful ornament detail.
+- **Top/bottom edge regions: stretch horizontally** (decorative bands repeat or stretch — `border-image-repeat: stretch` is fine for nebula/gradient art, `round` better for filigree).
+- **Left/right edge regions: fixed height, stretch vertically** if row grows taller (it doesn't currently, but covers future).
+- **Centre: discarded** (`fill` keyword omitted). The CSS mask cutout from Option B still applies — the LB row content sits inside the discarded area.
+
+**Prompt impact — important:**
+
+The brief in the table above already places "mirrored corner flourishes" in the corners and "decorative bands along the top/bottom edges" — that **happens to match the 9-slice layout**. Reinforce it explicitly in the regenerated prompts:
+
+> "Decorative detail must be **concentrated in the top 24px band, bottom 24px band, and 80px-wide left and right columns**. Centre of the image can be plain dark fill — it will be discarded by the UI."
+
+This is a hard requirement, not a stylistic note. A frame with detail in the centre will visibly clip when 9-sliced. Reroll any output where ornament strays past the 80px edge columns into the middle.
+
+**CSS sketch (Phase 3 — not for now):**
+
+```css
+.lb-frame {
+  position: absolute;
+  inset: 0;
+  border: 24px solid transparent;        /* matches top/bottom slice height */
+  border-left-width: 80px;               /* matches left slice width */
+  border-right-width: 80px;
+  border-image-source: var(--frame-url);
+  border-image-slice: 24 80 24 80;        /* top right bottom left, px */
+  border-image-repeat: stretch;           /* tweak per frame: round for filigree */
+  pointer-events: none;
+}
+```
+
+The 24px top/bottom + 80px left/right border-widths consume the frame's painted ornament; the LB row's actual content lives in the inner content box untouched by the frame at any viewport width.
+
+**Why not SVG instead?**
+- We considered it. SVG would scale perfectly without 9-slice. But our pipeline generates raster PNGs from FLUX — converting to clean SVG would need a vector tracing pass per frame, which loses the painterly detail that makes the frames feel "premium". 9-slice on the raster is the cheaper, better-looking path.
+
+**Mobile-specific check:** at ~340px row width, the centre region collapses to `340 - 80 - 80 = 180px`. That's still wide enough to render rank + name + score legibly inside the inner content box. No layout breaks expected. Confirmed against `components/game/Leaderboard` row dimensions during design.
+
+**Wardrobe preview:** the preview tile is square-ish (~240×80 in the grid). Same 9-slice rule applies — corners stay crisp, edges stretch to fit the smaller box. One asset, every render context covered.
+
 
 
 | Category | Model | Output | Render strategy |
