@@ -309,12 +309,12 @@ Generation happens via `functions/generateCosmeticAsset` (already built + tested
 
 **Meteor FX (1/1 approved ✅ — generated 2026-06-27):** `meteor_fx_gold_lightning` at 256×128. Completes every AI-generated chest cosmetic.
 
-**Next session — resume here (CODE-ONLY remaining):**
-1. **Chest Epic — Title Flair (3 items):** `title_style_rainbow_shimmer`, `title_style_blue_flame`, `title_style_liquid_chrome`. Pure CSS — design in `index.css` directly.
-2. **Chest Mythic — Weapon Trails (3 items):** `weapon_trail_void`, `weapon_trail_solar`, `weapon_trail_phoenix_fire`. ParticleManager configs.
-3. **Chest Mythic — Kill FX (2 items):** `kill_fx_coin_burst`, `kill_fx_supernova`. ParticleManager configs.
+**Code-only chest cosmetics — all DONE ✅ (2026-06-27):**
+1. ✅ **Chest Epic — Title Flair (3):** `rainbow_shimmer`, `blue_flame`, `liquid_chrome` — CSS animations in `index.css` under `@layer utilities`. Applied via `.title-flair-<id>` class.
+2. ✅ **Chest Mythic — Weapon Trails (3):** `weapon_trail_void`, `weapon_trail_solar`, `weapon_trail_phoenix_fire` — ParticleManager `createTrail` configs (eclipse cut → phoenix_fire per 06-26 design).
+3. ✅ **Chest Mythic — Kill FX (2):** `kill_fx_coin_burst`, `kill_fx_supernova` — ParticleManager `createKillEffect` cases.
 
-**All AI-generated chest assets are DONE.** Remaining work is code-only OR shifts to Phase 2 (save schema + Wardrobe page wiring + render integration).
+**Every chest cosmetic asset is now built.** Next: **Phase 2 — save schema additions (`equipped_*` slots + `owned_chest_cosmetics[]`) and Wardrobe page wiring** to make these previewable + equippable.
 
 ---
 

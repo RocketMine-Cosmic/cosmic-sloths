@@ -82,6 +82,61 @@
     0%, 100% { opacity: 0.2; }
     50% { opacity: 1; }
   }
+
+  /* ============================================================
+   * CHEST EPIC — Title Flair cosmetics
+   * Applied by adding the .title-flair-<id> class to the title
+   * text element when save.profile.equipped_title_style is set.
+   * Each flair is a single-class effect so titles can be rendered
+   * anywhere (LB rows, profile, chat) with just className tagging.
+   * ============================================================ */
+
+  /* Rainbow Shimmer — hue-shift gradient that travels across the text */
+  @keyframes title-flair-rainbow-shift {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  .title-flair-rainbow_shimmer {
+    background-image: linear-gradient(90deg, #ff4d6d, #ffa64d, #ffe14d, #6dffa6, #4da6ff, #b84dff, #ff4d6d);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: title-flair-rainbow-shift 4s linear infinite;
+    font-weight: 700;
+  }
+
+  /* Blue Flame — flickering blue outline glow */
+  @keyframes title-flair-blue-flicker {
+    0%, 100% { text-shadow: 0 0 4px #4dc8ff, 0 0 8px #1e90ff, 0 0 14px #0066ff; }
+    50%      { text-shadow: 0 0 6px #80dcff, 0 0 14px #1e90ff, 0 0 22px #0066ff, 0 0 30px #003fcc; }
+  }
+  .title-flair-blue_flame {
+    color: #e6f4ff;
+    animation: title-flair-blue-flicker 1.4s ease-in-out infinite;
+    font-weight: 700;
+  }
+
+  /* Liquid Chrome — bright reflection band sweeps across silver text */
+  @keyframes title-flair-chrome-sweep {
+    0%   { background-position: -150% 50%; }
+    100% { background-position: 250% 50%; }
+  }
+  .title-flair-liquid_chrome {
+    background-image: linear-gradient(100deg,
+      #b8c4d4 0%, #b8c4d4 35%,
+      #ffffff 48%, #f0f8ff 52%,
+      #b8c4d4 65%, #b8c4d4 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: title-flair-chrome-sweep 3s linear infinite;
+    font-weight: 700;
+    filter: drop-shadow(0 0 1px rgba(255,255,255,0.6));
+  }
 }
 
 @layer base {

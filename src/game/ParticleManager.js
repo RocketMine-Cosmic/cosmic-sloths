@@ -662,7 +662,10 @@ export class ParticleManager {
             // MYTHIC CHEST TIER -- ONE accent spark, no second cloud -------
             'weapon_trail_void':    { colors: ['#3a0066', '#5500aa'], type: 'dark_smoke', size: 1.5, options: { speed: 15, lifeBonus: 0.2 }, accent: { type: 'star',  color: '#ffd700', size: 0.9, options: { speed: 50, gravity: true, lifeBonus: -0.1 }, every: 4 } },
             'weapon_trail_solar':   { colors: ['#ff2200', '#ffaa00'], type: 'flame',      size: 1.5, options: { speed: 35, lifeBonus: -0.1 }, accent: { type: 'spark', color: '#ffffff', size: 0.9, options: { speed: 60, lifeBonus: -0.1 }, every: 3 } },
-            'weapon_trail_eclipse': { colors: ['#0a0a20', '#000000'], type: 'dark_smoke', size: 1.6, options: { speed: 10, lifeBonus: 0.3 }, accent: { type: 'spark', color: '#ffffff', size: 0.8, options: { speed: 40, lifeBonus: -0.1 }, every: 4 } },
+            // 'weapon_trail_eclipse' was originally specced but cut on 2026-06-26
+            // (black-on-black read poorly against the cosmic backdrop). Replaced
+            // by Phoenix Fire — orange→white→cyan gradient with feather sparks.
+            'weapon_trail_phoenix_fire': { colors: ['#ff4400', '#ffaa00', '#ffffff', '#00e5ff'], type: 'flame', size: 1.5, options: { speed: 35, lifeBonus: -0.1 }, accent: { type: 'spark', color: '#ffec6e', size: 1.0, options: { speed: 70, lifeBonus: -0.05 }, every: 3 } },
         };
         const config = trailConfigs[trailId];
         if (!config) return;
