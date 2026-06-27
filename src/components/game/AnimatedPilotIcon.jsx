@@ -19,15 +19,15 @@ export default function AnimatedPilotIcon({ animatedId, fallback, className = 'w
                 style={{
                     background: std.plate,
                     border: `2px solid ${std.rim}`,
-                    boxShadow: `0 0 0 1px rgba(15,23,42,0.9), inset 0 0 6px rgba(255,255,255,0.12), 0 0 10px ${std.rim}66`,
+                    boxShadow: `0 0 0 1px rgba(15,23,42,0.9), inset 0 0 8px rgba(255,255,255,0.18), 0 0 12px ${std.rim}aa, 0 0 24px ${std.rim}55`,
                 }}
             >
                 {/* Inner shine highlight — top-left arc */}
                 <span
                     className="absolute inset-[3px] rounded-full pointer-events-none"
-                    style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18) 0%, transparent 55%)' }}
+                    style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
                 />
-                <div className={`${std.anim} relative z-10`} style={{ width: '70%', height: '70%' }}>
+                <div className={`${std.anim} relative z-10`} style={{ width: '95%', height: '95%' }}>
                     <StandardIconSigil id={std.id} color={std.rim} />
                 </div>
             </div>

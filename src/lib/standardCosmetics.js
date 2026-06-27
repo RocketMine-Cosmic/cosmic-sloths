@@ -82,46 +82,51 @@ export const STANDARD_LB_FRAMES = [
 // procedurally-drawn cosmic emblem — not an emoji — so they hold their own
 // next to the chest-tier generated art. Rim colours are deeper / less saturated
 // than the earlier emoji set for a more premium feel.
+// Cosmic sigil icons rendered as SVG (see StandardIconSigils.jsx). Each is
+// a procedurally-drawn cosmic scene — nebula backdrop, starfield, glowing
+// sigil — so they hold their own at $4 a piece beside the chest AI art.
+// Rim colours are vivid cosmic tones; the plate keeps the deep-space mood
+// while letting the SVG nebula push through.
 export const STANDARD_ANIMATED_ICONS = [
     {
         id: 'std_icon_spinning_star',
         name: 'Astral Sigil',
         desc: 'Radiant eight-point star with a hex core, slowly rotating.',
         anim: 'std-icon-spin',
-        rim: '#d4a64a',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(212,166,74,0.18), rgba(8,12,24,0.97) 70%)',
+        rim: '#fbbf24',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(251,191,36,0.22), rgba(8,12,24,0.95) 75%)',
     },
     {
         id: 'std_icon_pulsing_gem',
         name: 'Prism Core',
         desc: 'Faceted prism orbited by a thin ring, pulsing softly.',
         anim: 'std-icon-pulse',
-        rim: '#3aa6b8',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(58,166,184,0.18), rgba(8,12,24,0.97) 70%)',
+        rim: '#22d3ee',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(34,211,238,0.22), rgba(8,12,24,0.95) 75%)',
     },
     {
         id: 'std_icon_bouncing_rocket',
         name: 'Comet',
         desc: 'Swept comet head trailing through the medallion.',
         anim: 'std-icon-bounce',
-        rim: '#4a7fc9',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(74,127,201,0.18), rgba(8,12,24,0.97) 70%)',
+        rim: '#60a5fa',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(96,165,250,0.22), rgba(8,12,24,0.95) 75%)',
     },
     {
         id: 'std_icon_glowing_heart',
         name: 'Crimson Eye',
         desc: 'Watching eye sigil with a soft pulsing iris.',
         anim: 'std-icon-glow',
-        rim: '#c44d6b',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(196,77,107,0.18), rgba(8,12,24,0.97) 70%)',
+        rim: '#f43f5e',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(244,63,94,0.22), rgba(8,12,24,0.95) 75%)',
     },
     {
         id: 'std_icon_wobbling_skull',
         name: 'Void Mark',
         desc: 'Pentagonal void sigil with a faint inner glyph.',
         anim: 'std-icon-wobble',
-        rim: '#8b6fc9',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(139,111,201,0.18), rgba(8,12,24,0.97) 70%)',
+        rim: '#a78bfa',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(167,139,250,0.22), rgba(8,12,24,0.95) 75%)',
     },
 ];
 

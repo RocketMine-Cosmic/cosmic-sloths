@@ -85,14 +85,14 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                                 style={{
                                     background: std.plate,
                                     border: `2px solid ${std.rim}`,
-                                    boxShadow: `inset 0 0 8px rgba(255,255,255,0.14), 0 0 14px ${std.rim}66`,
+                                    boxShadow: `inset 0 0 10px rgba(255,255,255,0.18), 0 0 18px ${std.rim}aa, 0 0 38px ${std.rim}55`,
                                 }}
                             >
                                 <span
                                     className="absolute inset-[3px] rounded-full pointer-events-none"
-                                    style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
+                                    style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.28) 0%, transparent 55%)' }}
                                 />
-                                <div className={`${std.anim} relative z-10`} style={{ width: '60%', height: '60%' }}>
+                                <div className={`${std.anim} relative z-10`} style={{ width: '92%', height: '92%' }}>
                                     <StandardIconSigil id={std.id} color={std.rim} />
                                 </div>
                             </div>

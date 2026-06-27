@@ -15,14 +15,14 @@ const StandardMedallion = ({ std, size }) => (
             width: size, height: size,
             background: std.plate,
             border: `2px solid ${std.rim}`,
-            boxShadow: `0 0 0 1px rgba(15,23,42,0.9), inset 0 0 8px rgba(255,255,255,0.14), 0 0 14px ${std.rim}66`,
+            boxShadow: `0 0 0 1px rgba(15,23,42,0.9), inset 0 0 10px rgba(255,255,255,0.2), 0 0 20px ${std.rim}aa, 0 0 44px ${std.rim}55`,
         }}
     >
         <span
             className="absolute inset-[3px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
+            style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.28) 0%, transparent 55%)' }}
         />
-        <div className={`${std.anim} relative z-10`} style={{ width: size * 0.62, height: size * 0.62 }}>
+        <div className={`${std.anim} relative z-10`} style={{ width: size * 0.95, height: size * 0.95 }}>
             <StandardIconSigil id={std.id} color={std.rim} />
         </div>
     </div>
