@@ -67,7 +67,7 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
                 <div className="w-full bg-slate-950 rounded-lg flex flex-col items-center justify-center gap-3 py-10">
                     <div className="text-[10px] uppercase tracking-widest text-slate-500">meteor strike fx preview</div>
                     <div className="w-full max-w-md bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 flex items-center gap-3">
-                        <img src={url} alt="meteor fx" className="w-16 h-8 object-contain" />
+                        <img src={url} alt="meteor fx" className="w-16 h-8 object-contain meteor-fx-gold-lightning" />
                         <div className="flex-1 text-xs">
                             <div className="text-amber-300 font-bold">⚡ You struck the meteor!</div>
                             <div className="text-slate-400">Deals bonus damage to squadmates' targets.</div>

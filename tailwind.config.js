@@ -16,6 +16,8 @@ module.exports = {
     'lb-frame-nebula-drift',
     'lb-frame-glitch-pulse',
     'lb-frame-eclipse-glow',
+    // Chest Mythic — Meteor FX shimmer (applied dynamically in preview + feed).
+    'meteor-fx-gold-lightning',
   ],
   theme: {
   	extend: {

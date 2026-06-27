@@ -155,6 +155,21 @@
   }
   .lb-frame-eclipse-glow { animation: lb-frame-eclipse-glow-kf 3.6s ease-in-out infinite; }
 
+  /* ============================================================
+   * CHEST MYTHIC — Meteor Strike FX (gold lightning) shimmer
+   * Pulses a gold halo and shifts brightness so the static PNG
+   * reads as "live" in the squad activity feed and preview.
+   * ============================================================ */
+  @keyframes meteor-fx-gold-pulse-kf {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px rgba(255, 200, 80, 0.55)) brightness(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 14px rgba(255, 220, 120, 1)) brightness(1.35);
+    }
+  }
+  .meteor-fx-gold-lightning { animation: meteor-fx-gold-pulse-kf 1.6s ease-in-out infinite; }
+
   /* When a row is wrapped by an LB Banner Frame, the frame itself is the visual
    * container — strip the inner row's background and border so we don't get a
    * "box within a box" effect. Targets the immediate row child. */
