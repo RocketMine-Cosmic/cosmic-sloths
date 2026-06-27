@@ -302,65 +302,96 @@
 
   /* ============================================================
    * CHEST EPIC — Animated Pilot Icon motions.
-   * Each PNG asset is wrapped in a div and given one of these
-   * classes so the static art reads as truly "alive" — drift,
-   * glitch, accretion spin, phoenix flicker, eye pulse, plasma
-   * crackle. Combined transform + filter where it adds depth.
+   *
+   * Design rule: the PNG itself NEVER moves (no transform, no scale).
+   * The static art is the cosmetic; the animation is an ambient glow /
+   * halo / overlay around it so it reads as "alive" without warping
+   * the picture. Black Hole is the one exception — circle-masked so a
+   * disc spin can sit on top without showing square corners.
    * ============================================================ */
 
-  /* Orbiting Moon — slow celestial drift + soft halo pulse */
-  @keyframes chest-icon-orbit-drift-kf {
-    0%, 100% { transform: translate(0,0) scale(1);        filter: drop-shadow(0 0 6px rgba(180,210,255,0.45)) brightness(1); }
-    25%      { transform: translate(2%, -1.5%) scale(1.02); filter: drop-shadow(0 0 12px rgba(180,210,255,0.7)) brightness(1.08); }
-    50%      { transform: translate(0, -2%) scale(1.03);   filter: drop-shadow(0 0 16px rgba(180,210,255,0.85)) brightness(1.12); }
-    75%      { transform: translate(-2%, -1.5%) scale(1.02); filter: drop-shadow(0 0 12px rgba(180,210,255,0.7)) brightness(1.08); }
+  /* Shared wrapper — establishes positioning + clips overlays to the avatar.
+     The chest icon container already has rounded-full + overflow-hidden, so
+     this just gives us a positioning context for absolutely-placed glows. */
+  .chest-icon-wrap { position: relative; width: 100%; height: 100%; }
+  .chest-icon-wrap > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* Halo overlay sits inside the rounded container and never escapes its bounds */
+  .chest-icon-halo {
+    position: absolute; inset: 0; pointer-events: none; border-radius: 9999px;
   }
-  .chest-icon-orbit-drift { animation: chest-icon-orbit-drift-kf 6s ease-in-out infinite; display: block; width: 100%; height: 100%; }
 
-  /* Glitch Skull — RGB-split jitter + hue shift bursts */
-  @keyframes chest-icon-glitch-kf {
-    0%, 88%, 100% { transform: translate(0,0); filter: drop-shadow(0 0 5px rgba(34,211,238,0.6)) hue-rotate(0deg); }
-    90%           { transform: translate(-1.5%, 0.5%); filter: drop-shadow(2px 0 0 rgba(255,40,80,0.7)) drop-shadow(-2px 0 0 rgba(40,220,255,0.7)) hue-rotate(-12deg); }
-    93%           { transform: translate(1.5%, -0.5%); filter: drop-shadow(-2px 0 0 rgba(255,40,80,0.7)) drop-shadow(2px 0 0 rgba(40,220,255,0.7)) hue-rotate(18deg); }
-    95%           { transform: translate(-0.8%, 0); filter: drop-shadow(0 0 10px rgba(34,211,238,0.95)) brightness(1.3); }
+  /* Orbiting Moon — gentle cool halo pulse, no movement */
+  @keyframes chest-icon-moon-halo-kf {
+    0%, 100% { box-shadow: inset 0 0 12px 1px rgba(180,210,255,0.18), 0 0 8px  rgba(180,210,255,0.35); opacity: 0.85; }
+    50%      { box-shadow: inset 0 0 18px 2px rgba(200,225,255,0.32), 0 0 18px rgba(180,210,255,0.7);  opacity: 1; }
   }
-  .chest-icon-glitch { animation: chest-icon-glitch-kf 3.5s steps(1, end) infinite; display: block; width: 100%; height: 100%; }
+  .chest-icon-orbit-drift .chest-icon-halo { animation: chest-icon-moon-halo-kf 5s ease-in-out infinite; }
 
-  /* Black Hole — slow accretion-disc spin + radiant halo */
-  @keyframes chest-icon-accretion-spin-kf {
-    from { transform: rotate(0deg);   filter: drop-shadow(0 0 8px rgba(255,140,40,0.55)) brightness(1.05); }
-    50%  {                            filter: drop-shadow(0 0 18px rgba(255,170,60,0.95)) brightness(1.18); }
-    to   { transform: rotate(360deg); filter: drop-shadow(0 0 8px rgba(255,140,40,0.55)) brightness(1.05); }
+  /* Glitch Skull — true RGB-split via two tinted img copies, no movement.
+     Implemented in the component by stacking 3 images; this class flickers
+     the offset copies in/out so it reads as a broken-signal glitch. */
+  @keyframes chest-icon-glitch-r-kf {
+    0%, 90%, 100% { opacity: 0; transform: translate(0,0); }
+    91%, 94%      { opacity: 0.7; transform: translate(2px, 0); }
+    95%, 97%      { opacity: 0.5; transform: translate(-1px, 1px); }
   }
-  .chest-icon-accretion-spin { animation: chest-icon-accretion-spin-kf 14s linear infinite; display: block; width: 100%; height: 100%; }
+  @keyframes chest-icon-glitch-b-kf {
+    0%, 90%, 100% { opacity: 0; transform: translate(0,0); }
+    91%, 94%      { opacity: 0.7; transform: translate(-2px, 0); }
+    95%, 97%      { opacity: 0.5; transform: translate(1px, -1px); }
+  }
+  @keyframes chest-icon-glitch-halo-kf {
+    0%, 89%, 100% { box-shadow: inset 0 0 10px rgba(34,211,238,0.25), 0 0 6px rgba(34,211,238,0.35); }
+    92%, 96%      { box-shadow: inset 0 0 16px rgba(34,211,238,0.55), 0 0 16px rgba(34,211,238,0.85); }
+  }
+  .chest-icon-glitch .chest-icon-halo { animation: chest-icon-glitch-halo-kf 3.5s steps(1, end) infinite; }
+  .chest-icon-glitch .chest-icon-rgb-r {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    mix-blend-mode: screen; filter: hue-rotate(-60deg) saturate(2);
+    animation: chest-icon-glitch-r-kf 3.5s steps(1, end) infinite;
+  }
+  .chest-icon-glitch .chest-icon-rgb-b {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    mix-blend-mode: screen; filter: hue-rotate(180deg) saturate(2);
+    animation: chest-icon-glitch-b-kf 3.5s steps(1, end) infinite;
+  }
 
-  /* Phoenix Wing — flame flicker + slow rise */
-  @keyframes chest-icon-phoenix-flicker-kf {
-    0%, 100% { transform: translateY(0)    scale(1);    filter: drop-shadow(0 0 6px rgba(255,150,40,0.7))  brightness(1); }
-    25%      { transform: translateY(-1.5%) scale(1.02); filter: drop-shadow(0 0 14px rgba(255,180,60,0.95)) brightness(1.15); }
-    50%      { transform: translateY(-2.5%) scale(1.03); filter: drop-shadow(0 0 22px rgba(255,210,90,1))    brightness(1.22); }
-    75%      { transform: translateY(-1.5%) scale(1.02); filter: drop-shadow(0 0 14px rgba(255,180,60,0.95)) brightness(1.15); }
+  /* Black Hole — the ONE icon we transform. The PNG is circle-masked so
+     rotating the full square stays inside the avatar bounds, and the
+     accretion disc spins naturally with the warm halo pulse. */
+  @keyframes chest-icon-blackhole-spin-kf {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
-  .chest-icon-phoenix-flicker { animation: chest-icon-phoenix-flicker-kf 2.4s ease-in-out infinite; display: block; width: 100%; height: 100%; }
+  @keyframes chest-icon-blackhole-halo-kf {
+    0%, 100% { box-shadow: inset 0 0 14px rgba(255,140,40,0.35), 0 0 10px rgba(255,140,40,0.45); }
+    50%      { box-shadow: inset 0 0 22px rgba(255,170,60,0.6),  0 0 22px rgba(255,170,60,0.85); }
+  }
+  .chest-icon-accretion-spin > img { animation: chest-icon-blackhole-spin-kf 18s linear infinite; }
+  .chest-icon-accretion-spin .chest-icon-halo { animation: chest-icon-blackhole-halo-kf 4s ease-in-out infinite; }
 
-  /* Eye of the Void — slow blink + glowing iris pulse */
-  @keyframes chest-icon-eye-pulse-kf {
-    0%, 45%, 100% { transform: scaleY(1);    filter: drop-shadow(0 0 8px rgba(168,85,247,0.7))  brightness(1); }
-    20%           { transform: scaleY(1);    filter: drop-shadow(0 0 18px rgba(192,132,252,1)) brightness(1.25); }
-    48%           { transform: scaleY(0.08); filter: drop-shadow(0 0 5px rgba(168,85,247,0.5))  brightness(0.8); }
-    52%           { transform: scaleY(1);    filter: drop-shadow(0 0 14px rgba(192,132,252,0.95)) brightness(1.18); }
+  /* Phoenix Wing — warm flame glow pulse, no movement */
+  @keyframes chest-icon-phoenix-halo-kf {
+    0%, 100% { box-shadow: inset 0 0 14px rgba(255,150,40,0.25), 0 0 10px rgba(255,150,40,0.45); opacity: 0.9; }
+    50%      { box-shadow: inset 0 0 26px rgba(255,200,80,0.55), 0 0 24px rgba(255,180,60,0.9);  opacity: 1; }
   }
-  .chest-icon-eye-pulse { animation: chest-icon-eye-pulse-kf 4.5s ease-in-out infinite; display: block; width: 100%; height: 100%; transform-origin: center 50%; }
+  .chest-icon-phoenix-flicker .chest-icon-halo { animation: chest-icon-phoenix-halo-kf 2.6s ease-in-out infinite; }
 
-  /* Plasma Core — fast crackle + intense glow */
-  @keyframes chest-icon-plasma-crackle-kf {
-    0%, 100% { transform: scale(1);     filter: drop-shadow(0 0 8px rgba(80,180,255,0.75))  brightness(1.05) contrast(1); }
-    20%      { transform: scale(1.03);  filter: drop-shadow(0 0 18px rgba(120,210,255,1))   brightness(1.25) contrast(1.1); }
-    40%      { transform: scale(0.99);  filter: drop-shadow(0 0 10px rgba(80,180,255,0.85)) brightness(1.1)  contrast(1); }
-    60%      { transform: scale(1.04);  filter: drop-shadow(0 0 22px rgba(150,220,255,1))   brightness(1.3)  contrast(1.12); }
-    80%      { transform: scale(1.01);  filter: drop-shadow(0 0 12px rgba(80,180,255,0.9))  brightness(1.15) contrast(1.05); }
+  /* Eye of the Void — iris glow pulse only, no blink, no squish */
+  @keyframes chest-icon-eye-halo-kf {
+    0%, 100% { box-shadow: inset 0 0 12px rgba(168,85,247,0.3),  0 0 10px rgba(168,85,247,0.45); }
+    50%      { box-shadow: inset 0 0 22px rgba(192,132,252,0.65), 0 0 22px rgba(192,132,252,0.9); }
   }
-  .chest-icon-plasma-crackle { animation: chest-icon-plasma-crackle-kf 1.4s ease-in-out infinite; display: block; width: 100%; height: 100%; }
+  .chest-icon-eye-pulse .chest-icon-halo { animation: chest-icon-eye-halo-kf 3.6s ease-in-out infinite; }
+
+  /* Plasma Core — fast brightness flicker via halo only, no scale */
+  @keyframes chest-icon-plasma-halo-kf {
+    0%, 100% { box-shadow: inset 0 0 12px rgba(80,180,255,0.35),  0 0 10px rgba(80,180,255,0.5);  opacity: 0.92; }
+    25%      { box-shadow: inset 0 0 22px rgba(150,220,255,0.7),  0 0 22px rgba(120,210,255,0.95); opacity: 1; }
+    50%      { box-shadow: inset 0 0 14px rgba(80,180,255,0.4),   0 0 12px rgba(80,180,255,0.55); opacity: 0.9; }
+    75%      { box-shadow: inset 0 0 26px rgba(180,235,255,0.8),  0 0 26px rgba(150,220,255,1);   opacity: 1; }
+  }
+  .chest-icon-plasma-crackle .chest-icon-halo { animation: chest-icon-plasma-halo-kf 1.2s ease-in-out infinite; }
 
   /* Liquid Chrome — bright reflection band sweeps across silver text */
   @keyframes title-flair-chrome-sweep {

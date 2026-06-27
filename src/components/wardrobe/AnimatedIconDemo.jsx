@@ -1,7 +1,7 @@
 import React from 'react';
 import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
-import { getChestIconAnimClass } from '@/lib/chestIconAnimations';
 import StandardIconSigil from './StandardIconSigils';
+import ChestIconImage from '@/components/game/ChestIconImage';
 
 // Preview of an animated pilot icon.
 //
@@ -54,12 +54,9 @@ export default function AnimatedIconDemo({ iconId, iconUrl }) {
             </div>
         );
     }
-    const anim = getChestIconAnimClass(iconId);
     const Wrapped = ({ size }) => (
-        <div className={`rounded-full overflow-hidden border-2 border-cyan-500/30`} style={{ width: size, height: size }}>
-            <div className={anim}>
-                <img src={iconUrl} alt="" className="w-full h-full object-cover" />
-            </div>
+        <div className="rounded-full overflow-hidden border-2 border-cyan-500/30" style={{ width: size, height: size }}>
+            <ChestIconImage url={iconUrl} animatedId={iconId} />
         </div>
     );
     return (

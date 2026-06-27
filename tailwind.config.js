@@ -35,8 +35,12 @@ module.exports = {
     'std-icon-wobble',
     // Chest Mythic — Meteor FX shimmer (applied dynamically in preview + feed).
     'meteor-fx-gold-lightning',
-    // Chest Epic — Animated pilot icon motion classes (applied dynamically
-    // via chestIconAnimations.js — keyframes live in index.css).
+    // Chest Epic — Animated pilot icon wrapper classes (applied dynamically
+    // via chestIconAnimations.js + ChestIconImage — keyframes live in index.css).
+    'chest-icon-wrap',
+    'chest-icon-halo',
+    'chest-icon-rgb-r',
+    'chest-icon-rgb-b',
     'chest-icon-orbit-drift',
     'chest-icon-glitch',
     'chest-icon-accretion-spin',

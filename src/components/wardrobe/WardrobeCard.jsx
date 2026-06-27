@@ -1,12 +1,12 @@
 import React from 'react';
 import { Lock, Eye } from 'lucide-react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
-import { getChestIconAnimClass } from '@/lib/chestIconAnimations';
 import {
     isStandardLbFrame, getStandardLbFrame,
     isStandardAnimatedIcon, getStandardAnimatedIcon,
 } from '@/lib/standardCosmetics';
 import StandardIconSigil from './StandardIconSigils';
+import ChestIconImage from '@/components/game/ChestIconImage';
 
 const RARITY_STYLES = {
     free:     { label: 'Free',     ring: 'border-slate-700',      text: 'text-slate-400' },
@@ -105,15 +105,18 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                     const chestUrl = ['pilot_icon', 'lb_frame', 'meteor_fx'].includes(item.category)
                         ? getChestAssetUrl(item.id) : null;
                     if (chestUrl) {
-                        // LB frames are 8:1 banners — `object-cover` in a square tile
-                        // crops them to a sliver. `object-contain` shows the whole frame
-                        // centred. Pilot icons / meteor FX are square-ish so cover still fits.
+                        // Chest pilot icons render via ChestIconImage so the thumbnail
+                        // gets the same halo / overlay animation as the live medallion.
+                        if (item.category === 'pilot_icon') {
+                            return (
+                                <div className="w-full h-full rounded-full overflow-hidden">
+                                    <ChestIconImage url={chestUrl} animatedId={item.id} alt={item.name} />
+                                </div>
+                            );
+                        }
+                        // LB frames are 8:1 banners — contain to show the whole frame.
                         const fit = item.category === 'lb_frame' ? 'object-contain' : 'object-cover';
-                        // Chest pilot icons get a CSS motion overlay so the static PNG
-                        // reads as alive in the thumbnail too.
-                        const anim = item.category === 'pilot_icon' ? getChestIconAnimClass(item.id) : '';
-                        const img = <img src={chestUrl} alt={item.name} className={`w-full h-full ${fit}`} />;
-                        return anim ? <div className={`${anim} w-full h-full`}>{img}</div> : img;
+                        return <img src={chestUrl} alt={item.name} className={`w-full h-full ${fit}`} />;
                     }
                     if (item.category === 'title_flair') {
                         const flairId = item.id.replace(/^title_style_/, '');

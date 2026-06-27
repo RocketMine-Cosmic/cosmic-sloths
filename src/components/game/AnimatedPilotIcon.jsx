@@ -1,8 +1,8 @@
 import React from 'react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
-import { getChestIconAnimClass } from '@/lib/chestIconAnimations';
 import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
 import StandardIconSigil from '@/components/wardrobe/StandardIconSigils';
+import ChestIconImage from './ChestIconImage';
 
 // Renders the equipped pilot icon. Three render paths:
 //   1. Chest animated icon — generated PNG asset.
@@ -35,15 +35,12 @@ export default function AnimatedPilotIcon({ animatedId, fallback, className = 'w
         );
     }
 
-    // Chest animated icon — generated PNG with CSS motion overlay.
+    // Chest animated icon — generated PNG with halo / overlay animation.
     const url = animatedId ? getChestAssetUrl(animatedId) : null;
     if (url) {
-        const anim = getChestIconAnimClass(animatedId);
         return (
             <div className={`${className} rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.3)]`}>
-                <div className={anim}>
-                    <img src={url} alt="pilot" className="w-full h-full object-cover" />
-                </div>
+                <ChestIconImage url={url} animatedId={animatedId} />
             </div>
         );
     }
