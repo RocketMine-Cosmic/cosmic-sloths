@@ -127,10 +127,11 @@ export function renderGame() {
         });
     }
 
-    if (this.characterId === 'holodrift' && this.characterMechanics?.decoys) {
+    if ((this.characterId === 'holodrift' || this.player.charAugments?.includes('glt_copy')) && this.characterMechanics?.decoys) {
+        const decoyColor = this.characterId === 'holodrift' ? '#00FA9A' : '#FF00FF';
         this.characterMechanics.decoys.forEach(d => {
             this.ctx.globalAlpha = Math.min(0.8, d.life / 2);
-            this.ctx.fillStyle = '#00FA9A';
+            this.ctx.fillStyle = decoyColor;
             this.ctx.beginPath();
             this.ctx.arc(d.x, d.y, 15, 0, Math.PI * 2);
             this.ctx.fill();

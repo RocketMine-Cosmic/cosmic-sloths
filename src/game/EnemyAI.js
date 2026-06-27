@@ -370,7 +370,7 @@ export function updateEnemies(engine, dt) {
         let isTargetingDecoy = false;
         let activeDecoy = null;
 
-        if (engine.characterId === 'holodrift' && engine.characterMechanics?.decoys?.length > 0 && !e.isBoss) {
+        if ((engine.characterId === 'holodrift' || engine.player.charAugments?.includes('glt_copy')) && engine.characterMechanics?.decoys?.length > 0 && !e.isBoss) {
             let nearestDecoy = null;
             let minDecoyDist = 600;
             engine.characterMechanics.decoys.forEach(d => {
