@@ -172,6 +172,108 @@
   }
   .meteor-fx-gold-lightning { animation: meteor-fx-gold-pulse-kf 1.6s ease-in-out infinite; }
 
+  /* ============================================================
+   * STANDARD ("Support the Devs") — Title Flair cosmetics
+   * Lighter-weight than the chest tier: solid colours and soft
+   * effects, no gradient animation.
+   * ============================================================ */
+  .title-flair-cyan_glow {
+    color: #67e8f9;
+    text-shadow: 0 0 6px rgba(34,211,238,0.7), 0 0 12px rgba(34,211,238,0.4);
+    font-weight: 700;
+  }
+  .title-flair-gold_outline {
+    color: #fde68a;
+    -webkit-text-stroke: 1px #d97706;
+    text-shadow: 0 0 4px rgba(217,119,6,0.6);
+    font-weight: 700;
+  }
+  .title-flair-pink_pop {
+    color: #fbcfe8;
+    text-shadow: 0 0 6px rgba(244,114,182,0.75), 0 0 14px rgba(236,72,153,0.4);
+    font-weight: 700;
+  }
+  .title-flair-emerald_mint {
+    background-image: linear-gradient(90deg, #6ee7b7, #a7f3d0, #6ee7b7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 700;
+    filter: drop-shadow(0 0 3px rgba(110,231,183,0.5));
+  }
+  .title-flair-violet_haze {
+    background-image: linear-gradient(90deg, #c4b5fd, #a78bfa, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 700;
+    filter: drop-shadow(0 0 4px rgba(167,139,250,0.55));
+  }
+
+  /* ============================================================
+   * STANDARD — LB Frame pulse / gradient-shift animations.
+   * Frames are pure CSS borders on the LBFrame wrapper; these
+   * keyframes drive the subtle "alive" effect on each.
+   * ============================================================ */
+  @keyframes std-lb-pulse-cyan-kf {
+    0%, 100% { box-shadow: 0 0 8px 1px rgba(34,211,238,0.4); }
+    50%      { box-shadow: 0 0 16px 3px rgba(34,211,238,0.75); }
+  }
+  .std-lb-pulse-cyan { animation: std-lb-pulse-cyan-kf 2.6s ease-in-out infinite; }
+
+  @keyframes std-lb-pulse-gold-kf {
+    0%, 100% { box-shadow: 0 0 8px 1px rgba(250,204,21,0.45); }
+    50%      { box-shadow: 0 0 16px 3px rgba(250,204,21,0.8); }
+  }
+  .std-lb-pulse-gold { animation: std-lb-pulse-gold-kf 2.6s ease-in-out infinite; }
+
+  @keyframes std-lb-pulse-purple-kf {
+    0%, 100% { box-shadow: 0 0 8px 1px rgba(168,85,247,0.45); }
+    50%      { box-shadow: 0 0 18px 3px rgba(192,132,252,0.8); }
+  }
+  .std-lb-pulse-purple { animation: std-lb-pulse-purple-kf 2.8s ease-in-out infinite; }
+
+  /* Gradient frames use background-position shift on the border image */
+  @keyframes std-lb-grad-shift-kf {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  .std-lb-grad-shift { animation: std-lb-grad-shift-kf 5s linear infinite; }
+
+  /* ============================================================
+   * STANDARD — Animated Pilot Icon motions.
+   * Applied to a wrapper around the emoji so the avatar slot
+   * itself doesn't move.
+   * ============================================================ */
+  @keyframes std-icon-spin-kf  { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .std-icon-spin { animation: std-icon-spin-kf 4s linear infinite; display: inline-block; }
+
+  @keyframes std-icon-pulse-kf {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.4)); }
+    50%      { transform: scale(1.15); filter: drop-shadow(0 0 6px rgba(125,211,252,0.8)); }
+  }
+  .std-icon-pulse { animation: std-icon-pulse-kf 1.6s ease-in-out infinite; display: inline-block; }
+
+  @keyframes std-icon-bounce-kf {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-15%); }
+  }
+  .std-icon-bounce { animation: std-icon-bounce-kf 1.4s ease-in-out infinite; display: inline-block; }
+
+  @keyframes std-icon-glow-kf {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(244,114,182,0.5)); }
+    50%      { filter: drop-shadow(0 0 10px rgba(244,114,182,1)); }
+  }
+  .std-icon-glow { animation: std-icon-glow-kf 1.8s ease-in-out infinite; display: inline-block; }
+
+  @keyframes std-icon-wobble-kf {
+    0%, 100% { transform: rotate(-8deg); }
+    50%      { transform: rotate(8deg); }
+  }
+  .std-icon-wobble { animation: std-icon-wobble-kf 1.6s ease-in-out infinite; display: inline-block; }
+
   /* Liquid Chrome — bright reflection band sweeps across silver text */
   @keyframes title-flair-chrome-sweep {
     0%   { background-position: -150% 50%; }

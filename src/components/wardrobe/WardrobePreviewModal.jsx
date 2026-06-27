@@ -52,7 +52,7 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
             return <LbFrameDemo frameId={item.id} frameUrl={getChestAssetUrl(item.id)} />;
         }
         if (item.category === 'pilot_icon') {
-            return <AnimatedIconDemo iconUrl={getChestAssetUrl(item.id)} />;
+            return <AnimatedIconDemo iconId={item.id} iconUrl={getChestAssetUrl(item.id)} />;
         }
         if (item.category === 'meteor_fx') {
             const url = getChestAssetUrl(item.id);

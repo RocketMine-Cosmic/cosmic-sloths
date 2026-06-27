@@ -1,6 +1,10 @@
 import React from 'react';
 import { Lock, Eye } from 'lucide-react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
+import {
+    isStandardLbFrame, getStandardLbFrame,
+    isStandardAnimatedIcon, getStandardAnimatedIcon,
+} from '@/lib/standardCosmetics';
 
 const RARITY_STYLES = {
     free:     { label: 'Free',     ring: 'border-slate-700',      text: 'text-slate-400' },
@@ -59,9 +63,25 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                 title="Preview"
             >
                 {(() => {
+                    // Standard CSS-only LB frame — render a mini sample frame.
+                    if (item.category === 'lb_frame' && isStandardLbFrame(item.id)) {
+                        const f = getStandardLbFrame(item.id);
+                        if (f.kind === 'gradient') {
+                            return (
+                                <div className={`w-[88%] h-[28%] rounded-md ${f.anim}`} style={{ padding: '2px', backgroundImage: f.gradient, backgroundSize: '200% 100%' }}>
+                                    <div className="w-full h-full rounded-sm bg-slate-900" />
+                                </div>
+                            );
+                        }
+                        return <div className={`w-[88%] h-[28%] rounded-md bg-slate-900 ${f.anim}`} style={f.style} />;
+                    }
+                    // Standard CSS-only animated pilot icon — render the emoji with its motion.
+                    if (item.category === 'pilot_icon' && isStandardAnimatedIcon(item.id)) {
+                        const std = getStandardAnimatedIcon(item.id);
+                        return <span className={`${std.anim} text-5xl leading-none`}>{std.emoji}</span>;
+                    }
                     // Show the actual generated asset thumbnail for chest categories
-                    // that have one — much more readable than a generic emoji once the
-                    // art exists. Falls through to the original emoji / colour swatch
+                    // that have one. Falls through to the original emoji / colour swatch
                     // for everything else (and chest items whose asset isn't ready yet).
                     const chestUrl = ['pilot_icon', 'lb_frame', 'meteor_fx'].includes(item.category)
                         ? getChestAssetUrl(item.id) : null;

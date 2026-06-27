@@ -1,14 +1,45 @@
 import React from 'react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
 import { getLBFrameStyle } from '@/lib/lbFrameStyles';
+import { isStandardLbFrame, getStandardLbFrame } from '@/lib/standardCosmetics';
 
-// Wraps a leaderboard row with a chest-tier LB Banner Frame.
+// Wraps a leaderboard row with an LB Banner Frame.
 //
-// Source PNGs are now 1024×128 (8:1 banner aspect), painted to match the LB
-// row's natural shape. So we just stretch the PNG full-bleed — the artwork
-// already has the right proportions, no slicing or end-cap tricks needed.
+// Two render paths:
+//   1. Standard (CSS) frames — pure border / box-shadow / gradient, no PNG.
+//   2. Chest (PNG) frames — stretched 8:1 banner art behind the row.
 export default function LBFrame({ frameId, children, className = '' }) {
-    const url = frameId ? getChestAssetUrl(frameId) : null;
+    if (!frameId) return <>{children}</>;
+
+    // Standard ("Support the Devs") CSS-only frames.
+    if (isStandardLbFrame(frameId)) {
+        const f = getStandardLbFrame(frameId);
+        if (f.kind === 'gradient') {
+            // Gradient frames use border-image + a shifting background-position.
+            return (
+                <div
+                    className={`relative rounded-lg ${f.anim} ${className}`}
+                    style={{
+                        padding: '2px',
+                        backgroundImage: f.gradient,
+                        backgroundSize: '200% 100%',
+                    }}
+                >
+                    <div className="rounded-md bg-slate-900/95">
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div className={`relative rounded-lg ${f.anim} ${className}`} style={f.style}>
+                {children}
+            </div>
+        );
+    }
+
+    // Chest (PNG) frames.
+    const url = getChestAssetUrl(frameId);
     if (!url) return <>{children}</>;
     const { anim } = getLBFrameStyle(frameId);
     return (

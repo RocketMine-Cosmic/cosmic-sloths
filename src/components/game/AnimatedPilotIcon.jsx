@@ -1,17 +1,27 @@
 import React from 'react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
+import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
 
-// Renders the equipped chest pilot icon if one is set, otherwise falls back to
+// Renders the equipped pilot icon if one is set, otherwise falls back to
 // the standard pilot icon (emoji or uploaded URL). Used everywhere a player's
-// avatar appears — LB row, profile, squad chat, end-of-run modal — so chest
-// icons "follow" the player without each render site needing its own logic.
+// avatar appears — LB row, profile, squad chat, end-of-run modal.
 //
-// Props:
-//   animatedId — chest cosmetic id (e.g. 'animated_pilot_orbiting_moon'). When
-//                set and the asset is loaded, this wins over `fallback`.
-//   fallback   — the player's standard pilot_icon (emoji char or upload URL).
-//   className  — sizing classes the parent provides (w-10 h-10 etc).
+// Three render paths:
+//   1. Chest animated icon — uses the generated PNG asset.
+//   2. Standard ("Support the Devs") animated icon — emoji + CSS animation.
+//   3. Fallback — standard pilot emoji / upload URL.
 export default function AnimatedPilotIcon({ animatedId, fallback, className = 'w-10 h-10' }) {
+    // Standard (CSS) animated icon — emoji with a motion class.
+    if (animatedId && isStandardAnimatedIcon(animatedId)) {
+        const std = getStandardAnimatedIcon(animatedId);
+        return (
+            <div className={`${className} rounded-full bg-slate-900 border-2 border-cyan-500/40 flex items-center justify-center overflow-hidden`}>
+                <span className={`${std.anim} text-xl leading-none`}>{std.emoji}</span>
+            </div>
+        );
+    }
+
+    // Chest animated icon — generated PNG.
     const url = animatedId ? getChestAssetUrl(animatedId) : null;
     if (url) {
         return (
@@ -20,6 +30,7 @@ export default function AnimatedPilotIcon({ animatedId, fallback, className = 'w
             </div>
         );
     }
+
     // Standard fallback — emoji char or uploaded image URL.
     const isUrl = typeof fallback === 'string' && fallback.startsWith('http');
     return (

@@ -10,12 +10,29 @@ module.exports = {
     'title-flair-rainbow_shimmer',
     'title-flair-blue_flame',
     'title-flair-liquid_chrome',
+    // Standard ("Support the Devs") title flair classes — also applied dynamically.
+    'title-flair-cyan_glow',
+    'title-flair-gold_outline',
+    'title-flair-pink_pop',
+    'title-flair-emerald_mint',
+    'title-flair-violet_haze',
     // Chest LB Frame glow animations — applied dynamically via lbFrameStyles.js.
     'lb-frame-glow-gold',
     'lb-frame-arc-flicker',
     'lb-frame-nebula-drift',
     'lb-frame-glitch-pulse',
     'lb-frame-eclipse-glow',
+    // Standard LB Frame pulse / gradient-shift animations.
+    'std-lb-pulse-cyan',
+    'std-lb-pulse-gold',
+    'std-lb-pulse-purple',
+    'std-lb-grad-shift',
+    // Standard animated pilot icon motions.
+    'std-icon-spin',
+    'std-icon-pulse',
+    'std-icon-bounce',
+    'std-icon-glow',
+    'std-icon-wobble',
     // Chest Mythic — Meteor FX shimmer (applied dynamically in preview + feed).
     'meteor-fx-gold-lightning',
   ],

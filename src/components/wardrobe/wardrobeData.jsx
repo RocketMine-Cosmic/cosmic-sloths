@@ -11,6 +11,11 @@
 // cosmetic_id → CosmeticAsset.url lookup the Wardrobe page already does.
 
 import { TRAIL_COSMETICS, KILL_COSMETICS, SKIN_COSMETICS, CHARACTERS } from '@/game/Constants';
+import {
+    STANDARD_LB_FRAMES,
+    STANDARD_ANIMATED_ICONS,
+    STANDARD_TITLE_FLAIRS,
+} from '@/lib/standardCosmetics';
 
 export const CATEGORY_TABS = [
     { id: 'pilot_icon', label: 'Pilot Icon', icon: '🎭' },
@@ -118,6 +123,21 @@ const chestEpicFrame = CHEST_LB_FRAMES_EPIC.map(x => ({ ...x, category: 'lb_fram
 const chestEpicFlair = CHEST_TITLE_FLAIR_EPIC.map(x => ({ ...x, category: 'title_flair', source: 'chest', rarity: 'epic', icon: '🎨' }));
 const chestMythic = CHEST_MYTHIC.map(x => ({ ...x, source: 'chest', rarity: 'mythic', icon: x.category === 'trail' ? '✨' : x.category === 'kill_fx' ? '💥' : x.category === 'meteor_fx' ? '☄️' : '🖼️' }));
 
+// Standard ("Support the Devs" GMT tier) items for the chest-only categories
+// that previously had no standard variants. Pure CSS / emoji — no assets.
+const standardLbFrames = STANDARD_LB_FRAMES.map(x => ({
+    id: x.id, name: x.name, desc: x.desc,
+    category: 'lb_frame', source: 'standard', rarity: 'standard', icon: '🖼️',
+}));
+const standardAnimatedIcons = STANDARD_ANIMATED_ICONS.map(x => ({
+    id: x.id, name: x.name, desc: x.desc,
+    category: 'pilot_icon', source: 'standard', rarity: 'standard', icon: x.emoji,
+}));
+const standardTitleFlairs = STANDARD_TITLE_FLAIRS.map(x => ({
+    id: x.id, name: x.name, desc: x.desc,
+    category: 'title_flair', source: 'standard', rarity: 'standard', icon: '🎨',
+}));
+
 // Pilot-icon catalogue is the emoji picker — we don't store these as items,
 // they're handled via the existing pilot_icon save field. The Wardrobe shows
 // chest animated icons here.
@@ -125,6 +145,9 @@ export const ALL_WARDROBE_ITEMS = [
     ...TRAIL_COSMETICS.map(trailToItem),
     ...KILL_COSMETICS.map(killToItem),
     ...SKIN_COSMETICS.map(skinToItem),
+    ...standardLbFrames,
+    ...standardAnimatedIcons,
+    ...standardTitleFlairs,
     ...chestEpicPilot,
     ...chestEpicFrame,
     ...chestEpicFlair,
