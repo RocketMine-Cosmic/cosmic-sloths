@@ -1,5 +1,6 @@
 import React from 'react';
 import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
+import StandardIconSigil from './StandardIconSigils';
 
 // Preview of an animated pilot icon.
 //
@@ -21,9 +22,9 @@ const StandardMedallion = ({ std, size }) => (
             className="absolute inset-[3px] rounded-full pointer-events-none"
             style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
         />
-        <span className={`${std.anim} relative z-10 leading-none`} style={{ fontSize: size * 0.55 }}>
-            {std.emoji}
-        </span>
+        <div className={`${std.anim} relative z-10`} style={{ width: size * 0.62, height: size * 0.62 }}>
+            <StandardIconSigil id={std.id} color={std.rim} />
+        </div>
     </div>
 );
 

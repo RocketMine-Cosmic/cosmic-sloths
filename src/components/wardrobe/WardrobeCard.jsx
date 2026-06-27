@@ -5,6 +5,7 @@ import {
     isStandardLbFrame, getStandardLbFrame,
     isStandardAnimatedIcon, getStandardAnimatedIcon,
 } from '@/lib/standardCosmetics';
+import StandardIconSigil from './StandardIconSigils';
 
 const RARITY_STYLES = {
     free:     { label: 'Free',     ring: 'border-slate-700',      text: 'text-slate-400' },
@@ -91,7 +92,9 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                                     className="absolute inset-[3px] rounded-full pointer-events-none"
                                     style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
                                 />
-                                <span className={`${std.anim} relative z-10 text-4xl leading-none`}>{std.emoji}</span>
+                                <div className={`${std.anim} relative z-10`} style={{ width: '60%', height: '60%' }}>
+                                    <StandardIconSigil id={std.id} color={std.rim} />
+                                </div>
                             </div>
                         );
                     }

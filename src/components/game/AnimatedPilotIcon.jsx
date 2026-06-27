@@ -1,6 +1,7 @@
 import React from 'react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
 import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
+import StandardIconSigil from '@/components/wardrobe/StandardIconSigils';
 
 // Renders the equipped pilot icon. Three render paths:
 //   1. Chest animated icon — generated PNG asset.
@@ -26,9 +27,9 @@ export default function AnimatedPilotIcon({ animatedId, fallback, className = 'w
                     className="absolute inset-[3px] rounded-full pointer-events-none"
                     style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18) 0%, transparent 55%)' }}
                 />
-                <span className={`${std.anim} relative z-10 leading-none`} style={{ fontSize: '70%' }}>
-                    {std.emoji}
-                </span>
+                <div className={`${std.anim} relative z-10`} style={{ width: '70%', height: '70%' }}>
+                    <StandardIconSigil id={std.id} color={std.rim} />
+                </div>
             </div>
         );
     }

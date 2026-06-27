@@ -78,51 +78,50 @@ export const STANDARD_LB_FRAMES = [
 // Each icon: themed emoji + motion + a coloured rim/glow that matches the
 // theme. The rim is what turns "an emoji" into "a cosmetic" — paid players
 // see a polished medallion, not a raw glyph.
+// Themed sigil icons rendered as SVG (see StandardIconSigils.jsx). Each is a
+// procedurally-drawn cosmic emblem — not an emoji — so they hold their own
+// next to the chest-tier generated art. Rim colours are deeper / less saturated
+// than the earlier emoji set for a more premium feel.
 export const STANDARD_ANIMATED_ICONS = [
     {
         id: 'std_icon_spinning_star',
-        name: 'Spinning Star',
-        desc: 'Gold star slowly rotating inside a warm-glow medallion.',
-        emoji: '🌟',
+        name: 'Astral Sigil',
+        desc: 'Radiant eight-point star with a hex core, slowly rotating.',
         anim: 'std-icon-spin',
-        rim: '#facc15',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(254,240,138,0.25), rgba(15,23,42,0.95) 70%)',
+        rim: '#d4a64a',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(212,166,74,0.18), rgba(8,12,24,0.97) 70%)',
     },
     {
         id: 'std_icon_pulsing_gem',
-        name: 'Pulsing Gem',
-        desc: 'Sapphire gem pulsing in a cool cyan medallion.',
-        emoji: '💎',
+        name: 'Prism Core',
+        desc: 'Faceted prism orbited by a thin ring, pulsing softly.',
         anim: 'std-icon-pulse',
-        rim: '#22d3ee',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(125,211,252,0.25), rgba(15,23,42,0.95) 70%)',
+        rim: '#3aa6b8',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(58,166,184,0.18), rgba(8,12,24,0.97) 70%)',
     },
     {
         id: 'std_icon_bouncing_rocket',
-        name: 'Bouncing Rocket',
-        desc: 'Rocket bobbing inside a deep-space medallion.',
-        emoji: '🚀',
+        name: 'Comet',
+        desc: 'Swept comet head trailing through the medallion.',
         anim: 'std-icon-bounce',
-        rim: '#60a5fa',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(147,197,253,0.25), rgba(15,23,42,0.95) 70%)',
+        rim: '#4a7fc9',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(74,127,201,0.18), rgba(8,12,24,0.97) 70%)',
     },
     {
         id: 'std_icon_glowing_heart',
-        name: 'Glowing Heart',
-        desc: 'Heart with a pink halo on a rose-tinted medallion.',
-        emoji: '💖',
+        name: 'Crimson Eye',
+        desc: 'Watching eye sigil with a soft pulsing iris.',
         anim: 'std-icon-glow',
-        rim: '#f472b6',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(251,207,232,0.25), rgba(15,23,42,0.95) 70%)',
+        rim: '#c44d6b',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(196,77,107,0.18), rgba(8,12,24,0.97) 70%)',
     },
     {
         id: 'std_icon_wobbling_skull',
-        name: 'Wobbling Skull',
-        desc: 'Skull tilting on a violet medallion.',
-        emoji: '💀',
+        name: 'Void Mark',
+        desc: 'Pentagonal void sigil with a faint inner glyph.',
         anim: 'std-icon-wobble',
-        rim: '#a78bfa',
-        plate: 'radial-gradient(circle at 30% 30%, rgba(196,181,253,0.22), rgba(15,23,42,0.95) 70%)',
+        rim: '#8b6fc9',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(139,111,201,0.18), rgba(8,12,24,0.97) 70%)',
     },
 ];
 
