@@ -49,7 +49,7 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
             return <TitleFlairDemo flairId={flairId} />;
         }
         if (item.category === 'lb_frame') {
-            return <LbFrameDemo frameUrl={getChestAssetUrl(item.id)} />;
+            return <LbFrameDemo frameId={item.id} frameUrl={getChestAssetUrl(item.id)} />;
         }
         if (item.category === 'pilot_icon') {
             return <AnimatedIconDemo iconUrl={getChestAssetUrl(item.id)} />;

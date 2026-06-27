@@ -1,12 +1,10 @@
 import React from 'react';
+import { getLBFrameStyle } from '@/lib/lbFrameStyles';
 
-// Live preview of a Leaderboard Frame cosmetic. Renders a mock LB row with the
-// border-image 9-slice applied — same render pattern the real leaderboard row
-// uses when this frame is equipped, so the player sees the corners + edges at
-// the exact aspect they'll get in the wild.
-//
-// frameUrl is the source 1024×1024 PNG from CosmeticAsset.
-export default function LbFrameDemo({ frameUrl, charIcon = '🦥', name = 'Cosmic Legend', score = 472000 }) {
+// Live preview of a Leaderboard Frame cosmetic. Renders a mock LB row using
+// the same per-frame 9-slice config as the real LB row, so the player sees
+// the corners + edges at the exact aspect they'll get in the wild.
+export default function LbFrameDemo({ frameId, frameUrl, charIcon = '🦥', name = 'Cosmic Legend', score = 472000 }) {
     if (!frameUrl) {
         return (
             <div className="w-full bg-slate-950 rounded-lg flex items-center justify-center py-10 text-slate-500 text-xs">
@@ -14,11 +12,12 @@ export default function LbFrameDemo({ frameUrl, charIcon = '🦥', name = 'Cosmi
             </div>
         );
     }
+    const { slice, repeat, anim } = getLBFrameStyle(frameId);
     return (
         <div className="w-full bg-slate-950 rounded-lg p-6 flex flex-col items-center gap-3">
             <div className="text-[10px] uppercase tracking-widest text-slate-500">leaderboard row preview</div>
             <div
-                className="w-full max-w-[640px] flex items-center gap-3 px-6 py-4 bg-slate-900/50"
+                className={`w-full max-w-[640px] flex items-center gap-3 px-6 py-4 bg-slate-900/50 ${anim}`}
                 style={{
                     borderStyle: 'solid',
                     borderColor: 'transparent',
@@ -27,8 +26,8 @@ export default function LbFrameDemo({ frameUrl, charIcon = '🦥', name = 'Cosmi
                     borderLeftWidth: 80,
                     borderRightWidth: 80,
                     borderImageSource: `url(${frameUrl})`,
-                    borderImageSlice: '120 320 120 320 fill',
-                    borderImageRepeat: 'stretch',
+                    borderImageSlice: slice,
+                    borderImageRepeat: repeat,
                     borderImageOutset: 0,
                 }}
             >
