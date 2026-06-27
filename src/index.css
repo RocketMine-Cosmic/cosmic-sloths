@@ -172,15 +172,6 @@
   }
   .meteor-fx-gold-lightning { animation: meteor-fx-gold-pulse-kf 1.6s ease-in-out infinite; }
 
-  /* When a row is wrapped by an LB Banner Frame, the frame itself is the visual
-   * container — strip the inner row's background and border so we don't get a
-   * "box within a box" effect. Targets the immediate row child. */
-  .lb-frame-wrap > * {
-    background-color: transparent !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
-  }
-
   /* Liquid Chrome — bright reflection band sweeps across silver text */
   @keyframes title-flair-chrome-sweep {
     0%   { background-position: -150% 50%; }
