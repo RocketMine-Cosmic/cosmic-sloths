@@ -132,12 +132,10 @@
   .lb-frame-glow-gold { animation: lb-frame-glow-gold-kf 3.2s ease-in-out infinite; }
 
   @keyframes lb-frame-arc-flicker-kf {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(80, 200, 255, 0.5)); }
-    35%      { filter: drop-shadow(0 0 16px rgba(120, 220, 255, 0.95)); }
-    55%      { filter: drop-shadow(0 0 6px rgba(80, 200, 255, 0.4)); }
-    75%      { filter: drop-shadow(0 0 18px rgba(160, 240, 255, 1)); }
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(80, 200, 255, 0.55)); }
+    50%      { filter: drop-shadow(0 0 14px rgba(120, 220, 255, 0.9)); }
   }
-  .lb-frame-arc-flicker { animation: lb-frame-arc-flicker-kf 1.8s steps(8, end) infinite; }
+  .lb-frame-arc-flicker { animation: lb-frame-arc-flicker-kf 3.4s ease-in-out infinite; }
 
   @keyframes lb-frame-nebula-drift-kf {
     0%, 100% { filter: drop-shadow(0 0 8px rgba(180, 80, 220, 0.45)) hue-rotate(0deg); }
@@ -146,16 +144,25 @@
   .lb-frame-nebula-drift { animation: lb-frame-nebula-drift-kf 6s ease-in-out infinite; }
 
   @keyframes lb-frame-glitch-pulse-kf {
-    0%, 100% { filter: drop-shadow(2px 0 0 rgba(255, 50, 80, 0.6)) drop-shadow(-2px 0 0 rgba(50, 220, 255, 0.6)); }
-    50%      { filter: drop-shadow(-2px 0 0 rgba(255, 50, 80, 0.85)) drop-shadow(2px 0 0 rgba(50, 220, 255, 0.85)); }
+    0%, 100% { filter: drop-shadow(1.5px 0 0 rgba(255, 50, 80, 0.55)) drop-shadow(-1.5px 0 0 rgba(50, 220, 255, 0.55)); }
+    50%      { filter: drop-shadow(-1.5px 0 0 rgba(255, 50, 80, 0.75)) drop-shadow(1.5px 0 0 rgba(50, 220, 255, 0.75)); }
   }
-  .lb-frame-glitch-pulse { animation: lb-frame-glitch-pulse-kf 0.4s steps(2, end) infinite; }
+  .lb-frame-glitch-pulse { animation: lb-frame-glitch-pulse-kf 3s ease-in-out infinite; }
 
   @keyframes lb-frame-eclipse-glow-kf {
     0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 180, 60, 0.6)) drop-shadow(0 0 18px rgba(220, 60, 60, 0.35)); }
     50%      { filter: drop-shadow(0 0 18px rgba(255, 210, 90, 1))   drop-shadow(0 0 36px rgba(220, 60, 60, 0.7)); }
   }
   .lb-frame-eclipse-glow { animation: lb-frame-eclipse-glow-kf 3.6s ease-in-out infinite; }
+
+  /* When a row is wrapped by an LB Banner Frame, the frame itself is the visual
+   * container — strip the inner row's background and border so we don't get a
+   * "box within a box" effect. Targets the immediate row child. */
+  .lb-frame-wrap > * {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
 
   /* Liquid Chrome — bright reflection band sweeps across silver text */
   @keyframes title-flair-chrome-sweep {

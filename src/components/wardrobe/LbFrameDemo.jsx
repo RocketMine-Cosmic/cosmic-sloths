@@ -17,7 +17,7 @@ export default function LbFrameDemo({ frameId, frameUrl, charIcon = '🦥', name
         <div className="w-full bg-slate-950 rounded-lg p-6 flex flex-col items-center gap-3">
             <div className="text-[10px] uppercase tracking-widest text-slate-500">leaderboard row preview</div>
             <div
-                className={`w-full max-w-[640px] flex items-center gap-3 px-6 py-4 bg-slate-900/50 ${anim}`}
+                className={`w-full max-w-[640px] flex items-center gap-3 px-6 py-4 ${anim}`}
                 style={{
                     borderStyle: 'solid',
                     borderColor: 'transparent',

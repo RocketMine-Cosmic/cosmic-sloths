@@ -17,7 +17,7 @@ export default function LBFrame({ frameId, children, className = '' }) {
     const { slice, repeat, anim } = getLBFrameStyle(frameId);
     return (
         <div
-            className={`relative ${anim} ${className}`}
+            className={`relative lb-frame-wrap ${anim} ${className}`}
             style={{
                 borderStyle: 'solid',
                 borderColor: 'transparent',
