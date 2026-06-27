@@ -1,5 +1,6 @@
 import React from 'react';
 import { Lock, Eye } from 'lucide-react';
+import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
 
 const RARITY_STYLES = {
     free:     { label: 'Free',     ring: 'border-slate-700',      text: 'text-slate-400' },
@@ -57,14 +58,34 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                 className="aspect-square bg-slate-950/80 rounded-lg flex items-center justify-center relative overflow-hidden group"
                 title="Preview"
             >
-                {item.category === 'skin' && item.color ? (
-                    <div
-                        className="w-16 h-16 rounded-full border-4"
-                        style={{ background: item.color, borderColor: item.color + '60', boxShadow: `0 0 30px ${item.color}40` }}
-                    />
-                ) : (
-                    <span className="text-5xl">{item.icon || '✨'}</span>
-                )}
+                {(() => {
+                    // Show the actual generated asset thumbnail for chest categories
+                    // that have one — much more readable than a generic emoji once the
+                    // art exists. Falls through to the original emoji / colour swatch
+                    // for everything else (and chest items whose asset isn't ready yet).
+                    const chestUrl = ['pilot_icon', 'lb_frame', 'meteor_fx'].includes(item.category)
+                        ? getChestAssetUrl(item.id) : null;
+                    if (chestUrl) {
+                        return <img src={chestUrl} alt={item.name} className="w-full h-full object-cover" />;
+                    }
+                    if (item.category === 'title_flair') {
+                        const flairId = item.id.replace(/^title_style_/, '');
+                        return (
+                            <span className={`title-flair-${flairId} text-base md:text-lg font-bold tracking-wide px-2`}>
+                                {item.name}
+                            </span>
+                        );
+                    }
+                    if (item.category === 'skin' && item.color) {
+                        return (
+                            <div
+                                className="w-16 h-16 rounded-full border-4"
+                                style={{ background: item.color, borderColor: item.color + '60', boxShadow: `0 0 30px ${item.color}40` }}
+                            />
+                        );
+                    }
+                    return <span className="text-5xl">{item.icon || '✨'}</span>;
+                })()}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                     <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>

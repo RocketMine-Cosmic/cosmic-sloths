@@ -91,6 +91,18 @@
     "season_id": {
       "type": "string",
       "description": "Identifier for the season (e.g., 2026-S1)"
+    },
+    "equipped_animated_icon": {
+      "type": "string",
+      "description": "Player's equipped chest animated pilot icon at run-end (e.g. 'animated_pilot_orbiting_moon'). Mirrored from save.profile by saveScore so the leaderboard row renders the chest icon for other players. Empty when player isn't using a chest icon."
+    },
+    "equipped_lb_frame": {
+      "type": "string",
+      "description": "Player's equipped chest LB frame at run-end (e.g. 'lb_frame_gold_filigree'). Mirrored from save.profile so the LB row wraps the row in the frame for other players. Empty when not using one."
+    },
+    "equipped_title_style": {
+      "type": "string",
+      "description": "Player's equipped chest Title Flair at run-end (e.g. 'title_style_blue_flame'). Mirrored from save.profile so the player_title pill renders with the flair animation for other players. Empty when not using one."
     }
   },
   "required": [

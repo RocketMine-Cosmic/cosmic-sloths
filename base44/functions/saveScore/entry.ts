@@ -810,12 +810,23 @@ Deno.serve(async (req) => {
         const savedName = (saveData.player_name || saveRecord.player_name || '').trim();
         const safeName = savedName || anonName;
 
+        // Chest cosmetic mirror — pulled from the freshly-saved profile so
+        // other players see the player's equipped animated icon / LB frame /
+        // title flair on the leaderboard. Server-side mirror (vs. trusting the
+        // client) means a tampered client can't equip a cosmetic they don't own.
+        const equippedProfile = updatedSave.profile || {};
+        const ownedChest = updatedSave.owned_chest_cosmetics || [];
+        const verifyOwned = (id) => (id && ownedChest.includes(id)) ? id : '';
+
         const runScore = {
             user_id: me.id,
             wallet_address: walletAddress,
             player_name: safeName,
             player_title: scoreData.player_title || '',
             pilot_icon: scoreData.pilot_icon || '',
+            equipped_animated_icon: verifyOwned(equippedProfile.equipped_animated_icon),
+            equipped_lb_frame:      verifyOwned(equippedProfile.equipped_lb_frame),
+            equipped_title_style:   verifyOwned(equippedProfile.equipped_title_style),
             score: validation.score,
             time_survived: validation.time,
             level: validation.level,

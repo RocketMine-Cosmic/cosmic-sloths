@@ -1,22 +1,27 @@
 import React from 'react';
 import { X, Lock } from 'lucide-react';
 import CosmeticPreview from '@/components/game/CosmeticPreview';
+import TitleFlairDemo from './TitleFlairDemo';
+import LbFrameDemo from './LbFrameDemo';
+import AnimatedIconDemo from './AnimatedIconDemo';
+import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
 
 // Live preview for any Wardrobe item.
 //
 // Trails / kill FX: render the existing CosmeticPreview canvas with the
 // item temporarily applied — same path the Armoury used to use.
 // Skins: render a styled character circle in the chosen color.
-// Chest-only categories (pilot_icon, lb_frame, title_flair, meteor_fx):
-// no asset yet → render a "preview coming once chest cosmetics ship" card.
+// Chest categories — proper live previews per category:
+//   pilot_icon   → AnimatedIconDemo using the generated asset
+//   lb_frame     → LbFrameDemo (9-slice on a sample LB row)
+//   title_flair  → TitleFlairDemo (CSS animations applied to sample text)
+//   meteor_fx    → asset image overlay (squad-feed mock)
+// Falls back to a placeholder card when an asset URL isn't available.
 export default function WardrobePreviewModal({ item, save, charId, onClose }) {
     if (!item) return null;
 
     const renderPreview = () => {
         if (item.category === 'trail' || item.category === 'kill_fx') {
-            // Render exactly like the old Armoury did — no wrapper. CosmeticPreview
-            // owns its own 640×320 canvas; wrapping it in aspect-* / overflow-hidden
-            // boxes confuses the canvas's intrinsic sizing and produces a blank.
             return (
                 <CosmeticPreview
                     trailId={item.category === 'trail' ? item.id : (save?.cosmetics?.trail || 'default')}
@@ -27,9 +32,6 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
             );
         }
         if (item.category === 'skin') {
-            // Render the live character sprite tinted with the skin's colour —
-            // a flat circle didn't tell the player what the skin actually looks
-            // like in-game. Reuses the same canvas trails / kill FX use.
             return (
                 <CosmeticPreview
                     trailId={save?.cosmetics?.trail || 'default'}
@@ -39,6 +41,43 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
                 />
             );
         }
+
+        // Chest category previews — strip the prefix to get the flair id for
+        // title_style_* (e.g. 'title_style_blue_flame' → 'blue_flame').
+        if (item.category === 'title_flair') {
+            const flairId = item.id.replace(/^title_style_/, '');
+            return <TitleFlairDemo flairId={flairId} />;
+        }
+        if (item.category === 'lb_frame') {
+            return <LbFrameDemo frameUrl={getChestAssetUrl(item.id)} />;
+        }
+        if (item.category === 'pilot_icon') {
+            return <AnimatedIconDemo iconUrl={getChestAssetUrl(item.id)} />;
+        }
+        if (item.category === 'meteor_fx') {
+            const url = getChestAssetUrl(item.id);
+            if (!url) {
+                return (
+                    <div className="w-full bg-slate-950 rounded-lg flex items-center justify-center py-10 text-slate-500 text-xs">
+                        Asset not yet generated.
+                    </div>
+                );
+            }
+            return (
+                <div className="w-full bg-slate-950 rounded-lg flex flex-col items-center justify-center gap-3 py-10">
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500">meteor strike fx preview</div>
+                    <div className="w-full max-w-md bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 flex items-center gap-3">
+                        <img src={url} alt="meteor fx" className="w-16 h-8 object-contain" />
+                        <div className="flex-1 text-xs">
+                            <div className="text-amber-300 font-bold">⚡ You struck the meteor!</div>
+                            <div className="text-slate-400">Deals bonus damage to squadmates' targets.</div>
+                        </div>
+                    </div>
+                    <div className="text-xs text-slate-500">Shown in the squad activity feed</div>
+                </div>
+            );
+        }
+
         // Chest-only categories — placeholder until assets ship.
         return (
             <div className="w-full bg-slate-950 rounded-lg flex flex-col items-center justify-center gap-3 text-center px-4 py-10">
@@ -46,10 +85,6 @@ export default function WardrobePreviewModal({ item, save, charId, onClose }) {
                 <div className="text-amber-300/80 text-sm flex items-center gap-2">
                     <Lock className="w-4 h-4" />
                     Live preview lands when the asset is generated.
-                </div>
-                <div className="text-slate-500 text-xs max-w-sm">
-                    This is a chest cosmetic — concept art is in the design doc, the asset
-                    is being authored in the Cosmetic Studio.
                 </div>
             </div>
         );

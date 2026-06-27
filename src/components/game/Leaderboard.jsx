@@ -9,6 +9,9 @@ import { useIsIdle } from '@/hooks/useIsIdle';
 import { getTitleStyle } from '@/lib/playerTitles';
 import { sanitizePilotName } from '@/lib/sanitizePilotName';
 import LeaderboardPoolBanner from './LeaderboardPoolBanner';
+import AnimatedPilotIcon from './AnimatedPilotIcon';
+import LBFrame from './LBFrame';
+import { ensureChestAssetsLoaded } from '@/lib/chestCosmeticAssets';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -177,6 +180,14 @@ export default function Leaderboard() {
     useEffect(() => {
         fetchScores();
     }, [view, payoutCfg.top_n]);
+
+    // Warm chest asset URL cache so animated pilot icons + LB frames render
+    // on the first paint instead of popping in after a delay. Triggers a tiny
+    // forceRender once URLs land so already-fetched RunScore rows display them.
+    const [, forceRender] = useState(0);
+    useEffect(() => {
+        ensureChestAssetsLoaded().then(() => forceRender(n => n + 1));
+    }, []);
 
     // Fetch live payout config once on mount (public read — no auth needed).
     // If it fails or returns nothing we just use the built-in defaults.
@@ -616,7 +627,8 @@ export default function Leaderboard() {
                                 }
 
                                 return (
-                                    <div key={score.id} className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/50 rounded-lg items-center border border-slate-800 hover:border-slate-600 transition-colors">
+                                    <LBFrame key={score.id} frameId={score.equipped_lb_frame}>
+                                    <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/50 rounded-lg items-center border border-slate-800 hover:border-slate-600 transition-colors">
                                         
                                         {/* Rank & Reward */}
                                         <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto sm:min-w-[180px]">
@@ -634,11 +646,15 @@ export default function Leaderboard() {
                                             )}
                                         </div>
 
-                                        {/* Player Info */}
+                                        {/* Player Info — chest cosmetics (animated icon + title flair) "follow"
+                                            the player here when equipped. equipped_* fields are mirrored
+                                            from save.profile by saveScore so other players see them too. */}
                                         <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
-                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center shrink-0 text-xl overflow-hidden">
-                                            {score.pilot_icon?.startsWith('http') ? <img src={score.pilot_icon} className="w-full h-full object-cover" alt="pilot" /> : (score.pilot_icon || '🦥')}
-                                        </div>
+                                        <AnimatedPilotIcon
+                                            animatedId={score.equipped_animated_icon}
+                                            fallback={score.pilot_icon}
+                                            className="w-10 h-10 md:w-12 md:h-12 shrink-0"
+                                        />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 truncate">
                                                 <div className="font-bold text-white text-lg md:text-xl truncate">
@@ -646,8 +662,12 @@ export default function Leaderboard() {
                                                 </div>
                                                     {score.player_title && (() => {
                                                         const st = getTitleStyle(score.player_title);
+                                                        const flairId = score.equipped_title_style
+                                                            ? score.equipped_title_style.replace(/^title_style_/, '')
+                                                            : null;
+                                                        const flairClass = flairId ? `title-flair-${flairId}` : '';
                                                         return (
-                                                            <span className={`text-[10px] ${st.bg} ${st.text} px-1.5 py-0.5 rounded border ${st.border} tracking-wider font-bold truncate`}>
+                                                            <span className={`text-[10px] ${st.bg} ${st.text} px-1.5 py-0.5 rounded border ${st.border} tracking-wider font-bold truncate ${flairClass}`}>
                                                                 {score.player_title}
                                                             </span>
                                                         );
@@ -702,6 +722,7 @@ export default function Leaderboard() {
                                             )}
                                         </div>
                                     </div>
+                                    </LBFrame>
                                 );
                             })}
                         </>

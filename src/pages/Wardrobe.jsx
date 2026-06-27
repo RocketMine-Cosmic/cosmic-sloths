@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SaveManager } from '@/game/SaveManager';
 import { CHARACTERS } from '@/game/Constants';
 import { SoundManager } from '@/game/SoundManager';
+import { ensureChestAssetsLoaded } from '@/lib/chestCosmeticAssets';
 import SpaceBackground from '@/components/game/SpaceBackground';
 import CurrencyHeader from '@/components/game/CurrencyHeader';
 import OmenXGate from '@/components/game/OmenXGate';
@@ -42,6 +43,14 @@ export default function Wardrobe({ isCarousel }) {
         const handle = (e) => setSave(e.detail);
         window.addEventListener('saveUpdated', handle);
         return () => window.removeEventListener('saveUpdated', handle);
+    }, []);
+
+    // Warm the chest asset URL cache on mount so cards / previews render the
+    // real generated images on first paint (rather than emoji-then-pop).
+    // forceRender flip ensures the grid re-renders once the URLs land.
+    const [, forceRender] = useState(0);
+    useEffect(() => {
+        ensureChestAssetsLoaded().then(() => forceRender(n => n + 1));
     }, []);
 
     // Filter to the active category, then apply source filter.
