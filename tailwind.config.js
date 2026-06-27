@@ -2,6 +2,21 @@
 module.exports = {
     darkMode: ["class"],
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+  safelist: [
+    // Chest Title Flair classes — applied dynamically as `title-flair-${id}`
+    // (see TitleFlairDemo + PlayerTitle), so they aren't found as literal
+    // substrings and would otherwise be purged. The keyframe + class rules
+    // themselves live in index.css under @layer utilities.
+    'title-flair-rainbow_shimmer',
+    'title-flair-blue_flame',
+    'title-flair-liquid_chrome',
+    // Chest LB Frame glow animations — applied dynamically via lbFrameStyles.js.
+    'lb-frame-glow-gold',
+    'lb-frame-arc-flicker',
+    'lb-frame-nebula-drift',
+    'lb-frame-glitch-pulse',
+    'lb-frame-eclipse-glow',
+  ],
   theme: {
   	extend: {
   		borderRadius: {
