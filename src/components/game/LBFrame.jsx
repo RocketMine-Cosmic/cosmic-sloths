@@ -4,54 +4,23 @@ import { getLBFrameStyle } from '@/lib/lbFrameStyles';
 
 // Wraps a leaderboard row with a chest-tier LB Banner Frame.
 //
-// Source PNGs are square 1024×1024 ornate picture frames. To avoid squashing
-// the corners into an 8:1 row, we use background-image with `auto 100%` size
-// + `left`/`right` background-position on two end-caps. The PNG scales to the
-// cap's height at natural aspect, and the cap's WIDTH controls how much of
-// the source's left or right portion shows. The middle fills with the dark
-// centre tone so corners read crisp and the row content sits on a clean band.
+// Source PNGs are now 1024×128 (8:1 banner aspect), painted to match the LB
+// row's natural shape. So we just stretch the PNG full-bleed — the artwork
+// already has the right proportions, no slicing or end-cap tricks needed.
 export default function LBFrame({ frameId, children, className = '' }) {
     const url = frameId ? getChestAssetUrl(frameId) : null;
     if (!url) return <>{children}</>;
     const { anim } = getLBFrameStyle(frameId);
-    // Cap width is a fraction of the row height — picked so each cap shows
-    // roughly the corner third of the source at natural aspect on any row size.
-    // Two caps + middle = full coverage with no horizontal stretch on the art.
-    const capStyle = {
-        backgroundImage: `url(${url})`,
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'auto 100%',
-    };
     return (
-        <div
-            className={`relative lb-frame-wrap overflow-hidden ${anim} ${className}`}
-            style={{ backgroundColor: '#0a0e1a' }}
-        >
-            {/* Left cap — shows the left ~third of the source PNG */}
-            <div
+        <div className={`relative lb-frame-wrap ${anim} ${className}`}>
+            <img
+                src={url}
+                alt=""
                 aria-hidden="true"
-                className="absolute left-0 top-0 bottom-0 pointer-events-none"
-                style={{
-                    width: '20%',
-                    minWidth: 90,
-                    maxWidth: 160,
-                    ...capStyle,
-                    backgroundPosition: 'left center',
-                }}
+                className="absolute inset-0 w-full h-full pointer-events-none select-none"
+                style={{ objectFit: 'fill' }}
             />
-            {/* Right cap — shows the right ~third */}
-            <div
-                aria-hidden="true"
-                className="absolute right-0 top-0 bottom-0 pointer-events-none"
-                style={{
-                    width: '20%',
-                    minWidth: 90,
-                    maxWidth: 160,
-                    ...capStyle,
-                    backgroundPosition: 'right center',
-                }}
-            />
-            <div className="relative z-10 py-3" style={{ paddingLeft: '22%', paddingRight: '22%' }}>
+            <div className="relative z-10 px-4 py-3">
                 {children}
             </div>
         </div>
