@@ -315,6 +315,70 @@ Generation happens via `functions/generateCosmeticAsset` (already built + tested
 
 **Remaining AI-generated assets:** 4 Epic LB frames + 1 Mythic meteor FX + 1 Mythic LB frame = **6 images**. Everything else in the chest catalogue is code-only.
 
+---
+
+### LB Banner Frame — render strategy (resolved 2026-06-27)
+
+Before generating the 5 frame assets we have to decide *how* the frame composites around a leaderboard row. The image-prompt brief depends entirely on this choice.
+
+**Options considered:**
+
+| Option | What the PNG is | Pros | Cons |
+|---|---|---|---|
+| A. Transparent inner cutout | Frame art is a thin ring; middle is fully transparent | Row content underneath shows perfectly; one PNG works on any LB row colour | FLUX struggles to keep the inner area cleanly transparent — usually fills it with vignette or gradient |
+| B. Solid-colour inner ("punch-through" via CSS mask) | Frame is a full painted rectangle; we punch a transparent inner area in CSS with `mask-image: linear-gradient(...)` | FLUX paints the easier shape (just a full rect with ornate edges); we control the cutout precisely in CSS | Need a second tiny mask asset (or pure CSS mask) per frame size |
+| C. Frame as background painted to fit | Frame is a full 1024×96 painted scene; row content sits on top with its own opaque dark background | Easiest prompt — "ornate cosmic border around dark centre"; no compositing tricks | Inner darkness has to be dark enough to read white text on, every time. Hit-and-miss on FLUX. |
+
+**Decision: Option B — solid-frame PNG + CSS-driven inner cutout.**
+
+Reasoning:
+- FLUX is far more reliable at painting a complete 1024×96 image with detailed edges than at honouring a "leave the centre transparent" instruction.
+- The cutout shape is **the same for every frame** (a centred 1000×72 rounded-rect window), so the mask is a single CSS rule applied at the `.lb-frame` wrapper — no per-frame mask asset.
+- Means we generate one PNG per frame and only ever ship that one PNG. Wardrobe preview and live LB row both use the same asset.
+
+**CSS sketch (for Phase 3 — not for now):**
+
+```css
+.lb-frame {
+  position: absolute;
+  inset: 0;
+  background-image: var(--frame-url);
+  background-size: 100% 100%;
+  /* Punch a rounded-rect window in the centre so the LB row reads through */
+  -webkit-mask-image:
+    linear-gradient(#000, #000),                                   /* keep the frame */
+    radial-gradient(closest-side at 50% 50%, #000 99%, transparent 100%);  /* hole */
+  -webkit-mask-composite: source-out;
+  mask-composite: subtract;
+}
+```
+
+Exact mask geometry is a Phase 3 concern — for now we just need to lock the **prompt brief** for the painters.
+
+### LB Frame prompt brief — locked
+
+Every Epic + Mythic LB frame generates with this shared spec:
+
+- **Dimensions:** 1024 × 96 px, landscape.
+- **Composition:** ornate decorative border filling the full canvas. The middle horizontal band (~70% of height) is a **flat, very dark neutral fill** (`#0a0e1a`-ish — the colour our LB row background sits at). The decorative work — filigree, arcs, glitch, swirl, crown — lives in the **top and bottom ~15% bands** and the **left/right ~80px columns**.
+- **Why dark centre, not transparent:** lets FLUX paint a complete image (its strength). The CSS mask punches the actual hole later — the centre fill is throwaway pixels we never see.
+- **No text, no UI chrome, no LB row contents** (no rank numbers, no player names, no avatar). Just the frame itself.
+- **Style baseline:** matches the pilot icons we just approved — deep space cosmic aesthetic, premium sci-fi game UI, sharp clean edges.
+
+### LB Frame catalogue (4 Epic + 1 Mythic)
+
+| # | ID | Rarity | Prompt direction | Negative prompt additions |
+|---|---|---|---|---|
+| 7 | `lb_frame_gold_filigree` | Epic | "Ornate gold filigree decorative border, 1024×96 horizontal banner. Thin baroque vine-and-laurel goldwork along the top and bottom edges, mirrored corner flourishes on each side. Centre 70% of the image is a flat dark navy fill (#0a0e1a). Soft cyan inner glow where gold meets dark. Premium MMO leaderboard frame, deep space cosmic aesthetic, crisp metallic detail, no text, no UI." | `text, numbers, names, faces, characters, content inside frame, hand drawn, photo, 3d render` |
+| 8 | `lb_frame_electric_arc` | Epic | "Sci-fi electric arc decorative border, 1024×96 horizontal banner. Glowing cyan and white-hot lightning arcs travelling along the top and bottom edges of the frame, with bright nodes at the four corners. Centre 70% is a flat dark navy fill (#0a0e1a). Crackling energy detail, premium futuristic UI frame, sharp glow, deep space aesthetic, no text, no UI." | `text, numbers, characters, content inside frame, hand drawn, photo, 3d render` |
+| 9 | `lb_frame_nebula_swirl` | Epic | "Nebula gradient decorative border, 1024×96 horizontal banner. Swirling cosmic clouds in deep purple, magenta and cyan along the top and bottom edges, with bright tiny stars scattered through the nebula. Centre 70% is a flat dark navy fill (#0a0e1a) so the nebula reads as a contained border, not a full background. Premium space MMO frame, vivid high-contrast nebula colours, crisp star detail, no text, no UI." | `text, numbers, characters, content inside frame, washed out, low contrast, blurry centre, hand drawn` |
+| 10 | `lb_frame_glitch_rgb` | Epic | "Cyberpunk RGB glitch decorative border, 1024×96 horizontal banner. Top and bottom edges show a digital interference pattern with red/green/blue chromatic split, scan lines, data-corruption artefacts. Bright cyan and magenta glow on the corners. Centre 70% is a flat dark navy fill (#0a0e1a). Premium cyberpunk game UI frame, sharp digital detail, no text, no UI." | `text, numbers, characters, content inside frame, hand drawn, photo, soft, blurred` |
+| 20 | `lb_frame_eclipse_crown` | **Mythic** | "Ornate mythic eclipse crown decorative border, 1024×96 horizontal banner. A central golden crown silhouette at the very top centre with a black eclipse disc behind it radiating golden corona rays. Baroque golden filigree extends along the entire top and bottom edges, with deep crimson accents in the corners. Centre 70% is a flat dark navy fill (#0a0e1a). Mythic ascendant tier — saturated, high-contrast, premium god-tier MMO leaderboard frame, exquisite metallic detail, no text, no UI." | `text, numbers, characters, content inside frame, hand drawn, photo, 3d render, washed out, multiple crowns` |
+
+**Generation order:** Epic 7→10 first in one batch (cheapest to iterate on), Mythic 20 last (highest stakes — we want to settle the Epic baseline before painting the chase tier).
+
+**Resume here next session if interrupted:** Generate frames 7→10 against the locked brief above. Review in Cosmetic Studio. Reroll any that bleed the decoration into the centre band (most likely failure mode) by adding `, dark centre, contained border decoration` to the prompt.
+
 
 
 | Category | Model | Output | Render strategy |
