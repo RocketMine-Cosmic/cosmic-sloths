@@ -305,15 +305,16 @@ Generation happens via `functions/generateCosmeticAsset` (already built + tested
 
 **Note on animation:** these are all hero/keyframe stills. The 6-frame loops promised in section B (CSS `steps(6)` sprite sheets) will be generated as follow-up passes against the approved hero frame, or hand-composed in code. Hero asset is the canonical "this is what the cosmetic looks like" image.
 
-**Next session — resume here:**
-1. **Chest Epic — LB Banner Frames (4 items):** `lb_frame_gold_filigree`, `lb_frame_electric_arc`, `lb_frame_nebula_swirl`, `lb_frame_glitch_rgb`. FLUX.1-dev, 1024×96. Need wide-aspect prompts with transparent / black inner cutout.
-2. **Chest Epic — Title Flair (3 items):** `title_style_rainbow_shimmer`, `title_style_blue_flame`, `title_style_liquid_chrome`. **Code-only** (pure CSS) — no studio generation needed, design in `index.css` directly.
-3. **Chest Mythic — Weapon Trails (3 items):** code-only ParticleManager configs.
-4. **Chest Mythic — Kill FX (2 items):** code-only ParticleManager configs.
-5. **Chest Mythic — Meteor FX (1 item):** `meteor_fx_gold_lightning`. FLUX.1-dev, 256×128.
-6. **Chest Mythic — LB Frame (1 item):** `lb_frame_eclipse_crown`. FLUX.1-dev, 1024×96.
+**LB Banner Frames (5/5 approved ✅ — category complete):** all 4 Epic frames + the Mythic Eclipse Crown generated at **1024×1024 with picture-frame prompts** (see "LB Frame generation finding #2" below for why square aspect was the unlock). 9-slice render handles the actual ~720×80 LB row size at runtime.
 
-**Remaining AI-generated assets:** 4 Epic LB frames + 1 Mythic meteor FX + 1 Mythic LB frame = **6 images**. Everything else in the chest catalogue is code-only.
+**Meteor FX (1/1 approved ✅ — generated 2026-06-27):** `meteor_fx_gold_lightning` at 256×128. Completes every AI-generated chest cosmetic.
+
+**Next session — resume here (CODE-ONLY remaining):**
+1. **Chest Epic — Title Flair (3 items):** `title_style_rainbow_shimmer`, `title_style_blue_flame`, `title_style_liquid_chrome`. Pure CSS — design in `index.css` directly.
+2. **Chest Mythic — Weapon Trails (3 items):** `weapon_trail_void`, `weapon_trail_solar`, `weapon_trail_phoenix_fire`. ParticleManager configs.
+3. **Chest Mythic — Kill FX (2 items):** `kill_fx_coin_burst`, `kill_fx_supernova`. ParticleManager configs.
+
+**All AI-generated chest assets are DONE.** Remaining work is code-only OR shifts to Phase 2 (save schema + Wardrobe page wiring + render integration).
 
 ---
 
