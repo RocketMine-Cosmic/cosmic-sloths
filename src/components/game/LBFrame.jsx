@@ -6,8 +6,22 @@ import { isStandardLbFrame, getStandardLbFrame } from '@/lib/standardCosmetics';
 // Wraps a leaderboard row with an LB Banner Frame.
 //
 // Two render paths:
-//   1. Standard (CSS) frames — pure border / box-shadow / gradient, no PNG.
+//   1. Standard (CSS) frames — layered borders / shadows / gradients, with
+//      optional corner sparks on gradient frames.
 //   2. Chest (PNG) frames — stretched 8:1 banner art behind the row.
+
+// Tiny diamond spark used on gradient frames' corners.
+const CornerSpark = ({ color, position }) => (
+    <span
+        className="absolute w-1.5 h-1.5 rotate-45 rounded-[1px] pointer-events-none"
+        style={{
+            ...position,
+            background: color,
+            boxShadow: `0 0 6px ${color}, 0 0 12px ${color}88`,
+        }}
+    />
+);
+
 export default function LBFrame({ frameId, children, className = '' }) {
     if (!frameId) return <>{children}</>;
 
@@ -15,7 +29,6 @@ export default function LBFrame({ frameId, children, className = '' }) {
     if (isStandardLbFrame(frameId)) {
         const f = getStandardLbFrame(frameId);
         if (f.kind === 'gradient') {
-            // Gradient frames use border-image + a shifting background-position.
             return (
                 <div
                     className={`relative rounded-lg ${f.anim} ${className}`}
@@ -23,11 +36,20 @@ export default function LBFrame({ frameId, children, className = '' }) {
                         padding: '2px',
                         backgroundImage: f.gradient,
                         backgroundSize: '200% 100%',
+                        boxShadow: `0 0 10px ${f.accent}55, 0 0 22px ${f.accent}33`,
                     }}
                 >
-                    <div className="rounded-md bg-slate-900/95">
+                    <div className="rounded-md bg-slate-900/95 relative">
                         {children}
                     </div>
+                    {f.showCorners && (
+                        <>
+                            <CornerSpark color={f.accent} position={{ top: '-3px', left: '-3px' }} />
+                            <CornerSpark color={f.accent} position={{ top: '-3px', right: '-3px' }} />
+                            <CornerSpark color={f.accent} position={{ bottom: '-3px', left: '-3px' }} />
+                            <CornerSpark color={f.accent} position={{ bottom: '-3px', right: '-3px' }} />
+                        </>
+                    )}
                 </div>
             );
         }

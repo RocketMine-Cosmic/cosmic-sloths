@@ -177,39 +177,65 @@
    * Lighter-weight than the chest tier: solid colours and soft
    * effects, no gradient animation.
    * ============================================================ */
+  /* Cyan Glow — layered halo, bright core */
   .title-flair-cyan_glow {
-    color: #67e8f9;
-    text-shadow: 0 0 6px rgba(34,211,238,0.7), 0 0 12px rgba(34,211,238,0.4);
+    color: #ecfeff;
+    text-shadow:
+      0 0 4px rgba(165,243,252,0.95),
+      0 0 10px rgba(34,211,238,0.85),
+      0 0 22px rgba(34,211,238,0.55),
+      0 0 38px rgba(8,145,178,0.35);
     font-weight: 700;
+    letter-spacing: 0.02em;
   }
+  /* Gold Outline — gradient fill + dark outline + warm sheen */
   .title-flair-gold_outline {
-    color: #fde68a;
-    -webkit-text-stroke: 1px #d97706;
-    text-shadow: 0 0 4px rgba(217,119,6,0.6);
-    font-weight: 700;
+    background-image: linear-gradient(180deg, #fef3c7 0%, #fde68a 35%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1px #92400e;
+    filter: drop-shadow(0 1px 0 rgba(120,53,15,0.6)) drop-shadow(0 0 6px rgba(217,119,6,0.55));
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
+  /* Pink Pop — vivid magenta with radiant glow */
   .title-flair-pink_pop {
-    color: #fbcfe8;
-    text-shadow: 0 0 6px rgba(244,114,182,0.75), 0 0 14px rgba(236,72,153,0.4);
-    font-weight: 700;
+    color: #fdf2f8;
+    text-shadow:
+      0 0 4px rgba(251,207,232,0.95),
+      0 0 12px rgba(244,114,182,0.9),
+      0 0 24px rgba(236,72,153,0.6),
+      0 0 40px rgba(190,24,93,0.35);
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
+  /* Emerald Mint — gradient sheen + soft glow */
   .title-flair-emerald_mint {
-    background-image: linear-gradient(90deg, #6ee7b7, #a7f3d0, #6ee7b7);
+    background-image: linear-gradient(180deg, #d1fae5 0%, #6ee7b7 50%, #10b981 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    font-weight: 700;
-    filter: drop-shadow(0 0 3px rgba(110,231,183,0.5));
+    filter:
+      drop-shadow(0 0 4px rgba(110,231,183,0.7))
+      drop-shadow(0 0 10px rgba(16,185,129,0.45));
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
+  /* Violet Haze — deeper gradient + dual-layer haze */
   .title-flair-violet_haze {
-    background-image: linear-gradient(90deg, #c4b5fd, #a78bfa, #8b5cf6);
+    background-image: linear-gradient(180deg, #ede9fe 0%, #c4b5fd 40%, #7c3aed 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    font-weight: 700;
-    filter: drop-shadow(0 0 4px rgba(167,139,250,0.55));
+    filter:
+      drop-shadow(0 0 5px rgba(167,139,250,0.75))
+      drop-shadow(0 0 12px rgba(124,58,237,0.45));
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
 
   /* ============================================================

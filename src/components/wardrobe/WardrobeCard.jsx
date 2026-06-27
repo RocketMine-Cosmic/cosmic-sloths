@@ -75,10 +75,25 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                         }
                         return <div className={`w-[88%] h-[28%] rounded-md bg-slate-900 ${f.anim}`} style={f.style} />;
                     }
-                    // Standard CSS-only animated pilot icon — render the emoji with its motion.
+                    // Standard CSS-only animated pilot icon — render the themed medallion.
                     if (item.category === 'pilot_icon' && isStandardAnimatedIcon(item.id)) {
                         const std = getStandardAnimatedIcon(item.id);
-                        return <span className={`${std.anim} text-5xl leading-none`}>{std.emoji}</span>;
+                        return (
+                            <div
+                                className="relative w-20 h-20 rounded-full flex items-center justify-center overflow-hidden"
+                                style={{
+                                    background: std.plate,
+                                    border: `2px solid ${std.rim}`,
+                                    boxShadow: `inset 0 0 8px rgba(255,255,255,0.14), 0 0 14px ${std.rim}66`,
+                                }}
+                            >
+                                <span
+                                    className="absolute inset-[3px] rounded-full pointer-events-none"
+                                    style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
+                                />
+                                <span className={`${std.anim} relative z-10 text-4xl leading-none`}>{std.emoji}</span>
+                            </div>
+                        );
                     }
                     // Show the actual generated asset thumbnail for chest categories
                     // that have one. Falls through to the original emoji / colour swatch

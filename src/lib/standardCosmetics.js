@@ -4,72 +4,136 @@
 //
 // IDs use the `std_` prefix so they never collide with chest IDs and the live
 // render paths (LBFrame, AnimatedPilotIcon, PlayerTitle) can branch cheaply.
+//
+// Visual baseline (locked 2026-06-27): these are paid items even at the
+// "donation" tier, so each entry carries enough layered treatment — plates,
+// rims, gradients, accent glows — to read as a real reward and not as
+// untreated emoji / plain borders.
 
 // ─── Standard LB Frames (5) ──────────────────────────────────────────────────
-// Mix of solid-colour borders and gradient borders, all driven by CSS.
-// `style` is passed straight to the wrapper div on the live LB row + preview.
+// Each frame is a layered treatment: outer accent border, gradient mid-layer,
+// inner highlight, optional corner ornaments. `kind` drives the renderer's
+// composition path (solid plate vs gradient stroke).
 export const STANDARD_LB_FRAMES = [
     {
         id: 'std_lb_frame_cyan_glow',
         name: 'Cyan Pulse',
-        desc: 'Solid cyan border with soft pulsing glow.',
+        desc: 'Double cyan border with inner highlight and pulsing aura.',
         kind: 'solid',
-        style: { border: '2px solid rgba(34,211,238,0.8)', boxShadow: '0 0 12px rgba(34,211,238,0.45)' },
+        // Outer ring + inner stroke + ambient glow combine for a "framed" feel.
+        style: {
+            border: '2px solid rgba(34,211,238,0.9)',
+            boxShadow: 'inset 0 0 0 1px rgba(125,211,252,0.35), 0 0 14px rgba(34,211,238,0.55), 0 0 28px rgba(34,211,238,0.25)',
+        },
         anim: 'std-lb-pulse-cyan',
+        accent: '#22d3ee',
     },
     {
-        id: 'std_lb_frame_gold_glow',
+        id: 'std_lb_frame_gold_halo',
         name: 'Gold Halo',
-        desc: 'Solid gold border with a warm halo.',
+        desc: 'Brushed-gold double border with warm halo glow.',
         kind: 'solid',
-        style: { border: '2px solid rgba(250,204,21,0.85)', boxShadow: '0 0 12px rgba(250,204,21,0.5)' },
+        style: {
+            border: '2px solid rgba(250,204,21,0.95)',
+            boxShadow: 'inset 0 0 0 1px rgba(254,240,138,0.45), 0 0 14px rgba(250,204,21,0.55), 0 0 30px rgba(217,119,6,0.35)',
+        },
         anim: 'std-lb-pulse-gold',
+        accent: '#facc15',
     },
     {
-        id: 'std_lb_frame_purple_glow',
+        id: 'std_lb_frame_violet_aura',
         name: 'Violet Aura',
-        desc: 'Solid violet border with deep purple aura.',
+        desc: 'Violet rim with deep purple aura and inner sheen.',
         kind: 'solid',
-        style: { border: '2px solid rgba(192,132,252,0.85)', boxShadow: '0 0 12px rgba(168,85,247,0.55)' },
+        style: {
+            border: '2px solid rgba(192,132,252,0.9)',
+            boxShadow: 'inset 0 0 0 1px rgba(216,180,254,0.4), 0 0 14px rgba(168,85,247,0.6), 0 0 30px rgba(126,34,206,0.35)',
+        },
         anim: 'std-lb-pulse-purple',
+        accent: '#c084fc',
     },
     {
-        id: 'std_lb_frame_sunset_gradient',
+        id: 'std_lb_frame_sunset',
         name: 'Sunset',
-        desc: 'Orange → pink gradient border.',
+        desc: 'Animated orange→pink gradient stroke with corner sparks.',
         kind: 'gradient',
-        gradient: 'linear-gradient(90deg,#f97316,#ec4899,#f97316)',
+        gradient: 'linear-gradient(90deg,#f59e0b,#f97316,#ec4899,#f97316,#f59e0b)',
         anim: 'std-lb-grad-shift',
+        accent: '#f97316',
+        showCorners: true,
     },
     {
-        id: 'std_lb_frame_aurora_gradient',
+        id: 'std_lb_frame_aurora',
         name: 'Aurora',
-        desc: 'Green → cyan → violet aurora gradient.',
+        desc: 'Animated green→cyan→violet aurora stroke with corner sparks.',
         kind: 'gradient',
-        gradient: 'linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#34d399)',
+        gradient: 'linear-gradient(90deg,#34d399,#22d3ee,#a78bfa,#22d3ee,#34d399)',
         anim: 'std-lb-grad-shift',
+        accent: '#22d3ee',
+        showCorners: true,
     },
 ];
 
 // ─── Standard Animated Pilot Icons (5) ───────────────────────────────────────
-// Emoji combined with a CSS animation. `emoji` renders inside the avatar slot;
-// `anim` is the CSS class that drives the motion.
+// Each icon: themed emoji + motion + a coloured rim/glow that matches the
+// theme. The rim is what turns "an emoji" into "a cosmetic" — paid players
+// see a polished medallion, not a raw glyph.
 export const STANDARD_ANIMATED_ICONS = [
-    { id: 'std_icon_spinning_star',  name: 'Spinning Star',  desc: 'A star that slowly rotates.',     emoji: '🌟', anim: 'std-icon-spin' },
-    { id: 'std_icon_pulsing_gem',    name: 'Pulsing Gem',    desc: 'A gem that softly pulses.',       emoji: '💎', anim: 'std-icon-pulse' },
-    { id: 'std_icon_bouncing_rocket', name: 'Bouncing Rocket', desc: 'A rocket that bobs in place.', emoji: '🚀', anim: 'std-icon-bounce' },
-    { id: 'std_icon_glowing_heart',  name: 'Glowing Heart',  desc: 'A heart with a soft glow loop.',  emoji: '💖', anim: 'std-icon-glow' },
-    { id: 'std_icon_wobbling_skull', name: 'Wobbling Skull', desc: 'A skull that tilts side to side.', emoji: '💀', anim: 'std-icon-wobble' },
+    {
+        id: 'std_icon_spinning_star',
+        name: 'Spinning Star',
+        desc: 'Gold star slowly rotating inside a warm-glow medallion.',
+        emoji: '🌟',
+        anim: 'std-icon-spin',
+        rim: '#facc15',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(254,240,138,0.25), rgba(15,23,42,0.95) 70%)',
+    },
+    {
+        id: 'std_icon_pulsing_gem',
+        name: 'Pulsing Gem',
+        desc: 'Sapphire gem pulsing in a cool cyan medallion.',
+        emoji: '💎',
+        anim: 'std-icon-pulse',
+        rim: '#22d3ee',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(125,211,252,0.25), rgba(15,23,42,0.95) 70%)',
+    },
+    {
+        id: 'std_icon_bouncing_rocket',
+        name: 'Bouncing Rocket',
+        desc: 'Rocket bobbing inside a deep-space medallion.',
+        emoji: '🚀',
+        anim: 'std-icon-bounce',
+        rim: '#60a5fa',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(147,197,253,0.25), rgba(15,23,42,0.95) 70%)',
+    },
+    {
+        id: 'std_icon_glowing_heart',
+        name: 'Glowing Heart',
+        desc: 'Heart with a pink halo on a rose-tinted medallion.',
+        emoji: '💖',
+        anim: 'std-icon-glow',
+        rim: '#f472b6',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(251,207,232,0.25), rgba(15,23,42,0.95) 70%)',
+    },
+    {
+        id: 'std_icon_wobbling_skull',
+        name: 'Wobbling Skull',
+        desc: 'Skull tilting on a violet medallion.',
+        emoji: '💀',
+        anim: 'std-icon-wobble',
+        rim: '#a78bfa',
+        plate: 'radial-gradient(circle at 30% 30%, rgba(196,181,253,0.22), rgba(15,23,42,0.95) 70%)',
+    },
 ];
 
 // ─── Standard Title Flairs (5) ───────────────────────────────────────────────
 // Each id maps 1:1 to a `.title-flair-<id>` CSS class defined in index.css.
 export const STANDARD_TITLE_FLAIRS = [
-    { id: 'title_style_cyan_glow',    name: 'Cyan Glow',    desc: 'Cyan glow around the text.' },
-    { id: 'title_style_gold_outline', name: 'Gold Outline', desc: 'Warm gold outline.' },
-    { id: 'title_style_pink_pop',     name: 'Pink Pop',     desc: 'Bright pink with a soft pop.' },
-    { id: 'title_style_emerald_mint', name: 'Emerald Mint', desc: 'Cool emerald-mint sheen.' },
-    { id: 'title_style_violet_haze',  name: 'Violet Haze',  desc: 'Smooth violet haze gradient.' },
+    { id: 'title_style_cyan_glow',    name: 'Cyan Glow',    desc: 'Cyan text with layered glow halo.' },
+    { id: 'title_style_gold_outline', name: 'Gold Outline', desc: 'Warm-gold double outline with soft sheen.' },
+    { id: 'title_style_pink_pop',     name: 'Pink Pop',     desc: 'Vivid pink text with radiant glow.' },
+    { id: 'title_style_emerald_mint', name: 'Emerald Mint', desc: 'Cool emerald-mint gradient with sheen.' },
+    { id: 'title_style_violet_haze',  name: 'Violet Haze',  desc: 'Smooth violet gradient with deep haze.' },
 ];
 
 // Fast lookup helpers.

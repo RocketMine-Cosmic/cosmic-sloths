@@ -2,21 +2,33 @@ import React from 'react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
 import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
 
-// Renders the equipped pilot icon if one is set, otherwise falls back to
-// the standard pilot icon (emoji or uploaded URL). Used everywhere a player's
-// avatar appears — LB row, profile, squad chat, end-of-run modal.
-//
-// Three render paths:
-//   1. Chest animated icon — uses the generated PNG asset.
-//   2. Standard ("Support the Devs") animated icon — emoji + CSS animation.
+// Renders the equipped pilot icon. Three render paths:
+//   1. Chest animated icon — generated PNG asset.
+//   2. Standard ("Support the Devs") icon — themed medallion: tinted plate,
+//      coloured rim, inner shine ring, animated emoji core. Reads as a real
+//      cosmetic, not raw emoji.
 //   3. Fallback — standard pilot emoji / upload URL.
 export default function AnimatedPilotIcon({ animatedId, fallback, className = 'w-10 h-10' }) {
-    // Standard (CSS) animated icon — emoji with a motion class.
+    // Standard medallion.
     if (animatedId && isStandardAnimatedIcon(animatedId)) {
         const std = getStandardAnimatedIcon(animatedId);
         return (
-            <div className={`${className} rounded-full bg-slate-900 border-2 border-cyan-500/40 flex items-center justify-center overflow-hidden`}>
-                <span className={`${std.anim} text-xl leading-none`}>{std.emoji}</span>
+            <div
+                className={`${className} rounded-full relative flex items-center justify-center overflow-hidden`}
+                style={{
+                    background: std.plate,
+                    border: `2px solid ${std.rim}`,
+                    boxShadow: `0 0 0 1px rgba(15,23,42,0.9), inset 0 0 6px rgba(255,255,255,0.12), 0 0 10px ${std.rim}66`,
+                }}
+            >
+                {/* Inner shine highlight — top-left arc */}
+                <span
+                    className="absolute inset-[3px] rounded-full pointer-events-none"
+                    style={{ background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18) 0%, transparent 55%)' }}
+                />
+                <span className={`${std.anim} relative z-10 leading-none`} style={{ fontSize: '70%' }}>
+                    {std.emoji}
+                </span>
             </div>
         );
     }
