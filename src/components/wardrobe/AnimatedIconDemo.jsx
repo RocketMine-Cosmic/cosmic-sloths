@@ -1,5 +1,6 @@
 import React from 'react';
 import { isStandardAnimatedIcon, getStandardAnimatedIcon } from '@/lib/standardCosmetics';
+import { getChestIconAnimClass } from '@/lib/chestIconAnimations';
 import StandardIconSigil from './StandardIconSigils';
 
 // Preview of an animated pilot icon.
@@ -53,23 +54,23 @@ export default function AnimatedIconDemo({ iconId, iconUrl }) {
             </div>
         );
     }
+    const anim = getChestIconAnimClass(iconId);
+    const Wrapped = ({ size }) => (
+        <div className={`rounded-full overflow-hidden border-2 border-cyan-500/30`} style={{ width: size, height: size }}>
+            <div className={anim}>
+                <img src={iconUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+        </div>
+    );
     return (
         <div className="w-full bg-slate-950 rounded-lg flex flex-col items-center justify-center gap-4 py-10">
             <div className="text-[10px] uppercase tracking-widest text-slate-500">pilot icon preview</div>
-            <div className="relative">
-                <img
-                    src={iconUrl}
-                    alt="pilot icon"
-                    className="w-32 h-32 rounded-full object-cover border-2 border-cyan-500/30 animate-pulse"
-                    style={{ animationDuration: '3s' }}
-                />
-                <div className="absolute inset-0 rounded-full ring-2 ring-cyan-400/20 ring-offset-2 ring-offset-slate-950 pointer-events-none" />
-            </div>
+            <Wrapped size={128} />
             <div className="flex items-center gap-3 text-xs text-slate-400">
                 <span>Small</span>
-                <img src={iconUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                <Wrapped size={32} />
                 <span>Medium</span>
-                <img src={iconUrl} alt="" className="w-12 h-12 rounded-full object-cover" />
+                <Wrapped size={48} />
                 <span>Leaderboard</span>
             </div>
         </div>

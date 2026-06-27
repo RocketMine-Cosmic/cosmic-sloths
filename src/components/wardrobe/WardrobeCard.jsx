@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lock, Eye } from 'lucide-react';
 import { getChestAssetUrl } from '@/lib/chestCosmeticAssets';
+import { getChestIconAnimClass } from '@/lib/chestIconAnimations';
 import {
     isStandardLbFrame, getStandardLbFrame,
     isStandardAnimatedIcon, getStandardAnimatedIcon,
@@ -108,7 +109,11 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                         // crops them to a sliver. `object-contain` shows the whole frame
                         // centred. Pilot icons / meteor FX are square-ish so cover still fits.
                         const fit = item.category === 'lb_frame' ? 'object-contain' : 'object-cover';
-                        return <img src={chestUrl} alt={item.name} className={`w-full h-full ${fit}`} />;
+                        // Chest pilot icons get a CSS motion overlay so the static PNG
+                        // reads as alive in the thumbnail too.
+                        const anim = item.category === 'pilot_icon' ? getChestIconAnimClass(item.id) : '';
+                        const img = <img src={chestUrl} alt={item.name} className={`w-full h-full ${fit}`} />;
+                        return anim ? <div className={`${anim} w-full h-full`}>{img}</div> : img;
                     }
                     if (item.category === 'title_flair') {
                         const flairId = item.id.replace(/^title_style_/, '');
