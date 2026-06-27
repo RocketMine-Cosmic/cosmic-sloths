@@ -23,14 +23,17 @@ export default function LbFrameDemo({ frameId, frameUrl, charIcon = '🦥', name
                     className="absolute inset-0 w-full h-full pointer-events-none select-none"
                     style={{ objectFit: 'fill' }}
                 />
-                <div className="relative z-10 h-full flex items-center gap-3 px-6">
-                    <div className="text-2xl font-bold text-amber-300">🥇</div>
-                    <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl">{charIcon}</div>
+                {/* Inset the row content so the ornate left/right end caps of the
+                    frame don't overlap the medal / name / score. ~10% padding each side
+                    keeps content inside the dark centre band of every frame. */}
+                <div className="relative z-10 h-full flex items-center gap-3 pl-[11%] pr-[11%]">
+                    <div className="text-xl font-bold text-amber-300 shrink-0">🥇</div>
+                    <div className="w-9 h-9 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-lg shrink-0">{charIcon}</div>
                     <div className="flex-1 min-w-0">
-                        <div className="font-bold text-white text-lg truncate">{name}</div>
+                        <div className="font-bold text-white text-base truncate">{name}</div>
                         <div className="text-[10px] text-slate-400">Sample row</div>
                     </div>
-                    <div className="font-mono text-cyan-400 font-bold text-lg">{score.toLocaleString()}</div>
+                    <div className="font-mono text-cyan-400 font-bold text-base shrink-0">{score.toLocaleString()}</div>
                 </div>
             </div>
             <div className="text-xs text-slate-500">Stretches to fit any row width</div>

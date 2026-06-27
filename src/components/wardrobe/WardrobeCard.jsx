@@ -66,7 +66,11 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
                     const chestUrl = ['pilot_icon', 'lb_frame', 'meteor_fx'].includes(item.category)
                         ? getChestAssetUrl(item.id) : null;
                     if (chestUrl) {
-                        return <img src={chestUrl} alt={item.name} className="w-full h-full object-cover" />;
+                        // LB frames are 8:1 banners — `object-cover` in a square tile
+                        // crops them to a sliver. `object-contain` shows the whole frame
+                        // centred. Pilot icons / meteor FX are square-ish so cover still fits.
+                        const fit = item.category === 'lb_frame' ? 'object-contain' : 'object-cover';
+                        return <img src={chestUrl} alt={item.name} className={`w-full h-full ${fit}`} />;
                     }
                     if (item.category === 'title_flair') {
                         const flairId = item.id.replace(/^title_style_/, '');
