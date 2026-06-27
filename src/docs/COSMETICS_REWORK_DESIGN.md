@@ -398,6 +398,22 @@ Every Epic + Mythic LB frame generates with this shared spec:
 
 ---
 
+### LB Frame generation finding #2 (2026-06-27) — 4:1 still too wide
+
+**Problem hit on second pass:** at 1024×256 (4:1) the frames now paint decoration concentrated in the **left and right end caps** with the top and bottom edges nearly empty — they read as "side panels with a centre gap" rather than fully enclosed four-sided borders. The 9-slice would stretch that empty middle band horizontally and the rendered LB row would have an obvious unornamented strip across the top and bottom.
+
+**Root cause:** FLUX's "horizontal banner" prior is still dominant at 4:1. The "fully enclosed rectangular frame" language in the prompt wasn't enough to override it. Same problem as the 10.6:1 pass, just shifted from "top edge only" to "left/right edges only".
+
+**Fix — go fully square + prompt for "ornate picture frame":**
+- **Source resolution: 1024 × 1024** (1:1). At square aspect, FLUX reliably treats the brief as "ornate picture frame surrounding a central scene" — the strongest prior we have for four-sided symmetrical decoration.
+- **Render strategy unchanged.** 9-slice via `border-image` doesn't care about source aspect ratio — `border-image-slice: 24 80 24 80` still describes the slice region as a fraction of the source. At 1024×1024 the corners are 80×24 fractional units (still pixel-equivalent at our render size). Centre still gets discarded.
+- **File size:** 1024×1024 PNG ≈ 4× a 1024×256 PNG (~800KB worst-case). Still acceptable — these load once at app start and are cached.
+- **Prompt rewrite (third pass):** drop all banner language. Lead with "ornate decorative picture frame" / "rectangular border surrounding a dark centre". Add explicit "four-sided symmetrical decoration, equal ornamentation on top edge, bottom edge, left edge, and right edge."
+
+**Resume here next session:** regenerate all 5 frames (Epic 7-10 + Mythic 20) at 1024×1024 with picture-frame-language prompts. Watch for the failure mode flipping again — if FLUX now paints something *inside* the dark centre (treating it as a painting subject), strengthen "empty centre" / "centre is plain dark fill, no subject" in the prompt.
+
+---
+
 ### LB Frame responsive scaling (resolved 2026-06-27)
 
 The LB row stretches with viewport — desktop ~720px wide, tablet ~500px, mobile ~340px. A naive `background-size: 100% 100%` stretch on a 1024×96 PNG squashes the corner ornaments horizontally and looks awful on mobile.
