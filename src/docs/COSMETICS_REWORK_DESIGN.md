@@ -381,6 +381,23 @@ Every Epic + Mythic LB frame generates with this shared spec:
 
 ---
 
+### LB Frame generation finding (2026-06-27) — aspect ratio matters
+
+**Problem hit on first pass:** Generated all 5 frames at exactly 1024×96 (the target render size). FLUX read 10.6:1 as "wide banner header" and painted ornate decoration only along the **top edge**, leaving the bottom totally blank. They look like the upper half of a picture frame — gorgeous, but not a full enclosing border.
+
+**Root cause:** at extreme aspect ratios FLUX has a strong "banner header" prior. "Top band" / "bottom band" instructions in the prompt couldn't override it.
+
+**Fix — generate taller, downscale via 9-slice:**
+- **Source resolution: 1024 × 256** (4:1) — an aspect FLUX reliably treats as "rectangular frame around a contained scene".
+- **Render size in the UI: unchanged** — 9-slice (`border-image`) doesn't care about source pixel height. It slices by ratio. The 24 / 80 / 24 / 80 slice fractions just become `64 / 80 / 64 / 80` against the 256px source.
+- **Prompt rewrite:** drop "1024×96 horizontal banner" and "top 24 pixel band / bottom 24 pixel band". Replace with "fully enclosed rectangular frame, decoration mirrored on top AND bottom edges, symmetrical four-sided border". Centre still flat `#0a0e1a`.
+
+**File-size impact:** 1024×256 PNG ≈ 4× the pixels of 1024×96, but still under 200KB each at FLUX's typical compression. Acceptable.
+
+**Reroll batch ran 2026-06-27 — all 5 frames regenerated at 1024×256 with rewritten prompts.** Old 96px assets superseded; review the new ones in the studio.
+
+---
+
 ### LB Frame responsive scaling (resolved 2026-06-27)
 
 The LB row stretches with viewport — desktop ~720px wide, tablet ~500px, mobile ~340px. A naive `background-size: 100% 100%` stretch on a 1024×96 PNG squashes the corner ornaments horizontally and looks awful on mobile.
