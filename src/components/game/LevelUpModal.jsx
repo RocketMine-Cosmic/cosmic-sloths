@@ -261,17 +261,22 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                     if (!engine) return null;
                     const arenaId = engine.arena?.id;
 
-                    // Squad Meteor — exact counter on the engine
-                    if (arenaId === 'quantum_meteor' && (engine.pendingStarterLevelUps || 0) > 0) {
-                        const remaining = engine.pendingStarterLevelUps;
-                        return (
-                            <div className="mb-3 md:mb-4 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 border-fuchsia-500/60 bg-fuchsia-950/40 text-fuchsia-200 font-mono font-bold text-xs md:text-sm flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 shrink-0" />
-                                <span>
-                                    {remaining} more upgrade{remaining === 1 ? '' : 's'} before the fight begins
-                                </span>
-                            </div>
-                        );
+                    // Squad Meteor — exact counter on the engine.
+                    // pendingStarterLevelUps includes the pick currently being shown,
+                    // so the count AFTER this pick is `pending - 1`. Only show the
+                    // banner when there's still something left after this one.
+                    if (arenaId === 'quantum_meteor') {
+                        const remaining = (engine.pendingStarterLevelUps || 0) - 1;
+                        if (remaining > 0) {
+                            return (
+                                <div className="mb-3 md:mb-4 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 border-fuchsia-500/60 bg-fuchsia-950/40 text-fuchsia-200 font-mono font-bold text-xs md:text-sm flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 shrink-0" />
+                                    <span>
+                                        {remaining} more upgrade{remaining === 1 ? '' : 's'} before the fight begins
+                                    </span>
+                                </div>
+                            );
+                        }
                     }
 
                     // Global Raid — estimate remaining queued level-ups from banked XP
