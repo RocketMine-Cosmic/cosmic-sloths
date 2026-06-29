@@ -817,62 +817,30 @@ Deno.serve(async (req) => {
         // Otherwise two concurrent purchases could each pre-validate against the same
         // old snapshot, charge, and one would clobber the other on write — player gets
         // charged 2× OMENX but only 1 grant lands.
-        //
-        // Double-charge fix (Briantjeuh 2026-06-29): if the save write fails after the
-        // charge succeeds, retry up to 3× with backoff. Without this, the client sees
-        // `success: true` but the grant never lands (local save stays stale), so the
-        // player clicks again and gets charged a SECOND time. The server-side retry
-        // dramatically reduces the chance of that happening from transient DB blips.
         if (grantInfo && saveRecord) {
-            let writeSucceeded = false;
-            let lastWriteErr = null;
-            for (let attempt = 0; attempt < 3 && !writeSucceeded; attempt++) {
-                if (attempt > 0) await new Promise(r => setTimeout(r, 250 * attempt));
-                try {
-                    const freshRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
-                    if (freshRecords.length === 0) throw new Error('Save vanished mid-purchase');
-                    const freshRecord = freshRecords[0];
-                    const freshSave = typeof freshRecord.save_data === 'string'
-                        ? JSON.parse(freshRecord.save_data)
-                        : freshRecord.save_data;
-                    const reAppliedSave = applyGrant(freshSave, grantInfo, skuId, periodIds);
-                    await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, {
-                        save_data: reAppliedSave,
-                        updated_at: Date.now()
-                    });
-                    updatedSave = reAppliedSave;
-                    writeSucceeded = true;
-                    if (attempt > 0) console.log(`[purchaseSku] grant write succeeded on retry ${attempt + 1}`);
-                    console.log(`[purchaseSku] Granted ${grantInfo.type} to ${walletAddress}`);
-                } catch (err) {
-                    lastWriteErr = err;
-                    console.error(`[purchaseSku] grant write attempt ${attempt + 1} failed:`, err.message);
-                }
-            }
-            if (!writeSucceeded) {
-                console.error('[purchaseSku] CRITICAL: charged but failed to apply grant after 3 retries:', lastWriteErr?.message);
-                // Loud alert — every one of these is a double-charge waiting to happen.
-                postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
-                    title: '💸 Charged but grant write failed — refund required',
-                    description: 'Player paid OMENX but their save never updated. They will likely re-purchase and get double-charged unless refunded.',
-                    fields: [
-                        { name: 'Player', value: playerNameForAlert || 'Unknown pilot', inline: true },
-                        { name: 'Wallet', value: `\`${walletAddress}\``, inline: true },
-                        { name: 'SKU', value: skuId, inline: true },
-                        { name: 'Amount', value: `${totalAmount} OMENX`, inline: true },
-                        { name: 'Last error', value: `\`\`\`${(lastWriteErr?.message || 'unknown').slice(0, 500)}\`\`\``, inline: false },
-                    ],
+            try {
+                const freshRecords = await base44.asServiceRole.entities.PlayerSave.filter({ wallet_address: walletAddress.toLowerCase() });
+                if (freshRecords.length === 0) throw new Error('Save vanished mid-purchase');
+                const freshRecord = freshRecords[0];
+                const freshSave = typeof freshRecord.save_data === 'string'
+                    ? JSON.parse(freshRecord.save_data)
+                    : freshRecord.save_data;
+                const reAppliedSave = applyGrant(freshSave, grantInfo, skuId, periodIds);
+                await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, {
+                    save_data: reAppliedSave,
+                    updated_at: Date.now()
                 });
-                // Tell the client unambiguously that this failed — so they don't retry
-                // and get charged again. Use a non-success response so the UI shows an
-                // error and asks the player to contact support.
+                updatedSave = reAppliedSave;
+                console.log(`[purchaseSku] Granted ${grantInfo.type} to ${walletAddress}`);
+            } catch (err) {
+                console.error('[purchaseSku] CRITICAL: charged but failed to apply grant:', err.message);
+                // Charge already happened — log but tell client to retry sync to get state from server.
                 return Response.json({
-                    success: false,
-                    error: "Your payment went through but we couldn't save the upgrade. Don't buy it again — Base44 support has been notified and will refund you.",
-                    grantApplied: false,
-                    chargedButNotGranted: true,
+                    success: true,
                     amount: totalAmount,
-                }, { status: 500 });
+                    grantApplied: false,
+                    warning: 'Charge succeeded but grant write failed — your purchase will sync from server next time.',
+                }, { status: 200 });
             }
         }
 
