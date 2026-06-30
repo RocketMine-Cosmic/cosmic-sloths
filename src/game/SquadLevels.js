@@ -9,6 +9,14 @@ export const SQUAD_LEVELS = [
   { level: 5,  xpRequired: 75000,  name: 'Reapers',     badge: '💀', borderColor: '#ef4444', glowColor: 'rgba(239,68,68,0.5)' },
   { level: 6,  xpRequired: 150000, name: 'Legends',     badge: '👑', borderColor: '#a855f7', glowColor: 'rgba(168,85,247,0.6)' },
   { level: 7,  xpRequired: 300000, name: 'Cosmic Elite', badge: '🌌', borderColor: '#ec4899', glowColor: 'rgba(236,72,153,0.7)' },
+  { level: 8,  xpRequired: 600000,    name: 'Void Sovereigns',    badge: '🛸', borderColor: '#8b5cf6', glowColor: 'rgba(139,92,246,0.7)' },
+  { level: 9,  xpRequired: 1200000,   name: 'Star Forgers',       badge: '⚔️', borderColor: '#f97316', glowColor: 'rgba(249,115,22,0.7)' },
+  { level: 10, xpRequired: 2500000,   name: 'Eternal Ascendants', badge: '🌠', borderColor: '#fbbf24', glowColor: 'rgba(251,191,36,0.75)' },
+  { level: 11, xpRequired: 5000000,   name: 'Galaxy Wardens',     badge: '🪐', borderColor: '#06b6d4', glowColor: 'rgba(6,182,212,0.75)' },
+  { level: 12, xpRequired: 10000000,  name: 'Nebula Tyrants',     badge: '☄️', borderColor: '#d946ef', glowColor: 'rgba(217,70,239,0.8)' },
+  { level: 13, xpRequired: 20000000,  name: 'Singularity Lords',  badge: '🕳️', borderColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.85)' },
+  { level: 14, xpRequired: 40000000,  name: 'Ascended Pantheon',  badge: '🔱', borderColor: '#facc15', glowColor: 'rgba(250,204,21,0.9)' },
+  { level: 15, xpRequired: 80000000,  name: 'Omenforged',         badge: '✨', borderColor: '#f43f5e', glowColor: 'rgba(244,63,94,0.95)' },
 ];
 
 export const MAX_SQUAD_LEVEL = SQUAD_LEVELS.length;

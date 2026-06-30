@@ -41,12 +41,42 @@ async function pairSquadsForWeek(base44, weekId) {
     });
 
     const toPair = eligible.filter(s => !alreadyPaired.has(s.id));
-    toPair.sort((a, b) => (b.level || 1) - (a.level || 1));
+
+    // Bracket matchmaking — see squadWarEngine for the design notes. Logic is
+    // intentionally identical: bracket by 3 levels, sort within bracket by war_wins
+    // desc, bump the odd squad DOWN to the next bracket to minimise byes.
+    const BRACKET_SIZE = 3;
+    const bracketOf = (lvl) => Math.floor((Math.max(1, lvl) - 1) / BRACKET_SIZE);
+    const buckets = new Map();
+    for (const s of toPair) {
+        const b = bracketOf(s.level || 1);
+        if (!buckets.has(b)) buckets.set(b, []);
+        buckets.get(b).push(s);
+    }
+    const bracketIds = [...buckets.keys()].sort((a, b) => b - a);
+    for (const bId of bracketIds) {
+        const bucket = buckets.get(bId);
+        bucket.sort((a, b) => (b.war_wins || 0) - (a.war_wins || 0));
+        if (bucket.length % 2 === 1 && bId > 0) {
+            const bumped = bucket.pop();
+            const nextDown = bId - 1;
+            if (!buckets.has(nextDown)) {
+                buckets.set(nextDown, []);
+                bracketIds.push(nextDown);
+            }
+            buckets.get(nextDown).unshift(bumped);
+        }
+    }
+    const ordered = [];
+    for (const bId of [...buckets.keys()].sort((a, b) => b - a)) {
+        buckets.get(bId).sort((a, b) => (b.war_wins || 0) - (a.war_wins || 0));
+        ordered.push(...buckets.get(bId));
+    }
 
     let paired = 0, byes = 0;
-    for (let i = 0; i < toPair.length; i += 2) {
-        const a = toPair[i];
-        const b = toPair[i + 1];
+    for (let i = 0; i < ordered.length; i += 2) {
+        const a = ordered[i];
+        const b = ordered[i + 1];
         if (b) {
             await base44.asServiceRole.entities.SquadWar.create({
                 week_id: weekId,
