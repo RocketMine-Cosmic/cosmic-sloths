@@ -55,9 +55,27 @@ of ~30-40 active weekly players. The two sinks below are our first attempt.
   - 6-10/day: 72 rows (14%)
   - **11+/day: 57 rows (11%)** ← this is where a cap actually bites
 
-**~26% of daily rows are 6+ revives in a single day.** That's a lot of
-"just one more try" pressed at 4 OMENX — exactly the behaviour that
-should cost more per press, not less.
+**~26% of daily rows are 6+ revives in a single day.** With
+one-revive-per-run enforced, that means 6+ separate runs in a single
+day, each ending in a paid revive — this is dedicated grinding, not
+chain-reviving one long run.
+
+**Player-week distribution** (155 revive-active player-weeks over the
+last 6 weeks):
+- **64 (41%) had 10+ revives in the week** — would hit a 10/wk cap.
+- **47 (30%) had 15+ revives** — would hit a 15/wk cap.
+- **32 (21%) had 20+ revives** — would hit a 20/wk cap.
+
+A 10/week cap binds on **41% of revive-active player-weeks** — much
+harder than initially assumed. This changes the revenue math below.
+
+**Data integrity red flag (unresolved):** several top revive-weeks
+show 40-125 revives with 0 matching RunScore rows in the same window.
+Either the RunScore sample is time-truncated, revive-then-die doesn't
+write a RunScore, or the one-revive-per-run rule isn't actually
+enforced server-side. Log a follow-up to reconcile
+`TokenSpendLog['ingame-revive']` against distinct RunScore run IDs
+before shipping.
 
 ### The proposal (locked)
 
@@ -115,38 +133,60 @@ Weighted blend of all revive volume by cost tier:
 
 **With 10/week cap:**
 
-Assuming volume stays similar to W26 (319 revives) but chain-revive
-days get clipped by the cap:
+One revive per run means the cap is really "10 saved runs per week".
+Live data shows 41% of revive-active player-weeks currently exceed 10,
+so the cap trims ~55% of total revive volume from those weeks. From
+319 W26 revives, ~180 survive post-cap (uncapped weeks contribute
+fully; capped weeks contribute their 10-revive ceiling).
 
 | Bucket | Share | Revives/wk | Cost each | OMENX/wk |
 |---|---:|---:|---:|---:|
-| 0-4 min | 39% | 105 | 4 | 420 |
-| 4-8 min | 26% | 70 | 8 | 560 |
-| 8-11 min sector / 10-25 endless | 33% | 89 | 15 | 1,335 |
-| 11+ sector / 25+ endless | 2% | 5 | 25 | 125 |
-| **Total (10/wk cap)** | | **269** | | **~2,440** |
+| 0-4 min | 39% | 70 | 4 | 280 |
+| 4-8 min | 26% | 47 | 8 | 376 |
+| 8-11 min sector / 10-25 endless | 33% | 59 | 15 | 885 |
+| 11+ sector / 25+ endless | 2% | 4 | 25 | 100 |
+| **Total (10/wk cap)** | | **180** | | **~1,641** |
 
-**10/wk cap = +1,164 OMENX/week (+91% vs current 1,276).**
+**10/wk cap = +365 OMENX/week (+29% vs current 1,276).**
 
-This is a smaller number than the pre-correction estimate (~3,002) —
-the 25 OMENX top tier barely fires because sector runs can't reach it
-and endless runs are only 18% of the mix. But the **15 OMENX tier does
-the heavy lifting** because a full 35% of sector deaths happen at
-8-11min, right when a leaderboard-worthy run is on the line.
+This is *substantially* smaller than the pre-correction number because
+the cap now bites much harder than modelled: 41% of player-weeks lose
+volume, not just the top 10% "chain-reviver" weeks. The dedicated
+grinders running 20+ separate runs per week are the very players being
+capped.
 
-Top whale ceiling: 10 × 25 = **250 OMENX/week/whale** (rare — most
-whales cap out closer to 150 OMENX/week under this distribution). Fair
-brake without gating engaged play.
+**Cap-size sensitivity:**
+
+| Cap | Player-weeks capped | Est. revives/wk | Est. OMENX/wk | Delta vs 1,276 |
+|---|---:|---:|---:|---:|
+| 10/wk | 41% | 180 | ~1,641 | +29% |
+| 15/wk | 30% | 235 | ~2,143 | +68% |
+| 20/wk | 21% | 270 | ~2,462 | +93% |
+| No cap | 0% | 319 | ~2,908 | +128% |
+
+**Recommendation:** ship with **15/week** as the cap. It still trims
+the compulsive-grind top tail (30% of weeks capped) but delivers
+meaningfully more revenue than the 10/week option. The 20/week option
+is close to uncapped and doesn't meaningfully protect anyone.
+
+Top-whale ceiling at 15/wk: 15 × 25 = **375 OMENX/week/whale** (rare —
+the 25 tier barely fires); realistic whale ceiling ~200 OMENX/week.
 
 ### Locked spec (post-tuning)
 
-- 4 / 8 / 15 / 25 OMENX by run-time bucket (5 / 10 / 25 min breakpoints).
-- **Weekly cap: 10 revives per player per week.** (Revised up from 5
-  once we saw actual per-week revive counts.)
+- 4 / 8 / 15 / 25 OMENX by run-time bucket (4 / 8 / 11 min breakpoints,
+  tuned for the 12:30 sector-run ceiling).
+- **Weekly cap: 15 revives per player per week.** (Trims the top 30%
+  of revive-active player-weeks — the dedicated 15+ separate-run
+  grinders — without capping normal engaged players.)
+- One revive per run (already enforced by engine — confirm before ship).
 - Price shown in death prompt before purchase.
 - Cap counter stored on `PlayerSave.weekly_revive_count` + companion
   `weekly_revive_week_id` (same pattern as `weekly_sector_kills`).
 - ~0.5 day dev in `purchaseSku`, `GameEngine.js`, and the death modal.
+- **Pre-ship task:** reconcile the RunScore-vs-revive count mismatch
+  (§"Data integrity red flag" above) — if one-revive-per-run isn't
+  actually enforced, all revenue estimates need to be redone.
 
 ### Zero cannibalisation risk
 
@@ -237,20 +277,24 @@ trivial vs the 76M/week gold spend we see).
 ## Combined weekly OMENX projection
 
 Both sinks stack on top of the current W26 baseline of 18,584 OMENX/week.
-Revive delta = new total (~2,440) − current (1,276) = **+1,164**.
+Revive delta at 15/week cap = new total (~2,143) − current (1,276) =
+**+867**.
 
 | Scenario | Revive delta | Fragments (new) | **New total OMENX/week** | vs W26 | vs W23 peak (43.9k) |
 |---|---:|---:|---:|---:|---:|
-| Conservative | +1,164 | ~5,400 | **~25,148** | **+35%** | 57% |
-| Realistic | +1,164 | ~9,800 | **~29,548** | **+59%** | 67% |
-| Optimistic | +1,164 | ~15,200 | **~34,948** | **+88%** | 80% |
+| Conservative | +867 | ~5,400 | **~24,851** | **+34%** | 57% |
+| Realistic | +867 | ~9,800 | **~29,251** | **+57%** | 67% |
+| Optimistic | +867 | ~15,200 | **~34,651** | **+86%** | 79% |
 
-**Both sinks still contribute meaningfully** — the revive correction
-brought the sector-tuned estimate down from ~+135% to ~+91% on its
-own category, but fragments still carry the bulk of the absolute
-increase because that SKU opens with the biggest addressable base.
+**Fragments now carry the vast majority of the revenue lift** — the
+revive escalation has been progressively de-scoped as constraints
+surfaced (endless-tier deleted, cap tightened, one-revive-per-run
+bounding). Revive is now primarily a *pricing hygiene* intervention
+(charging appropriately for late-run saves) rather than a major
+revenue lever. That's fine — the sink still delivers +67% category
+lift, but our expectations should sit with fragments.
 
-Realistic combined case (~29.5k/week) recovers ~67% of the W23 peak —
+Realistic combined case (~29.3k/week) recovers ~67% of the W23 peak —
 without touching player count. If the S8 tease / new content in the
 audit §7G lifts actives back to 50-60/week, both sinks scale
 proportionally and we're back above W23 levels.
@@ -275,21 +319,20 @@ Week 1 targets:
   combined case).
 - Revive SKU: ≥ **25 unique buyers** (matches current baseline — cap
   shouldn't drop the buyer count, only trim the top tail).
-- Revive OMENX ≥ **2,500** (vs 1,276 current — validates escalation
-  is working even if fewer revives happen).
+- Revive OMENX ≥ **2,000** (vs 1,276 current — validates escalation
+  is working even after cap trims volume).
 - Fragment SKU: ≥ **6 unique buyers** in first week (conservative floor).
 - No support tickets about the revive cap being unfair.
 
 Week 4 targets:
 
-- Total OMENX/week ≥ **30,000** (hitting realistic combined case).
+- Total OMENX/week ≥ **29,000** (hitting realistic combined case).
 - Fragment SKU cap-hitters: ≥ **8** (whale segment fully adopted).
 - Prestige actions (`prestigeRelic` calls) up ≥ 30% — validates that
   the express lane is *enabling* more prestige, not just extracting
   OMENX from stalled grinders.
-- Revive cap-hitters (players hitting 10/week): ≥ **3** — confirms
-  the cap is doing real work on the top tail without being unreachable
-  for a normal engaged reviver.
+- Revive cap-hitters (players hitting 15/week): **5-8 expected**
+  (matches the 30% of revive-active weeks we see today at 15+ revives).
 
 If week 1 undershoots on the fragment SKU, first move is to loosen the
 cap to 800 frags/week (not to drop the price — the price is anchored
