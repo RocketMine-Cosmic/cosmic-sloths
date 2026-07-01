@@ -35,6 +35,12 @@ function TargetRow({ target, points, committedPoints, onAdd, onRemove, canAdd, a
     // players can see at a glance which choices they've changed.
     const isDirty = points !== committedPoints;
     const delta = points - committedPoints;
+    // The − button can only walk back points added THIS session — i.e. points
+    // above the already-committed allocation. Removing committed points would
+    // let players free up spent points without paying respec (bypass fix
+    // 2026-07-01 — reported live: "you can press minus and remove all the
+    // allocated points without having to pay for respec").
+    const canRemove = points > committedPoints;
     // Past +100% = diminishing returns kick in. We still allow it (no cap), but
     // flag it visually so the player understands the bar staying full isn't a
     // bug — extra points still count, they're just worth less per point.
@@ -65,9 +71,9 @@ function TargetRow({ target, points, committedPoints, onAdd, onRemove, canAdd, a
                     </span>
                     <button
                         onClick={onRemove}
-                        disabled={points <= 0}
+                        disabled={!canRemove}
                         className="px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center gap-1 text-[10px] font-bold transition-colors"
-                        title="Remove 1 point"
+                        title={canRemove ? 'Remove 1 point' : 'Already committed — use Respec to free up spent points'}
                     >
                         <Minus className="w-3 h-3" />
                     </button>
@@ -140,7 +146,11 @@ export default function PoolBiasPanel({ save, setSave }) {
 
     const removePoint = (targetId) => {
         const current = Number(draft[targetId] || 0);
-        if (current <= 0) return;
+        const committed = Number(committedAllocations[targetId] || 0);
+        // Only points added this session (above the committed floor) can be
+        // walked back. Removing committed points requires a paid respec —
+        // otherwise the − button is a free respec (bypass fix 2026-07-01).
+        if (current <= committed) return;
         SoundManager.playUIClick();
         setDraft(d => {
             const next = { ...d, [targetId]: current - 1 };
@@ -150,16 +160,24 @@ export default function PoolBiasPanel({ save, setSave }) {
         });
     };
 
-    // Apply a preset to the DRAFT — wipes the draft first then distributes ALL
-    // total points across the preset's target weights. This way switching
-    // between presets in the draft cleanly swaps builds (without each preset
-    // stacking on top of the previous one). Respec is still required to commit
-    // changes that reduce committed allocations — Confirm/Cancel handles that.
+    // Apply a preset to the DRAFT — distributes ONLY the currently-unspent
+    // points across the preset's target weights, layered on top of already-
+    // committed allocations. Presets can no longer wipe committed points
+    // (that requires a paid respec — bypass fix 2026-07-01).
     const applyPreset = (preset) => {
-        if (total <= 0) return;
+        // Unspent = total minus what's ALREADY committed. Uncommitted draft
+        // additions are also discarded so pressing a preset gives a
+        // predictable result regardless of any draft +'s the player made.
+        const unspent = Math.max(0, total - committedSpent);
+        if (unspent <= 0) return;
         SoundManager.playUIClick();
-        const fresh = buildPresetAllocation(preset.weights, total);
-        setDraft(fresh);
+        const bonus = buildPresetAllocation(preset.weights, unspent);
+        // Merge bonus on top of committed floor.
+        const next = { ...committedAllocations };
+        for (const [id, pts] of Object.entries(bonus)) {
+            next[id] = Number(next[id] || 0) + pts;
+        }
+        setDraft(next);
     };
 
     const confirmDraft = () => {
@@ -301,8 +319,8 @@ export default function PoolBiasPanel({ save, setSave }) {
                         <button
                             key={p.id}
                             onClick={() => applyPreset(p)}
-                            disabled={total <= 0}
-                            title={total <= 0 ? 'No points available' : `Redistributes all ${total} points: ${p.desc}`}
+                            disabled={draftRemaining <= 0}
+                            title={draftRemaining <= 0 ? 'No unspent points — use Respec to free up committed points' : `Distributes your ${draftRemaining} unspent points: ${p.desc}`}
                             className="flex items-start gap-2 bg-slate-900/60 hover:bg-fuchsia-900/30 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-fuchsia-500/60 rounded-lg px-2 py-1.5 text-left transition-colors"
                         >
                             <span className="text-base shrink-0">{p.icon}</span>
