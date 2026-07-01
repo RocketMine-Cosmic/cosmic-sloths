@@ -21,14 +21,25 @@ const DAILY_SQUAD_XP_BY_LEVEL = [
 ];
 
 // MUST mirror game/SquadLevels.js. Used to recompute level when XP changes server-side.
+// Cap raised to Lv15 (2026-07-01) — without the extended thresholds every squad
+// with 300k+ XP got clamped to Lv7 in the stored `level` field, wiping their
+// visible progress (Briantjeuh 2026-07-01: "we were lvl11 before utc 00:00").
 const SQUAD_LEVEL_THRESHOLDS = [
-    { level: 1, xpRequired: 0 },
-    { level: 2, xpRequired: 5000 },
-    { level: 3, xpRequired: 15000 },
-    { level: 4, xpRequired: 35000 },
-    { level: 5, xpRequired: 75000 },
-    { level: 6, xpRequired: 150000 },
-    { level: 7, xpRequired: 300000 },
+    { level: 1,  xpRequired: 0 },
+    { level: 2,  xpRequired: 5000 },
+    { level: 3,  xpRequired: 15000 },
+    { level: 4,  xpRequired: 35000 },
+    { level: 5,  xpRequired: 75000 },
+    { level: 6,  xpRequired: 150000 },
+    { level: 7,  xpRequired: 300000 },
+    { level: 8,  xpRequired: 600000 },
+    { level: 9,  xpRequired: 1200000 },
+    { level: 10, xpRequired: 2500000 },
+    { level: 11, xpRequired: 5000000 },
+    { level: 12, xpRequired: 10000000 },
+    { level: 13, xpRequired: 20000000 },
+    { level: 14, xpRequired: 40000000 },
+    { level: 15, xpRequired: 80000000 },
 ];
 
 function computeSquadLevel(xp) {
@@ -705,10 +716,13 @@ Deno.serve(async (req) => {
                 safePatch.current_week = canonicalWeek;
             } else if (squad.current_week < canonicalWeek) {
                 // Weekly rollover: stored week is BEHIND canonical. Roll weekly_kills into XP,
-                // zero weekly_kills, stamp canonical week.
+                // zero weekly_kills, stamp canonical week. Also recompute level so squads
+                // that grow past a tier threshold during rollover see their new rank
+                // immediately (previously `level` only advanced on the next daily bounty).
                 safePatch.current_week = canonicalWeek;
                 safePatch.weekly_kills = 0;
                 safePatch.xp = (squad.xp || 0) + (squad.weekly_kills || 0);
+                safePatch.level = computeSquadLevel(safePatch.xp);
             } else if (squad.current_week !== canonicalWeek) {
                 // Squad is stamped with a FUTURE week (corrupted by the old buggy client).
                 // Heal it without wiping kills — those kills were earned in the real current week.
