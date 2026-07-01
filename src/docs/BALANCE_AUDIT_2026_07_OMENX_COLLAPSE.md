@@ -400,16 +400,18 @@ fragments below their gold-convert rate.
   **~8,333 OMENX**. That's a serious anchor spend.
 - Bypasses the 30/day gold-convert cap in the Forge (the whole point —
   cap-hit whales are the target).
-- **Weekly cap: 600 fragments (400 OMENX)** — cap set to match a
-  realistic weekly play horizon rather than a full-season grind:
+- **Weekly cap: 600 fragments (400 OMENX)** — cap sized against the
+  actual 4-week season cadence:
   - **1 week at cap** = 600 frags = **1 PL step + 20% toward the next** —
-    real, visible progression from one weekend of play.
-  - **A whale hitting cap for 4 weeks** = 2,400 frags = **~5 PL steps** —
-    a satisfying season-long OMENX investment.
-  - **Full 25-step prestige via OMENX alone** = ~21 weeks (~1.5 seasons)
-    — still meaningful, no longer "nearly a year".
+    real, visible progression from a single week of play.
+  - **A whale hitting cap all 4 weeks of a season** = 2,400 frags =
+    **~5 PL steps** — a satisfying season-long OMENX investment,
+    finishing about a full relic's worth of prestige from OMENX alone.
+  - **Full 25-step prestige via OMENX only** = ~21 weeks ≈ **5 seasons**
+    — long enough to remain aspirational, short enough that dedicated
+    whales see a real endpoint.
   - Per-whale ceiling: **400 OMENX/week** (up from an initial 160 draft
-    that was pegged to a full-year horizon nobody would sustain).
+    that was pegged to a horizon nobody would sustain).
 - ~0.5 day dev. Zero cannibalisation risk — no other OMENX sink
   overlaps.
 
