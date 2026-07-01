@@ -1,8 +1,14 @@
 # Sandbox / Test Play Mode — Design Doc
 
-**Status:** Design phase. Not on near-term roadmap.
-**Source:** Player suggestion from Jasper70 in Discord, 2026-06-26.
-**Priority:** Low — Jasper himself flagged it as non-urgent. Target window: **before full public roll-out of the OMEN Foundation platform**, as a polish / professionalism pass.
+**Status:** Under active consideration for **S8 launch** (~1 week out).
+**Source:** Player suggestion from Jasper70 in Discord, 2026-06-26 —
+originally framed as OMEN-public-launch polish; **repositioned 2026-07-01**
+as a returning-player retention hook for S8.
+**Priority:** Elevated — pairs with the S8 revive+fragments monetisation
+sinks (see `OMENX_SINKS_2026_07_REVIVE_AND_FRAGMENTS.md` §"S8 launch
+coordination") to address the audit's -51% active-player collapse. Serves
+double duty: **retention lever for lapsed players now**, **onboarding
+lever for OMEN public launch later** — same build, two audiences.
 
 ---
 
@@ -173,4 +179,18 @@ To stop this growing into a months-long feature:
 
 ## Decision
 
-**Park for now.** Revisit when the OMEN Foundation public launch date is locked. Build window: ~1 week, schedule it in the launch run-up so it ships in the same announcement as the OMEN platform debut. Matches Jasper70's own timing suggestion exactly.
+**Repositioned for S8 launch consideration (2026-07-01).** Original
+"park until OMEN public launch" call is superseded by the S8 retention
+need — active players fell 63 → 31 over the last 5 weeks and the S8
+patch as currently drafted is monetisation-heavy (revive escalation +
+fragment express lane) with no *give* to lapsed players. Sandbox flips
+the launch narrative from "we're charging more" to "try anything, then
+chase the leaderboard."
+
+**Open question for product:** ~5 days of dev during S8 crunch is real
+budget. If sandbox slots in alongside revive+fragments for the S8
+launch patch, something else on the S8 roadmap gives up its slot.
+Product to confirm the trade before build kicks off.
+
+**If it doesn't make S8:** original OMEN-public-launch window still
+applies. The doc stands as-is either way.

@@ -8,6 +8,50 @@ time we tweak a value.
 **Companion docs:**
 - `BALANCE_AUDIT_2026_07_OMENX_COLLAPSE.md` — full diagnosis + all levers.
 - `OMENX_SPEND_BRAINSTORM.md` — original ideation pool.
+- `SANDBOX_TEST_PLAY_MODE.md` — S8 retention companion (see §"S8 launch coordination" below).
+
+---
+
+## S8 launch coordination — retention alongside monetisation
+
+Both sinks in this doc are **monetisation** levers: they pull more OMENX
+out of players who are already here. Neither of them addresses the
+audit's other headline finding — **active players fell 63 → 31 (-51%)**.
+Extracting more from a shrinking base only works for so long.
+
+**Sandbox / Test Play Mode** (spec in `SANDBOX_TEST_PLAY_MODE.md`) is
+the retention companion. It was originally scoped as an OMEN-public-
+launch onboarding tool but the same build serves the S8 returning-
+player problem better than any balance patch:
+
+- Lapsed players who churned around W25 (shield nerf) can dust off
+  their old build risk-free before committing to a real run — removes
+  the "I don't remember how to play anymore" bounce.
+- Reframes S8 messaging: without sandbox, S8 patch notes read as
+  *taking* (revive costs more, here's a way to buy fragments).
+  With sandbox they read as *giving* — "try anything, then chase
+  the leaderboard". The launch announcement lands very differently.
+- Feeds the two monetisation sinks downstream: player uses sandbox →
+  commits to a real cool build → dies at 10 min → the new 15-OMENX
+  revive is a save-my-build moment, not a cash grab.
+
+**Ship-together package for S8:**
+
+| Feature | Type | Effort | Purpose |
+|---|---|---:|---|
+| Revive escalation | Monetisation | 0.5d | Charge fairly for late-run saves |
+| Fragment express lane | Monetisation | 0.5d | Give whales a new anchor spend |
+| Sandbox / Test Play | Retention | ~5d | Bring lapsed players back + soften onboarding |
+
+**Sandbox risk to name:** could marginally reduce revive spend if
+players perfect builds in sandbox first and die less in real runs.
+Realistically small — real-run randomness kills more often than build
+ignorance — but worth watching in the week-4 monitoring pass.
+
+**Sandbox is a design call, not a monetisation decision.** ~5 days of
+dev during S8 crunch is real budget; product should confirm what else
+on the S8 roadmap slides if all three ship together. See sandbox doc
+for the full spec.
 
 ---
 
