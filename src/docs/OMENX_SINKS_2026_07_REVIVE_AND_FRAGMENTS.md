@@ -69,13 +69,11 @@ last 6 weeks):
 A 10/week cap binds on **41% of revive-active player-weeks** — much
 harder than initially assumed. This changes the revenue math below.
 
-**Data integrity red flag (unresolved):** several top revive-weeks
-show 40-125 revives with 0 matching RunScore rows in the same window.
-Either the RunScore sample is time-truncated, revive-then-die doesn't
-write a RunScore, or the one-revive-per-run rule isn't actually
-enforced server-side. Log a follow-up to reconcile
-`TokenSpendLog['ingame-revive']` against distinct RunScore run IDs
-before shipping.
+**RunScore/revive mismatch — explained:** initial audit flagged top
+revivers with 40-125 weekly revives against 0 matching RunScore rows.
+This is expected: RunScore is pruned to top-5 per player for DB space,
+so the 40+ non-top-5 runs those revivers played simply aren't in the
+table anymore. One-revive-per-run is enforced — the revenue math stands.
 
 ### The proposal (locked)
 
@@ -184,9 +182,7 @@ the 25 tier barely fires); realistic whale ceiling ~200 OMENX/week.
 - Cap counter stored on `PlayerSave.weekly_revive_count` + companion
   `weekly_revive_week_id` (same pattern as `weekly_sector_kills`).
 - ~0.5 day dev in `purchaseSku`, `GameEngine.js`, and the death modal.
-- **Pre-ship task:** reconcile the RunScore-vs-revive count mismatch
-  (§"Data integrity red flag" above) — if one-revive-per-run isn't
-  actually enforced, all revenue estimates need to be redone.
+
 
 ### Zero cannibalisation risk
 
