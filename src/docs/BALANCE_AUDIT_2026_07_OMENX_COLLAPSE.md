@@ -70,10 +70,17 @@ attractive to shortcut**. Either because:
 - Or they've reached the cap and there's nothing left to buy,
 - Or they've disengaged and don't care to progress.
 
-### 2b. Cosmetics OMENX is functionally zero
+### 2b. Cosmetics OMENX is functionally zero — **AND THIS IS NOW BY DESIGN**
 
-Only 2 weeks (W21, W23) had any cosmetic spend at all — and both under
-650 OMENX total. **We have zero cosmetic revenue.** Explanation in §4.
+Only 2 weeks (W21, W23) had any cosmetic spend at all — both under 650 OMENX
+total. Per the locked cosmetics rework (`COSMETICS_REWORK_DESIGN.md`,
+2026-06-26), this is **intentional and permanent**: the entire cosmetic
+category is moving off OMENX. Standard cosmetics become GMT-only "Support
+the Devs" donations (flat 15 GMT per item, real-money) at GMT launch; the
+new Epic/Mythic chest cosmetics are OmenX **platform** VIP Chest rewards
+(real-money purchases on the OmenX side, dropped via webhook), not sold
+directly for OMENX in-app. **Cosmetics as an OMENX sink no longer exist and
+shouldn't be planned around.** More in §4.
 
 ### 2c. Progression spenders (unique wallets) fell off a cliff
 
@@ -145,29 +152,56 @@ whale attention away from OMENX purchases.
 
 ---
 
-## 4. Why cosmetics OMENX = 0
+## 4. Cosmetics have moved out of the OMENX economy entirely
 
-The `TRAIL_COSMETICS`, `KILL_COSMETICS`, and `SKIN_COSMETICS` tables in
-`Constants.js` list an OMENX price for every item. But cosmetic OMENX
-revenue is **0 for 5 of the last 7 weeks**. Why:
+The old assumption in §7 of the first draft — "sell more cosmetics for
+OMENX" — is dead. Per the locked design (`COSMETICS_REWORK_DESIGN.md`,
+`VIP_CHEST_GAME_ITEMS.md`) cosmetics are now a **real-money-only
+category**, split into two rails:
 
-1. **The Wardrobe page shows gold price by default.** OMENX cost is either
-   hidden or secondary. Need to verify UI behavior on `Wardrobe.jsx` /
-   `WardrobeCard.jsx` — see §7.
+### 4a. Standard cosmetics → GMT "Support the Devs" donations
 
-2. **Gold cost is 5× less "expensive-feeling" than OMENX.**
-   Trail epic: 20,000g OR 20 OMENX. At the ratios above, gold feels like
-   "a few good runs" and OMENX feels like "real money". Rational players
-   pay gold every time.
+All existing Armoury cosmetics (trails, kill FX, character skins) are
+being **repositioned** as a flat-15-GMT donation tier at GMT launch. Until
+GMT ships, purchase buttons are disabled ("Coming soon"). Every OMENX and
+gold cosmetic SKU in `skuMap.js` will be replaced by a single GMT SKU per
+item.
 
-3. **Chest cosmetics (Epic / Mythic) are not sold for OMENX at all.** Per
-   `COSMETICS_REWORK_DESIGN.md`, chest cosmetics are unlockable only via
-   the VIP chest / seasonal rewards — no direct OMENX purchase path. So
-   even a whale willing to pay OMENX for the *good* cosmetics can't.
+**Consequence:** The 313 / 630 OMENX cosmetic weeks (W21 / W23) are not
+just "flat" — they're the tail end of a category that's being deleted
+from the OMENX economy on purpose. Standard cosmetics will never
+contribute to OMENX spend again.
 
-4. **Seasonal skins are missable-forever.** Great for FOMO on the current
-   season, but generates zero revenue from missed seasons — no vault, no
-   re-release, no OMENX buyback.
+### 4b. Chest cosmetics → OmenX VIP Chests (real-money via platform)
+
+The new 20-item Epic/Mythic chest catalogue (13 Epic + 7 Mythic, all
+generated + code-integrated as of 2026-06-27) is not for sale in-app.
+Players open OmenX **platform** VIP Chests (Bronze → Elite, 15 → 750 GMT
+each, some tiers also charging OMENX), OmenX rolls the loot table
+platform-side, and a webhook grants the cosmetic to our PlayerSave. **No
+OMENX changes hands in our purchase flow for these** — the OMENX chest
+tiers charge (Silver 100, Gold 200, Platinum 300, Diamond 500, Legend
+1000, Elite 1500) settle on the **OmenX platform**, not our
+`TokenSpendLog`.
+
+**Consequence:** Chest OMENX spend will appear as **new external revenue
+to OmenX**, likely visible only in the dev-portal Revenue tab, not in our
+weekly `TokenPool.total_spent`. Our internal OMENX spend number will
+stay flat on cosmetics forever.
+
+### 4c. What this means for the audit
+
+The "OMENX per active player" figure in §1 is **structurally never going
+back to 683 via cosmetics**. Cosmetic OMENX is retired as a lever.
+Everything else in this doc — progression, consumables, prestige, gold
+sinks — is what's actually available to tune.
+
+There's also a nuance worth naming: chest OMENX (Silver+ tiers) is real
+OMENX being spent — just not in our books. If we care about total OMENX
+demand across the ecosystem, chests are a huge new sink. If we care about
+**our weekly reward pool** (which is funded from `TokenSpendLog`, i.e.
+in-app spend only), chests contribute zero. Those are two different
+metrics and both matter — see §7.
 
 ---
 
@@ -226,69 +260,95 @@ sold at all.
 
 ## 7. Recommended interventions, ranked by expected impact
 
-### Immediate (this week — pure UI / config, no gameplay changes)
+**Ground rule:** cosmetics are off the table as an OMENX lever (see §4).
+Every intervention below targets **progression, consumables, or gold-sink
+rebalance** — the three levers that actually route through
+`TokenSpendLog`.
 
-**A. Make OMENX the *featured* purchase path on the Wardrobe.**
-Verify `WardrobeCard.jsx` — the OMENX button should be primary, gold
-button secondary. Show OMENX price first, gold price as "or pay X gold".
-This is the cheapest single intervention with a real chance to move numbers.
+### Immediate (this week — already scoped in `OMENX_SPEND_BRAINSTORM.md`)
 
-**B. Increase gold prices on the top-tier cosmetics (leave OMENX alone).**
-Legendary trails at 30,000g feels cheap when players are sitting on 5M gold.
-Bump legendary trails to 200,000g, epic kill effects to 250,000g. OMENX
-prices unchanged (still 20-30 OMENX). This restores the "gold is a slow
-alternative, OMENX is the fast way" narrative.
+**A. Ship the DevilsReject "Pick 2 / Pick All" level-up tokens.**
+The brainstorm doc has this fully scoped: `ingame-pick-two` at 8 OMENX,
+`ingame-pick-all` at 15 OMENX, per-run and per-week caps, reuses the
+existing `pendingStarterLevelUps` engine pattern from Squad Meteor. ~1.5
+days dev. This is the single highest-confidence lift because it targets
+the exact bucket that's still working (consumables) — it lets existing
+consumers spend *more per run*, not "convince a dormant player to buy".
 
-**C. Add cosmetic OMENX-only exclusives.** At least 2-3 cosmetics per
-category that CANNOT be bought with gold — OMENX-only, no seasonal gate.
-Simple example: a "Void Trail" and a "Cosmic Aura" kill effect priced at
-50 OMENX each. Zero-effort art if you reuse existing assets with a color
-shift.
+**B. Ship the Revive escalation + weekly cap.** Currently 4 OMENX flat.
+The engine already fires the death prompt (verified at
+`GameEngine.js:673`). Just needs a time-based cost curve (4 → 8 → 15 →
+25 OMENX past 5/10/25 min) and a weekly cap. ~0.5 day. Existing whales
+grinding endless will spend more per session.
 
-### Short-term (next 1-2 weeks — one small backend change each)
+**C. Ship the OMENX → Star Fragments express lane.** 1 OMENX = 1
+fragment, bypasses the 30/day gold-convert cap in the Forge, weekly cap
+100. ~0.5 day. Directly targets the whales who currently hit the
+convert wall and stop.
 
-**D. Add an OMENX-only "instant prestige" shortcut.** Right now prestige
-costs 7.5M gold + 500 frags per relic. That's ~32 casual weeks. Add an
-OMENX button next to each prestige level: pay 30 OMENX per PL to skip. A
-completionist whale paying 30×5×5 = 750 OMENX to fully prestige an entire
-account. New pure-OMENX sink.
+Bundle A + B + C in one patch. Total dev ~2.5 days, three sinks live in
+one week.
 
-**E. Rebalance Astral Lab cost curve UPward.** Current 1.4× growth per
-pull is generous. Bump to 1.5× — pull 10 goes from ~413k to ~577k, pull 15
-from 2.2M to ~4.4M. Same "endless whale sink" narrative, but slower gold
-drain = players have gold left over to consider OMENX progression again.
+### Short-term (next 1-2 weeks)
 
-**F. Cosmetic "reroll" for OMENX.** Players who got a duplicate seasonal
-skin should be able to reroll it via OMENX (say, 50 OMENX per reroll). No
-new art, just a config flag on the skin table.
+**D. Add an OMENX "instant prestige" shortcut.** Prestige currently costs
+7.5M gold + 500 fragments per relic level. That's ~32 casual weeks per
+relic. Add an OMENX button: pay 30 OMENX per PL to skip a level. A
+completionist whale fully prestiging 5 relics × 5 levels = 750 OMENX per
+account. This is the single biggest untapped **progression** sink.
 
-### Medium-term (next 2-4 weeks — one focused feature each)
+**E. Rebalance Astral Lab cost curve upward.** Current 1.4× growth per
+pull is generous — 25M gold pulled through it in W26 alone. Bump to 1.5×
+so gold sits in accounts longer. Whales sitting on gold are more likely
+to consider OMENX progression shortcuts than whales who just emptied
+their bank.
 
-**G. Chest cosmetics need an OMENX bypass path.** Per §4.3, chest cosmetics
-are the aspirational tier but aren't for sale. Add a direct-purchase price
-in OMENX at ~3-5× the "expected pull cost" for players who missed a chest
-season. This is the single biggest untapped OMENX category on the roadmap.
+**F. Squad-Wide Buffs funded with OMENX.** Extend the existing
+`Squad.active_buff_tier` field (currently gold-treasury-funded) to
+accept an OMENX-funded activation path. 200-500 OMENX per week for a
+squad-wide effect. Creates social pressure to donate — a category that
+currently exists only in gold (7-8M/week going to gold treasury alone).
 
-**H. Ship an S8 tease + a genuinely new content drop.** Balance patches
-don't retain. Even one new character or one new sector reactivates the
-player base. Look at the active-player curve — it needs a concrete reason
-to come back before W29.
+### Medium-term (next 2-4 weeks)
 
-**I. Refresh the daily OMENX-featured shop.** A daily rotating "featured
-item" that's OMENX-only and time-limited (24h). Costs nothing in art — just
-rotates existing SKUs. Creates a daily reason to log in AND to hold OMENX.
+**G. Ship an S8 tease + a genuinely new content drop.** Balance patches
+don't retain. Active player count has halved. Even one new character or
+one new sector reactivates the player base. Nothing in this audit's
+recommendations matters if the active count keeps falling — you need
+players *before* you have anyone to sell OMENX to.
+
+**H. Refresh the daily OMENX-featured shop.** A daily rotating "featured
+item" that's OMENX-only and time-limited (24h). Rotates existing
+consumable SKUs — no new content needed. Creates a daily reason to log
+in AND to hold OMENX.
+
+**I. Battle Pass (deferred to S8).** Marco confirmed BP is roadmapped but
+not launching with chests. Once designed, a 500 OMENX season pass is a
+massive OMENX anchor — this is the single biggest structural sink on the
+horizon.
 
 ### Structural (harder, higher upside)
 
-**J. Undo or halve the W25 weekly-score pool cut.** Going from 20% → 15%
-of spend was intended to fund the kill pool AND extend runway. But active
-players fell 51% since. The lost engagement from top players may cost more
-in future spend than the 5% saved. Consider restoring to 18% score + 5% kills.
+**J. Reconsider the W25 weekly-score pool cut.** Going from 20% → 15% of
+spend was intended to fund the kill pool AND extend runway. Active
+players fell 51% since. If top earners partially disengaged in response
+to the ~25% weekly-prize haircut, the lost future spend outweighs the 5%
+saved. Consider restoring to 18% score + 5% kills as a mid-season
+correction.
 
-**K. Introduce OMENX-only relic slots or perks.** Right now every
-permanent upgrade is dual-priced. A single "exclusive" perk tree accessible
-only via OMENX (e.g. a 6th relic slot; a cosmetic-only pilot title tier)
-creates a category of purchase that gold can never touch.
+**K. VIP Chest promotion inside the app.** Chest cosmetics don't fund
+our OMENX pool, BUT chest **purchases** are real OMENX revenue on the
+OmenX platform side (Silver+ tiers charge 100-1500 OMENX per open). A
+Wardrobe teaser card ("Open a chest to unlock this →") converts our
+in-app engagement into platform revenue. Doesn't hit `TokenSpendLog` but
+lifts our overall OmenX-ecosystem contribution, which is what OmenX
+uses to weight future platform features / promotion / VIP-tier lists.
+
+**L. OMENX-only relic slots or perks.** Right now every permanent upgrade
+is dual-priced. A single "exclusive" perk tree accessible only via OMENX
+(e.g. a 6th relic slot; an OMENX-only pilot title tier that isn't a
+chest reward) creates a category gold can never touch. Same principle
+as the Battle Pass but shipped as smaller pieces.
 
 ---
 
@@ -298,11 +358,16 @@ Simple dashboard I recommend building (all queries already possible against
 existing entities):
 
 1. `OMENX spend / active player` — top-line health metric. Target: hold ≥ 500.
-2. `OMENX progression spenders / week` — target: > 15.
-3. `OMENX cosmetic spend / week` — target: > 2,000 (currently ~0).
-4. `Gold spend / OMENX spend ratio` — currently gold is doing ALL the work.
-   Target: bring this ratio down by making gold sinks scale or OMENX sinks compelling.
+2. `OMENX progression spenders / week` — target: > 15 (was 20 pre-collapse).
+3. `OMENX consumable spenders / week` — the still-healthy bucket. Watch
+   for drop.
+4. `Gold spend / OMENX spend ratio` — currently gold is doing ALL the
+   work on permanent upgrades. Target: bring this ratio down by making
+   gold sinks slower (Astral 1.4× → 1.5×) or OMENX progression paths
+   cheaper (Pick 2, Pick All, revive cap, prestige shortcut).
 5. `Active player count 7d MAA` — target: back to 55+ within 4 weeks.
+6. **NEW when chests ship:** OmenX platform revenue tab (chest sales
+   attributed to Cosmic Sloths). Not in our DB — check dev portal.
 
 If any of 1-3 drop again next week without action, escalate.
 
@@ -310,5 +375,9 @@ If any of 1-3 drop again next week without action, escalate.
 
 ## 9. The single most important sentence
 
-**Gold has three deep endgame sinks. OMENX has none.** Fix that, and the
-spend curve inverts. Everything in §7 is subordinate to that principle.
+**Gold has three deep endgame sinks. OMENX has one healthy bucket
+(in-run consumables) and its progression + cosmetic buckets have been
+neutralised by design.** The fix is to build more compelling
+consumables and progression shortcuts (§7 A–F) — cosmetics are no
+longer a lever we own for our internal pool, they belong to the OmenX
+platform now.
