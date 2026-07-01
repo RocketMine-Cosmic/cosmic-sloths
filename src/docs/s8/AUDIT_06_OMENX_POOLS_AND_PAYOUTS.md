@@ -33,7 +33,7 @@ Files: `purchaseSku/entry.ts` (spend recording), `distributeRewards/entry.ts`
 | Retained (dev + operations) | **60%** | Not distributed |
 
 **S6 was 25%/20%/5%/50%** — S7 dropped leaderboard from 25→15 and lifted
-retained from 50→60 (see `S7_POOL_RESPLIT_PLAN.md`).
+retained from 50→60.
 
 ## 3. Seasonal pool splits (S7+)
 
@@ -62,7 +62,7 @@ Default weekly config (line 62-79):
 
 Sum: 12 + 12 + 21 + 22.5 + 18.75 + 17.5 = **103.75%** — slight over-allocation
 built in as safety (payouts capped by `MAX_PAYOUT_PER_PLAYER = 10000 OMENX` at
-line 91). Real distribution ≤ 100% due to cap clamping.
+line 91).
 
 Seasonal has DIFFERENT config (larger buckets, up to top 200).
 
@@ -124,52 +124,28 @@ Total distributed: 20,000 OMENX. Total held: 30,000 OMENX.
 ## 11. Observations
 
 1. **60% retention is high** relative to comparable games (10-30% typical).
-   S7 shift 50→60 reflects operational costs but players notice — the
-   S7 patch notes should call this out clearly (currently framed as "kill
-   pool boost from 15→20%"). Watch churn during S7.
+   Watch churn during S7.
 
-2. **Player LB payout over-allocation (103.75%)** is intentional safety —
-   the `MAX_PAYOUT_PER_PLAYER = 10000` cap kicks in for whales in small
-   weeks and would otherwise leave pool "under-distributed". Fine as-is.
+2. **Player LB payout over-allocation (103.75%)** is intentional safety.
 
-3. **`MIN_KILLS_TO_QUALIFY = 100`** for kill pool is very low. A player
-   grinding 30 min of sectors easily clears 100 kills. Consider raising
-   to 500-1000 to concentrate the pool on real contributors.
+3. **`MIN_KILLS_TO_QUALIFY = 100`** for kill pool is very low. Consider
+   raising to 500-1000.
 
 4. **`MAX_PAYOUT_PER_PLAYER = 10000` OMENX/week** = huge concentration cap.
-   At current typical OMENX price, that's a meaningful payout. On a
-   200k OMENX week, top-3 could each hit the cap and leave 3-5k OMENX
-   under-distributed. Confirm the cap-remainder is either logged or
-   redistributed downstream (currently: just clamped, not redistributed).
+   Confirm the cap-remainder is either logged or redistributed downstream.
 
 5. **Champions pool ONLY runs at season-start weeks** (W1, W5, W9, ...
-   modulo 4). If admins forget to configure `staff_pct_per_wallet` before
-   season boundary, they miss the season staff cut. Consider auto-defaulting.
+   modulo 4).
 
-6. **`TokenPool.distributed` flip logic** relies on scanning `PayoutLog` for
-   expected pool types. If we ADD a new pool type (e.g., a raid pool),
-   `distributed=true` might flip prematurely — see `distributeStaffPayout`
-   line 16-52 helper. Whenever adding new pools, update the pool-required
-   list.
+6. **`TokenPool.distributed` flip logic** relies on scanning `PayoutLog`.
 
-7. **Weekly + seasonal share a `TokenPool` per period_id** — a single
-   spend contributes to BOTH the weekly and the seasonal pool for that
-   date. So a 100 OMENX spend on Wed of W25 (which is inside S7) shows up
-   as 100 OMENX toward 2026-W25 weekly AND 100 OMENX toward 2026-S7
-   seasonal. Total ecosystem distribution is thus effectively:
-   - S7 weekly: 40% of every spend distributed (15+20+5)
-   - S7 seasonal (paid at season end): 35% of every spend (20+10+5)
-   - Combined: 75% of spend flows out, 25% retained — BUT staff double-
-     counts (weekly 5% + seasonal 5% for the same admin wallet). Effective
-     retention closer to 30-35%.
+7. **Weekly + seasonal share a `TokenPool` per period_id** — a single spend
+   contributes to BOTH pools. Effective retention closer to 30-35%.
 
-8. **Discord alerts** on payout failures via `DISCORD_ERROR_WEBHOOK`. Good.
-   Successful payouts don't post to Discord — consider adding a
-   `DISCORD_ECONOMY_WEBHOOK` summary at end of each distribution run so
-   the team can spot anomalies (e.g., a week that paid 3× normal).
+8. **Discord alerts** on payout failures via `DISCORD_ERROR_WEBHOOK`. Consider
+   adding a success summary too.
 
 9. **`previewPayouts` dry-run** lets admins simulate distribution before
-   pushing. Underused — should be part of standard weekly admin checklist.
+   pushing. Underused.
 
-10. **API key rotation is thin** (4 keys). If OMENX tightens rate limits
-    or one key gets revoked, payouts stall. Consider requesting 6-8 keys.
+10. **API key rotation is thin** (4 keys). Consider requesting 6-8 keys.

@@ -124,48 +124,30 @@ Hardcore Lv7 squad member with all clears + high raid tier ≈ 800k-1.2M/week.
 ## 9. Observations
 
 1. **Daily login jackpot on day 7 is the strongest single-day reward**
-   (1,500g + 3 frags = 31,500g equiv). Great retention hook. Streak-break
-   cost is substantial — good design.
+   (1,500g + 3 frags = 31,500g equiv). Great retention hook.
 
-2. **Daily task cap at 5 tasks feels right.** Total 1,650g/day daily-tasks
-   is ~15% of a casual's daily income — meaningful without dominating.
-   `dt_diversity` (need 2 characters) blocks brand-new players — see Doc 1 §9.4.
+2. **Daily task cap at 5 tasks feels right.** `dt_diversity` (need 2
+   characters) blocks brand-new players — see Doc 1 §9.4.
 
 3. **Bounties pool = 6 defined, 3 active per week.** Rotation is random per
-   week via `Constants.js` list; not visible without reading source. Consider
-   adding a "next week's bounties" preview in-UI.
+   week; not visible without reading source. Consider adding a "next week's
+   bounties" preview in-UI.
 
-4. **Weekly boss raid HP tuning is dynamic** (based on participation) but the
-   exact formula isn't in `Constants.js`. Check `getOrSpawnWeeklyBoss` — if HP
-   auto-scales, a low-participation week may make the boss trivially killable
-   by whales (bad if they hog top-tier rewards).
+4. **Weekly boss raid HP tuning is dynamic** but the exact formula isn't in
+   `Constants.js`.
 
 5. **Seasonal skins are MISSABLE-FOREVER.** High retention value but also
-   a rage-quit source when players learn they missed one. Consider making
-   past skins purchasable in a "vault" at 2-3× OMENX cost after 2 seasons.
+   a rage-quit source when players learn they missed one.
 
 6. **Leviathan Trial modifiers don't grant special leaderboard placement.**
-   Trial runs go on the general sector leaderboard with `run_type='sector'`.
-   `iron_will` + `glass_cannon` stacked = incredibly high skill runs but no
-   dedicated trial leaderboard. Consider a "Trials weekly" leaderboard.
 
 7. **Casual weekly income ~104k gold + 28 frags** = ~384k gold equivalent.
-   Prestiging one relic (7.5M gold + 500 frags = 12.5M equiv) = **32 weeks
-   of casual play**. Full 5-relic prestige = 32 × 5 = 160 weeks = 3 years.
-   Long tail is real — Astral Lab past pull 10 is even longer.
+   Prestiging one relic = 32 weeks of casual play.
 
 8. **Endless doesn't advance `Play Ten` / gold bounties** but DOES advance
-   dailies (line 397). Slight inconsistency — either both should exclude
-   endless or neither should. Recommend keeping current behaviour (dailies
-   are "engagement" tasks, bounties are "achievement" tasks — endless
-   grinding shouldn't clear achievements).
+   dailies. Slight inconsistency but keep current behaviour.
 
 9. **Boss raid reward Discord webhook** posts to `DISCORD_ECONOMY_WEBHOOK`.
-   Good for auditing. Ensure top-tier rewards logged with enough detail to
-   spot anomalies.
 
-10. **Daily login uses `save.dailyLoginLastClaim`** (client-writable), so
-    a tampered client could theoretically claim multiple times per day.
-    Verify `claimDailyLogin/entry.ts` uses server-authoritative UTC day
-    comparison, not client-submitted date. (Should be fine — Base44 auth
-    verifies wallet; check the actual UTC-key logic.)
+10. **Daily login uses `save.dailyLoginLastClaim`** (client-writable) so
+    verify UTC-key comparison is server-side.

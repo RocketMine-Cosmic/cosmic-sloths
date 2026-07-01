@@ -6,9 +6,8 @@ and the combined revenue picture so we don't have to re-derive them each
 time we tweak a value.
 
 **Companion docs:**
-- `BALANCE_AUDIT_2026_07_OMENX_COLLAPSE.md` — full diagnosis + all levers.
-- `OMENX_SPEND_BRAINSTORM.md` — original ideation pool.
-- `SANDBOX_TEST_PLAY_MODE.md` — S8 retention companion (see §"S8 launch coordination" below).
+- `AUDIT_OMENX_COLLAPSE.md` — full diagnosis + all levers.
+- `PLAN_SANDBOX_TEST_PLAY.md` — S8 retention companion (see §"S8 launch coordination" below).
 
 ---
 
@@ -19,7 +18,7 @@ out of players who are already here. Neither of them addresses the
 audit's other headline finding — **active players fell 63 → 31 (-51%)**.
 Extracting more from a shrinking base only works for so long.
 
-**Sandbox / Test Play Mode** (spec in `SANDBOX_TEST_PLAY_MODE.md`) is
+**Sandbox / Test Play Mode** (spec in `PLAN_SANDBOX_TEST_PLAY.md`) is
 the retention companion. It was originally scoped as an OMEN-public-
 launch onboarding tool but the same build serves the S8 returning-
 player problem better than any balance patch:
@@ -38,7 +37,7 @@ player problem better than any balance patch:
 **Ship-together package for S8:**
 
 | Feature | Type | Effort | Purpose |
-|---|---|---:|---|
+|---|---|---|---|
 | Revive escalation | Monetisation | 0.5d | Charge fairly for late-run saves |
 | Fragment express lane | Monetisation | 0.5d | Give whales a new anchor spend |
 | Sandbox / Test Play | Retention | ~5d | Bring lapsed players back + soften onboarding |
@@ -133,8 +132,7 @@ Sector runs cap at **~12:30** — pricing has to fit that ceiling.
 | 8-11 min | **15 OMENX** | Deep sector run — score is climbing, losing it hurts. |
 | 11 min+ / endless-any | **25 OMENX** | End-of-sector podium save or a genuine endless-tier death. |
 
-- **Weekly cap: 10 revives per player per week** (max 250 OMENX/week if
-  every one lands in the top tier — realistic ceiling is lower).
+- **Weekly cap: 15 revives per player per week** (see cap-size sensitivity below).
 - Cap resets on ISO week rollover (piggyback on existing weekly reset).
 - Death prompt shows the price BEFORE the click — no surprise charges.
 
@@ -150,8 +148,8 @@ Sector runs cap at **~12:30** — pricing has to fit that ceiling.
 - Endless runs (18% of all runs) contribute a real but small 25min+
   tail — 7% of endless runs reach 25min+. Top tier still exists but
   isn't where the volume lives.
-- 10/week cap trims the 6+ revives-per-day chain-revive behaviour
-  (see below) without punishing normal engaged players.
+- 15/week cap trims the 30% of revive-active weeks that hit 15+
+  revives without punishing normal engaged players.
 
 ### Revenue estimate
 
@@ -173,41 +171,17 @@ Weighted blend of all revive volume by cost tier:
 - **15 OMENX tier (8-11min sector / 10-25min endless):** 33%
 - **25 OMENX tier (11min+ sector podium / 25min+ endless):** 2%
 
-**With 10/week cap:**
-
-One revive per run means the cap is really "10 saved runs per week".
-Live data shows 41% of revive-active player-weeks currently exceed 10,
-so the cap trims ~55% of total revive volume from those weeks. From
-319 W26 revives, ~180 survive post-cap (uncapped weeks contribute
-fully; capped weeks contribute their 10-revive ceiling).
-
-| Bucket | Share | Revives/wk | Cost each | OMENX/wk |
-|---|---:|---:|---:|---:|
-| 0-4 min | 39% | 70 | 4 | 280 |
-| 4-8 min | 26% | 47 | 8 | 376 |
-| 8-11 min sector / 10-25 endless | 33% | 59 | 15 | 885 |
-| 11+ sector / 25+ endless | 2% | 4 | 25 | 100 |
-| **Total (10/wk cap)** | | **180** | | **~1,641** |
-
-**10/wk cap = +365 OMENX/week (+29% vs current 1,276).**
-
-This is *substantially* smaller than the pre-correction number because
-the cap now bites much harder than modelled: 41% of player-weeks lose
-volume, not just the top 10% "chain-reviver" weeks. The dedicated
-grinders running 20+ separate runs per week are the very players being
-capped.
-
 **Cap-size sensitivity:**
 
 | Cap | Player-weeks capped | Est. revives/wk | Est. OMENX/wk | Delta vs 1,276 |
 |---|---:|---:|---:|---:|
 | 10/wk | 41% | 180 | ~1,641 | +29% |
-| 15/wk | 30% | 235 | ~2,143 | +68% |
+| **15/wk** | **30%** | **235** | **~2,143** | **+68%** |
 | 20/wk | 21% | 270 | ~2,462 | +93% |
 | No cap | 0% | 319 | ~2,908 | +128% |
 
-**Recommendation:** ship with **15/week** as the cap. It still trims
-the compulsive-grind top tail (30% of weeks capped) but delivers
+**Recommendation:** ship with **15/week** as the cap. It trims the
+compulsive-grind top tail (30% of weeks capped) but delivers
 meaningfully more revenue than the 10/week option. The 20/week option
 is close to uncapped and doesn't meaningfully protect anyone.
 

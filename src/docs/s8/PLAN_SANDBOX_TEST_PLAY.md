@@ -5,10 +5,10 @@
 originally framed as OMEN-public-launch polish; **repositioned 2026-07-01**
 as a returning-player retention hook for S8.
 **Priority:** Elevated — pairs with the S8 revive+fragments monetisation
-sinks (see `OMENX_SINKS_2026_07_REVIVE_AND_FRAGMENTS.md` §"S8 launch
-coordination") to address the audit's -51% active-player collapse. Serves
-double duty: **retention lever for lapsed players now**, **onboarding
-lever for OMEN public launch later** — same build, two audiences.
+sinks (see `PLAN_REVIVE_AND_FRAGMENTS.md` §"S8 launch coordination") to
+address the audit's -51% active-player collapse. Serves double duty:
+**retention lever for lapsed players now**, **onboarding lever for OMEN
+public launch later** — same build, two audiences.
 
 ---
 

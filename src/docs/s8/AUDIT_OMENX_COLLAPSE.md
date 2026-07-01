@@ -6,6 +6,10 @@ cliff while gold spend is climbing, and what do we do about it?*
 
 Without OMENX spend the game shuts down. That's the frame.
 
+**Companion docs (S8 folder):**
+- `PLAN_REVIVE_AND_FRAGMENTS.md` — locked ships for §7A + §7B.
+- `PLAN_SANDBOX_TEST_PLAY.md` — retention companion (addresses the -51% active-player collapse).
+
 ---
 
 ## 1. The numbers
@@ -73,14 +77,14 @@ attractive to shortcut**. Either because:
 ### 2b. Cosmetics OMENX is functionally zero — **AND THIS IS NOW BY DESIGN**
 
 Only 2 weeks (W21, W23) had any cosmetic spend at all — both under 650 OMENX
-total. Per the locked cosmetics rework (`COSMETICS_REWORK_DESIGN.md`,
-2026-06-26), this is **intentional and permanent**: the entire cosmetic
-category is moving off OMENX. Standard cosmetics become GMT-only "Support
-the Devs" donations (flat 15 GMT per item, real-money) at GMT launch; the
-new Epic/Mythic chest cosmetics are OmenX **platform** VIP Chest rewards
-(real-money purchases on the OmenX side, dropped via webhook), not sold
-directly for OMENX in-app. **Cosmetics as an OMENX sink no longer exist and
-shouldn't be planned around.** More in §4.
+total. Per the locked cosmetics rework (`COSMETICS_REWORK.md` in the design
+folder, 2026-06-26), this is **intentional and permanent**: the entire
+cosmetic category is moving off OMENX. Standard cosmetics become GMT-only
+"Support the Devs" donations (flat 15 GMT per item, real-money) at GMT
+launch; the new Epic/Mythic chest cosmetics are OmenX **platform** VIP
+Chest rewards (real-money purchases on the OmenX side, dropped via
+webhook), not sold directly for OMENX in-app. **Cosmetics as an OMENX
+sink no longer exist and shouldn't be planned around.** More in §4.
 
 ### 2c. Progression spenders (unique wallets) fell off a cliff
 
@@ -280,8 +284,8 @@ very collapse we're trying to arrest.
 ## 4. Cosmetics have moved out of the OMENX economy entirely
 
 The old assumption in §7 of the first draft — "sell more cosmetics for
-OMENX" — is dead. Per the locked design (`COSMETICS_REWORK_DESIGN.md`,
-`VIP_CHEST_GAME_ITEMS.md`) cosmetics are now a **real-money-only
+OMENX" — is dead. Per the locked design (`COSMETICS_REWORK.md`,
+`VIP_CHESTS.md` in the design folder) cosmetics are now a **real-money-only
 category**, split into two rails:
 
 ### 4a. Standard cosmetics → GMT "Support the Devs" donations
@@ -402,63 +406,19 @@ The engine already fires the death prompt (verified at
 25 OMENX past 5/10/25 min) and a weekly cap. ~0.5 day. **Zero
 cannibalisation risk** — it targets endless whales who currently pay
 4 OMENX to save a 45-minute run, and simply charges more where the
-value delivered is highest. This is the cleanest ship.
+value delivered is highest. This is the cleanest ship. **Locked in
+`PLAN_REVIVE_AND_FRAGMENTS.md`.**
 
-**B. Ship the OMENX → Star Fragments express lane.** Fragments are the
-input to Astral Lab prestige (500 fragments + 7.5M gold per PL). At the
-gold-convert rate of ~130g per fragment, a whale needs 500 × 130g = 65k
-gold-equivalent per PL step *on top of* the 7.5M base cost. Any OMENX
-express lane has to price above that floor or we're literally selling
-fragments below their gold-convert rate.
-
-**Locked pricing: 10 OMENX = 15 fragments (batched purchases only).**
-- Batch minimum forces a meaningful transaction (no 1-OMENX
-  micro-drips). At 10 OMENX per 15 fragments (≈0.67 OMENX/fragment), a
-  whale wanting to fully prestige 5 relics × 5 PLs = 12,500 fragments =
-  **~8,333 OMENX**. That's a serious anchor spend.
-- Bypasses the 30/day gold-convert cap in the Forge (the whole point —
-  cap-hit whales are the target).
-- **Weekly cap: 600 fragments (400 OMENX)** — cap sized against the
-  actual 4-week season cadence:
-  - **1 week at cap** = 600 frags = **1 PL step + 20% toward the next** —
-    real, visible progression from a single week of play.
-  - **A whale hitting cap all 4 weeks of a season** = 2,400 frags =
-    **~5 PL steps** — a satisfying season-long OMENX investment,
-    finishing about a full relic's worth of prestige from OMENX alone.
-  - **Full 25-step prestige via OMENX only** = ~21 weeks ≈ **5 seasons**
-    — long enough to remain aspirational, short enough that dedicated
-    whales see a real endpoint.
-  - Per-whale ceiling: **400 OMENX/week** (up from an initial 160 draft
-    that was pegged to a horizon nobody would sustain).
-- ~0.5 day dev. Zero cannibalisation risk — no other OMENX sink
-  overlaps.
-
-**Why not 1 OMENX = 1 fragment (the brainstorm original)?** Fragments
-gate prestige, which is the deepest OMENX progression sink we have
-(item D — 30 OMENX to skip a PL). Pricing fragments at 1:1 makes them
-effectively free relative to the 30-OMENX PL-skip: a whale would just
-buy 500 fragments for 500 OMENX instead of paying 30 to skip. The
-10:15 batch keeps fragments valuable enough that PL-skip stays the
-premium path.
+**B. Ship the OMENX → Star Fragments express lane.** **Locked pricing:
+10 OMENX = 15 fragments (batched purchases only).** Full spec + revenue
+math in `PLAN_REVIVE_AND_FRAGMENTS.md`.
 
 **C. HOLD on Pick 2 / Pick All.** Per §3b, reroll is 50-78% of our
 consumable OMENX and heavy-bias players (our whales) already spend
 ~45 OMENX/run on rerolls chasing the biased target. A Pick 2 at 8 OMENX
 that consumes ONE level-up is likely revenue-neutral; Pick All at 15 for
 3 picks is probably net negative vs the current 3-4 chained rerolls per
-missed target.
-
-**Two safer variants to consider before shipping:**
-- **Price up.** Pick 2 at 12 OMENX / Pick All at 25 OMENX would sit above
-  the average chained-reroll spend per level-up. Ship at those prices,
-  monitor reroll spend for 2 weeks, adjust down if needed.
-- **Gate by level range.** Only offer Pick 2/All at levels 20+ (endgame,
-  when the pool is huge and reroll gambling gets expensive anyway). Keeps
-  reroll dominant for the first half of a run.
-
-Recommendation: **do NOT bundle A+B+C in one patch as the brainstorm
-originally proposed.** Ship A+B this week; run Pick 2/All through one
-more design pass with pricing that acknowledges the reroll interaction.
+missed target. Do NOT bundle A+B+C in one patch.
 
 ### Short-term (next 1-2 weeks)
 
@@ -486,7 +446,8 @@ currently exists only in gold (7-8M/week going to gold treasury alone).
 don't retain. Active player count has halved. Even one new character or
 one new sector reactivates the player base. Nothing in this audit's
 recommendations matters if the active count keeps falling — you need
-players *before* you have anyone to sell OMENX to.
+players *before* you have anyone to sell OMENX to. **See
+`PLAN_SANDBOX_TEST_PLAY.md` for the S8 retention hook.**
 
 **H. Refresh the daily OMENX-featured shop.** A daily rotating "featured
 item" that's OMENX-only and time-limited (24h). Rotates existing

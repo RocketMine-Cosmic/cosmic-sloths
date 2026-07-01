@@ -255,17 +255,10 @@ Total to buy all: 91,000 gold. But most players unlock via kill milestones
 
 5. **Astral Lab costs go astronomical fast.** Pull 20 = 12M gold. Pull 30 =
    345M gold. The intent is "endless gold sink for whales" but only ~5 pulls
-   are affordable within a normal player's lifetime gold accumulation. This
-   is by design (see docs/S6_MASTER_PLAN §5b). If we want more players to
-   engage, dropping the growth from 1.4 to 1.25 would keep pull 15 accessible
-   (~230k instead of ~2.2M).
+   are affordable within a normal player's lifetime gold accumulation.
 
 6. **Character purchase gold is a legacy path.** Kill milestones (Doc 1 §5)
    grant characters randomly, so most players never buy through this route.
-   NeonVortex/SynthBeats/SkyByte at 15-25k gold are the only ones a struggling
-   player might buy directly. Consider removing gold purchase entirely and
-   giving milestone-only unlocks — simpler and eliminates the "why did I get
-   Glitch not the one I wanted" random-drop annoyance.
 
 7. **Prestige is the endgame gold sink par excellence.** 37.5M gold to fully
    prestige all 5 relics is a huge target. Combined with Astral Lab and Forge,
@@ -273,22 +266,12 @@ Total to buy all: 91,000 gold. But most players unlock via kill milestones
 
 8. **Treasury buff prices scale 4× per tier** (25k → 100k → 500k → 2M).
    Steeper than the 2× stat/weapon curve. Encourages squads to save up for
-   Platinum rather than cycle Bronze/Silver — good for squad-wide "big pushes"
-   design. Consider whether the effect delta between Bronze and Platinum
-   actually feels 80× stronger (probably not — check the applied `computeBuffs`
-   values; currently these treasury tiers do NOT appear to feed the same
-   meteor-buff formula — this is worth clarifying in code).
+   Platinum rather than cycle Bronze/Silver.
 
 9. **Talent respec (permanent = 5000g / weekly = 2000g / seasonal = 8000g)**
-   feels expensive for the low permanent cost (T1 = 1000g). A player who bought
-   T1+T2A for 5000g total then wants to respec pays 5000g. Fair but tight.
-   Seasonal respec 8000g on a season that resets in 4 weeks anyway — is anyone
-   actually paying that? Consider making seasonal cheaper than permanent OR
-   free with per-week cooldown.
+   feels expensive for the low permanent cost (T1 = 1000g).
 
 10. **No cosmic-token gold sink.** `TRAIL_COSMETICS` list a `tokenCost` field
     but I can't find where tokens are actually spent. Cosmetics buy through
     OMENX or gold. Cosmic tokens (`saveData.cosmicTokens`) only received via
-    daily login rewards (see Doc 5) but there's no active spend for them.
-    Legacy currency — either wire them into a store or remove them from the
-    daily login rewards.
+    daily login rewards but there's no active spend for them.

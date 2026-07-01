@@ -8,12 +8,15 @@ value and know exactly what changes.
 
 | # | File | Scope |
 |---|------|-------|
-| 1 | `BALANCE_AUDIT_01_SCORE_AND_RUN_ECONOMY.md` | Score formula, run-end gold/kills/fragments, endless caps, HEAT bonus |
-| 2 | `BALANCE_AUDIT_02_UPGRADES_AND_GROWTH.md` | Passives, weapons, level-up, mastery, evolutions, synergies, in-run stat caps |
-| 3 | `BALANCE_AUDIT_03_META_PROGRESSION_SINKS.md` | Gold/OMENX prices for stats/weapons/talents/cosmetics, forge, astral, prestige |
-| 4 | `BALANCE_AUDIT_04_SQUADS_AND_WARS.md` | Squad XP curve, bounty tiers, treasury buffs, war matchmaking, meteor, champions |
-| 5 | `BALANCE_AUDIT_05_LIVE_EVENTS_AND_DAILY_LOOP.md` | Daily login, daily tasks, bounties, raid, weekly kill leaderboard |
-| 6 | `BALANCE_AUDIT_06_OMENX_POOLS_AND_PAYOUTS.md` | Token pool splits, staff pct, rank tiers, kill pool, champions pool, S7 gate |
+| 1 | `AUDIT_01_SCORE_AND_RUN_ECONOMY.md` | Score formula, run-end gold/kills/fragments, endless caps, HEAT bonus |
+| 2 | `AUDIT_02_UPGRADES_AND_GROWTH.md` | Passives, weapons, level-up, mastery, evolutions, synergies, in-run stat caps |
+| 3 | `AUDIT_03_META_PROGRESSION_SINKS.md` | Gold/OMENX prices for stats/weapons/talents/cosmetics, forge, astral, prestige |
+| 4 | `AUDIT_04_SQUADS_AND_WARS.md` | Squad XP curve, bounty tiers, treasury buffs, war matchmaking, meteor, champions |
+| 5 | `AUDIT_05_LIVE_EVENTS_AND_DAILY_LOOP.md` | Daily login, daily tasks, bounties, raid, weekly kill leaderboard |
+| 6 | `AUDIT_06_OMENX_POOLS_AND_PAYOUTS.md` | Token pool splits, staff pct, rank tiers, kill pool, champions pool, S7 gate |
+| — | `AUDIT_OMENX_COLLAPSE.md` | Diagnosis of the OMENX spend collapse + full lever list |
+| — | `PLAN_REVIVE_AND_FRAGMENTS.md` | S8 monetisation ships (revive escalation + fragment express lane) |
+| — | `PLAN_SANDBOX_TEST_PLAY.md` | S8 retention companion — sandbox / test play mode |
 
 ## Global observations up-front (things that will keep showing up)
 

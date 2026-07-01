@@ -191,46 +191,31 @@ A 5-member Lv7 squad that wins all 4 weeks of a season with high kill totals:
 ## 9. Observations
 
 1. **Daily XP caps at Lv7 (2000/day).** Fine at low end. Past Lv7 the daily XP
-   feels vestigial — 2000 XP is 0.0025% of Lv15's 80M threshold. Consider
-   extending the daily table to Lv15 (e.g. Lv15 = 5000/day) so long-lived
-   squads see growth in that channel too.
+   feels vestigial. Consider extending the daily table to Lv15.
 
 2. **Bounty tiers cap at Lv7 (12k daily kills, 75k weekly).** Once past Lv7
-   the daily/weekly rewards STOP scaling. A brand-new Lv7 squad and a veteran
-   Lv15 squad get identical bounty rewards. Extend the tier tables to Lv15 OR
-   explicitly document Lv7 as the reward ceiling.
+   the daily/weekly rewards STOP scaling.
 
-3. **Lv7 weekly target (75k kills) is unreachable for casual squads.** With
-   5 members × ~500 kills/hour × ~5 hours/week = 12,500 kills. Only hardcore
-   squads hit 75k. Consider Lv8-15 tiers up to 200k so top squads have targets.
+3. **Lv7 weekly target (75k kills) is unreachable for casual squads.**
 
 4. **War win = 2500g × 5 = 12,500g per squad per war.** Compare to weekly
-   bounty at Lv7 = 37,500g. Wars are ~30% of the weekly bounty — fair for
-   a passive/opponent-dependent reward, but if wars should feel more valuable,
-   consider scaling war reward with squad level (currently flat).
+   bounty at Lv7 = 37,500g. Wars are ~30% of the weekly bounty.
 
 5. **`MIN_MEMBERS_FOR_WAR = 2` is very permissive.** Leader+alt duo squads
-   can farm easy wins. Consider lifting to 3+ or scaling by season count.
+   can farm easy wins.
 
-6. **Bracket size 3 works for current ~20 squad count.** No lever needed
-   unless we see stomps at 50+ squads.
+6. **Bracket size 3 works for current ~20 squad count.**
 
 7. **Champions pool scales with season revenue.** 10% × pool × 50%/5 members.
-   At 100k OMENX pool → 1000 OMENX/member. At 500k pool → 5000 OMENX/member.
    Meaningful money; watch for gaming as pool grows.
 
-8. **Bye = auto-win increments `war_streak`.** Streak fragility low today
-   (odd-bracket edge only) but note: if pairing ever gives byes elsewhere,
-   free streaks appear.
+8. **Bye = auto-win increments `war_streak`.** Streak fragility low today.
 
-9. **Squad Meteor HP scaling** = 50M + 25M×(lvl-1). Lv20 = 525M HP. Rough
-   estimate: 3 attempts × 5 members × ~5M dmg = 75M/day/squad. Lv1→Lv20
-   = ~70 days. Reasonable long-term progression; verify actual dmg spread.
+9. **Squad Meteor HP scaling** = 50M + 25M×(lvl-1). Lv20 = 525M HP.
 
 10. **Treasury buffs advertised but not APPLIED anywhere I can find.**
-    `squadActions` writes `active_buff_tier` / `active_buff_week_id` but no
-    engine or `saveScore` reads it. Check `GameEngine.js` — otherwise 2M gold
-    Platinum purchases are cosmetic. Real bug if not wired.
+    `squadActions` writes `active_buff_tier` but no engine or `saveScore`
+    reads it. Real bug if not wired.
 
 11. **Squad chat lacks rate-limiting.** `MutedWallet` exists but no per-wallet
     messages/minute cap. Community-health issue, not balance.
