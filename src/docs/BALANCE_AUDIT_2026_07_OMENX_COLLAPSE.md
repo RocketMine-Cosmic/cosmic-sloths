@@ -386,10 +386,34 @@ cannibalisation risk** — it targets endless whales who currently pay
 4 OMENX to save a 45-minute run, and simply charges more where the
 value delivered is highest. This is the cleanest ship.
 
-**B. Ship the OMENX → Star Fragments express lane.** 1 OMENX = 1
-fragment, bypasses the 30/day gold-convert cap in the Forge, weekly cap
-100. ~0.5 day. **Zero cannibalisation risk** — it targets whales who
-currently hit the convert wall and stop. Purely additive.
+**B. Ship the OMENX → Star Fragments express lane.** Fragments are the
+input to Astral Lab prestige (500 fragments + 7.5M gold per PL). At the
+gold-convert rate of ~130g per fragment, a whale needs 500 × 130g = 65k
+gold-equivalent per PL step *on top of* the 7.5M base cost. Any OMENX
+express lane has to price above that floor or we're literally selling
+fragments below their gold-convert rate.
+
+**Locked pricing: 5 OMENX = 10 fragments (batched purchases only).**
+- Batch minimum forces a meaningful transaction (no 1-OMENX
+  micro-drips). At 5 OMENX per 10 fragments, a whale wanting to fully
+  prestige 5 relics × 5 PLs = 12,500 fragments = **6,250 OMENX**.
+  That's an anchor spend, not a rounding error.
+- Bypasses the 30/day gold-convert cap in the Forge (the whole point —
+  cap-hit whales are the target).
+- **Weekly cap: 500 fragments (250 OMENX)** — prevents a single whale
+  from prestiging their entire account in one afternoon and killing
+  their own future spend runway. Also keeps the sink additive to
+  prestige rather than a shortcut around it.
+- ~0.5 day dev. Zero cannibalisation risk — no other OMENX sink
+  overlaps.
+
+**Why not 1 OMENX = 1 fragment (the brainstorm original)?** Fragments
+gate prestige, which is the deepest OMENX progression sink we have
+(item D — 30 OMENX to skip a PL). Pricing fragments at 1:1 makes them
+effectively free relative to the 30-OMENX PL-skip: a whale would just
+buy 500 fragments for 500 OMENX instead of paying 30 to skip. The
+5:10 batch keeps fragments valuable enough that PL-skip stays the
+premium path.
 
 **C. HOLD on Pick 2 / Pick All.** Per §3b, reroll is 50-78% of our
 consumable OMENX and heavy-bias players (our whales) already spend
