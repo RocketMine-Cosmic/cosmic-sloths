@@ -62,18 +62,19 @@ should cost more per press, not less.
 ### The proposal (locked)
 
 Time-based cost curve so late-run revives — where the value delivered is
-highest — cost more. Weekly cap so no single player can be nickel-and-dimed
-out of the game.
+highest — cost more. **Tuned for sector runs**, which are 82% of all
+runs and where the score-leaderboard chasers (our OMENX whales) live.
+Sector runs cap at **~12:30** — pricing has to fit that ceiling.
 
 | Run time at death | Cost | Rationale |
 |---|---:|---|
-| 0-5 min | **4 OMENX** | Unchanged — early revives stay a soft impulse buy. |
-| 5-10 min | **8 OMENX** | Mid-run. Player has real investment now. |
-| 10-25 min | **15 OMENX** | Deep run — losing this hurts. |
-| 25 min+ | **25 OMENX** | Endless-tier. This is where the whales live. |
+| 0-4 min | **4 OMENX** | Unchanged — early revives stay a soft impulse buy. |
+| 4-8 min | **8 OMENX** | Mid-run. Real investment now. |
+| 8-11 min | **15 OMENX** | Deep sector run — score is climbing, losing it hurts. |
+| 11 min+ / endless-any | **25 OMENX** | End-of-sector podium save or a genuine endless-tier death. |
 
-- **Weekly cap: 3 revives per player per week** (max 75 OMENX/week if
-  all 3 land in the 25min+ tier).
+- **Weekly cap: 10 revives per player per week** (max 250 OMENX/week if
+  every one lands in the top tier — realistic ceiling is lower).
 - Cap resets on ISO week rollover (piggyback on existing weekly reset).
 - Death prompt shows the price BEFORE the click — no surprise charges.
 
@@ -81,62 +82,61 @@ out of the game.
 
 - **4 → 8 → 15 → 25** roughly matches the tier structure we already use
   for banish (2 / 4 / 6 OMENX) — familiar shape, higher ceiling.
-- Top reviver's 31 lifetime revives at 4 OMENX flat = 124 OMENX. Under
-  the new curve, if a third of those were 25-min+ deaths (very plausible
-  for endless whales), the same behaviour = ~450+ OMENX. **~3-4× ARPU
-  from the top-10 revivers alone.**
-- 3/week cap prevents a single bad run from making the player quit. Cap
-  is intentionally low enough to force a "should I really spend this?"
-  moment.
+- **Sector-run reality check:** live data (500-run sample) shows sector
+  deaths cluster at **40% 0-5min / 25% 5-10min / 35% 10-12.5min** — the
+  10-12.5min bucket is huge and directly maps to "I was about to
+  finish a leaderboard-worthy sector run and one hit ended it". That's
+  exactly the moment worth 15+ OMENX to a score chaser.
+- Endless runs (18% of all runs) contribute a real but small 25min+
+  tail — 7% of endless runs reach 25min+. Top tier still exists but
+  isn't where the volume lives.
+- 10/week cap trims the 6+ revives-per-day chain-revive behaviour
+  (see below) without punishing normal engaged players.
 
 ### Revenue estimate
 
 Baseline against W26: 27 revivers, **319 revives**, 1,276 OMENX
 (all at flat 4 OMENX). Avg 11.8 revives per active reviver per week.
 
-Assumptions:
-- Split of revive purchases by run-time bucket, estimated from endless-
-  arena play patterns: 30% early / 30% mid / 25% deep / 15% endless.
-- Volume stays the same *up to the cap*; the cap trims the top tail.
+**Bucket split — grounded in live data.** Sector runs are 82% of the
+mix, endless is 18%. Applying real death-time distributions from a
+500-run sample:
 
-**With 5/week cap:**
-- 27 revivers × 5 revives capped = **135 revives max/week** from cap-
-  hitters, down from 319. That's a **58% volume cut**.
-- Under the ceiling, the cap doesn't bind — most revivers (avg 12/wk
-  today) will only spend ~5, so we lose 7 revives × ~$mixed-price each.
+- Sector deaths (~82% of revive volume): 40% at 0-4min / 25% at 4-8min
+  / 35% at 8-11min (very small 11-12:30 tail).
+- Endless deaths (~18% of revive volume): 33% at 0-5min / 37% at 5-10min
+  / 23% at 10-25min / 7% at 25min+.
 
-| Bucket | Share | Revives/wk | Cost each | OMENX/wk |
-|---|---:|---:|---:|---:|
-| 0-5 min | 30% | 41 | 4 | 164 |
-| 5-10 min | 30% | 41 | 8 | 328 |
-| 10-25 min | 25% | 34 | 15 | 510 |
-| 25 min+ | 15% | 19 | 25 | 475 |
-| **Total (5/wk cap)** | | 135 | | **~1,477** |
-
-**5/wk cap = +200 OMENX/week vs current** (+16%). Marginal.
+Weighted blend of all revive volume by cost tier:
+- **4 OMENX tier (0-4min):** 39%
+- **8 OMENX tier (4-8min):** 26%
+- **15 OMENX tier (8-11min sector / 10-25min endless):** 33%
+- **25 OMENX tier (11min+ sector podium / 25min+ endless):** 2%
 
 **With 10/week cap:**
 
+Assuming volume stays similar to W26 (319 revives) but chain-revive
+days get clipped by the cap:
+
 | Bucket | Share | Revives/wk | Cost each | OMENX/wk |
 |---|---:|---:|---:|---:|
-| 0-5 min | 30% | 81 | 4 | 324 |
-| 5-10 min | 30% | 81 | 8 | 648 |
-| 10-25 min | 25% | 67 | 15 | 1,005 |
-| 25 min+ | 15% | 41 | 25 | 1,025 |
-| **Total (10/wk cap)** | | 270 | | **~3,002** |
+| 0-4 min | 39% | 105 | 4 | 420 |
+| 4-8 min | 26% | 70 | 8 | 560 |
+| 8-11 min sector / 10-25 endless | 33% | 89 | 15 | 1,335 |
+| 11+ sector / 25+ endless | 2% | 5 | 25 | 125 |
+| **Total (10/wk cap)** | | **269** | | **~2,440** |
 
-**10/wk cap = +1,726 OMENX/week (+135%).** ← This is the real number.
+**10/wk cap = +1,164 OMENX/week (+91% vs current 1,276).**
 
-The 3/week and 5/week caps I originally floated were too tight. Live
-data shows the median active reviver dies 12+ times a week — a 5/week
-cap punishes normal engaged players, not just whales. A **10/week
-cap** clips only the 25% of days where a player is chain-reviving
-(6+ in one day), which is precisely the "just one more" behaviour we
-want the price curve to disincentivise anyway.
+This is a smaller number than the pre-correction estimate (~3,002) —
+the 25 OMENX top tier barely fires because sector runs can't reach it
+and endless runs are only 18% of the mix. But the **15 OMENX tier does
+the heavy lifting** because a full 35% of sector deaths happen at
+8-11min, right when a leaderboard-worthy run is on the line.
 
-Top whale ceiling: 10 × 25 = **250 OMENX/week/whale**. Even for the
-368-revive lifetime whale, that's a fair cap — they simply reach it
-via fewer, more meaningful revives.
+Top whale ceiling: 10 × 25 = **250 OMENX/week/whale** (rare — most
+whales cap out closer to 150 OMENX/week under this distribution). Fair
+brake without gating engaged play.
 
 ### Locked spec (post-tuning)
 
@@ -237,21 +237,20 @@ trivial vs the 76M/week gold spend we see).
 ## Combined weekly OMENX projection
 
 Both sinks stack on top of the current W26 baseline of 18,584 OMENX/week.
-Revive delta = new total (~3,002) − current (1,276) = **+1,726**.
+Revive delta = new total (~2,440) − current (1,276) = **+1,164**.
 
 | Scenario | Revive delta | Fragments (new) | **New total OMENX/week** | vs W26 | vs W23 peak (43.9k) |
 |---|---:|---:|---:|---:|---:|
-| Conservative | +1,726 | ~5,400 | **~25,710** | **+38%** | 59% |
-| Realistic | +1,726 | ~9,800 | **~30,110** | **+62%** | 69% |
-| Optimistic | +1,726 | ~15,200 | **~35,510** | **+91%** | 81% |
+| Conservative | +1,164 | ~5,400 | **~25,148** | **+35%** | 57% |
+| Realistic | +1,164 | ~9,800 | **~29,548** | **+59%** | 67% |
+| Optimistic | +1,164 | ~15,200 | **~34,948** | **+88%** | 80% |
 
-**Both sinks now contribute meaningfully.** Revive escalation is no
-longer just a hygiene fix — at a 10/week cap it's a genuine +135%
-revenue lever on its own category. Fragments still carries most of the
-absolute increase because it opens a whole new SKU with a bigger
-addressable base.
+**Both sinks still contribute meaningfully** — the revive correction
+brought the sector-tuned estimate down from ~+135% to ~+91% on its
+own category, but fragments still carry the bulk of the absolute
+increase because that SKU opens with the biggest addressable base.
 
-Realistic combined case (~30.1k/week) recovers ~69% of the W23 peak —
+Realistic combined case (~29.5k/week) recovers ~67% of the W23 peak —
 without touching player count. If the S8 tease / new content in the
 audit §7G lifts actives back to 50-60/week, both sinks scale
 proportionally and we're back above W23 levels.
