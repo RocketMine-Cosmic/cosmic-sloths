@@ -165,6 +165,27 @@ except W25:
 
 If reroll spend collapses, the last healthy OMENX bucket collapses with it.
 
+### Actual reroll volumes (de-aggregated from daily rows)
+
+`TokenSpendLog` rows are aggregated per wallet per day. At 2 OMENX/reroll,
+`amount / 2` = actual reroll count. Real numbers over the last 6 weeks:
+
+| Week | OMENX | **Rerolls** | Rerollers | Avg rerolls/wallet/week | Avg OMENX/wallet/week |
+|---|---:|---:|---:|---:|---:|
+| W22 | 12,992 | **6,496** | 33 | 197 | 394 |
+| W23 | 18,446 | **9,223** | 29 | **318** | **636** |
+| W24 | 7,086 | 3,543 | 25 | 142 | 283 |
+| W25 | 5,556 | 2,778 | 21 | 132 | 265 |
+| W26 | 7,924 | 3,962 | 21 | 189 | 377 |
+| W27 (partial) | 2,118 | 1,059 | 16 | 66 | 132 |
+
+**These numbers reframe the whole reroll picture:**
+- The average engaged reroller does **190+ rerolls per week**, not per run.
+- **Top whale did 4,989 lifetime rerolls.** Top 3 all above 3,000.
+- **Daily row-size distribution:** 30% of rows are **51+ rerolls in a
+  single day** (151 out of 500 rows). Another 17% are 21-50/day. Nearly
+  half of daily reroll behaviour is "hammering the button in one sitting".
+
 ### The counter-intuitive finding: pool bias is *driving* reroll spend, not replacing it
 
 Pool bias was designed to reduce the "3 bad choices at level-up" problem by
@@ -173,23 +194,11 @@ letting players push specific weapons/stats higher in the upgrade pool
 that heavy bias users would need to reroll *less* because their pool is
 already tuned toward what they want.
 
-The data shows the opposite:
-
-| Bias points allocated | Players (W23-W27) | Total reroll OMENX | Reroll OMENX / run | Reroll OMENX / player |
-|---|---:|---:|---:|---:|
-| 0 pts (no bias) | 16 | 1,816 | **6.9** | 113 |
-| 1–10 pts | 0 | — | — | — |
-| 11–30 pts | 6 | 3,284 | 42.1 | 547 |
-| 31–60 pts | 10 | 6,796 | 33.8 | 680 |
-| **60+ pts (whales)** | **24** | **29,208** | **45.1** | **1,217** |
-
-Reroll spend per run is **6.5× higher** for heavily-biased players than
-for players with no bias.
-
-**And 85-90% of ALL rerollers every week have bias allocated.** Only
-2-4 wallets per week reroll without any bias. Pool bias hasn't reduced
-reroll demand — it has coincided with, and possibly *enabled*, the
-highest-spending reroll behaviour we have.
+The data shows the opposite: **85-90% of all rerollers every week have
+bias allocated**, and the biggest rerollers overlap heavily with the
+heaviest bias whales. Pool bias hasn't reduced reroll demand — it has
+coincided with, and possibly *enabled*, the highest-spending reroll
+behaviour we have.
 
 ### Two competing readings
 
@@ -233,29 +242,38 @@ intentioned buffs to pool bias — will directly cannibalise our biggest
 consumable line. Specifically:
 
 - **Pick 2 / Pick All (recommendation §7A) directly threatens reroll
-  spend.** If a player pays 8 OMENX to take 2 of 3, they no longer need
-  the 2-OMENX reroll on the same level-up. The 8 OMENX charge is
-  higher, but you get 1 charge per level-up instead of potentially 3-4
-  rerolls chasing a target. **On the current data, average reroll spend
-  per level-up for a heavy-bias player is closer to 6-10 OMENX** (multiple
-  chained rerolls trying to force the biased target), so Pick 2 is
-  roughly *revenue-neutral*, not additive. Pick All at 15 OMENX for 3
-  picks is probably a **net negative** vs current reroll behaviour.
+  spend — worse than initially thought.** A heavy-bias whale rerolls
+  **200-600 OMENX per week** (100-300 individual rerolls). At 8 OMENX
+  for Pick 2, a whale who would otherwise chain 5 rerolls on one
+  level-up chasing their biased target now pays 8 once instead of 10 —
+  and eliminates the *next* 4 rerolls too, because they take everything
+  they wanted. Pick 2 doesn't just fail to be additive; on the biggest
+  spenders it's probably a **~40% net cut** to reroll revenue on those
+  level-ups. Pick All at 15 OMENX for all 3 is worse.
 - **Buffing bias multiplier (10% → 15% per point) would likely REDUCE
   OMENX spend**, not increase it. Bias is currently a whale marker; make
   it more effective and it starts actually reducing the "missed target"
   frustration that drives rerolls.
 - **The real question is whether reroll demand SHOULD be this high.** A
   well-designed level-up pool with a working bias system shouldn't need
-  massive reroll spend per run. The fact that heavily-biased whales
-  reroll ~45 OMENX per run suggests the base pool is too noisy — or
-  players *want* to reroll for the dopamine of finding the perfect
-  build regardless of what the pool offers. Either way, tune with care.
+  a whale mashing 300 rerolls in a week. **30% of daily reroll rows are
+  51+ rerolls in a single sitting** — that's not "chasing a target",
+  that's compulsive-loop behaviour. Two readings:
+  1. **Positive:** it's fun and lucrative — the dopamine of "one more
+     roll" is our best per-player OMENX generator by a wide margin.
+     Don't touch it, ship additive sinks elsewhere.
+  2. **Cautionary:** 51+ rerolls/day is a UX / anti-fatigue red flag.
+     Players hammering that hard often burn out fast — could be a
+     contributor to the -51% actives collapse (§5). Worth a designer
+     eye on whether the loop is genuinely fun or attritionally
+     rewarding.
+  Either way, don't casually kneecap it.
 
-**Bottom line:** reroll + bias are a coupled system that's currently
-generating half of our healthy OMENX bucket. Do not add "Pick 2 / Pick
-All" or buff pool bias without a clear replacement sink lined up, or
-we accelerate the very collapse we're trying to arrest.
+**Bottom line:** reroll + bias are a coupled system generating over
+half of our healthy OMENX bucket, and the per-whale figures are much
+higher than we thought. Do not add "Pick 2 / Pick All" or buff pool
+bias without a clear replacement sink lined up, or we accelerate the
+very collapse we're trying to arrest.
 
 ---
 
