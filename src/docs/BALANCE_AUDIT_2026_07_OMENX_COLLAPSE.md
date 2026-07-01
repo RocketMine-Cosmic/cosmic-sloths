@@ -152,6 +152,113 @@ whale attention away from OMENX purchases.
 
 ---
 
+## 3b. The reroll–pool-bias interaction — where OMENX health actually lives
+
+Before moving on, a critical finding from cross-referencing `TokenSpendLog`
+against `PlayerSave.poolBiasAllocations` for the last 5 weeks (W23–W27):
+
+**Reroll is the single largest OMENX consumable line item.** Every week
+except W25:
+- W21: reroll = 8,902 / 17,525 consumable OMENX = **51%**
+- W23: reroll = 18,446 / 27,952 = **66%**
+- W26: reroll = 7,924 / 10,157 = **78%**
+
+If reroll spend collapses, the last healthy OMENX bucket collapses with it.
+
+### The counter-intuitive finding: pool bias is *driving* reroll spend, not replacing it
+
+Pool bias was designed to reduce the "3 bad choices at level-up" problem by
+letting players push specific weapons/stats higher in the upgrade pool
+(`poolBias.js` — `+10% weight per allocated point`). The intuition was
+that heavy bias users would need to reroll *less* because their pool is
+already tuned toward what they want.
+
+The data shows the opposite:
+
+| Bias points allocated | Players (W23-W27) | Total reroll OMENX | Reroll OMENX / run | Reroll OMENX / player |
+|---|---:|---:|---:|---:|
+| 0 pts (no bias) | 16 | 1,816 | **6.9** | 113 |
+| 1–10 pts | 0 | — | — | — |
+| 11–30 pts | 6 | 3,284 | 42.1 | 547 |
+| 31–60 pts | 10 | 6,796 | 33.8 | 680 |
+| **60+ pts (whales)** | **24** | **29,208** | **45.1** | **1,217** |
+
+Reroll spend per run is **6.5× higher** for heavily-biased players than
+for players with no bias.
+
+**And 85-90% of ALL rerollers every week have bias allocated.** Only
+2-4 wallets per week reroll without any bias. Pool bias hasn't reduced
+reroll demand — it has coincided with, and possibly *enabled*, the
+highest-spending reroll behaviour we have.
+
+### Two competing readings
+
+**Reading A — "Bias is a whale marker, not a substitute for reroll."**
+Heavy bias allocation is a signal that the player is an engaged
+optimiser. They allocated 60+ points because they care about optimal
+builds. That same personality is the one who will reroll aggressively
+when a level-up doesn't offer their biased target — bias raised their
+*expectation* of getting the right upgrade, so a missed roll feels worse
+and gets rerolled. Bias didn't fix the reroll problem; it made rerolling
+feel more justified.
+
+**Reading B — "Bias multiplier is too weak to obviate reroll."**
++10% weight per point sounds significant but at 20 points allocated to
+one weapon (=3× weight), you still see it in only ~35% of level-ups
+against the 20+ other pool entries. That's not enough to feel "my pool
+is tuned" — it's still a probabilistic scatter. So players allocate,
+still don't see the target enough, and reroll to force it.
+
+**Both are probably true.** Either way, the important business fact is:
+
+> **Pool bias is not a substitute for reroll — it's a *complement* to it.
+> Heavy bias users are our reroll whales.**
+
+### Bias respec spend is negligible
+
+`bias-respec` (10 OMENX to clear all allocations) shows up **7 times
+total** across W21–W27. Players allocate and never rethink. This means:
+- The escalating gold-respec cost curve (`GOLD_RESPEC_TIERS = [2000,
+  4000, 8000, 16000]`) is not a meaningful sink. Only 17 out of 105
+  saves have EVER respec'd (16%), and only 6% have done it more than once.
+- The OMENX respec at 10 OMENX is essentially unused. Priced too high
+  relative to the perceived benefit of a rethink? Or players just never
+  want to rethink? The data can't distinguish, but either way the SKU
+  isn't producing revenue.
+
+### What this means for interventions
+
+Anything that reduces the "3 bad choices" friction — including well-
+intentioned buffs to pool bias — will directly cannibalise our biggest
+consumable line. Specifically:
+
+- **Pick 2 / Pick All (recommendation §7A) directly threatens reroll
+  spend.** If a player pays 8 OMENX to take 2 of 3, they no longer need
+  the 2-OMENX reroll on the same level-up. The 8 OMENX charge is
+  higher, but you get 1 charge per level-up instead of potentially 3-4
+  rerolls chasing a target. **On the current data, average reroll spend
+  per level-up for a heavy-bias player is closer to 6-10 OMENX** (multiple
+  chained rerolls trying to force the biased target), so Pick 2 is
+  roughly *revenue-neutral*, not additive. Pick All at 15 OMENX for 3
+  picks is probably a **net negative** vs current reroll behaviour.
+- **Buffing bias multiplier (10% → 15% per point) would likely REDUCE
+  OMENX spend**, not increase it. Bias is currently a whale marker; make
+  it more effective and it starts actually reducing the "missed target"
+  frustration that drives rerolls.
+- **The real question is whether reroll demand SHOULD be this high.** A
+  well-designed level-up pool with a working bias system shouldn't need
+  massive reroll spend per run. The fact that heavily-biased whales
+  reroll ~45 OMENX per run suggests the base pool is too noisy — or
+  players *want* to reroll for the dopamine of finding the perfect
+  build regardless of what the pool offers. Either way, tune with care.
+
+**Bottom line:** reroll + bias are a coupled system that's currently
+generating half of our healthy OMENX bucket. Do not add "Pick 2 / Pick
+All" or buff pool bias without a clear replacement sink lined up, or
+we accelerate the very collapse we're trying to arrest.
+
+---
+
 ## 4. Cosmetics have moved out of the OMENX economy entirely
 
 The old assumption in §7 of the first draft — "sell more cosmetics for
@@ -265,29 +372,43 @@ Every intervention below targets **progression, consumables, or gold-sink
 rebalance** — the three levers that actually route through
 `TokenSpendLog`.
 
-### Immediate (this week — already scoped in `OMENX_SPEND_BRAINSTORM.md`)
+### Immediate (this week)
 
-**A. Ship the DevilsReject "Pick 2 / Pick All" level-up tokens.**
-The brainstorm doc has this fully scoped: `ingame-pick-two` at 8 OMENX,
-`ingame-pick-all` at 15 OMENX, per-run and per-week caps, reuses the
-existing `pendingStarterLevelUps` engine pattern from Squad Meteor. ~1.5
-days dev. This is the single highest-confidence lift because it targets
-the exact bucket that's still working (consumables) — it lets existing
-consumers spend *more per run*, not "convince a dormant player to buy".
+**⚠️ Order matters — the reroll–bias interaction (§3b) changes the
+priority of what to ship first. Pick 2 / Pick All is no longer the safe
+lead.**
 
-**B. Ship the Revive escalation + weekly cap.** Currently 4 OMENX flat.
+**A. Ship the Revive escalation + weekly cap.** Currently 4 OMENX flat.
 The engine already fires the death prompt (verified at
 `GameEngine.js:673`). Just needs a time-based cost curve (4 → 8 → 15 →
-25 OMENX past 5/10/25 min) and a weekly cap. ~0.5 day. Existing whales
-grinding endless will spend more per session.
+25 OMENX past 5/10/25 min) and a weekly cap. ~0.5 day. **Zero
+cannibalisation risk** — it targets endless whales who currently pay
+4 OMENX to save a 45-minute run, and simply charges more where the
+value delivered is highest. This is the cleanest ship.
 
-**C. Ship the OMENX → Star Fragments express lane.** 1 OMENX = 1
+**B. Ship the OMENX → Star Fragments express lane.** 1 OMENX = 1
 fragment, bypasses the 30/day gold-convert cap in the Forge, weekly cap
-100. ~0.5 day. Directly targets the whales who currently hit the
-convert wall and stop.
+100. ~0.5 day. **Zero cannibalisation risk** — it targets whales who
+currently hit the convert wall and stop. Purely additive.
 
-Bundle A + B + C in one patch. Total dev ~2.5 days, three sinks live in
-one week.
+**C. HOLD on Pick 2 / Pick All.** Per §3b, reroll is 50-78% of our
+consumable OMENX and heavy-bias players (our whales) already spend
+~45 OMENX/run on rerolls chasing the biased target. A Pick 2 at 8 OMENX
+that consumes ONE level-up is likely revenue-neutral; Pick All at 15 for
+3 picks is probably net negative vs the current 3-4 chained rerolls per
+missed target.
+
+**Two safer variants to consider before shipping:**
+- **Price up.** Pick 2 at 12 OMENX / Pick All at 25 OMENX would sit above
+  the average chained-reroll spend per level-up. Ship at those prices,
+  monitor reroll spend for 2 weeks, adjust down if needed.
+- **Gate by level range.** Only offer Pick 2/All at levels 20+ (endgame,
+  when the pool is huge and reroll gambling gets expensive anyway). Keeps
+  reroll dominant for the first half of a run.
+
+Recommendation: **do NOT bundle A+B+C in one patch as the brainstorm
+originally proposed.** Ship A+B this week; run Pick 2/All through one
+more design pass with pricing that acknowledges the reroll interaction.
 
 ### Short-term (next 1-2 weeks)
 
