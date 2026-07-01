@@ -400,12 +400,15 @@ fragments below their gold-convert rate.
   **~8,333 OMENX**. That's a serious anchor spend.
 - Bypasses the 30/day gold-convert cap in the Forge (the whole point —
   cap-hit whales are the target).
-- **Weekly cap: 250 fragments (~167 OMENX)** — prevents a single whale
+- **Weekly cap: 250 fragments (160 OMENX)** — prevents a single whale
   from prestiging their entire account in one afternoon and killing
   their own future spend runway. Keeps the sink additive to prestige
-  rather than a shortcut around it. At 250/week it takes ~50 weeks of
-  sustained buying to fully prestige — matches roughly a season-long
-  investment horizon.
+  rather than a shortcut around it. Realistic horizon: **2 weeks of
+  capped buying = 1 full PL step** (500 frags), so a mid-engaged whale
+  can buy ~6-8 PL steps over a season — meaningful progression without
+  finishing the whole prestige ladder from OMENX alone. Full 25-step
+  prestige via OMENX only would take ~50 weeks, but that's not the
+  target — grinders will still farm most fragments in-run.
 - ~0.5 day dev. Zero cannibalisation risk — no other OMENX sink
   overlaps.
 
