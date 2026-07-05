@@ -1,3 +1,18 @@
+// 2026-07-05 (Mustard Discord): certain sprite art assets are dark-toned
+// silhouettes that vanish against similarly-dark cosmic backgrounds
+// (Ethereal Nebula, Andromeda's Edge, Shattered Core, Stormfront Nebula,
+// Pillars of Creation). Fix is targeted, not global: only these enemy IDs
+// get a bright halo drawn BEHIND the sprite so the silhouette reads against
+// any background. Cost = one extra drawImage per instance, and only for
+// this ~handful of mob types — no perf impact on the rest of the roster.
+const RIM_LIGHT_IDS = new Set([
+    't10_shadow',
+    't11_shadow_mantling',
+    't13_void_shark',
+    't14_cosmic_manta_ray',
+    'boss_nexus_annihilator',
+]);
+
 export function drawEnemy(ctx, e, time, playerX) {
     ctx.save();
     ctx.translate(e.x, e.y);
@@ -53,7 +68,24 @@ export function drawEnemy(ctx, e, time, playerX) {
         
         const drawSize = e.radius * 1.8;
         const bob = Math.sin(time * 3 + e.id.length) * (e.radius * 0.1);
-        
+
+        // Rim-light for readability-flagged dark sprites — see RIM_LIGHT_IDS.
+        // shadowBlur is one of the cheapest ways to add a background-agnostic
+        // halo (single drawImage, no scratch canvas). Only fires on the ~5
+        // flagged IDs so most enemies pay zero cost.
+        const needsRim = RIM_LIGHT_IDS.has(e.originalBossId || e.id);
+        if (needsRim) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(180, 220, 255, 0.9)';
+            ctx.shadowBlur = 12;
+            ctx.drawImage(
+                e.spriteImage,
+                col * frameWidth, row * frameHeight, frameWidth, frameHeight,
+                -drawSize/2, -drawSize/2 + bob, drawSize, drawSize
+            );
+            ctx.restore();
+        }
+
         ctx.drawImage(
             e.spriteImage,
             col * frameWidth, row * frameHeight, frameWidth, frameHeight,
