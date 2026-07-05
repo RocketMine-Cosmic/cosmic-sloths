@@ -396,6 +396,24 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
                 ctx.stroke();
                 ctx.setLineDash([]);
+
+                // Defined shape outline — Mustard 2026-07-05 reported bubble was
+                // "invisible" on dark cosmic backgrounds (esp. NeonVortex whose
+                // areaMult 0.7× shrinks the ring to ~56px at Lv1). The screen-
+                // blended dashed ring above disappears against purple nebulae.
+                // Fix: a thin source-over solid outline is always visible
+                // regardless of background, but stays non-strobing (single-pass
+                // source-over doesn't compound when bubbles overlap, unlike the
+                // additive layers). Alpha capped modest so it doesn't reintroduce
+                // the epilepsy issue.
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = Math.min(1, p.life * 2) * 0.75;
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.max(0.1, p.radius), 0, Math.PI*2);
+                ctx.stroke();
+                ctx.globalCompositeOperation = 'screen';
             } else {
                 // Burning Barrier: Hexagon shape so it's instantly distinct from circles.
                 // Outline alpha 0.9→0.5 + dash speed 60→25 — same epilepsy-safety

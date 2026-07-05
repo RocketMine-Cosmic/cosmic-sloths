@@ -361,10 +361,16 @@ export function fireWeaponLogic(engine, w) {
             visualRadius: getVisualRadius('shieldBubble', r),
             damage: dmg,
             pierce: 999,
-            life: 2.0,
+            // 2026-07-05 (Mustard Discord): life bumped 2.0 → 2.5s. Base cooldown
+            // is 3.0s (180 frames @ 60fps), so at zero CDR the shield was DOWN
+            // for a full 1.0s between activations — players reported "monster
+            // touched me without any resistance" during that gap. 2.5s cuts the
+            // gap to 0.5s (still a real off-window so shield stacking has meaning
+            // at high CDR, but no longer feels broken to fresh runs).
+            life: 2.5,
             // S7 §4b: stored at spawn so ProjectileSystem can compute lifeFrac
             // for pushback decay in the final 25%. Pre-S7 reads ignore this.
-            maxLife: 2.0,
+            maxLife: 2.5,
             color: color,
             isAoe: true,
             pushback: 250,
