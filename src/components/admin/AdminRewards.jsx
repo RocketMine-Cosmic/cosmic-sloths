@@ -323,6 +323,7 @@ export default function AdminRewards({ walletAddress }) {
                 </div>
                 <div className="text-[11px] text-slate-500 mt-2 leading-snug">
                     Run the three buttons separately for weekly periods to avoid gateway 504 timeouts — all three are resume-safe and idempotent.
+                    On failure, the wallets in flight are logged as <span className="text-amber-400 font-mono">tx_id="pending-…"</span> and will be skipped on retry to prevent double-pays. If OmenX shows the on-chain payment succeeded for a "pending" row, you can safely leave it; if it didn't, delete that PayoutLog row and re-run.
                 </div>
                 {distributeMsg && <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{distributeMsg}</div>}
             </div>

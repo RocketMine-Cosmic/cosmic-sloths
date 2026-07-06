@@ -242,25 +242,51 @@ Deno.serve(async (req) => {
         for (const key of order) {
             const tier = tiers.get(key);
             if (!tier || tier.payments.length === 0) continue;
-            const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({
-                    payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-                    gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
-                }),
-            });
+
+            // Log-first double-pay guard (2026-07-06). Write pending PayoutLog
+            // rows BEFORE the fetch — if OmenX settles on-chain but the response
+            // is lost (504/network), pending logs stay so retry skips these
+            // wallets. See manuallyDistributeRewards.postTieredBatches.
+            const pendingMarker = `pending-${period_id}-${Date.now()}-kills-${key}`;
+            const createdLogIds = [];
+            for (const p of tier.payments) {
+                const row = await base44.asServiceRole.entities.PayoutLog.create({
+                    period_id, period_type: 'weekly_kills',
+                    wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+                    amount: p.amount, rank: p.rank, tx_id: pendingMarker,
+                });
+                createdLogIds.push(row.id);
+            }
+
+            let response;
+            try {
+                response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                    body: JSON.stringify({
+                        payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                        gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
+                    }),
+                });
+            } catch (netErr) {
+                throw new Error(`Kill tier ${tier.label} network error (pending logs retained for safety): ${netErr?.message || netErr}`);
+            }
             const batchResult = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+            if (!response.ok) {
+                if (response.status >= 400 && response.status < 500) {
+                    for (const id of createdLogIds) {
+                        try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
+                    }
+                }
+                throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+            }
             const tierTxId = batchResult?.transactionId || batchResult?.txHash || '';
             if (tierTxId) txIds.push(tierTxId);
             tiersPaid++;
+            for (const id of createdLogIds) {
+                try { await base44.asServiceRole.entities.PayoutLog.update(id, { tx_id: tierTxId }); } catch {}
+            }
             for (const p of tier.payments) {
-                await base44.asServiceRole.entities.PayoutLog.create({
-                    period_id, period_type: 'weekly_kills',
-                    wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-                    amount: p.amount, rank: p.rank, tx_id: tierTxId,
-                });
                 walletsPaid++;
                 omenxPaid += p.amount;
             }

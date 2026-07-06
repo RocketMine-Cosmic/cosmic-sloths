@@ -188,19 +188,26 @@ function rankTierLabel(rank) {
 // Group ranked payments into tier buckets and send each tier as its own
 // grant-batch HTTP call so the OmenX-side note reflects the recipient's rank.
 //
-// IDEMPOTENCY (added 2026-05-18 after S5 seasonal payout hit a 502 mid-way):
-//   - alreadyPaidWallets is the set of wallets that already have a PayoutLog row
-//     for this period_id+period_type. We skip those wallets when retrying.
-//   - PayoutLogs are written *per-tier* as each tier succeeds (not all at the
-//     end), so a 502 partway through doesn't leave an empty audit trail.
-//   - Caller is responsible for passing alreadyPaidWallets and writing logs in
-//     the per-tier callback (onTierSuccess).
-async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets, onTierSuccess) {
+// IDEMPOTENCY / DOUBLE-PAY SAFETY (revised 2026-07-06):
+//   Problem: the previous "log AFTER fetch success" flow lost the audit trail
+//   when OmenX settled the payment on-chain but returned a 504/network error.
+//   Wallets got paid, no PayoutLog written, resume-retry double-paid them.
+//
+//   Fix: write PayoutLog rows BEFORE the fetch (with tx_id='pending-…').
+//     - Fetch succeeds  → update tx_id to real transaction hash.
+//     - Fetch throws 5xx/network → LEAVE the pending log in place. On-chain
+//       state is ambiguous; assume paid so retry skips (safer to under-pay
+//       one wallet — admin can top up manually — than to double-pay).
+//     - Fetch returns explicit 4xx (definitively rejected, not settled) →
+//       DELETE the pending log so retry re-attempts.
+//
+//   Caller passes alreadyPaidWallets (set of already-logged wallets from ANY
+//   status — 'pending-…' or real txId) so we skip them entirely.
+async function postTieredBatches(base44, period_id, period_type, payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets) {
     if (payments.length === 0) return { txId: '', tiersPaid: 0, tiersSkipped: 0 };
     const tiers = new Map();
     for (const p of payments) {
-        // Skip wallets already paid in a previous (failed) attempt.
-        if (alreadyPaidWallets && alreadyPaidWallets.has(p.walletAddress)) continue;
+        if (alreadyPaidWallets && alreadyPaidWallets.has(p.walletAddress.toLowerCase())) continue;
         const { key, label } = rankTierLabel(p.rank);
         if (!tiers.has(key)) tiers.set(key, { label, payments: [] });
         tiers.get(key).payments.push(p);
@@ -211,22 +218,54 @@ async function postTieredBatches(payments, apiBaseUrl, apiKey, baseNote, already
     for (const key of order) {
         const tier = tiers.get(key);
         if (!tier || tier.payments.length === 0) continue;
-        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-                gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
-            }),
-        });
+        // 1) Write pending PayoutLog rows FIRST — if fetch never returns cleanly,
+        //    these stay in place and resume-retry skips them (avoids double-pay).
+        const pendingMarker = `pending-${period_id}-${Date.now()}-${key}`;
+        const createdLogIds = [];
+        for (const p of tier.payments) {
+            const row = await base44.asServiceRole.entities.PayoutLog.create({
+                period_id, period_type,
+                wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
+                amount: p.amount, rank: p.rank, tx_id: pendingMarker,
+            });
+            createdLogIds.push(row.id);
+        }
+        // 2) Fire the actual OmenX batch.
+        let response;
+        try {
+            response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
+                }),
+            });
+        } catch (netErr) {
+            // Network error / gateway timeout — outcome ambiguous. LEAVE pending
+            // logs in place so a resume skips these wallets. Admin can inspect
+            // the 'pending-…' tx_ids in PayoutLog and top-up manually if needed.
+            throw new Error(`Tier ${tier.label} network error (pending logs retained for safety): ${netErr?.message || netErr}`);
+        }
         const batchResult = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+        if (!response.ok) {
+            // 4xx = definitive rejection (not settled on-chain) → safe to delete
+            //       pending logs so retry re-attempts.
+            // 5xx = ambiguous → keep pending logs (safer to skip on retry).
+            if (response.status >= 400 && response.status < 500) {
+                for (const id of createdLogIds) {
+                    try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
+                }
+            }
+            throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+        }
+        // 3) Success — patch tx_id from 'pending-…' to the real transaction hash.
         const txId = batchResult?.transactionId || batchResult?.txHash || '';
         if (txId) txIds.push(txId);
+        for (const id of createdLogIds) {
+            try { await base44.asServiceRole.entities.PayoutLog.update(id, { tx_id: txId }); } catch {}
+        }
         tiersPaid++;
-        // Write logs for THIS tier immediately so a failure in the next tier
-        // doesn't lose the audit trail for tiers that already succeeded.
-        if (onTierSuccess) await onTierSuccess(tier.payments, txId);
     }
     return { txId: txIds.join(','), tiersPaid, tiersSkipped: 0 };
 }
@@ -339,58 +378,58 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     }
 
     // Players: one batch per rank tier so OmenX TX history shows exact rank/band.
-    // PayoutLogs are written per-tier as each tier succeeds (resume-safe).
+    // Log-first pattern (see postTieredBatches) — pending log written BEFORE the
+    // fetch so ambiguous errors don't leave silently-paid wallets untracked.
     const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
-    const onTierSuccess = async (tierPayments, tierTxId) => {
-        for (const p of tierPayments) {
-            await base44.asServiceRole.entities.PayoutLog.create({
-                period_id: pool.period_id, period_type: 'weekly',
-                wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-                amount: p.amount, rank: p.rank, tx_id: tierTxId
-            });
-        }
-    };
-    const { txId: playerTxId } = await postTieredBatches(payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets, onTierSuccess);
+    const { txId: playerTxId } = await postTieredBatches(base44, pool.period_id, 'weekly', payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets);
 
-    // Staff: separate batch, also resume-safe — skip already-paid staff wallets.
+    // Staff: single batch, log-first (same rationale).
     const remainingStaff = staffPayments.filter(p => !alreadyPaidStaff.has(p.walletAddress.toLowerCase()));
     let staffTxId = '';
     if (remainingStaff.length > 0) {
-        const staffResponse = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                payments: remainingStaff.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-                gameId: GAME_ID, gameName: GAME_NAME, note: `${playerBase} — Staff share`,
-            }),
-        });
-        const staffResult = await staffResponse.json().catch(() => ({}));
-        if (!staffResponse.ok) throw new Error(`Staff batch failed — HTTP ${staffResponse.status}: ${JSON.stringify(staffResult)}`);
-        staffTxId = staffResult?.transactionId || staffResult?.txHash || '';
+        const pendingMarker = `pending-${pool.period_id}-${Date.now()}-staff`;
+        const createdLogIds = [];
         for (const p of remainingStaff) {
-            await base44.asServiceRole.entities.PayoutLog.create({
+            const row = await base44.asServiceRole.entities.PayoutLog.create({
                 period_id: pool.period_id, period_type: 'staff_weekly',
                 wallet_address: p.walletAddress, player_name: p.player_name,
-                amount: p.amount, rank: 0, tx_id: staffTxId
+                amount: p.amount, rank: 0, tx_id: pendingMarker,
             });
+            createdLogIds.push(row.id);
+        }
+        let staffResponse;
+        try {
+            staffResponse = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    payments: remainingStaff.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    gameId: GAME_ID, gameName: GAME_NAME, note: `${playerBase} — Staff share`,
+                }),
+            });
+        } catch (netErr) {
+            throw new Error(`Staff batch network error (pending logs retained for safety): ${netErr?.message || netErr}`);
+        }
+        const staffResult = await staffResponse.json().catch(() => ({}));
+        if (!staffResponse.ok) {
+            if (staffResponse.status >= 400 && staffResponse.status < 500) {
+                for (const id of createdLogIds) {
+                    try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
+                }
+            }
+            throw new Error(`Staff batch failed — HTTP ${staffResponse.status}: ${JSON.stringify(staffResult)}`);
+        }
+        staffTxId = staffResult?.transactionId || staffResult?.txHash || '';
+        for (const id of createdLogIds) {
+            try { await base44.asServiceRole.entities.PayoutLog.update(id, { tx_id: staffTxId }); } catch {}
         }
     }
 
-    // S7+ kill leaderboard payout — resume-safe via existing 'weekly_kills' PayoutLogs.
-    // Runs AFTER players + staff so a 502 here doesn't lose the player/staff audit trail.
+    // S7+ kill leaderboard payout — same log-first pattern via postTieredBatches.
     let killTxId = '';
     if (killPayments.length > 0) {
         const killBase = `Cosmic Sloths weekly KILL payout ${pool.period_id}`;
-        const onKillTierSuccess = async (tierPayments, tierTxId) => {
-            for (const p of tierPayments) {
-                await base44.asServiceRole.entities.PayoutLog.create({
-                    period_id: pool.period_id, period_type: 'weekly_kills',
-                    wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-                    amount: p.amount, rank: p.rank, tx_id: tierTxId
-                });
-            }
-        };
-        const r = await postTieredBatches(killPayments, apiBaseUrl, apiKey, killBase, alreadyPaidKills, onKillTierSuccess);
+        const r = await postTieredBatches(base44, pool.period_id, 'weekly_kills', killPayments, apiBaseUrl, apiKey, killBase, alreadyPaidKills);
         killTxId = r.txId;
     }
     const remainingKills = killPayments.filter(p => !alreadyPaidKills.has(p.walletAddress.toLowerCase()));
@@ -432,21 +471,13 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     const existingLogs = await base44.asServiceRole.entities.PayoutLog.filter({ period_id: pool.period_id, period_type: 'seasonal' }, '-created_date', 1000);
     const alreadyPaidWallets = new Set(existingLogs.map(l => (l.wallet_address || '').toLowerCase()));
 
-    // One batch per rank tier so OmenX TX history shows exact rank/band.
-    // PayoutLogs written per-tier so partial failures preserve the audit trail.
-    const onTierSuccess = async (tierPayments, tierTxId) => {
-        for (const p of tierPayments) {
-            await base44.asServiceRole.entities.PayoutLog.create({
-                period_id: pool.period_id, period_type: 'seasonal',
-                wallet_address: p.walletAddress, player_name: p.player_name || p.walletAddress,
-                amount: p.amount, rank: p.rank, tx_id: tierTxId
-            });
-        }
-    };
+    // Log-first pattern (see postTieredBatches) — pending log written BEFORE
+    // the fetch so ambiguous errors don't leave silently-paid wallets untracked.
     const { txId, tiersPaid } = await postTieredBatches(
+        base44, pool.period_id, 'seasonal',
         payments, apiBaseUrl, apiKey,
         `Cosmic Sloths seasonal payout ${pool.period_id}`,
-        alreadyPaidWallets, onTierSuccess
+        alreadyPaidWallets
     );
 
     await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });

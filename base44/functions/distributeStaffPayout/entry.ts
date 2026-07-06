@@ -120,25 +120,51 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, paid: 0, skipped_already_paid: alreadyPaid.size, skipped: 'all staff already paid' });
         }
 
-        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                payments: remaining.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
-                gameId: GAME_ID, gameName: GAME_NAME,
-                note: `Cosmic Sloths weekly payout ${period_id} — Staff share`,
-            }),
-        });
-        const batchResult = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(`Staff batch failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
-        const txId = batchResult?.transactionId || batchResult?.txHash || '';
-
+        // Log-first double-pay guard (2026-07-06). Write pending PayoutLog rows
+        // BEFORE the fetch — if the OmenX call settles on-chain but the response
+        // is lost (504/network), the pending log stays so resume-retry skips
+        // these wallets (safer to skip than to double-pay). See manuallyDistributeRewards.
+        const pendingMarker = `pending-${period_id}-${Date.now()}-staff`;
+        const createdLogIds = [];
         for (const p of remaining) {
-            await base44.asServiceRole.entities.PayoutLog.create({
+            const row = await base44.asServiceRole.entities.PayoutLog.create({
                 period_id, period_type: 'staff_weekly',
                 wallet_address: p.walletAddress, player_name: p.player_name,
-                amount: p.amount, rank: 0, tx_id: txId,
+                amount: p.amount, rank: 0, tx_id: pendingMarker,
             });
+            createdLogIds.push(row.id);
+        }
+
+        let response;
+        try {
+            response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    payments: remaining.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    gameId: GAME_ID, gameName: GAME_NAME,
+                    note: `Cosmic Sloths weekly payout ${period_id} — Staff share`,
+                }),
+            });
+        } catch (netErr) {
+            // Ambiguous outcome — leave pending logs in place.
+            throw new Error(`Staff batch network error (pending logs retained for safety): ${netErr?.message || netErr}`);
+        }
+        const batchResult = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            // Only rollback pending logs on definitive 4xx rejection.
+            if (response.status >= 400 && response.status < 500) {
+                for (const id of createdLogIds) {
+                    try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
+                }
+            }
+            throw new Error(`Staff batch failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+        }
+        const txId = batchResult?.transactionId || batchResult?.txHash || '';
+
+        // Patch pending logs with the real tx_id.
+        for (const id of createdLogIds) {
+            try { await base44.asServiceRole.entities.PayoutLog.update(id, { tx_id: txId }); } catch {}
         }
 
         try {
