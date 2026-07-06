@@ -76,9 +76,17 @@ Deno.serve(async (req) => {
         const pool = pools[0];
         console.log(`[manuallyDistributeRewards] Distributing ${period_type} ${period_id}, pool total_spent=${pool.total_spent}`);
 
+        // 2026-07-06: green "Distribute (Players)" button is players-only. Staff and
+        // Kill pool have their own dedicated buttons (distributeStaffPayout /
+        // distributeKillPool). Doing all three in one call was hitting gateway 504s
+        // and confusing the resume-safety logic. Callers can still opt into the
+        // legacy all-in-one behaviour by passing `includeAll: true` (e.g. cron).
+        const includeStaff = body.includeAll === true;
+        const includeKills = body.includeAll === true;
+
         let result;
         if (period_type === 'weekly') {
-            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey);
+            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, { includeStaff, includeKills });
         } else if (period_type === 'seasonal') {
             result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
         } else {
@@ -91,6 +99,38 @@ Deno.serve(async (req) => {
         return Response.json({ error: error?.message || String(error) }, { status: 500 });
     }
 });
+
+// Mirrors the helper in distributeStaffPayout / distributeKillPool. Flips
+// TokenPool.distributed=true only once players + staff + (S7+ kills) all have
+// PayoutLog rows. Safe to call from any of the three split paths — whichever
+// runs last closes the loop. Without this, "Players Only" would leave the
+// pool marked pending until staff + kills also ran.
+async function maybeMarkWeeklyPoolDistributed(db, period_id) {
+    try {
+        const pools = await db.entities.TokenPool.filter({ period_id, period_type: 'weekly' });
+        const pool = pools[0];
+        if (!pool) return false;
+        if (pool.distributed) return true;
+
+        const [playerLogs, staffLogs, killLogs] = await Promise.all([
+            db.entities.PayoutLog.filter({ period_id, period_type: 'weekly' }, '-created_date', 1),
+            db.entities.PayoutLog.filter({ period_id, period_type: 'staff_weekly' }, '-created_date', 1),
+            db.entities.PayoutLog.filter({ period_id, period_type: 'weekly_kills' }, '-created_date', 1),
+        ]);
+
+        const isS7Plus = isNewPoolPeriod(period_id, 'weekly');
+        const allDone = isS7Plus
+            ? (playerLogs.length > 0 && staffLogs.length > 0 && killLogs.length > 0)
+            : (playerLogs.length > 0 && staffLogs.length > 0);
+
+        if (!allDone) return false;
+        await db.entities.TokenPool.update(pool.id, { distributed: true });
+        return true;
+    } catch (err) {
+        console.warn('[maybeMarkWeeklyPoolDistributed]', err?.message);
+        return false;
+    }
+}
 
 // Payout config loaded from AppConfig at distribution time. Defaults match
 // distributeRewards.js. Admin edits via functions/leaderboardPayoutConfig.
@@ -270,7 +310,7 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
     return { txId: txIds.join(','), tiersPaid, tiersSkipped: 0 };
 }
 
-async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
+async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { includeStaff: true, includeKills: true }) {
     // S7 gate — periods >= S7 use config-driven pool % (15%); earlier use 20%.
     const useNewPools = isNewPoolPeriod(pool.period_id, 'weekly');
     const cfg = await loadPayoutConfig(base44);
@@ -383,10 +423,12 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
     const { txId: playerTxId } = await postTieredBatches(base44, pool.period_id, 'weekly', payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets);
 
-    // Staff: single batch, log-first (same rationale).
+    // Staff: single batch, log-first (same rationale). Gated by opts.includeStaff
+    // — the green "Distribute (Players)" button skips this; use the "Staff Only"
+    // button (distributeStaffPayout) instead.
     const remainingStaff = staffPayments.filter(p => !alreadyPaidStaff.has(p.walletAddress.toLowerCase()));
     let staffTxId = '';
-    if (remainingStaff.length > 0) {
+    if (opts.includeStaff && remainingStaff.length > 0) {
         const pendingMarker = `pending-${pool.period_id}-${Date.now()}-staff`;
         const createdLogIds = [];
         for (const p of remainingStaff) {
@@ -426,15 +468,26 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey) {
     }
 
     // S7+ kill leaderboard payout — same log-first pattern via postTieredBatches.
+    // Gated by opts.includeKills — the green button skips this; use the "Kill
+    // Pool Only" button (distributeKillPool) instead.
     let killTxId = '';
-    if (killPayments.length > 0) {
+    if (opts.includeKills && killPayments.length > 0) {
         const killBase = `Cosmic Sloths weekly KILL payout ${pool.period_id}`;
         const r = await postTieredBatches(base44, pool.period_id, 'weekly_kills', killPayments, apiBaseUrl, apiKey, killBase, alreadyPaidKills);
         killTxId = r.txId;
     }
     const remainingKills = killPayments.filter(p => !alreadyPaidKills.has(p.walletAddress.toLowerCase()));
 
-    await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+    // Only auto-flip `distributed: true` when the run covered every bucket
+    // (legacy cron path with includeAll=true). For the split "Players Only"
+    // button, defer to the other two split fns — whichever runs last closes
+    // the pool via maybeMarkWeeklyPoolDistributed. Otherwise clicking Players
+    // Only would mark the pool distributed while staff+kills are still owed.
+    if (opts.includeStaff && opts.includeKills) {
+        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+    } else {
+        await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, pool.period_id);
+    }
     return {
         paid: payments.length - alreadyPaidWallets.size,
         skipped_already_paid: alreadyPaidWallets.size,
