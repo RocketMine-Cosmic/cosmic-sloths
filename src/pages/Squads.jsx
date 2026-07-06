@@ -109,6 +109,8 @@ export default function Squads({ isCarousel }) {
     // (mobile strip, desktop panel, settings "Danger Zone") open the same modal.
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
+    const [pendingTransferMember, setPendingTransferMember] = useState(null);
+    const [isTransferringLeadership, setIsTransferringLeadership] = useState(false);
 
     // Browse tab — lazy-loaded the first time it's opened (and refreshed at
     // most once per 60s). Avoids the always-on Squad.list('-created_date', 50)
@@ -581,6 +583,15 @@ export default function Squads({ isCarousel }) {
 
     const handleTransferLeadership = async (member) => {
         if (!isLeader) return;
+        // 2026-07-06: gate behind confirm dialog — accidental mis-taps on the small
+        // crown icon (right next to Kick) were transferring leadership silently.
+        setPendingTransferMember(member);
+    };
+
+    const confirmTransferLeadership = async () => {
+        const member = pendingTransferMember;
+        if (!isLeader || !member) return;
+        setIsTransferringLeadership(true);
         try {
             SoundManager.playUIClick();
             const res = await base44.functions.invoke('squadActions', {
@@ -600,8 +611,11 @@ export default function Squads({ isCarousel }) {
                 return m;
             }));
             toast({ title: "Leadership Transferred", description: `${sanitizePilotName(member.player_name, member.wallet_address)} is now the leader.` });
+            setPendingTransferMember(null);
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsTransferringLeadership(false);
         }
     };
 
@@ -1405,6 +1419,43 @@ export default function Squads({ isCarousel }) {
                 )}
             </div>
         </div>
+        {pendingTransferMember && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+                onClick={() => { if (!isTransferringLeadership) setPendingTransferMember(null); }}
+            >
+                <div
+                    className="bg-[#0b0416] border-2 border-yellow-500/60 rounded-2xl p-6 max-w-sm w-full shadow-[0_0_40px_rgba(245,158,11,0.3)]"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <h3 className="text-xl font-black text-yellow-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Crown className="w-5 h-5" /> Transfer Leadership?
+                    </h3>
+                    <p className="text-sm text-slate-300 mb-2">
+                        Make <span className="font-bold text-white">{sanitizePilotName(pendingTransferMember.player_name, pendingTransferMember.wallet_address)}</span> the new squad leader?
+                    </p>
+                    <p className="text-xs text-amber-400 bg-amber-950/30 border border-amber-900/50 rounded-lg p-2 mb-5">
+                        ⚠️ You will lose leader privileges. Only the new leader can transfer it back.
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setPendingTransferMember(null)}
+                            disabled={isTransferringLeadership}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg border border-slate-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={confirmTransferLeadership}
+                            disabled={isTransferringLeadership}
+                            className="flex-1 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-lg transition-colors"
+                        >
+                            {isTransferringLeadership ? 'Transferring…' : 'Transfer'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         {showLeaveConfirm && (
             <div
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
