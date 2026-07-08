@@ -1035,10 +1035,16 @@ export class GameEngine {
             return;
         }
 
-        // Regen
-        if (this.player.regen > 0 && this.frameCount % 60 === 0) {
-            this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.regen);
-            this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+        // Regen — fixed-time tick (2026-07-08 FPS-fairness fix). Was frameCount % 60,
+        // which gave 144Hz PCs 2.4× regen and 30fps phones half regen. Now heals
+        // exactly 1× regen value per real second regardless of FPS.
+        if (this.player.regen > 0) {
+            this._regenAcc = (this._regenAcc || 0) + dt;
+            if (this._regenAcc >= 1.0) {
+                this._regenAcc -= 1.0;
+                this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.regen);
+                this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+            }
         }
 
         // Endless XP trickle — after 5 minutes, gain a small passive XP stream so

@@ -428,12 +428,19 @@ export function updateEnemies(engine, dt) {
         }
         if (e.attackTimer > 0) e.attackTimer -= dt;
 
-        if (e.isBoss && engine.bossModifiers.regen && engine.frameCount % 60 === 0) {
-            if (e.hp < e.maxHp) {
-                const healAmount = e.maxHp * 0.01;
-                e.hp = Math.min(e.maxHp, e.hp + healAmount);
-                engine.addParticle(e.x, e.y, '#00ff00', 5, 'spark', 1);
-                engine.addDamageText(e.x, e.y - 20, `+${Math.floor(healAmount)}`, '#00ff00');
+        // Boss regen — fixed-time tick (2026-07-08 FPS-fairness fix). Was frameCount % 60,
+        // which made bosses heal 2.4× faster on 144Hz PCs vs 60Hz laptops. Now heals
+        // exactly 1% max HP per real second regardless of FPS.
+        if (e.isBoss && engine.bossModifiers.regen) {
+            e._regenAcc = (e._regenAcc || 0) + dt;
+            if (e._regenAcc >= 1.0) {
+                e._regenAcc -= 1.0;
+                if (e.hp < e.maxHp) {
+                    const healAmount = e.maxHp * 0.01;
+                    e.hp = Math.min(e.maxHp, e.hp + healAmount);
+                    engine.addParticle(e.x, e.y, '#00ff00', 5, 'spark', 1);
+                    engine.addDamageText(e.x, e.y - 20, `+${Math.floor(healAmount)}`, '#00ff00');
+                }
             }
         }
 
