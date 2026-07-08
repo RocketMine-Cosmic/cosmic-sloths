@@ -69,12 +69,32 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
 
     const handleConnectWallet = async () => {
         setLoading(true);
+        setSuccessMsg('');
+        // Safety net: if omenx.authenticate() silently fails (mobile Safari popup
+        // blockers, SDK edge cases), the button used to just sit doing nothing.
+        // Detect that and surface a clear error + reset so the user can retry.
+        // 2026-07-08 (Briantjeuh Discord report): "connect wallet does nothing"
+        // on mobile after logging out and clearing cache.
+        const redirectUri = getRedirectUri();
+        let navigated = false;
+        const beforeUnload = () => { navigated = true; };
+        window.addEventListener('beforeunload', beforeUnload);
         try {
-            const redirectUri = getRedirectUri();
             await omenx.authenticate({ redirectUri, enablePKCE: true });
-        } catch {
-            setLoading(false);
+        } catch (err) {
+            console.error('[OmenXAuthButton] authenticate threw:', err);
         }
+        // Give the SDK ~1.5s to actually trigger a page navigation (redirect flow).
+        // If we're still here after that, something silently failed — reset the
+        // button and show a hint so the user knows what to do next.
+        setTimeout(() => {
+            window.removeEventListener('beforeunload', beforeUnload);
+            if (!navigated && document.visibilityState === 'visible') {
+                setLoading(false);
+                setSuccessMsg('Connect didn\'t open. Please allow pop-ups and try again, or reload the page.');
+                setTimeout(() => setSuccessMsg(''), 8000);
+            }
+        }, 1500);
     };
 
     const handleLogout = async () => {
@@ -140,8 +160,12 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                 {label}
             </button>
             {successMsg && (
-                <div className="text-[10px] text-green-400 font-bold bg-green-950/50 border border-green-700/50 px-2 py-1 rounded max-w-[240px] text-center truncate">
-                    ✓ {successMsg}
+                <div className={`text-[10px] font-bold px-2 py-1 rounded max-w-[240px] text-center border ${
+                    successMsg.startsWith('Wallet connected')
+                        ? 'text-green-400 bg-green-950/50 border-green-700/50 truncate'
+                        : 'text-amber-300 bg-amber-950/50 border-amber-700/50'
+                }`}>
+                    {successMsg.startsWith('Wallet connected') ? `✓ ${successMsg}` : `⚠ ${successMsg}`}
                 </div>
             )}
         </div>

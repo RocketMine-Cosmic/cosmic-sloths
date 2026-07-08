@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SpaceBackground from './SpaceBackground';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { base44 } from '@/api/base44Client';
@@ -7,6 +7,10 @@ import { omenx, getRedirectUri } from '@/lib/omenx';
 export default function OmenXGate({ children, isCarousel }) {
     // Read shared auth state — no per-gate `me` call (was 13× across the carousel).
     const { authData: auth, base44Authed } = useOmenXAuth();
+    // Surface silent SDK failures on mobile (Briantjeuh report 2026-07-08 —
+    // "Connect Wallet does nothing" on mobile Safari after logout + cache clear).
+    const [ctaError, setCtaError] = useState('');
+    const [ctaLoading, setCtaLoading] = useState(false);
 
     // Bypass auth inside Base44 preview iframe
     const isPreview = window.self !== window.top && window.location !== window.parent.location;
@@ -43,11 +47,28 @@ export default function OmenXGate({ children, isCarousel }) {
         icon = '🔗';
         title = 'Wallet Required';
         subtitle = 'Connect your OmenX wallet to access this area.';
-        ctaLabel = 'Connect Wallet';
+        ctaLabel = ctaLoading ? 'Connecting…' : 'Connect Wallet';
         ctaAction = async () => {
+            setCtaError('');
+            setCtaLoading(true);
+            let navigated = false;
+            const beforeUnload = () => { navigated = true; };
+            window.addEventListener('beforeunload', beforeUnload);
             try {
                 await omenx.authenticate({ redirectUri: getRedirectUri(), enablePKCE: true });
-            } catch (e) {}
+            } catch (e) {
+                console.error('[OmenXGate] authenticate threw:', e);
+            }
+            // If no navigation kicks off within 1.5s, the SDK silently failed
+            // (typically mobile Safari blocking a popup). Surface a clear
+            // message so the user knows they need to retry / allow pop-ups.
+            setTimeout(() => {
+                window.removeEventListener('beforeunload', beforeUnload);
+                if (!navigated && document.visibilityState === 'visible') {
+                    setCtaLoading(false);
+                    setCtaError('Connect didn\'t open. Please allow pop-ups for this site and tap Connect Wallet again. If it still fails, reload the page and retry.');
+                }
+            }, 1500);
         };
     }
 
@@ -61,10 +82,16 @@ export default function OmenXGate({ children, isCarousel }) {
                 {ctaAction && (
                     <button
                         onClick={ctaAction}
-                        className="mt-2 px-6 py-3 bg-cyan-900/30 hover:bg-cyan-900/50 border border-cyan-500/60 hover:border-cyan-400 text-cyan-100 hover:text-white font-black tracking-widest uppercase text-sm rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all"
+                        disabled={ctaLoading}
+                        className="mt-2 px-6 py-3 bg-cyan-900/30 hover:bg-cyan-900/50 border border-cyan-500/60 hover:border-cyan-400 text-cyan-100 hover:text-white font-black tracking-widest uppercase text-sm rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all disabled:opacity-60"
                     >
                         {ctaLabel}
                     </button>
+                )}
+                {ctaError && (
+                    <div className="mt-3 max-w-xs text-[11px] text-amber-300 bg-amber-950/50 border border-amber-700/50 rounded-lg px-3 py-2 text-center">
+                        ⚠ {ctaError}
+                    </div>
                 )}
             </div>
         </div>
