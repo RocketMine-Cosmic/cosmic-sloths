@@ -1,9 +1,13 @@
 // Projectile update logic extracted from GameEngine.
 // Handles player projectile movement, AoE, collisions, chains, and enemy projectiles.
-import { isS7OrLater } from '@/lib/seasonGate';
+import { isS7OrLater, isS8OrLater } from '@/lib/seasonGate';
 
 // Cached at module load — same pattern as PickupSystem/_IS_S6.
 const _IS_S7 = isS7OrLater();
+// S8 FPS-fairness gate — flips pool/shield damage ticks from frameCount-based
+// (unfair to 30fps mobile) to real-time accumulators (4Hz on every device).
+// Held back until W29 rollover so the in-flight S7 leaderboard stays fair.
+const _IS_S8 = isS8OrLater();
 
 // Swept circle-vs-point hit test: returns true if the line segment from (px0,py0)
 // to (px,py) passes within `r` of point (ex,ey). Handles fast projectiles + moving
@@ -286,11 +290,17 @@ export function updateProjectiles(engine, dt) {
                 p.x = engine.player.x;
                 p.y = engine.player.y;
                 // p.radius = uncapped damage hitbox. visualRadius (if set) is render-only.
-                // Fixed-time tick (2026-07-08 fix): see the pool-tick block below
-                // for the full rationale. Shields damage-tick at 4Hz regardless of FPS.
-                p._tickAcc = (p._tickAcc || 0) + dt;
-                const _shieldDoTick = p._tickAcc >= 0.25;
-                if (_shieldDoTick) p._tickAcc -= 0.25;
+                // S8+: real-time 4Hz tick (fair across FPS). S7 and earlier: legacy
+                // frameCount % 15 tick — kept to avoid retroactively changing the
+                // in-flight S7 leaderboard.
+                let _shieldDoTick;
+                if (_IS_S8) {
+                    p._tickAcc = (p._tickAcc || 0) + dt;
+                    _shieldDoTick = p._tickAcc >= 0.25;
+                    if (_shieldDoTick) p._tickAcc -= 0.25;
+                } else {
+                    _shieldDoTick = engine.frameCount % 15 === 0;
+                }
                 checkAoe(e => {
                     if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                     const dist = Math.hypot(e.x - p.x, e.y - p.y);
@@ -358,16 +368,19 @@ export function updateProjectiles(engine, dt) {
                         p.visualRadius = Math.min(p.visualMaxRadius, p.visualRadius + p.growthRate * dt);
                     }
                 }
-                // Fixed-time tick (2026-07-08, Briantjeuh Squad Meteor bug): pools
-                // used to tick every 15 frames, which meant a 60 FPS laptop dealt
-                // ~4 ticks/sec but a 30 FPS phone only ~2 ticks/sec — same build,
-                // same weapon, ~1.6× more damage on desktop just from frame rate.
-                // Now every pool ticks exactly 4×/sec (every 0.25s of game time)
-                // regardless of FPS. Applies to Flaming Lash, Napalm, Hellfire,
-                // Toxic Cloud, Venom Lash — every burn/AoE-pool weapon.
-                p._tickAcc = (p._tickAcc || 0) + dt;
-                if (p._tickAcc >= 0.25) {
-                    p._tickAcc -= 0.25;
+                // S8+ (Briantjeuh Squad Meteor bug, 2026-07-08): pools tick at
+                // real-time 4Hz — same DPS on 30fps phones, 60fps laptops, and
+                // 144Hz PCs. S7 and earlier: legacy frameCount % 15 tick (kept
+                // so the in-flight S7 leaderboard isn't retroactively changed).
+                let _poolDoTick;
+                if (_IS_S8) {
+                    p._tickAcc = (p._tickAcc || 0) + dt;
+                    _poolDoTick = p._tickAcc >= 0.25;
+                    if (_poolDoTick) p._tickAcc -= 0.25;
+                } else {
+                    _poolDoTick = engine.frameCount % 15 === 0;
+                }
+                if (_poolDoTick) {
                     checkAoe(e => {
                         if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {

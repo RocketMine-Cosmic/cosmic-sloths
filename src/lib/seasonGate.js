@@ -58,3 +58,23 @@ export function isS7OrLater() {
         return false;
     }
 }
+
+// S8 FPS-fairness gate — activates at the W28→W29 rollover (Mon Jul 13 2026
+// 00:00 UTC, season_id flips '2026-S7' → '2026-S8'). Converts frame-rate-dependent
+// damage/heal ticks to real-time accumulators so 144Hz PCs, 60Hz laptops, and
+// 30Hz phones all deal/heal the same DPS per real second:
+//   - AoE damage pools (Flaming Lash / Napalm / Hellfire / Toxic / Venom Lash)
+//     → 4Hz fixed tick (0.25s) instead of frameCount % 15
+//   - Player HP regen → 1× regen per real second instead of frameCount % 60
+//   - Boss HP regen (bossModifiers.regen) → 1% max HP per real second
+// Held back until S8 so the in-flight S7 leaderboard stays fair — enabling
+// mid-season would retroactively change every high-refresh player's DPS.
+// Used by: ProjectileSystem.js, GameEngine.js, EnemyAI.js.
+export function isS8OrLater() {
+    try {
+        const { season_id } = getCurrentPeriodIds();
+        return season_id >= '2026-S8';
+    } catch {
+        return false;
+    }
+}

@@ -11,7 +11,7 @@ import { updateEnemies as updateEnemiesLogic } from './EnemyAI';
 import { updatePickups as updatePickupsLogic } from './PickupSystem';
 import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, applyUpgrade as applyUpgradeLogic, checkSynergies as checkSynergiesLogic, checkEvolutions as checkEvolutionsLogic } from './UpgradeSystem';
 import { updateCharacterMechanics } from './CharacterMechanics';
-import { isS6OrLater, isS7OrLater } from '@/lib/seasonGate';
+import { isS6OrLater, isS7OrLater, isS8OrLater } from '@/lib/seasonGate';
 
 // S7 §4a: pushback weapons share a lifted CD floor (0.85× vs default 0.5×) so
 // stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
@@ -86,6 +86,7 @@ export class GameEngine {
         // W20→W21 rollover (Mon May 25 2026 00:00 UTC). S5 keeps legacy values.
         this._isS6 = isS6OrLater();
         this._isS7 = isS7OrLater();
+        this._isS8 = isS8OrLater();
 
         // L3 — Cosmic difficulty 3.0× → 2.0× gold/XP. Cuts the dominant
         // difficulty stacker without touching enemy HP/dmg (still 2.5×).
@@ -1035,13 +1036,18 @@ export class GameEngine {
             return;
         }
 
-        // Regen — fixed-time tick (2026-07-08 FPS-fairness fix). Was frameCount % 60,
-        // which gave 144Hz PCs 2.4× regen and 30fps phones half regen. Now heals
-        // exactly 1× regen value per real second regardless of FPS.
+        // Regen — S8+ uses a real-time accumulator (1× regen per real second on
+        // every device). S7 and earlier keep the legacy frameCount % 60 tick so
+        // the in-flight S7 leaderboard isn't retroactively changed.
         if (this.player.regen > 0) {
-            this._regenAcc = (this._regenAcc || 0) + dt;
-            if (this._regenAcc >= 1.0) {
-                this._regenAcc -= 1.0;
+            if (this._isS8) {
+                this._regenAcc = (this._regenAcc || 0) + dt;
+                if (this._regenAcc >= 1.0) {
+                    this._regenAcc -= 1.0;
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.regen);
+                    this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
+                }
+            } else if (this.frameCount % 60 === 0) {
                 this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.regen);
                 this.callbacks.onHpChange(this.player.hp, this.player.maxHp);
             }

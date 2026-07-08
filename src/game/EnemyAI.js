@@ -428,19 +428,25 @@ export function updateEnemies(engine, dt) {
         }
         if (e.attackTimer > 0) e.attackTimer -= dt;
 
-        // Boss regen — fixed-time tick (2026-07-08 FPS-fairness fix). Was frameCount % 60,
-        // which made bosses heal 2.4× faster on 144Hz PCs vs 60Hz laptops. Now heals
-        // exactly 1% max HP per real second regardless of FPS.
+        // Boss regen — S8+ uses a real-time accumulator (1% max HP per real
+        // second on every device). S7 and earlier keep the legacy frameCount % 60
+        // tick so the in-flight S7 leaderboard isn't retroactively changed.
         if (e.isBoss && engine.bossModifiers.regen) {
-            e._regenAcc = (e._regenAcc || 0) + dt;
-            if (e._regenAcc >= 1.0) {
-                e._regenAcc -= 1.0;
-                if (e.hp < e.maxHp) {
-                    const healAmount = e.maxHp * 0.01;
-                    e.hp = Math.min(e.maxHp, e.hp + healAmount);
-                    engine.addParticle(e.x, e.y, '#00ff00', 5, 'spark', 1);
-                    engine.addDamageText(e.x, e.y - 20, `+${Math.floor(healAmount)}`, '#00ff00');
+            let shouldHeal = false;
+            if (engine._isS8) {
+                e._regenAcc = (e._regenAcc || 0) + dt;
+                if (e._regenAcc >= 1.0) {
+                    e._regenAcc -= 1.0;
+                    shouldHeal = true;
                 }
+            } else if (engine.frameCount % 60 === 0) {
+                shouldHeal = true;
+            }
+            if (shouldHeal && e.hp < e.maxHp) {
+                const healAmount = e.maxHp * 0.01;
+                e.hp = Math.min(e.maxHp, e.hp + healAmount);
+                engine.addParticle(e.x, e.y, '#00ff00', 5, 'spark', 1);
+                engine.addDamageText(e.x, e.y - 20, `+${Math.floor(healAmount)}`, '#00ff00');
             }
         }
 
