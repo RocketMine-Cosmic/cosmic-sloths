@@ -286,11 +286,16 @@ export function updateProjectiles(engine, dt) {
                 p.x = engine.player.x;
                 p.y = engine.player.y;
                 // p.radius = uncapped damage hitbox. visualRadius (if set) is render-only.
+                // Fixed-time tick (2026-07-08 fix): see the pool-tick block below
+                // for the full rationale. Shields damage-tick at 4Hz regardless of FPS.
+                p._tickAcc = (p._tickAcc || 0) + dt;
+                const _shieldDoTick = p._tickAcc >= 0.25;
+                if (_shieldDoTick) p._tickAcc -= 0.25;
                 checkAoe(e => {
                     if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                     const dist = Math.hypot(e.x - p.x, e.y - p.y);
                     if (dist < p.radius) {
-                        if (engine.frameCount % 15 === 0) {
+                        if (_shieldDoTick) {
                             engine.damageEnemy(e, p.damage, p);
                             if (p.burn) {
                                 engine.addParticle(e.x, e.y, '#ff4500', 3);
@@ -353,7 +358,16 @@ export function updateProjectiles(engine, dt) {
                         p.visualRadius = Math.min(p.visualMaxRadius, p.visualRadius + p.growthRate * dt);
                     }
                 }
-                if (engine.frameCount % 15 === 0) {
+                // Fixed-time tick (2026-07-08, Briantjeuh Squad Meteor bug): pools
+                // used to tick every 15 frames, which meant a 60 FPS laptop dealt
+                // ~4 ticks/sec but a 30 FPS phone only ~2 ticks/sec — same build,
+                // same weapon, ~1.6× more damage on desktop just from frame rate.
+                // Now every pool ticks exactly 4×/sec (every 0.25s of game time)
+                // regardless of FPS. Applies to Flaming Lash, Napalm, Hellfire,
+                // Toxic Cloud, Venom Lash — every burn/AoE-pool weapon.
+                p._tickAcc = (p._tickAcc || 0) + dt;
+                if (p._tickAcc >= 0.25) {
+                    p._tickAcc -= 0.25;
                     checkAoe(e => {
                         if (Math.abs(e.x - p.x) > p.radius + e.radius || Math.abs(e.y - p.y) > p.radius + e.radius) return;
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius) {
