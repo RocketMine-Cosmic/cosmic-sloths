@@ -22,16 +22,6 @@ A brand new no-stakes testing area — try any character, any sector, any diffic
 
 Enter from the Hub → **"PRACTICE RANGE"** tile.
 
-## ⚖️ FPS FAIRNESS
-
-Damage-over-time and healing now tick in **real time** instead of per frame. This means players on 30Hz phones, 60Hz laptops, and 144Hz PCs all deal and heal the **same DPS per real second**.
-
-- **AoE damage pools** (Flaming Lash, Napalm, Hellfire, Toxic, Venom Lash) → 4Hz fixed tick
-- **Player HP regen** → 1× regen per real second
-- **Boss HP regen** → 1% max HP per real second
-
-No more high-refresh-rate advantage on the leaderboard.
-
 ## 💀 REVIVE ESCALATION
 
 Weekly revive costs now **escalate** to prevent whales from buying infinite second chances:
