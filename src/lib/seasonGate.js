@@ -70,26 +70,17 @@ export function isS7OrLater() {
 // Held back until S8 so the in-flight S7 leaderboard stays fair — enabling
 // mid-season would retroactively change every high-refresh player's DPS.
 // Used by: ProjectileSystem.js, GameEngine.js, EnemyAI.js.
-// Dev preview override — `?s8=1` on any URL flips S8 UI on for THIS browser
-// only (server gates unchanged, so no real leaderboard/economy impact).
-// Persists to sessionStorage so page navs keep the preview alive.
-// To disable: `?s8=0` OR clear the tab.
-function _s8Preview() {
-    if (typeof window === 'undefined') return false;
-    try {
-        const q = new URLSearchParams(window.location.search).get('s8');
-        if (q === '1') { sessionStorage.setItem('s8_preview', '1'); return true; }
-        if (q === '0') { sessionStorage.removeItem('s8_preview'); return false; }
-        return sessionStorage.getItem('s8_preview') === '1';
-    } catch { return false; }
-}
-
+// TEMPORARILY forced ON so all S8 UI (Sandbox tile, Fragment Express card,
+// revive escalation) renders in the preview before the W29 rollover.
+// Flip back to the season_id check below when you're ready to gate this
+// behind the real S8 launch (server saveScore already independently enforces
+// the season_id, so leaderboard integrity is unaffected).
 export function isS8OrLater() {
-    if (_s8Preview()) return true;
-    try {
-        const { season_id } = getCurrentPeriodIds();
-        return season_id >= '2026-S8';
-    } catch {
-        return false;
-    }
+    return true;
+    // try {
+    //     const { season_id } = getCurrentPeriodIds();
+    //     return season_id >= '2026-S8';
+    // } catch {
+    //     return false;
+    // }
 }
