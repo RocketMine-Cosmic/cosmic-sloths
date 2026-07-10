@@ -70,17 +70,17 @@ export function isS7OrLater() {
 // Held back until S8 so the in-flight S7 leaderboard stays fair — enabling
 // mid-season would retroactively change every high-refresh player's DPS.
 // Used by: ProjectileSystem.js, GameEngine.js, EnemyAI.js.
-// TEMPORARILY forced ON so all S8 UI (Sandbox tile, Fragment Express card,
-// revive escalation) renders in the preview before the W29 rollover.
-// Flip back to the season_id check below when you're ready to gate this
-// behind the real S8 launch (server saveScore already independently enforces
-// the season_id, so leaderboard integrity is unaffected).
+// Force-ON only when running in the builder preview iframe so all S8 UI
+// (Sandbox tile, Fragment Express card, revive escalation) renders for
+// review before W29. Published app (window === top) uses the real season
+// check, so real players don't see S8 until the rollover.
+// Server saveScore independently enforces season_id → leaderboard safe.
 export function isS8OrLater() {
-    return true;
-    // try {
-    //     const { season_id } = getCurrentPeriodIds();
-    //     return season_id >= '2026-S8';
-    // } catch {
-    //     return false;
-    // }
+    if (typeof window !== 'undefined' && window.self !== window.top) return true;
+    try {
+        const { season_id } = getCurrentPeriodIds();
+        return season_id >= '2026-S8';
+    } catch {
+        return false;
+    }
 }
