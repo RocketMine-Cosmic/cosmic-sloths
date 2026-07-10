@@ -6,8 +6,14 @@ import { isS8OrLater } from '@/lib/seasonGate';
 
 // S8 Sandbox / Test Play entry point. Placed on the Hub next to the LAUNCH
 // buttons. Gated to S8+ so it doesn't appear mid-S7. Launches /game with
-// mode='sandbox' — the engine reads it, every server run-mutating function
+// sandbox=true — the engine reads it, every server run-mutating function
 // early-returns on it, and a yellow banner sits over the canvas.
+//
+// Sandbox intentionally bypasses the Hub's lock gates: passes forceUnlocked
+// through location.state so Game.jsx can hand the engine any character +
+// arena the player wants to test, even ones they haven't unlocked. The
+// server-side is_sandbox rejection stops this being an exploit — the run
+// never produces rewards regardless of what was selected.
 // See docs/s8/PLAN_SANDBOX_TEST_PLAY.md.
 export default function SandboxHubCard({ selectedChar, selectedArena, selectedDifficulty, selectedWeapon }) {
     const navigate = useNavigate();
@@ -24,6 +30,9 @@ export default function SandboxHubCard({ selectedChar, selectedArena, selectedDi
                 startingWeaponId: selectedWeapon,
                 isEndless: false,
                 sandbox: true,
+                // Belt-and-braces: even if the caller had a locked char/arena
+                // selected, the engine ignores unlock checks in sandbox mode.
+                forceUnlocked: true,
             },
         });
     };
