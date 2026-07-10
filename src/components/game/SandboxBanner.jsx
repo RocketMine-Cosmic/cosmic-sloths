@@ -16,7 +16,7 @@ export default function SandboxBanner() {
             }}
         >
             <div className="text-slate-900 font-black text-[10px] md:text-xs tracking-widest uppercase text-center">
-                🧪 Sandbox Mode · No rewards · No leaderboard · No kill credit
+                🎯 Practice Range · No rewards · No leaderboard · No kill credit
             </div>
         </div>
     );

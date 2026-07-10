@@ -93,7 +93,7 @@ export default function SandboxDevPanel({ engineRef }) {
                     onClick={() => setOpen(true)}
                     data-allow-edge-touch="true"
                     className="fixed right-2 top-1/2 -translate-y-1/2 z-[75] bg-yellow-600/90 hover:bg-yellow-500 text-slate-900 rounded-l-lg p-2 shadow-[0_0_15px_rgba(234,179,8,0.5)] border-2 border-yellow-400"
-                    title="Open sandbox dev panel"
+                    title="Open practice range dev tools"
                 >
                     <Wrench className="w-5 h-5" />
                 </button>
@@ -115,7 +115,7 @@ export default function SandboxDevPanel({ engineRef }) {
                     >
                         <div className="sticky top-0 bg-slate-950/95 backdrop-blur border-b border-yellow-500/40 px-4 py-3 flex items-center justify-between z-10">
                             <div className="flex items-center gap-2 text-yellow-300 font-black tracking-widest uppercase text-sm">
-                                <Wrench className="w-4 h-4" /> Sandbox Tools
+                                <Wrench className="w-4 h-4" /> Practice Tools
                             </div>
                             <button onClick={() => setOpen(false)} className="p-1 hover:bg-yellow-500/20 rounded text-yellow-300">
                                 <X className="w-5 h-5" />

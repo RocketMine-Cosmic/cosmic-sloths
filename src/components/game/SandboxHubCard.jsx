@@ -29,7 +29,7 @@ export default function SandboxHubCard() {
                     <FlaskConical className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
                     <span className="flex flex-col items-start">
                         <span className="text-sm md:text-lg font-black tracking-widest uppercase text-white group-hover:text-yellow-200 transition-colors flex items-center gap-2">
-                            Sandbox
+                            Practice Range
                             <span className="text-[9px] font-black bg-yellow-500 text-slate-900 px-1.5 py-0.5 rounded uppercase tracking-widest">NEW</span>
                         </span>
                         <span className="text-[10px] md:text-xs text-slate-400 group-hover:text-slate-300 font-normal normal-case tracking-normal">

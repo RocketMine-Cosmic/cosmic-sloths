@@ -94,9 +94,9 @@ export default function Sandbox() {
                         </button>
                         <h1 className="text-2xl md:text-4xl font-black tracking-widest uppercase flex items-center gap-3" style={{ background: 'linear-gradient(90deg, #facc15, #f59e0b, #facc15)', backgroundSize: '200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                             <FlaskConical className="w-7 h-7 md:w-9 md:h-9 text-yellow-400" style={{ filter: 'drop-shadow(0 0 8px rgba(234,179,8,0.6))' }} />
-                            SANDBOX
+                            PRACTICE RANGE
                         </h1>
-                        <p className="text-yellow-500/70 mt-0.5 text-[10px] md:text-sm tracking-widest uppercase">⚡ Test Play · No Rewards · Everything Unlocked</p>
+                        <p className="text-yellow-500/70 mt-0.5 text-[10px] md:text-sm tracking-widest uppercase">⚡ Try Builds · No Rewards · Everything Unlocked</p>
                     </div>
                 </header>
 
@@ -104,7 +104,7 @@ export default function Sandbox() {
                 <div className="bg-gradient-to-r from-yellow-950/60 via-amber-950/40 to-yellow-950/60 border-2 border-yellow-600/60 rounded-xl p-3 md:p-4 mb-4 md:mb-6 flex items-start gap-3 shadow-[0_0_25px_rgba(234,179,8,0.15)]">
                     <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-yellow-400 shrink-0 mt-0.5" />
                     <div className="text-xs md:text-sm text-yellow-100">
-                        <div className="font-black tracking-widest uppercase mb-1 text-yellow-300">Practice Mode — No Rewards</div>
+                        <div className="font-black tracking-widest uppercase mb-1 text-yellow-300">Practice Range — No Rewards</div>
                         <div className="text-yellow-200/80 font-normal normal-case leading-relaxed">
                             No score, no leaderboard, no gold, no XP, no kill credit, no achievement or bounty progress. Every character, sector, and difficulty is unlocked. Spawn enemies, grant weapons, and force level-ups from the in-run dev panel <span className="inline-flex items-center gap-1 bg-yellow-900/40 px-1.5 py-0.5 rounded font-black">🔧</span>.
                         </div>
@@ -114,7 +114,7 @@ export default function Sandbox() {
                 {/* Main briefing panel — Hub-style container */}
                 <div className="bg-[#0b0416]/60 backdrop-blur-xl rounded-2xl p-3 md:p-5 border border-yellow-500/30 shadow-[0_0_50px_rgba(234,179,8,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <h2 className="text-sm md:text-lg font-bold text-white mb-3 md:mb-4 tracking-widest uppercase flex items-center gap-2">
-                        <span className="text-yellow-400">▶</span> Sandbox Briefing
+                        <span className="text-yellow-400">▶</span> Practice Briefing
                     </h2>
 
                     {/* Character banner — full-bleed portrait, matches Hub */}
@@ -143,7 +143,7 @@ export default function Sandbox() {
                                     </h4>
                                     <p className="text-[11px] md:text-sm text-slate-300 max-w-[80%] leading-snug">{character.desc}</p>
                                     <span className="inline-flex items-center gap-1 text-yellow-300 font-black tracking-widest text-[9px] md:text-[10px] bg-yellow-950/60 px-2 py-1 rounded border border-yellow-500/50 backdrop-blur-sm mt-2 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-                                        🧪 SANDBOX · ALL UNLOCKED
+                                        🎯 PRACTICE · ALL UNLOCKED
                                     </span>
                                 </div>
                                 <button
@@ -274,7 +274,7 @@ export default function Sandbox() {
                     className="mt-4 md:mt-6 w-full relative group bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-400 text-slate-950 font-black tracking-[0.3em] uppercase py-4 md:py-5 rounded-xl text-base md:text-2xl flex items-center justify-center gap-3 md:gap-4 shadow-[0_0_30px_rgba(234,179,8,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_0_50px_rgba(234,179,8,0.8)] hover:scale-[1.01] active:scale-95 transition-all border-2 border-yellow-300/50"
                 >
                     <FlaskConical className="w-6 h-6 md:w-7 md:h-7" />
-                    Launch Sandbox
+                    Enter Practice Range
                     <ArrowRight className="w-6 h-6 md:w-7 md:h-7 group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
