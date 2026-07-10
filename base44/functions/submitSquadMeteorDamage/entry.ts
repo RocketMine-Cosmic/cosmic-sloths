@@ -109,6 +109,10 @@ Deno.serve(async (req) => {
         if (!isFinite(rawDamage) || rawDamage < 0) {
             return Response.json({ error: 'Invalid damage value.' }, { status: 400 });
         }
+        // S8 Sandbox — practice runs never consume a meteor attack or bank damage.
+        if (body?.is_sandbox === true) {
+            return Response.json({ success: false, sandbox: true });
+        }
         // Floor + sanity-cap
         const damage = Math.min(Math.floor(rawDamage), SANITY_DAMAGE_CAP);
 

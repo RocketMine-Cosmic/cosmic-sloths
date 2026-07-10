@@ -51,6 +51,12 @@ Deno.serve(async (req) => {
         const stats = body?.stats;
         if (!stats) return Response.json({ error: 'Missing stats' }, { status: 400 });
 
+        // S8 Sandbox — never persist a snapshot for practice runs, so nothing
+        // can be replayed as a "recovered" run via flushPendingScores next launch.
+        if (stats.is_sandbox === true) {
+            return Response.json({ success: false, sandbox: true });
+        }
+
         // Only checkpoint endless / world-boss runs — these are the long ones.
         if (stats.arenaId !== 'endless' && stats.arenaId !== 'world_boss_arena') {
             return Response.json({ skipped: true });

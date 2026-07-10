@@ -12,7 +12,14 @@ export const IN_GAME_SKUS = {
     // Squad Ultimate has two tiers — lite (capped clone power) and full (scales with player upgrades).
     squadUltimateLite: 'ingame-squad-ult-lite', // 5 OMENX — capped clone
     squadUltimateFull: 'ingame-squad-ult-full', // 10 OMENX — full-power clone
+    // Revive — flat 4 OMENX pre-S8. Escalation tiers (8/15/25) are selected
+    // dynamically by lib/reviveTiers.js on S8+. Callers should use getReviveForRun
+    // rather than picking a SKU manually.
     revive:        'ingame-revive',
+    reviveT2:      'ingame-revive-8',    // S8+ mid-run (4–8 min)
+    reviveT3:      'ingame-revive-15',   // S8+ deep sector (8–11 min)
+    reviveT4:      'ingame-revive-25',   // S8+ podium / endless-any
+    starFragments: 'ingame-star-fragments', // S8 Fragment Express — 15 frags per 10 OMENX
     xpSession:     'ingame-xp-buff',
     biasRespec:    'bias-respec', // ~10 OMENX — clears all allocated pool-bias points
 };
@@ -141,6 +148,10 @@ export function getConsumableCost(skuId) {
         'ingame-banish-3': 6,
         'ingame-reroll': 2,
         'ingame-revive': 4,
+        'ingame-revive-8': 8,
+        'ingame-revive-15': 15,
+        'ingame-revive-25': 25,
+        'ingame-star-fragments': 10,
         'ingame-squad-ult-lite': 5,
         'ingame-squad-ult-full': 10,
         'ingame-xp-buff': 10,

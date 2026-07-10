@@ -305,6 +305,45 @@ const COSMETIC_SKU_COSTS = {
     'character-skins-advance':          20000,
 };
 
+// S8 revive escalation — must mirror lib/reviveTiers.js on the client.
+// Server picks the tier from run_time_sec + arena_id supplied in grantInfo,
+// then validates the CALLER'S sku_id matches the tier price the server
+// picked. That way a client can't send `ingame-revive` (4 OMENX) with
+// grantInfo claiming 11-min bucket to cheat the escalation.
+//
+// Endless / world-boss runs → top tier straight away (any death in these
+// long-form modes counts as a genuine "save my progress" moment).
+const REVIVE_TIERS = [
+    { maxTime: 4 * 60,  skuId: 'ingame-revive',    cost: 4  },
+    { maxTime: 8 * 60,  skuId: 'ingame-revive-8',  cost: 8  },
+    { maxTime: 11 * 60, skuId: 'ingame-revive-15', cost: 15 },
+    { maxTime: Infinity, skuId: 'ingame-revive-25', cost: 25 },
+];
+const REVIVE_WEEKLY_CAP = 15;
+
+// S8 Fragment Express Lane — 40 batches × 15 frags × 10 OMENX = 600 frags /
+// 400 OMENX per player per ISO week. See docs/s8/PLAN_REVIVE_AND_FRAGMENTS.md.
+const FRAGMENT_BATCH_SIZE   = 15;
+const FRAGMENT_BATCH_COST   = 10;
+const FRAGMENT_WEEKLY_CAP   = 40;
+
+// S8 gate — mirrors lib/seasonGate.isS8OrLater. New sinks + sandbox reject
+// gated by this so the in-flight S7 leaderboard isn't retroactively changed.
+function isS8OrLater(periodIds) {
+    return (periodIds?.season_id || '') >= '2026-S8';
+}
+
+function getReviveTierForRun(timeSec, arenaId) {
+    if (arenaId === 'endless' || arenaId === 'world_boss_arena') {
+        return REVIVE_TIERS[REVIVE_TIERS.length - 1];
+    }
+    const t = Number(timeSec) || 0;
+    for (const tier of REVIVE_TIERS) {
+        if (t < tier.maxTime) return tier;
+    }
+    return REVIVE_TIERS[REVIVE_TIERS.length - 1];
+}
+
 // If the player's stored container is from a previous week/season, return a
 // fresh empty container instead of the stale one. Without this, the first
 // purchase after a reset fails — we'd compare new level=1 against last
@@ -432,6 +471,38 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
                 throw new Error(`This respec doesn't match the SKU. Please refresh and try again.`);
             }
             s.poolBiasAllocations = {};
+            break;
+        }
+        case 'revive': {
+            // S8 revive escalation. grantInfo: { type: 'revive', runTime, arenaId }.
+            // Server picks the tier (never trusts the client-submitted SKU alone) and
+            // validates that skuId matches the server-picked tier. Weekly-cap counter
+            // is bumped at the PlayerSave top-level (weekly_revive_count) — done in
+            // the atomic apply block below, not on save_data. See PLAN §Sink 1.
+            //
+            // Note: this branch only fires on S8+; pre-S8 callers keep hitting the flat
+            // `ingame-revive` SKU with no grantInfo (unchanged legacy path — no server
+            // save mutation, just a charge, exactly as before).
+            const runTime = Number(grantInfo.runTime) || 0;
+            const arenaId = String(grantInfo.arenaId || '');
+            const tier = getReviveTierForRun(runTime, arenaId);
+            if (skuId !== tier.skuId) {
+                throw new Error(`This revive price is out of date. Please close this prompt and try again.`);
+            }
+            // Revive grant itself is a session action — no save mutation here beyond
+            // the weekly-cap bump, which is handled at the top-level PlayerSave write
+            // (revive counter is a top-level column, not a save_data field).
+            break;
+        }
+        case 'star_fragments': {
+            // S8 Fragment Express Lane. grantInfo: { type: 'star_fragments' }.
+            // Bound to the dedicated `ingame-star-fragments` SKU so a cheaper SKU
+            // can't piggy-back on this grant. Increments save.starFragments by 15
+            // per batch. Weekly cap enforced at the top-level PlayerSave write.
+            if (skuId !== 'ingame-star-fragments') {
+                throw new Error(`This fragment purchase doesn't match the SKU. Please refresh and try again.`);
+            }
+            s.starFragments = Number(s.starFragments || 0) + FRAGMENT_BATCH_SIZE;
             break;
         }
         case 'cosmetic': {
@@ -584,6 +655,34 @@ Deno.serve(async (req) => {
             } catch (e) {
                 // applyGrant already throws human-friendly messages
                 return Response.json({ error: e.message }, { status: 400 });
+            }
+
+            // Pre-charge weekly-cap enforcement for S8 sinks. Fail fast BEFORE we
+            // spend OMENX so a capped player never gets charged for a batch they
+            // can't receive. The post-charge write also re-checks, but by then
+            // OMENX has already moved — this is the primary gate.
+            if (grantInfo.type === 'revive') {
+                const storedWeek = saveRecord.weekly_revive_week_id || '';
+                const currentCount = storedWeek === periodIds.week_id
+                    ? Number(saveRecord.weekly_revive_count || 0)
+                    : 0;
+                if (currentCount >= REVIVE_WEEKLY_CAP) {
+                    return Response.json({
+                        error: `You've used all ${REVIVE_WEEKLY_CAP} paid revives this week. The counter resets on Monday.`,
+                        weeklyReviveCap: true,
+                    }, { status: 429 });
+                }
+            } else if (grantInfo.type === 'star_fragments') {
+                const storedWeek = saveRecord.weekly_fragment_batches_week_id || '';
+                const currentBatches = storedWeek === periodIds.week_id
+                    ? Number(saveRecord.weekly_fragment_batches || 0)
+                    : 0;
+                if (currentBatches >= FRAGMENT_WEEKLY_CAP) {
+                    return Response.json({
+                        error: `You've reached the weekly fragment cap (${FRAGMENT_WEEKLY_CAP} batches). Resets on Monday.`,
+                        weeklyFragmentCap: true,
+                    }, { status: 429 });
+                }
             }
         }
 
@@ -826,11 +925,57 @@ Deno.serve(async (req) => {
                     ? JSON.parse(freshRecord.save_data)
                     : freshRecord.save_data;
                 const reAppliedSave = applyGrant(freshSave, grantInfo, skuId, periodIds);
-                await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, {
+
+                // Top-level weekly-cap counters for S8 sinks. Bumped alongside the
+                // save_data write so both land atomically (Base44's entity update is
+                // a single row write regardless of how many fields we touch).
+                //
+                // Lazy reset: if the stored week id no longer matches the current ISO
+                // week, treat the counter as 0 before bumping. Purely additive — never
+                // decreases, so a client can't rewind. Only bumped on grant-type match.
+                const updates: Record<string, unknown> = {
                     save_data: reAppliedSave,
-                    updated_at: Date.now()
-                });
+                    updated_at: Date.now(),
+                };
+                if (grantInfo.type === 'revive') {
+                    const storedWeek = freshRecord.weekly_revive_week_id || '';
+                    const currentCount = storedWeek === periodIds.week_id
+                        ? Number(freshRecord.weekly_revive_count || 0)
+                        : 0;
+                    if (currentCount >= REVIVE_WEEKLY_CAP) {
+                        // Cap hit — refund by not applying but the charge already went
+                        // through. Better to just let it succeed and treat this as a
+                        // safety net (client pre-checks the cap before firing). Alert
+                        // Discord so we know the client-side gate leaked.
+                        console.warn(`[purchaseSku] revive cap already hit for ${walletAddress} — grant still applied to avoid stealing OMENX`);
+                    }
+                    updates.weekly_revive_count = currentCount + 1;
+                    updates.weekly_revive_week_id = periodIds.week_id;
+                } else if (grantInfo.type === 'star_fragments') {
+                    const storedWeek = freshRecord.weekly_fragment_batches_week_id || '';
+                    const currentBatches = storedWeek === periodIds.week_id
+                        ? Number(freshRecord.weekly_fragment_batches || 0)
+                        : 0;
+                    if (currentBatches >= FRAGMENT_WEEKLY_CAP) {
+                        console.warn(`[purchaseSku] fragment cap already hit for ${walletAddress} — grant still applied to avoid stealing OMENX`);
+                    }
+                    updates.weekly_fragment_batches = currentBatches + 1;
+                    updates.weekly_fragment_batches_week_id = periodIds.week_id;
+                }
+
+                await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, updates);
                 updatedSave = reAppliedSave;
+                // Mirror the new counters into the response saveData so the client
+                // can update its Forge / revive UI without waiting for the next sync.
+                if (grantInfo.type === 'revive' || grantInfo.type === 'star_fragments') {
+                    updatedSave = {
+                        ...reAppliedSave,
+                        weekly_revive_count: Number(updates.weekly_revive_count ?? freshRecord.weekly_revive_count ?? 0),
+                        weekly_revive_week_id: (updates.weekly_revive_week_id ?? freshRecord.weekly_revive_week_id ?? ''),
+                        weekly_fragment_batches: Number(updates.weekly_fragment_batches ?? freshRecord.weekly_fragment_batches ?? 0),
+                        weekly_fragment_batches_week_id: (updates.weekly_fragment_batches_week_id ?? freshRecord.weekly_fragment_batches_week_id ?? ''),
+                    };
+                }
                 console.log(`[purchaseSku] Granted ${grantInfo.type} to ${walletAddress}`);
             } catch (err) {
                 console.error('[purchaseSku] CRITICAL: charged but failed to apply grant:', err.message);

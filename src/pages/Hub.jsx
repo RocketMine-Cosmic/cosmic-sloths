@@ -42,6 +42,7 @@ import CharacterStatPills from '../components/game/CharacterStatPills';
 import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
+import SandboxHubCard from '../components/game/SandboxHubCard';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
@@ -766,6 +767,14 @@ export default function Hub({ isCarousel }) {
                                         <div className="flex flex-col gap-2 md:gap-3 mt-2 md:mt-6 pt-2 md:pt-4 border-t border-slate-700/40">
 
                                             <BuildSummary save={save} selectedChar={selectedChar} currentTime={currentTime} />
+
+                                            {/* S8 Sandbox — self-gates to S8+ (returns null pre-S8, no visual space taken). */}
+                                            <SandboxHubCard
+                                                selectedChar={selectedChar}
+                                                selectedArena={selectedArena}
+                                                selectedDifficulty={selectedDifficulty}
+                                                selectedWeapon={selectedWeapon}
+                                            />
 
                                             <button
                                                 onClick={() => { SoundManager.playUIClick(); navigate('/loadouts'); }}

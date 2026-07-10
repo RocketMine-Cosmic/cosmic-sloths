@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Hammer, Zap, Timer, Sparkles, Star, Coins, H
 import { useCurrency } from '@/lib/CurrencyContext';
 import { normalizeNftCharacterName } from '@/lib/nftNameNormalize';
 import MysteryForgeCard from './MysteryForgeCard';
+import FragmentExpressCard from './FragmentExpressCard';
 
 const GOLD_PER_FRAGMENT = 10000;
 const DAILY_CONVERT_CAP = 30; // max fragments from conversion per day
@@ -320,6 +321,11 @@ export default function ForgePanel({ save, setSave }) {
                             <li>🌟 Augments carry over forever — they never reset with weekly/seasonal upgrades</li>
                         </ul>
                     </div>
+
+                    {/* S8 Fragment Express Lane — self-gates to S8+ and hides pre-S8.
+                        Sits right below the gold-convert flow because it targets the
+                        same "I need more fragments" moment (see PLAN §Sink 2). */}
+                    <FragmentExpressCard save={save} setSave={setSave} />
 
                     {/* S6 Phase 3b — Mystery Forge gold sink. Component handles its own
                         S5/S6 gating + roll UI. Slotted here so it lives alongside the

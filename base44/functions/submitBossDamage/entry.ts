@@ -56,9 +56,13 @@ Deno.serve(async (req) => {
         const walletAddress = me.wallet_address;
         if (!walletAddress) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
-        const { damage } = await req.json();
+        const { damage, is_sandbox } = await req.json();
         if (typeof damage !== 'number' || damage <= 0) {
             return Response.json({ error: 'Couldn\'t record your damage — please try again.' }, { status: 400 });
+        }
+        // S8 Sandbox — practice runs never contribute to the global raid boss.
+        if (is_sandbox === true) {
+            return Response.json({ success: false, sandbox: true });
         }
 
         const clampedDamage = Math.min(damage, MAX_DAMAGE_PER_SUBMISSION);

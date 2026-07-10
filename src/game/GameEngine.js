@@ -1011,7 +1011,10 @@ export class GameEngine {
         if (this.frameCount % 7200 === 0
             && (this.arena.duration === Infinity || this.arena.id === 'world_boss_arena')
             && (this.kills || 0) >= 5
-            && (this.time || 0) >= 30) {
+            && (this.time || 0) >= 30
+            && !this.save?.isSandbox) {
+            // Sandbox runs never checkpoint — the server would reject the write and
+            // we don't want practice progress recoverable via flushPendingScores.
             try {
                 import('@/api/base44Client').then(({ base44 }) => {
                     base44.functions.invoke('checkpointRun', { stats: this._runStats() })
@@ -1551,6 +1554,10 @@ export class GameEngine {
             // S7 §4f: difficulty + DD peak feed the server-side HEAT score bonus.
             difficulty: this.difficulty?.id || 'normal',
             ddPeakSpawnMult: this.ddPeakSpawnMult || 1.0,
+            // S8 Sandbox — mirror the flag so every downstream server call (saveScore,
+            // checkpointRun, submitBossDamage, submitSquadMeteorDamage) sees it and
+            // rejects the run-mutating write. Read from save at construction time.
+            is_sandbox: !!this.save?.isSandbox,
             ...extra
         };
     }

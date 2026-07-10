@@ -13,6 +13,8 @@ import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
+import { getReviveForRun, REVIVE_WEEKLY_CAP } from '@/lib/reviveTiers';
+import SandboxBanner from '../components/game/SandboxBanner';
 import { SoundManager } from '../game/SoundManager';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { getOmenXUserSync } from '@/lib/omenxUser';
@@ -105,6 +107,9 @@ export default function Game() {
     // with 401 at run-end. Disabled outside endless to avoid pointless traffic
     // on short fixed-duration arenas.
     const isEndlessRun = !!location.state?.isEndless;
+    // S8 Sandbox — practice runs. Server rejects any run-mutation with
+    // is_sandbox=true, so this flag propagates from carousel/Hub → engine → server.
+    const isSandbox = !!location.state?.sandbox;
     useSessionKeepAlive(isEndlessRun && !gameOverStats && !victoryStats);
 
     // Android tab-kill safety: when the page is being torn down (phone lock,
@@ -203,6 +208,9 @@ export default function Game() {
                 // bonus (up to ×2.0). Engine emits these in _runStats.
                 difficulty: stats.difficulty || difficultyId,
                 ddPeakSpawnMult: stats.ddPeakSpawnMult || 1.0,
+                // S8 Sandbox — server one-way rejects this on true, no score/kill/gold
+                // credited. See PLAN_SANDBOX_TEST_PLAY.md §Server guards.
+                is_sandbox: isSandbox,
             };
 
             // Read squad membership from local cache to avoid a network round-trip
@@ -277,6 +285,10 @@ export default function Game() {
 
         // Inject live OMENX balance so GameEngine can gate the revive prompt correctly
         save.omenxBalance = omenxBalance ?? 0;
+
+        // S8 Sandbox — engine reads save.isSandbox to skip cloud writes (checkpointRun)
+        // and _runStats mirrors it into stats.is_sandbox so server functions reject.
+        save.isSandbox = isSandbox;
 
         // For Global Raid runs: fetch the cloud boss's current HP/max HP so the
         // in-game HP bar reflects the current global state (not a hardcoded value).
@@ -391,6 +403,16 @@ export default function Game() {
                 // engine, so if the player revives, levelUp() fires again on
                 // the next tick and re-opens the modal cleanly.
                 setLevelUpChoices(null);
+                // Sandbox: never show the revive prompt (no OMENX charges). Let
+                // the engine complete its game-over flow — practice runs die free.
+                if (isSandbox) {
+                    if (engineRef.current) {
+                        engineRef.current.player.hasRevivedWithTokens = true;
+                        engineRef.current.isPaused = false;
+                        engineRef.current.gameOver();
+                    }
+                    return;
+                }
                 setShowRevivePrompt(true);
             },
             onCharacterFound: (charId) => {
@@ -473,10 +495,12 @@ export default function Game() {
                     setGameOverStats(s => ({ ...s, _saveFailed: true, _authExpired: !!err?._authExpired }));
                 });
                 
-                if (stats.worldBossDamage > 0) {
+                if (stats.worldBossDamage > 0 && !isSandbox) {
                     // Server reads the trusted pilot name from PlayerSave — don't send it
                     // from the client (fix 2026-05-13: client fallback to full_name was
                     // causing legit pilots to show as Pilot_XXXXXX in the raid feed).
+                    // Sandbox runs skip boss damage entirely (server would reject anyway,
+                    // but no point in the round-trip).
                     base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
@@ -486,7 +510,7 @@ export default function Game() {
                 // Capture the response so we can surface a level-up celebration on
                 // the run-end modal (purely cosmetic — the level itself is already
                 // applied server-side regardless of whether we read the response).
-                if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
+                if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0 && !isSandbox) {
                     // FAST LAUNCH: attackId may have been reserved AFTER navigation.
                     // Pull the latest value from sessionStorage if location.state didn't carry one.
                     let resolvedAttackId = meteorAttackId || null;
@@ -573,13 +597,13 @@ export default function Game() {
                     setVictoryStats(s => ({ ...s, _saveFailed: true, _authExpired: !!err?._authExpired }));
                 });
                 
-                if (stats.worldBossDamage > 0) {
+                if (stats.worldBossDamage > 0 && !isSandbox) {
                     // Server reads the trusted pilot name from PlayerSave (see onGameOver).
                     base44.functions.invoke('submitBossDamage', { damage: stats.worldBossDamage })
                         .catch(err => console.error('Failed to submit boss damage', err));
                 }
                 // Squad Meteor — same flow as onGameOver above.
-                if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0) {
+                if (arenaId === 'quantum_meteor' && (stats.meteorDamage || 0) > 0 && !isSandbox) {
                     let resolvedAttackId = meteorAttackId || null;
                     if (!resolvedAttackId) {
                         try {
@@ -1049,25 +1073,53 @@ export default function Game() {
         }
     };
 
+    // S8 revive escalation. Tier is picked from run time + arena; pre-S8 falls
+    // back to the flat 4-OMENX SKU inside getReviveForRun so nothing changes
+    // for the in-flight S7 leaderboard experience.
+    const reviveEngine = engineRef.current;
+    const reviveInfo = getReviveForRun(reviveEngine?.time || 0, reviveEngine?.arena?.id || '');
+    // Weekly-cap indicator — read from save (server bumps top-level counter atomically).
+    const reviveCapInfo = (() => {
+        try {
+            const s = SaveManager.load();
+            const { week_id } = getCurrentPeriodIds();
+            const storedWeek = s?.weekly_revive_week_id || '';
+            const used = storedWeek === week_id ? Number(s?.weekly_revive_count || 0) : 0;
+            return { used, remaining: Math.max(0, REVIVE_WEEKLY_CAP - used), atCap: used >= REVIVE_WEEKLY_CAP };
+        } catch { return { used: 0, remaining: REVIVE_WEEKLY_CAP, atCap: false }; }
+    })();
+
     const handleRevive = () => {
         if (omenxPurchasesDisabled) return;
-        if ((omenxBalance ?? 0) >= 4) {
-            confirmPurchase(4, 'Emergency Revive', () => {
-                // Grant immediately, pay in background
-                if (engineRef.current) {
-                    engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
-                    engineRef.current.player.iFrames = 3.0;
-                    engineRef.current.player.invincibleTimer = 3.0;
-                    engineRef.current.player.hasRevivedWithTokens = true;
-                    engineRef.current.isPaused = false;
-                    setShowRevivePrompt(false);
-                }
-                purchaseSku(IN_GAME_SKUS.revive);
-                refreshBalance();
-            });
-        }
+        if (isSandbox) return; // no OMENX charges in sandbox — buttons are hidden anyway
+        if (reviveCapInfo.atCap) return;
+        const { skuId, cost } = reviveInfo;
+        if ((omenxBalance ?? 0) < cost) return;
+        confirmPurchase(cost, 'Emergency Revive', () => {
+            // Grant immediately, pay in background
+            if (engineRef.current) {
+                engineRef.current.player.hp = engineRef.current.player.maxHp * 0.5;
+                engineRef.current.player.iFrames = 3.0;
+                engineRef.current.player.invincibleTimer = 3.0;
+                engineRef.current.player.hasRevivedWithTokens = true;
+                engineRef.current.isPaused = false;
+                setShowRevivePrompt(false);
+            }
+            // S8+ passes grantInfo so the server can validate the tier matches the
+            // run time it saw. Pre-S8 sends no grantInfo (legacy flat-price path).
+            const grantInfo = skuId === 'ingame-revive' ? null : {
+                type: 'revive',
+                runTime: engineRef.current?.time || 0,
+                arenaId: engineRef.current?.arena?.id || '',
+            };
+            purchaseSku(skuId, 1, grantInfo);
+            refreshBalance();
+        });
     };
 
+    // In sandbox mode, the death prompt should just skip the revive UI and go
+    // straight to game-over (no OMENX charges in sandbox). Belt-and-braces:
+    // engine also short-circuits below in onDeathPrompt if isSandbox is set.
     const handleDeclineRevive = () => {
         setShowRevivePrompt(false);
         // Player chose death — clear any pending level-up so it can't render
@@ -1291,6 +1343,7 @@ export default function Game() {
             
             {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
+            {isSandbox && <SandboxBanner />}
             {!hudHidden && <UIOverlay {...gameState} ddMult={gameState.ddMult ?? 1.0} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}
@@ -1325,19 +1378,30 @@ export default function Game() {
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[60] p-4">
                     <div className="bg-slate-900 border-2 border-emerald-500 p-6 md:p-8 rounded-xl max-w-md w-full text-center">
                         <h2 className="text-2xl font-bold text-white mb-2 font-mono">CRITICAL DAMAGE</h2>
-                        <p className="text-slate-400 mb-6">Operative system failing. Use an Emergency Revive?</p>
+                        <p className="text-slate-400 mb-2">Operative system failing. Use an Emergency Revive?</p>
+                        {/* S8 escalation info — pre-S8 label is 'Flat', so the tier hint stays hidden */}
+                        {reviveInfo.label !== 'Flat' && (
+                            <p className="text-emerald-300/80 text-xs mb-4 font-mono">
+                                Tier: {reviveInfo.label} · {reviveCapInfo.remaining}/{REVIVE_WEEKLY_CAP} revives left this week
+                            </p>
+                        )}
                         {omenxPurchasesDisabled && (
                             <div className="mb-3 bg-red-950/40 border border-red-700/60 rounded-lg p-2 text-xs text-red-200">
                                 OMENX purchases temporarily disabled. Revive isn't available right now.
                             </div>
                         )}
+                        {reviveCapInfo.atCap && (
+                            <div className="mb-3 bg-amber-950/40 border border-amber-700/60 rounded-lg p-2 text-xs text-amber-200">
+                                Weekly revive cap reached ({REVIVE_WEEKLY_CAP}/{REVIVE_WEEKLY_CAP}). Resets on Monday.
+                            </div>
+                        )}
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={handleRevive}
-                                disabled={(omenxBalance ?? 0) < 4 || omenxPurchasesDisabled}
+                                disabled={(omenxBalance ?? 0) < reviveInfo.cost || omenxPurchasesDisabled || reviveCapInfo.atCap}
                                 className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
                             >
-                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: 4 OMENX</span>
+                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: {reviveInfo.cost} OMENX</span>
                             </button>
                             <button
                                 onClick={handleDeclineRevive}

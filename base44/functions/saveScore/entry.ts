@@ -585,6 +585,15 @@ Deno.serve(async (req) => {
         const { scoreData, squadStats } = await req.json();
         if (!scoreData) return Response.json({ error: 'Couldn\'t save your run — missing data. Please try again.' }, { status: 400 });
 
+        // S8 Sandbox mode — client-flagged practice runs get one-way rejected here
+        // before ANY score/kill/gold/fragment mutation. Defensive design: a client
+        // that omits the flag just gets a normal run (no exploit), but a client
+        // that SETS it can never leak rewards through. See PLAN_SANDBOX_TEST_PLAY.md.
+        if (scoreData.is_sandbox === true) {
+            console.log(`[saveScore] Sandbox run from ${walletAddress} — no rewards recorded`);
+            return Response.json({ success: false, sandbox: true, reason: 'sandbox' });
+        }
+
         // Validate stats and recompute score server-side
         const validation = validateAndRecompute(scoreData);
         if (!validation.ok) {

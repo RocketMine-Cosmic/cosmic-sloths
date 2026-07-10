@@ -33,6 +33,24 @@
     "weekly_sector_kills_week": {
       "type": "string",
       "description": "ISO week id (e.g. 2026-W22) that weekly_sector_kills applies to. Once we're past this week, the counter is effectively expired and the leaderboard query (which filters on current week_id) naturally excludes it."
+    },
+    "weekly_revive_count": {
+      "type": "number",
+      "default": 0,
+      "description": "S8 revive escalation counter \u2014 number of paid revives this ISO week (top-level so purchaseSku can atomically increment without a full save_data rewrite). Server-authoritative: only purchaseSku writes this. Capped at 15 per week (see PLAN_REVIVE_AND_FRAGMENTS.md \u00a7Sink 1). Resets to 0 lazily when weekly_revive_week_id != current week."
+    },
+    "weekly_revive_week_id": {
+      "type": "string",
+      "description": "ISO week id that weekly_revive_count applies to. Once we're past this week, the counter is expired and the next revive purchase resets it to 0."
+    },
+    "weekly_fragment_batches": {
+      "type": "number",
+      "default": 0,
+      "description": "S8 fragment express lane counter \u2014 number of 15-fragment batches purchased this ISO week (top-level for the same atomic-increment reason as weekly_revive_count). Server-authoritative: only purchaseSku writes this. Capped at 40 batches per week (= 600 frags / 400 OMENX, see PLAN_REVIVE_AND_FRAGMENTS.md \u00a7Sink 2). Resets to 0 lazily when weekly_fragment_batches_week_id != current week."
+    },
+    "weekly_fragment_batches_week_id": {
+      "type": "string",
+      "description": "ISO week id that weekly_fragment_batches applies to. Once we're past this week, the counter is expired and the next fragment purchase resets it to 0."
     }
   },
   "required": [

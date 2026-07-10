@@ -36,9 +36,15 @@ Deno.serve(async (req) => {
         const wallet = me.wallet_address;
         if (!wallet) return Response.json({ error: 'Your wallet isn\'t linked yet. Sign in with OmenX to continue.' }, { status: 400 });
 
-        const { type, bountyIndex } = await req.json();
+        const { type, bountyIndex, is_sandbox } = await req.json();
         if (!type || (type !== 'bounty' && type !== 'dailyMission')) {
             return Response.json({ error: 'Couldn\'t process this claim — please refresh and try again.' }, { status: 400 });
+        }
+        // S8 Sandbox — practice runs can't reach here (we early-return in saveScore
+        // so no bounty progress is written), but guard defensively so a tampered
+        // client can't manually POST here after a sandbox run.
+        if (is_sandbox === true) {
+            return Response.json({ success: false, sandbox: true });
         }
         if (type === 'bounty' && (bountyIndex === undefined || bountyIndex < 0 || bountyIndex > 2)) {
             return Response.json({ error: 'Couldn\'t process this claim — please refresh and try again.' }, { status: 400 });
