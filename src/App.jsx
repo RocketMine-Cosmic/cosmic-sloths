@@ -38,6 +38,7 @@ const SquadWars = React.lazy(() => import('./pages/SquadWars'));
 const WarArchive = React.lazy(() => import('./pages/WarArchive'));
 const SquadLeaderDashboard = React.lazy(() => import('./pages/SquadLeaderDashboard'));
 const SquadMeteor = React.lazy(() => import('./pages/SquadMeteor'));
+const Sandbox = React.lazy(() => import('./pages/Sandbox'));
 import { initOmenX } from '@/lib/omenx';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
@@ -106,6 +107,7 @@ const MainApp = () => {
           <Route path="/war-archive" element={<WarArchive />} />
           <Route path="/squad-leader" element={<SquadLeaderDashboard />} />
           <Route path="/squad-meteor" element={<SquadMeteor />} />
+          <Route path="/sandbox" element={<Sandbox />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </React.Suspense>
@@ -157,6 +159,7 @@ const MainApp = () => {
       <Route path="/war-archive" element={<WarArchive />} />
       <Route path="/squad-leader" element={<SquadLeaderDashboard />} />
       <Route path="/squad-meteor" element={<SquadMeteor />} />
+      <Route path="/sandbox" element={<Sandbox />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </>

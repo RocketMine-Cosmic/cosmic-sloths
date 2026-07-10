@@ -15,6 +15,7 @@ import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { getReviveForRun, REVIVE_WEEKLY_CAP } from '@/lib/reviveTiers';
 import SandboxBanner from '../components/game/SandboxBanner';
+import SandboxDevPanel from '../components/game/SandboxDevPanel';
 import { SoundManager } from '../game/SoundManager';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { getOmenXUserSync } from '@/lib/omenxUser';
@@ -635,7 +636,15 @@ export default function Game() {
         }, isEndless, worldBossId, worldBossName, startingWeaponId);
         
         engineRef.current = engine;
-        
+
+        // Sandbox — pre-fire N starter level-ups so the player picks their build
+        // before mobs spawn. Same pattern as squad meteor's pendingStarterLevelUps
+        // chain: each pick opens LevelUpModal and applyUpgrade queues the next.
+        const startLevel = Number(runConfigRef.current?.sandboxStartLevel || 1);
+        if (isSandbox && startLevel > 1) {
+            engine.pendingStarterLevelUps = startLevel - 1;
+        }
+
         setGameState({
             hp: engine.player.hp, maxHp: engine.player.maxHp,
             time: 0, duration: engine.arena.duration, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired, gold: 0,
@@ -1344,6 +1353,7 @@ export default function Game() {
             {!hudHidden && <VirtualJoystick onChange={handleJoystickChange} />}
             
             {isSandbox && <SandboxBanner />}
+            {isSandbox && !hudHidden && <SandboxDevPanel engineRef={engineRef} />}
             {!hudHidden && <UIOverlay {...gameState} ddMult={gameState.ddMult ?? 1.0} arenaId={engineRef.current?.arena?.id || location.state?.arenaId || ''} omenxBalance={omenxBalance ?? 0} onPause={handlePause} omenxPurchasesDisabled={omenxPurchasesDisabled} />}
             {!hudHidden && <CharacterAbilityMeter engineRef={engineRef} />}
             {!hudHidden && <SynergyBanner />}

@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, ARENAS, CHARACTER_TALENTS, DIFFICULTIES, SKIN_COSMETICS, RELICS, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
+import { CHARACTERS, WEAPONS, ARENAS, CHARACTER_TALENTS, DIFFICULTIES, SKIN_COSMETICS, RELICS, ENEMIES, UPGRADES, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
 import { SFXManager } from './SFXManager';
 import { ParticleManager } from './ParticleManager';
 import { SaveManager } from './SaveManager';
@@ -826,7 +826,12 @@ export class GameEngine {
                 this.isPaused = false;
             }
             if (!this.isPaused && !this.isGameOver && !this.isVictory) {
-                const dt = (timestamp - this.lastTime) / 1000;
+                let dt = (timestamp - this.lastTime) / 1000;
+                // Sandbox time scale — 2×/4× fast-forward via the dev panel. Only
+                // applies when save.isSandbox is on (sandboxSetTimeScale gates it).
+                if (this._sandboxTimeScale && this._sandboxTimeScale > 1) {
+                    dt *= this._sandboxTimeScale;
+                }
                 this.update(dt);
                 this.draw();
             }
@@ -1287,6 +1292,10 @@ export class GameEngine {
         const bannerBuffMult = this.masteryAbilityBoost?.banner?.buffMult || 1.0;
         const bannerCdBoost = 1.0 + (0.3 * bannerBuffMult);
         const timeMultiplier = (this.characterId === 'neobyte' && this.player.bannerBuff) ? bannerCdBoost : 1.0;
+        // Sandbox: infinite cooldowns → fire every tick by force-clearing timers.
+        if (this._sandboxInfiniteCd) {
+            this.player.weapons.forEach(w => { w.timer = 0; });
+        }
         this.player.weapons.forEach(w => {
             w.timer -= dt * timeMultiplier;
             if (w.timer <= 0) {
@@ -1536,6 +1545,108 @@ export class GameEngine {
     banishUpgrade(upgradeId) {
         if (!this.banishedUpgrades) this.banishedUpgrades = new Set();
         this.banishedUpgrades.add(upgradeId);
+    }
+
+    // ─── SANDBOX DEV-TOOLS API ──────────────────────────────────────────────
+    // Only wired to the in-run SandboxDevPanel (Game.jsx renders that panel
+    // only when save.isSandbox is true). Every method here is a no-op unless
+    // save.isSandbox, so a tampered client can't smuggle these into a real
+    // run — even if it did, the server-side is_sandbox rejection would
+    // still block any rewards. See docs/s8/PLAN_SANDBOX_TEST_PLAY.md.
+    _sandboxGuard() { return !!this.save?.isSandbox; }
+
+    sandboxSpawnEnemy(enemyId, count = 1) {
+        if (!this._sandboxGuard()) return;
+        const template = ENEMIES.find(e => e.id === enemyId);
+        if (!template) return;
+        for (let i = 0; i < count; i++) {
+            // Spawn at a random offset around the player, same distance the
+            // real spawner uses (canvas-scaled + a bit outside the view).
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.min(900, Math.max(this.canvas.width / this.zoom, this.canvas.height / this.zoom) / 2 + 50);
+            const enemy = { ...template };
+            enemy.x = this.player.x + Math.cos(angle) * dist;
+            enemy.y = this.player.y + Math.sin(angle) * dist;
+            enemy.hp = template.hp;
+            enemy.maxHp = template.hp;
+            enemy.damage = template.damage;
+            enemy.speed = template.speed;
+            this.enemies.push(enemy);
+            this.encounteredEnemies.add(template.id);
+        }
+        if (template.isBoss) this.isBossActive = true;
+    }
+
+    sandboxClearEnemies() {
+        if (!this._sandboxGuard()) return;
+        this.enemies = [];
+        this.isBossActive = false;
+    }
+
+    sandboxGrantWeapon(weaponId) {
+        if (!this._sandboxGuard()) return;
+        const template = WEAPONS[weaponId];
+        if (!template) return;
+        const existing = this.player.weapons.find(w => w.id === weaponId);
+        if (existing) {
+            // Cap at level 5 — same cap as the real level-up upgrade pool.
+            existing.level = Math.min(5, (existing.level || 1) + 1);
+        } else {
+            this.player.weapons.push({ ...template, level: 1, timer: 0 });
+        }
+        this.addDamageText(this.player.x, this.player.y - 40, `+ ${template.name}`, '#facc15');
+    }
+
+    sandboxGrantPassive(upgradeId) {
+        if (!this._sandboxGuard()) return;
+        const upgrade = UPGRADES.find(u => u.id === upgradeId && u.type === 'passive');
+        if (!upgrade) return;
+        // Bump passive-level tracking so the HUD shows the stack.
+        this.player.passiveLevels[upgradeId] = (this.player.passiveLevels[upgradeId] || 0) + 1;
+        if (!this.player.passives.find(p => p.id === upgradeId)) {
+            this.player.passives.push(upgrade);
+        }
+        // Apply the stat directly. Mirrors UpgradeSystem.applyUpgrade's passive branch.
+        if (upgrade.stat === 'maxHp') {
+            this.player.maxHp += upgrade.value;
+            this.player.hp += upgrade.value;
+            this.callbacks?.onHpChange?.(this.player.hp, this.player.maxHp);
+        } else if (typeof this.player[upgrade.stat] === 'number') {
+            this.player[upgrade.stat] += upgrade.value;
+        }
+        this.addDamageText(this.player.x, this.player.y - 40, `+ ${upgrade.name}`, '#facc15');
+    }
+
+    sandboxForceLevelUp() {
+        if (!this._sandboxGuard()) return;
+        // Fill XP + trigger a level-up modal without waiting for the meter.
+        this.xp = this.xpRequired;
+        this.levelUp();
+    }
+
+    sandboxSetInvincible(on) {
+        if (!this._sandboxGuard()) return;
+        this._sandboxInvincible = !!on;
+        // Iterate iFrames — the takeDamage guard already respects iFrames > 0.
+        // Setting a huge iFrame value keeps the player untouchable until toggled off.
+        if (on) {
+            this.player.iFrames = Number.MAX_SAFE_INTEGER;
+            this.player.invincibleTimer = Number.MAX_SAFE_INTEGER;
+        } else {
+            this.player.iFrames = 0;
+            this.player.invincibleTimer = 0;
+        }
+    }
+
+    sandboxSetInfiniteCooldowns(on) {
+        if (!this._sandboxGuard()) return;
+        this._sandboxInfiniteCd = !!on;
+        // When on, weapon timers are forced to 0 each tick (see loop patch).
+    }
+
+    sandboxSetTimeScale(mult) {
+        if (!this._sandboxGuard()) return;
+        this._sandboxTimeScale = Math.max(1, Math.min(4, Number(mult) || 1));
     }
 
     _runStats(extra = {}) {
