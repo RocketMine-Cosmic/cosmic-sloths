@@ -495,14 +495,17 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
             break;
         }
         case 'star_fragments': {
-            // S8 Fragment Express Lane. grantInfo: { type: 'star_fragments' }.
+            // S8 Fragment Express Lane. grantInfo: { type: 'star_fragments', quantity? }.
             // Bound to the dedicated `ingame-star-fragments` SKU so a cheaper SKU
-            // can't piggy-back on this grant. Increments save.starFragments by 15
-            // per batch. Weekly cap enforced at the top-level PlayerSave write.
+            // can't piggy-back on this grant. Increments save.starFragments by
+            // FRAGMENT_BATCH_SIZE × quantity. Weekly cap enforced at the top-level
+            // PlayerSave write (rejects the WHOLE purchase if it would exceed cap
+            // — never grants a partial bundle).
             if (skuId !== 'ingame-star-fragments') {
                 throw new Error(`This fragment purchase doesn't match the SKU. Please refresh and try again.`);
             }
-            s.starFragments = Number(s.starFragments || 0) + FRAGMENT_BATCH_SIZE;
+            const batches = Math.max(1, Math.min(10, Number(grantInfo.quantity) || 1));
+            s.starFragments = Number(s.starFragments || 0) + FRAGMENT_BATCH_SIZE * batches;
             break;
         }
         case 'cosmetic': {
@@ -677,9 +680,13 @@ Deno.serve(async (req) => {
                 const currentBatches = storedWeek === periodIds.week_id
                     ? Number(saveRecord.weekly_fragment_batches || 0)
                     : 0;
-                if (currentBatches >= FRAGMENT_WEEKLY_CAP) {
+                const requestedBatches = Math.max(1, Math.min(10, Number(grantInfo.quantity) || 1));
+                // Reject the ENTIRE bundle if it would exceed the weekly cap —
+                // never grants a partial batch. Client-side buttons pre-check
+                // remaining capacity so this is the safety net.
+                if (currentBatches + requestedBatches > FRAGMENT_WEEKLY_CAP) {
                     return Response.json({
-                        error: `You've reached the weekly fragment cap (${FRAGMENT_WEEKLY_CAP} batches). Resets on Monday.`,
+                        error: `This purchase would exceed your weekly fragment cap (${FRAGMENT_WEEKLY_CAP} batches). You have ${FRAGMENT_WEEKLY_CAP - currentBatches} left this week.`,
                         weeklyFragmentCap: true,
                     }, { status: 429 });
                 }
@@ -956,10 +963,11 @@ Deno.serve(async (req) => {
                     const currentBatches = storedWeek === periodIds.week_id
                         ? Number(freshRecord.weekly_fragment_batches || 0)
                         : 0;
-                    if (currentBatches >= FRAGMENT_WEEKLY_CAP) {
-                        console.warn(`[purchaseSku] fragment cap already hit for ${walletAddress} — grant still applied to avoid stealing OMENX`);
+                    const requestedBatches = Math.max(1, Math.min(10, Number(grantInfo.quantity) || 1));
+                    if (currentBatches + requestedBatches > FRAGMENT_WEEKLY_CAP) {
+                        console.warn(`[purchaseSku] fragment cap would be exceeded for ${walletAddress} (post-charge race) — grant still applied to avoid stealing OMENX`);
                     }
-                    updates.weekly_fragment_batches = currentBatches + 1;
+                    updates.weekly_fragment_batches = currentBatches + requestedBatches;
                     updates.weekly_fragment_batches_week_id = periodIds.week_id;
                 }
 

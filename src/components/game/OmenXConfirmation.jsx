@@ -8,7 +8,11 @@ function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
 }
 
-export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId }) {
+export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId, forceConfirm = false }) {
+    // forceConfirm — high-value bulk purchases (e.g. 10× fragment bundle) hide
+    // the "don't show for 24h" checkbox entirely, so a whale who ticked skip
+    // for the small 10-OMENX button can never accidentally buy 100 OMENX in
+    // one tap. See docs/s8/PLAN_REVIVE_AND_FRAGMENTS.md §Sink 2 (bulk bundle).
     const [skipNext24h, setSkipNext24h] = useState(false);
     // Read kill-switch from SHARED maintenance cache — no per-modal poll.
     const initialMaint = getMaintenanceStatus();
@@ -31,7 +35,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
             // Network blip — fail OPEN (let the existing flag govern) so we don't
             // block legit purchases on a transient hiccup.
         }
-        if (skipNext24h) {
+        if (skipNext24h && !forceConfirm) {
             const disabledUntil = Date.now() + (24 * 60 * 60 * 1000);
             localStorage.setItem(`omenx_confirm_disabled_${pageId}`, disabledUntil.toString());
         }
@@ -61,18 +65,20 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 mb-6 bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                    <input
-                        type="checkbox"
-                        id="skip-confirm"
-                        checked={skipNext24h}
-                        onChange={(e) => setSkipNext24h(e.target.checked)}
-                        className="w-4 h-4 accent-orange-500 cursor-pointer"
-                    />
-                    <label htmlFor="skip-confirm" className="text-sm text-slate-300 cursor-pointer flex-1 text-left">
-                        Don't show this again for 24 hours
-                    </label>
-                </div>
+                {!forceConfirm && (
+                    <div className="flex items-center gap-2 mb-6 bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                        <input
+                            type="checkbox"
+                            id="skip-confirm"
+                            checked={skipNext24h}
+                            onChange={(e) => setSkipNext24h(e.target.checked)}
+                            className="w-4 h-4 accent-orange-500 cursor-pointer"
+                        />
+                        <label htmlFor="skip-confirm" className="text-sm text-slate-300 cursor-pointer flex-1 text-left">
+                            Don't show this again for 24 hours
+                        </label>
+                    </div>
+                )}
 
                 {purchasesDisabled && (
                     <div className="mb-4 bg-red-950/40 border border-red-700/60 rounded-lg p-3 text-left flex gap-2">
