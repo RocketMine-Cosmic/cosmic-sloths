@@ -24,21 +24,20 @@ Enter from the Hub → **"PRACTICE RANGE"** tile.
 
 ## 💀 REVIVE ESCALATION
 
-Weekly revive costs now **escalate** to prevent whales from buying infinite second chances:
+Revive cost now **scales with how far you've made it** — the deeper into a run you die, the more it costs to get back up. Still just **one revive per run**:
 
-- First few revives: standard price
-- Each additional revive this week: **higher cost**
-- Cap: **15 paid revives per ISO week**
-
-Resets every Monday 00:00 UTC.
+- **0–4 min** → 4 OMENX
+- **4–8 min** → 8 OMENX
+- **8–11 min** → 15 OMENX
+- **11 min+ / Endless** → 25 OMENX
 
 ## ⚡ FRAGMENT EXPRESS LANE
 
 New OMENX → Relic Fragments shortcut for players who don't want to grind:
 
-- **15 fragments per batch** for 10 OMENX
-- Weekly cap: **40 batches** (600 fragments / 400 OMENX max)
-- Resets Monday 00:00 UTC
+- **15 fragments** for 10 OMENX
+- **150 fragments** for 100 OMENX
+- Weekly cap: **40 batches** (600 fragments / 400 OMENX max) — resets Monday 00:00 UTC
 
 ## 🐛 FIXES & POLISH
 
