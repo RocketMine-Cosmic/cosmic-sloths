@@ -8,7 +8,6 @@ A brand new no-stakes testing area — try any character, any sector, any diffic
 
 - **Test locked content** — every character, sector, and difficulty is unlocked
 - **Pick your starting level** — jump straight to Lv 5, 10, 15, 20, or 30
-- **Pick your starting weapon** — including weapons you haven't unlocked yet (normal runs are still Blaster-only)
 - **In-run dev tools** (wrench icon on the right side of the screen):
   - Spawn any enemy (including bosses) in any quantity
   - Grant any weapon or passive on demand

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, FlaskConical, AlertTriangle, Infinity as InfinityIcon, Clock, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, FlaskConical, AlertTriangle, Infinity as InfinityIcon, Clock } from 'lucide-react';
 import SpaceBackground from '../components/game/SpaceBackground';
-import { CHARACTERS, ARENAS, DIFFICULTIES, WEAPONS } from '../game/Constants';
+import { CHARACTERS, ARENAS, DIFFICULTIES } from '../game/Constants';
 import { SoundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { isS8OrLater } from '@/lib/seasonGate';
@@ -16,7 +16,6 @@ const SECTOR_OPTIONS = ARENAS.filter(a => !SANDBOX_ARENA_BLOCKLIST.has(a.id));
 const ENDLESS_OPTION = { id: '__endless__', name: 'Endless (Cosmic Void)', image: SECTOR_OPTIONS[0]?.image, endless: true };
 const ALL_ARENA_OPTIONS = [...SECTOR_OPTIONS, ENDLESS_OPTION];
 
-const STARTING_WEAPONS = Object.values(WEAPONS).filter(w => !w.isSynergy && !w.isEvolution);
 const STARTING_LEVELS = [1, 5, 10, 15, 20, 30];
 
 // Difficulty tint palette — mirrors Hub.jsx so difficulty pickers feel unified.
@@ -41,7 +40,6 @@ export default function Sandbox() {
     const [charId, setCharId] = useState(initial.charId || 'neobyte');
     const [arenaId, setArenaId] = useState(initial.arenaId || 'station');
     const [difficultyId, setDifficultyId] = useState(initial.difficultyId || 'normal');
-    const [weaponId, setWeaponId] = useState(initial.weaponId || 'neoBlaster');
     const [startLevel, setStartLevel] = useState(initial.startLevel || 1);
 
     const character = CHARACTERS.find(c => c.id === charId) || CHARACTERS[0];
@@ -58,7 +56,7 @@ export default function Sandbox() {
 
     const launch = () => {
         SoundManager.playUIClick();
-        try { localStorage.setItem('sandbox_setup', JSON.stringify({ charId, arenaId, difficultyId, weaponId, startLevel })); } catch {}
+        try { localStorage.setItem('sandbox_setup', JSON.stringify({ charId, arenaId, difficultyId, startLevel })); } catch {}
 
         const save = SaveManager.load() || {};
         save.unlockedCharacters = save.unlockedCharacters || ['neobyte'];
@@ -70,7 +68,6 @@ export default function Sandbox() {
                 characterId: charId,
                 arenaId: isEndless ? 'endless' : arenaId,
                 difficultyId,
-                startingWeaponId: weaponId,
                 isEndless,
                 sandbox: true,
                 sandboxStartLevel: startLevel,
@@ -219,50 +216,29 @@ export default function Sandbox() {
                         </div>
                     </div>
 
-                    {/* Weapon + Starting Level row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                        {/* Starting weapon */}
-                        <div>
-                            <h3 className="text-[10px] md:text-xs text-emerald-300/80 font-black tracking-[0.25em] uppercase mb-1.5 md:mb-2 flex items-center gap-1.5">
-                                <Zap className="w-3 h-3" /> Starting Weapon
-                            </h3>
-                            <div className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-emerald-500/50 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.12)] p-2.5 md:p-3 min-h-[92px] md:min-h-[104px] flex items-center">
-                                <select
-                                    value={weaponId}
-                                    onChange={(e) => { SoundManager.playUIClick(); setWeaponId(e.target.value); }}
-                                    className="w-full bg-slate-900/90 border border-emerald-500/40 text-white text-base md:text-lg font-black rounded-lg px-3 py-2.5 md:py-3 outline-none focus:border-emerald-400 cursor-pointer hover:border-emerald-400 transition-colors"
-                                >
-                                    {STARTING_WEAPONS.map(w => (
-                                        <option key={w.id} value={w.id}>{w.name}</option>
-                                    ))}
-                                </select>
+                    {/* Starting level */}
+                    <div>
+                        <h3 className="text-[10px] md:text-xs text-amber-300/80 font-black tracking-[0.25em] uppercase mb-1.5 md:mb-2">Starting Level</h3>
+                        <div className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-amber-500/50 overflow-hidden shadow-[0_0_20px_rgba(245,158,11,0.12)] p-2.5 md:p-3 min-h-[92px] md:min-h-[104px] flex flex-col justify-center">
+                            <div className="flex flex-wrap gap-1.5 md:gap-2">
+                                {STARTING_LEVELS.map(lv => (
+                                    <button
+                                        key={lv}
+                                        onClick={() => { SoundManager.playUIClick(); setStartLevel(lv); }}
+                                        className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg font-black text-xs md:text-sm transition-all border ${
+                                            startLevel === lv
+                                                ? 'bg-amber-500/30 text-amber-200 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)] scale-105'
+                                                : 'bg-slate-900/60 text-slate-300 border-slate-700 hover:border-amber-500/50 hover:text-amber-200'
+                                        }`}
+                                    >
+                                        Lv {lv}
+                                    </button>
+                                ))}
                             </div>
-                        </div>
-
-                        {/* Starting level */}
-                        <div>
-                            <h3 className="text-[10px] md:text-xs text-amber-300/80 font-black tracking-[0.25em] uppercase mb-1.5 md:mb-2">Starting Level</h3>
-                            <div className="relative bg-[#0b0416]/80 backdrop-blur-xl rounded-xl border border-amber-500/50 overflow-hidden shadow-[0_0_20px_rgba(245,158,11,0.12)] p-2.5 md:p-3 min-h-[92px] md:min-h-[104px] flex flex-col justify-center">
-                                <div className="flex flex-wrap gap-1.5 md:gap-2">
-                                    {STARTING_LEVELS.map(lv => (
-                                        <button
-                                            key={lv}
-                                            onClick={() => { SoundManager.playUIClick(); setStartLevel(lv); }}
-                                            className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg font-black text-xs md:text-sm transition-all border ${
-                                                startLevel === lv
-                                                    ? 'bg-amber-500/30 text-amber-200 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)] scale-105'
-                                                    : 'bg-slate-900/60 text-slate-300 border-slate-700 hover:border-amber-500/50 hover:text-amber-200'
-                                            }`}
-                                        >
-                                            Lv {lv}
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="text-[9px] md:text-[11px] text-amber-200/60 mt-1.5 md:mt-2 leading-tight">
-                                    {startLevel > 1
-                                        ? `${startLevel - 1} instant level-ups on spawn — pick your build before mobs arrive.`
-                                        : 'Start fresh at level 1.'}
-                                </div>
+                            <div className="text-[9px] md:text-[11px] text-amber-200/60 mt-1.5 md:mt-2 leading-tight">
+                                {startLevel > 1
+                                    ? `${startLevel - 1} instant level-ups on spawn — pick your build before mobs arrive.`
+                                    : 'Start fresh at level 1.'}
                             </div>
                         </div>
                     </div>
