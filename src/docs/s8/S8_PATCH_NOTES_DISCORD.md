@@ -1,6 +1,9 @@
-# 🚀 SEASON 8 — Practice Range & Fairness Update
+Good Evening all sorry its late. been one hectic week. trying to sort things out while busy with Real Life work and sleep but better late than never haha
 
-Season 8 is live! Here's everything that's changed.
+
+# 🚀 SEASON 8 — Practice Range 
+
+Season 8 comeing Monday Here's everything that's changeing.
 
 ## 🎯 NEW: Practice Range
 
@@ -47,4 +50,4 @@ New OMENX → Relic Fragments shortcut for players who don't want to grind:
 
 ---
 
-**GLHF, pilots. See you in the void.** 🌌
+**GLHF, Sloths. See you in the void.** 🌌
