@@ -52,9 +52,7 @@ export default function FragmentExpressCard({ save, setSave }) {
         if (busy) return;
         if (atCap) return;
         SoundManager.playUIClick();
-        const label = isBulk
-            ? `+${BATCH_SIZE * BULK_BATCHES} Star Fragments (10× bundle)`
-            : `+${BATCH_SIZE} Star Fragments`;
+        const label = `+${BATCH_SIZE * batches} Star Fragments`;
         const cost = BATCH_COST * batches;
         // Set forceConfirm BEFORE opening the modal so the initial render hides
         // the 24h-skip toggle. Cleared in onCancel/onConfirm below.
@@ -168,9 +166,6 @@ export default function FragmentExpressCard({ save, setSave }) {
                                     : 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white'
                             }`}
                         >
-                            {!bulkDisabled && (
-                                <span className="absolute -top-2 -right-2 text-[9px] font-black bg-fuchsia-400 text-slate-900 px-1.5 py-0.5 rounded uppercase tracking-widest">Bulk</span>
-                            )}
                             <Star className="w-4 h-4 fill-current" /> {bulkLabel}
                         </button>
                     </div>
