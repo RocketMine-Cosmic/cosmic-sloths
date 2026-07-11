@@ -62,9 +62,13 @@ export default function FragmentExpressCard({ save, setSave }) {
         confirmPurchase(cost, label, async () => {
             setBusy(isBulk ? 'bulk' : 'single');
             try {
+                // 10× bundle uses its own OmenX SKU (server checks skuId matches
+                // the bundle tier so a cheap single-batch SKU can't be used to
+                // grant a 10× bundle).
+                const skuId = isBulk ? 'ingame-star-fragments-10' : 'ingame-star-fragments';
                 const res = await base44.functions.invoke('purchaseSku', {
-                    skuId: 'ingame-star-fragments',
-                    quantity: batches,
+                    skuId,
+                    quantity: 1,
                     grantInfo: { type: 'star_fragments', quantity: batches },
                 });
                 if (!res.data?.success) {

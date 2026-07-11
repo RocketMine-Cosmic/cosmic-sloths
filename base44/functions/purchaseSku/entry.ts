@@ -496,16 +496,19 @@ function applyGrant(save, grantInfo, skuId, periodIds) {
         }
         case 'star_fragments': {
             // S8 Fragment Express Lane. grantInfo: { type: 'star_fragments', quantity? }.
-            // Bound to the dedicated `ingame-star-fragments` SKU so a cheaper SKU
-            // can't piggy-back on this grant. Increments save.starFragments by
-            // FRAGMENT_BATCH_SIZE × quantity. Weekly cap enforced at the top-level
-            // PlayerSave write (rejects the WHOLE purchase if it would exceed cap
-            // — never grants a partial bundle).
-            if (skuId !== 'ingame-star-fragments') {
+            // Two dedicated SKUs registered in the OmenX portal:
+            //   ingame-star-fragments     — single batch (15 🌟 / 10 OMENX)
+            //   ingame-star-fragments-10  — bulk bundle  (150 🌟 / 100 OMENX)
+            // quantity MUST match the SKU tier so a cheap SKU can't grant a
+            // bulk bundle. Weekly cap enforced at the top-level PlayerSave
+            // write (rejects the WHOLE purchase if it would exceed cap —
+            // never grants a partial bundle).
+            const requestedBatches = Math.max(1, Math.min(10, Number(grantInfo.quantity) || 1));
+            const expectedSku = requestedBatches === 10 ? 'ingame-star-fragments-10' : 'ingame-star-fragments';
+            if (skuId !== expectedSku) {
                 throw new Error(`This fragment purchase doesn't match the SKU. Please refresh and try again.`);
             }
-            const batches = Math.max(1, Math.min(10, Number(grantInfo.quantity) || 1));
-            s.starFragments = Number(s.starFragments || 0) + FRAGMENT_BATCH_SIZE * batches;
+            s.starFragments = Number(s.starFragments || 0) + FRAGMENT_BATCH_SIZE * requestedBatches;
             break;
         }
         case 'cosmetic': {

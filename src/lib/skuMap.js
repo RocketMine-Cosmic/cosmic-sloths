@@ -19,7 +19,8 @@ export const IN_GAME_SKUS = {
     reviveT2:      'ingame-revive-8',    // S8+ mid-run (4–8 min)
     reviveT3:      'ingame-revive-15',   // S8+ deep sector (8–11 min)
     reviveT4:      'ingame-revive-25',   // S8+ podium / endless-any
-    starFragments: 'ingame-star-fragments', // S8 Fragment Express — 15 frags per 10 OMENX
+    starFragments:      'ingame-star-fragments',    // S8 Fragment Express — 15 frags / 10 OMENX
+    starFragmentsBulk:  'ingame-star-fragments-10', // S8 Fragment Express bulk — 150 frags / 100 OMENX
     xpSession:     'ingame-xp-buff',
     biasRespec:    'bias-respec', // ~10 OMENX — clears all allocated pool-bias points
 };
@@ -152,6 +153,7 @@ export function getConsumableCost(skuId) {
         'ingame-revive-15': 15,
         'ingame-revive-25': 25,
         'ingame-star-fragments': 10,
+        'ingame-star-fragments-10': 100,
         'ingame-squad-ult-lite': 5,
         'ingame-squad-ult-full': 10,
         'ingame-xp-buff': 10,
