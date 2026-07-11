@@ -319,7 +319,6 @@ const REVIVE_TIERS = [
     { maxTime: 11 * 60, skuId: 'ingame-revive-15', cost: 15 },
     { maxTime: Infinity, skuId: 'ingame-revive-25', cost: 25 },
 ];
-const REVIVE_WEEKLY_CAP = 15;
 
 // S8 Fragment Express Lane — 40 batches × 15 frags × 10 OMENX = 600 frags /
 // 400 OMENX per player per ISO week. See docs/s8/PLAN_REVIVE_AND_FRAGMENTS.md.
@@ -667,18 +666,7 @@ Deno.serve(async (req) => {
             // spend OMENX so a capped player never gets charged for a batch they
             // can't receive. The post-charge write also re-checks, but by then
             // OMENX has already moved — this is the primary gate.
-            if (grantInfo.type === 'revive') {
-                const storedWeek = saveRecord.weekly_revive_week_id || '';
-                const currentCount = storedWeek === periodIds.week_id
-                    ? Number(saveRecord.weekly_revive_count || 0)
-                    : 0;
-                if (currentCount >= REVIVE_WEEKLY_CAP) {
-                    return Response.json({
-                        error: `You've used all ${REVIVE_WEEKLY_CAP} paid revives this week. The counter resets on Monday.`,
-                        weeklyReviveCap: true,
-                    }, { status: 429 });
-                }
-            } else if (grantInfo.type === 'star_fragments') {
+            if (grantInfo.type === 'star_fragments') {
                 const storedWeek = saveRecord.weekly_fragment_batches_week_id || '';
                 const currentBatches = storedWeek === periodIds.week_id
                     ? Number(saveRecord.weekly_fragment_batches || 0)
@@ -947,21 +935,7 @@ Deno.serve(async (req) => {
                     save_data: reAppliedSave,
                     updated_at: Date.now(),
                 };
-                if (grantInfo.type === 'revive') {
-                    const storedWeek = freshRecord.weekly_revive_week_id || '';
-                    const currentCount = storedWeek === periodIds.week_id
-                        ? Number(freshRecord.weekly_revive_count || 0)
-                        : 0;
-                    if (currentCount >= REVIVE_WEEKLY_CAP) {
-                        // Cap hit — refund by not applying but the charge already went
-                        // through. Better to just let it succeed and treat this as a
-                        // safety net (client pre-checks the cap before firing). Alert
-                        // Discord so we know the client-side gate leaked.
-                        console.warn(`[purchaseSku] revive cap already hit for ${walletAddress} — grant still applied to avoid stealing OMENX`);
-                    }
-                    updates.weekly_revive_count = currentCount + 1;
-                    updates.weekly_revive_week_id = periodIds.week_id;
-                } else if (grantInfo.type === 'star_fragments') {
+                if (grantInfo.type === 'star_fragments') {
                     const storedWeek = freshRecord.weekly_fragment_batches_week_id || '';
                     const currentBatches = storedWeek === periodIds.week_id
                         ? Number(freshRecord.weekly_fragment_batches || 0)
@@ -977,12 +951,10 @@ Deno.serve(async (req) => {
                 await base44.asServiceRole.entities.PlayerSave.update(freshRecord.id, updates);
                 updatedSave = reAppliedSave;
                 // Mirror the new counters into the response saveData so the client
-                // can update its Forge / revive UI without waiting for the next sync.
-                if (grantInfo.type === 'revive' || grantInfo.type === 'star_fragments') {
+                // can update its Forge UI without waiting for the next sync.
+                if (grantInfo.type === 'star_fragments') {
                     updatedSave = {
                         ...reAppliedSave,
-                        weekly_revive_count: Number(updates.weekly_revive_count ?? freshRecord.weekly_revive_count ?? 0),
-                        weekly_revive_week_id: (updates.weekly_revive_week_id ?? freshRecord.weekly_revive_week_id ?? ''),
                         weekly_fragment_batches: Number(updates.weekly_fragment_batches ?? freshRecord.weekly_fragment_batches ?? 0),
                         weekly_fragment_batches_week_id: (updates.weekly_fragment_batches_week_id ?? freshRecord.weekly_fragment_batches_week_id ?? ''),
                     };

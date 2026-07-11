@@ -13,7 +13,7 @@ import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
-import { getReviveForRun, REVIVE_WEEKLY_CAP } from '@/lib/reviveTiers';
+import { getReviveForRun } from '@/lib/reviveTiers';
 import SandboxBanner from '../components/game/SandboxBanner';
 import SandboxDevPanel from '../components/game/SandboxDevPanel';
 import { SoundManager } from '../game/SoundManager';
@@ -1087,21 +1087,10 @@ export default function Game() {
     // for the in-flight S7 leaderboard experience.
     const reviveEngine = engineRef.current;
     const reviveInfo = getReviveForRun(reviveEngine?.time || 0, reviveEngine?.arena?.id || '');
-    // Weekly-cap indicator — read from save (server bumps top-level counter atomically).
-    const reviveCapInfo = (() => {
-        try {
-            const s = SaveManager.load();
-            const { week_id } = getCurrentPeriodIds();
-            const storedWeek = s?.weekly_revive_week_id || '';
-            const used = storedWeek === week_id ? Number(s?.weekly_revive_count || 0) : 0;
-            return { used, remaining: Math.max(0, REVIVE_WEEKLY_CAP - used), atCap: used >= REVIVE_WEEKLY_CAP };
-        } catch { return { used: 0, remaining: REVIVE_WEEKLY_CAP, atCap: false }; }
-    })();
 
     const handleRevive = () => {
         if (omenxPurchasesDisabled) return;
         if (isSandbox) return; // no OMENX charges in sandbox — buttons are hidden anyway
-        if (reviveCapInfo.atCap) return;
         const { skuId, cost } = reviveInfo;
         if ((omenxBalance ?? 0) < cost) return;
         confirmPurchase(cost, 'Emergency Revive', () => {
@@ -1392,7 +1381,7 @@ export default function Game() {
                         {/* S8 escalation info — pre-S8 label is 'Flat', so the tier hint stays hidden */}
                         {reviveInfo.label !== 'Flat' && (
                             <p className="text-emerald-300/80 text-xs mb-4 font-mono">
-                                Tier: {reviveInfo.label} · {reviveCapInfo.remaining}/{REVIVE_WEEKLY_CAP} revives left this week
+                                Tier: {reviveInfo.label}
                             </p>
                         )}
                         {omenxPurchasesDisabled && (
@@ -1400,15 +1389,10 @@ export default function Game() {
                                 OMENX purchases temporarily disabled. Revive isn't available right now.
                             </div>
                         )}
-                        {reviveCapInfo.atCap && (
-                            <div className="mb-3 bg-amber-950/40 border border-amber-700/60 rounded-lg p-2 text-xs text-amber-200">
-                                Weekly revive cap reached ({REVIVE_WEEKLY_CAP}/{REVIVE_WEEKLY_CAP}). Resets on Monday.
-                            </div>
-                        )}
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={handleRevive}
-                                disabled={(omenxBalance ?? 0) < reviveInfo.cost || omenxPurchasesDisabled || reviveCapInfo.atCap}
+                                disabled={(omenxBalance ?? 0) < reviveInfo.cost || omenxPurchasesDisabled}
                                 className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
                             >
                                 REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: {reviveInfo.cost} OMENX</span>

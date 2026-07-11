@@ -10,10 +10,9 @@
 //   8–11 min     → 15 OMENX · ingame-revive-15
 //   11 min+ / any endless run → 25 OMENX · ingame-revive-25
 //
-// Weekly cap: 15 paid revives per ISO week (enforced server-side).
+// No weekly cap — one revive per run is already the hard limit, and each
+// successive revive within a run is priced by the tier ladder above.
 import { isS8OrLater } from '@/lib/seasonGate';
-
-export const REVIVE_WEEKLY_CAP = 15;
 
 // timeSec = engine.time at death; arenaId lets us short-circuit endless to top tier.
 export function getReviveTierForRun(timeSec, arenaId) {
