@@ -12,6 +12,7 @@ import { updatePickups as updatePickupsLogic } from './PickupSystem';
 import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, applyUpgrade as applyUpgradeLogic, checkSynergies as checkSynergiesLogic, checkEvolutions as checkEvolutionsLogic } from './UpgradeSystem';
 import { updateCharacterMechanics } from './CharacterMechanics';
 import { isS6OrLater, isS7OrLater, isS8OrLater } from '@/lib/seasonGate';
+import { getCurrentPeriodIds } from '@/lib/periodIds';
 
 // S7 §4a: pushback weapons share a lifted CD floor (0.85× vs default 0.5×) so
 // stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
@@ -87,6 +88,21 @@ export class GameEngine {
         this._isS6 = isS6OrLater();
         this._isS7 = isS7OrLater();
         this._isS8 = isS8OrLater();
+
+        // Season stamp captured at RUN-START — sent up to saveScore so a run
+        // that begins pre-rollover (e.g. 23:58 UTC Sunday) and finishes after
+        // (e.g. 00:02 UTC Monday) lands on the correct season's leaderboard.
+        // Without this, the S8 W29 leaderboard's first week would be polluted
+        // by high-FPS S7 runs — the client mechanics stay S7 (isS8OrLater is
+        // module-cached, doesn't flip mid-session) so those runs had legacy
+        // frame-tied DPS but were getting stamped S8 by save-time detection.
+        // Server validates: only accepts client stamps STRICTLY OLDER than
+        // its own current season (never newer — anti-cheat).
+        try {
+            this._runSeasonId = getCurrentPeriodIds().season_id;
+        } catch {
+            this._runSeasonId = null;
+        }
 
         // L3 — Cosmic difficulty 3.0× → 2.0× gold/XP. Cuts the dominant
         // difficulty stacker without touching enemy HP/dmg (still 2.5×).
@@ -1665,6 +1681,10 @@ export class GameEngine {
             // S7 §4f: difficulty + DD peak feed the server-side HEAT score bonus.
             difficulty: this.difficulty?.id || 'normal',
             ddPeakSpawnMult: this.ddPeakSpawnMult || 1.0,
+            // Season the run STARTED in — server honors if strictly older than
+            // current server season, so pre-rollover runs bank into the right
+            // leaderboard and their score uses the correct-era formula.
+            runSeasonId: this._runSeasonId || null,
             // S8 Sandbox — mirror the flag so every downstream server call (saveScore,
             // checkpointRun, submitBossDamage, submitSquadMeteorDamage) sees it and
             // rejects the run-mutating write. Read from save at construction time.

@@ -39,6 +39,11 @@ function statsToPayload(stats, user) {
         is_victory: false, // recovered runs are always abandoned
         encountered: stats.encountered || [],
         enemyKills: stats.enemyKills || {},
+        // Forward the run-start season stamp (if the snapshot has one) so a run
+        // that crashed pre-rollover and recovers post-rollover still banks into
+        // the correct season's leaderboard. Missing on old snapshots — server
+        // will fall through to its current-season default in that case.
+        runSeasonId: stats.runSeasonId || null,
     };
     return { scoreData, squadStats: null };
 }

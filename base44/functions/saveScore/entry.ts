@@ -134,7 +134,20 @@ function getArenaMultiplier(arenaId) {
 }
 
 function validateAndRecompute(scoreData) {
-    const { week_id: _runWeek, season_id: runSeasonId } = getCurrentPeriodIds();
+    const { week_id: _runWeek, season_id: serverSeasonId } = getCurrentPeriodIds();
+
+    // Season stamp: prefer the client-declared run-start season IF it's STRICTLY
+    // OLDER than the server's current season. Fixes the rollover-straddle unfairness
+    // where a player who starts a run at 23:58 UTC Sunday and finishes at 00:02 UTC
+    // Monday would otherwise land on the fresh season's leaderboard while playing
+    // under the OLD season's mechanics (client season flag is module-cached in
+    // seasonGate.js, doesn't flip mid-session). Never accept a NEWER stamp — that
+    // would let a tampered client back-date a fresh run onto whatever leaderboard
+    // it wants. Format is 'YYYY-SN' which sorts correctly lexicographically for
+    // the years/seasons we ship.
+    const clientSeasonId = typeof scoreData.runSeasonId === 'string' ? scoreData.runSeasonId : null;
+    const runSeasonId = (clientSeasonId && clientSeasonId < serverSeasonId) ? clientSeasonId : serverSeasonId;
+
     const isS6OrLater = runSeasonId !== '2026-S5';
     // S7 §4f: HEAT score bonus — up to +1.0× score based on DD peak vs the
     // difficulty's own DD cap. Server-side mirror of lib/seasonGate.isS7OrLater.
@@ -317,7 +330,29 @@ function validateAndRecompute(scoreData) {
         goldForLedger, killsForLedger, fragmentsForLedger, // ledger values (= raw in S6)
         endlessGoldCapped, endlessKillsCapped, fragmentsCapped, isEndless,
         isRaidRun, isMeteorRun, // damage-only arenas — excluded from RunScore + squad kill credit
+        // Honored season (client stamp if strictly older, else server current). RunScore
+        // will be stamped with this so a straddle-run lands on the correct leaderboard.
+        runSeasonId,
+        // Was the client stamp actually honored? Used for the RunScore week_id — if
+        // we're honoring an older season, the client stamp is also strictly older than
+        // the current server week (since seasons contain 4 weeks), so we back-stamp
+        // week_id to the LAST week of the honored season to avoid mixing pre/post
+        // rollover runs on the same weekly leaderboard.
+        seasonBackDated: clientSeasonId && clientSeasonId < serverSeasonId,
     };
+}
+
+// Compute the last ISO week id of a given season id (e.g. '2026-S7' → '2026-W28').
+// Used to back-stamp week_id when honoring a client run-start season that's older
+// than the server's current season. Seasons = 4 weeks each (see periodIds.js:
+// seasonNum = floor((week - 1) / 4) + 1), so season N covers weeks (N-1)*4+1 .. N*4.
+function lastWeekOfSeason(seasonId) {
+    const m = /^(\d{4})-S(\d+)$/.exec(seasonId || '');
+    if (!m) return null;
+    const year = m[1];
+    const seasonNum = Number(m[2]);
+    const lastWeek = seasonNum * 4;
+    return `${year}-W${String(lastWeek).padStart(2, '0')}`;
 }
 
 // 429-aware retry helper for Base44 entity calls. Base44 rate-limits aggressively
@@ -713,7 +748,11 @@ Deno.serve(async (req) => {
         // Only sector runs count (excludes endless / raid / meteor). Resets when
         // the stored week id no longer matches the current ISO week. RunScore is
         // unreliable here because it gets soft-deleted by the keep-top-scores cron.
-        const { week_id: _currentWeekId } = getCurrentPeriodIds();
+        //
+        // Use the SAME honored week as the RunScore stamp — a straddle-run that
+        // started in W28 credits kills to W28's counter, not W29's. This keeps
+        // the weekly kill LB pool consistent with the score LB pool for the same run.
+        const _currentWeekId = week_id;
         const isSectorRun = !validation.isEndless && !validation.isRaidRun && !validation.isMeteorRun;
         const storedKillsWeek = saveRecord.weekly_sector_kills_week || '';
         const previousKills = Number(saveRecord.weekly_sector_kills) || 0;
@@ -808,8 +847,19 @@ Deno.serve(async (req) => {
             console.warn('[saveScore] DailyActivityLog upsert failed (non-fatal):', logErr.message);
         }
 
-        // Build RunScore record
-        const { week_id, season_id } = getCurrentPeriodIds();
+        // Build RunScore record. If validateAndRecompute honored an older client
+        // run-start season (rollover-straddle protection), stamp both season_id
+        // AND week_id back to that season so the run banks onto the correct
+        // leaderboard. Otherwise use the server's current period ids as before.
+        const currentPeriod = getCurrentPeriodIds();
+        let week_id = currentPeriod.week_id;
+        let season_id = currentPeriod.season_id;
+        if (validation.seasonBackDated && validation.runSeasonId) {
+            season_id = validation.runSeasonId;
+            const backWeek = lastWeekOfSeason(validation.runSeasonId);
+            if (backWeek) week_id = backWeek;
+            console.log(`[saveScore] Honored client run-start season for ${walletAddress}: stamped ${season_id}/${week_id} (server was ${currentPeriod.season_id}/${currentPeriod.week_id})`);
+        }
 
         // Authoritative player_name comes from PlayerSave (set via Profile page).
         // Ignore the client-submitted name entirely — it can contain the OAuth
