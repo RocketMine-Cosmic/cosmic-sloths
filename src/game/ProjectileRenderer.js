@@ -487,20 +487,26 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             if (texSmoke && texSmoke.isReady) {
                 const tintedSmoke = particleManager.getTintedTexture(texSmoke, p.color);
                 const drawTex = (tintedSmoke && tintedSmoke.isReady) ? tintedSmoke : texSmoke;
-                
-                for(let i=0; i<3; i++) {
+
+                // 2026-07-12 (Briantjeuh Discord): 3-layer smoke stack cut FPS from
+                // 150 → 60 within 2min of a run. Toxic Cloud clouds stack heavily
+                // (spawn at player position on every fire tick, ~15s life) so
+                // overdraw multiplies with density. Dropped 3 → 2 layers to match
+                // napalm/hellfire/flaming_lash which use the same texture and don't
+                // exhibit the FPS collapse. No gameplay impact.
+                for(let i=0; i<2; i++) {
                     ctx.save();
                     const rot = time * (0.3 + i * 0.15) * (i % 2 === 0 ? 1 : -1) + p.x;
                     ctx.rotate(rot);
                     const scale = 1.1 + Math.sin(time * 1.5 + i) * 0.15;
                     const r = p.radius * scale;
-                    
+
                     ctx.drawImage(drawTex, -r, -r, r * 2, r * 2);
                     ctx.restore();
                 }
             } else {
                 ctx.fillStyle = p.color;
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < 2; i++) {
                     ctx.beginPath();
                     ctx.arc(
                         Math.cos(time + i) * p.radius * 0.2, 
