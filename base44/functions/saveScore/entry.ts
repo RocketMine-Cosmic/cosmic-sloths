@@ -136,17 +136,12 @@ function getArenaMultiplier(arenaId) {
 function validateAndRecompute(scoreData) {
     const { week_id: _runWeek, season_id: serverSeasonId } = getCurrentPeriodIds();
 
-    // Season stamp: prefer the client-declared run-start season IF it's STRICTLY
-    // OLDER than the server's current season. Fixes the rollover-straddle unfairness
-    // where a player who starts a run at 23:58 UTC Sunday and finishes at 00:02 UTC
-    // Monday would otherwise land on the fresh season's leaderboard while playing
-    // under the OLD season's mechanics (client season flag is module-cached in
-    // seasonGate.js, doesn't flip mid-session). Never accept a NEWER stamp — that
-    // would let a tampered client back-date a fresh run onto whatever leaderboard
-    // it wants. Format is 'YYYY-SN' which sorts correctly lexicographically for
-    // the years/seasons we ship.
-    const clientSeasonId = typeof scoreData.runSeasonId === 'string' ? scoreData.runSeasonId : null;
-    const runSeasonId = (clientSeasonId && clientSeasonId < serverSeasonId) ? clientSeasonId : serverSeasonId;
+    // Season stamp: always use the server's current season. The straddle-run
+    // back-date logic (honoring an older client-declared run-start season) was
+    // removed 2026-07-13 W29 — long browser sessions with stale caches were
+    // shunting fresh runs onto closed leaderboards. Runs now land on whatever
+    // week/season the server is on when the score is saved. Simple, predictable.
+    const runSeasonId = serverSeasonId;
 
     const isS6OrLater = runSeasonId !== '2026-S5';
     // S7 §4f: HEAT score bonus — up to +1.0× score based on DD peak vs the
@@ -333,12 +328,9 @@ function validateAndRecompute(scoreData) {
         // Honored season (client stamp if strictly older, else server current). RunScore
         // will be stamped with this so a straddle-run lands on the correct leaderboard.
         runSeasonId,
-        // Was the client stamp actually honored? Used for the RunScore week_id — if
-        // we're honoring an older season, the client stamp is also strictly older than
-        // the current server week (since seasons contain 4 weeks), so we back-stamp
-        // week_id to the LAST week of the honored season to avoid mixing pre/post
-        // rollover runs on the same weekly leaderboard.
-        seasonBackDated: clientSeasonId && clientSeasonId < serverSeasonId,
+        // Straddle back-date retired — always false. Kept for clarity; downstream code
+        // checks this and falls through to server current period.
+        seasonBackDated: false,
     };
 }
 
