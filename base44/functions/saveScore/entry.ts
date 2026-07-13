@@ -847,19 +847,7 @@ Deno.serve(async (req) => {
             console.warn('[saveScore] DailyActivityLog upsert failed (non-fatal):', logErr.message);
         }
 
-        // Build RunScore record. If validateAndRecompute honored an older client
-        // run-start season (rollover-straddle protection), stamp both season_id
-        // AND week_id back to that season so the run banks onto the correct
-        // leaderboard. Otherwise use the server's current period ids as before.
-        const currentPeriod = getCurrentPeriodIds();
-        let week_id = currentPeriod.week_id;
-        let season_id = currentPeriod.season_id;
-        if (validation.seasonBackDated && validation.runSeasonId) {
-            season_id = validation.runSeasonId;
-            const backWeek = lastWeekOfSeason(validation.runSeasonId);
-            if (backWeek) week_id = backWeek;
-            console.log(`[saveScore] Honored client run-start season for ${walletAddress}: stamped ${season_id}/${week_id} (server was ${currentPeriod.season_id}/${currentPeriod.week_id})`);
-        }
+        // week_id / season_id already resolved above (before weekly-kills block).
 
         // Authoritative player_name comes from PlayerSave (set via Profile page).
         // Ignore the client-submitted name entirely — it can contain the OAuth
