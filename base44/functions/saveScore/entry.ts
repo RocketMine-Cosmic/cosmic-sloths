@@ -735,15 +735,17 @@ Deno.serve(async (req) => {
             delete updatedSave.pendingRunSnapshot;
         }
 
+        // Resolve current week/season ONCE, up-front — used by the weekly-kills
+        // block (immediately below), the RunScore stamp, and the SquadWar filter.
+        // Straddle back-date was removed 2026-07-13: runs always land on the
+        // server's current period at the time the score is saved.
+        const { week_id, season_id } = getCurrentPeriodIds();
+
         // Weekly sector kill counter — top-level field on PlayerSave so the
         // weekly-kills leaderboard can sort server-side without scanning save_data.
         // Only sector runs count (excludes endless / raid / meteor). Resets when
         // the stored week id no longer matches the current ISO week. RunScore is
         // unreliable here because it gets soft-deleted by the keep-top-scores cron.
-        //
-        // Use the SAME honored week as the RunScore stamp — a straddle-run that
-        // started in W28 credits kills to W28's counter, not W29's. This keeps
-        // the weekly kill LB pool consistent with the score LB pool for the same run.
         const _currentWeekId = week_id;
         const isSectorRun = !validation.isEndless && !validation.isRaidRun && !validation.isMeteorRun;
         const storedKillsWeek = saveRecord.weekly_sector_kills_week || '';
