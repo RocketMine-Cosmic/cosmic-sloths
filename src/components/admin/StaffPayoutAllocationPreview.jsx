@@ -4,8 +4,11 @@ import { AlertTriangle } from 'lucide-react';
 // Single-bar breakdown of every OMENX commitment that draws from WEEKLY spend.
 // All five slices (weekly players pool, kill pool, staff payouts, seasonal
 // players pool, squad champions pool) are funded from the same weekly spend
-// window — so the bar sums them all and shows what's left as
-// "Available to withdraw" from the dev wallet each week.
+// window — so the bar sums them all and shows what's left as the
+// "Dev wallet share" (the leftover that stays in the dev wallet each week).
+// Labelled that way rather than "Available to withdraw" because the funds
+// aren't actively withdrawn — they just sit in the dev wallet — and this
+// panel gets screenshotted for Discord where player-friendly wording matters.
 //
 // Staff slice uses the CURRENTLY-SAVED per-wallet pct (`liveStaffPct`) so the
 // bar reflects real payouts, not whatever's typed in the input box. When the
@@ -30,7 +33,10 @@ export default function StaffPayoutAllocationPreview({
     const previewStaffTotalPct = staffCount * numericPct;
     const previewCommittedPct = weeklyPlayerPct + killPoolPct + previewStaffTotalPct + seasonalPlayerPct + squadChampionsPct;
     const previewAvailablePct = Math.max(0, 1 - previewCommittedPct);
-    const hasPreviewDelta = Math.abs(previewCommittedPct - liveCommittedPct) > 0.00001;
+    // Epsilon widened from 1e-5 → 1e-4 so floating-point noise (e.g. 0.02 × 3
+    // producing 0.06000000000000001 vs. a saved 0.06) doesn't spuriously trip
+    // the "Unsaved change" banner when nothing has actually changed.
+    const hasPreviewDelta = Math.abs(previewCommittedPct - liveCommittedPct) > 0.0001;
 
     // Caps only constrain the staff-controllable portion of weekly spend
     // (player/kill/staff). Seasonal+champions sit on top but aren't what the
@@ -44,7 +50,7 @@ export default function StaffPayoutAllocationPreview({
             <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                 <div className="text-[10px] text-slate-500 uppercase font-bold">Weekly Spend — Where Each OMENX Goes</div>
                 <div className="text-xs font-mono font-bold text-emerald-400">
-                    {(liveAvailablePct * 100).toFixed(2)}% available to withdraw
+                    {(liveAvailablePct * 100).toFixed(2)}% dev wallet share
                 </div>
             </div>
             <div className="relative h-4 w-full bg-slate-950 rounded overflow-hidden flex border border-slate-800">
@@ -53,7 +59,7 @@ export default function StaffPayoutAllocationPreview({
                 <div className="bg-amber-500 h-full"   style={{ width: `${liveStaffTotalPct * 100}%` }}  title={`Staff payouts (live): ${(liveStaffTotalPct * 100).toFixed(2)}%`} />
                 <div className="bg-indigo-600 h-full"  style={{ width: `${seasonalPlayerPct * 100}%` }}  title={`Seasonal players pool: ${(seasonalPlayerPct * 100).toFixed(2)}%`} />
                 <div className="bg-purple-600 h-full"  style={{ width: `${squadChampionsPct * 100}%` }}  title={`Squad Champions pool: ${(squadChampionsPct * 100).toFixed(2)}%`} />
-                <div className="bg-emerald-700/60 h-full flex-1" title={`Available to withdraw: ${(liveAvailablePct * 100).toFixed(2)}%`} />
+                <div className="bg-emerald-700/60 h-full flex-1" title={`Dev wallet share: ${(liveAvailablePct * 100).toFixed(2)}%`} />
                 <div className="absolute top-0 bottom-0 w-px bg-amber-300/80" style={{ left: `${SOFT_CAP_PCT * 100}%` }} title="Soft cap 75%" />
                 <div className="absolute top-0 bottom-0 w-px bg-red-400"      style={{ left: `${HARD_CAP_PCT * 100}%` }} title="Hard cap 85%" />
             </div>
@@ -65,7 +71,7 @@ export default function StaffPayoutAllocationPreview({
                 </span>
                 <span className="text-indigo-400">■ Seasonal players {(seasonalPlayerPct * 100).toFixed(2)}%</span>
                 <span className="text-purple-400">■ Squad Champions {(squadChampionsPct * 100).toFixed(2)}%</span>
-                <span className="text-emerald-400">■ Available to withdraw {(liveAvailablePct * 100).toFixed(2)}%</span>
+                <span className="text-emerald-400">■ Dev wallet share {(liveAvailablePct * 100).toFixed(2)}%</span>
                 <span className="text-amber-300">┊ Soft cap {(SOFT_CAP_PCT * 100).toFixed(0)}%</span>
                 <span className="text-red-400">┊ Hard cap {(HARD_CAP_PCT * 100).toFixed(0)}%</span>
             </div>
@@ -92,7 +98,7 @@ export default function StaffPayoutAllocationPreview({
             )}
 
             <p className="text-[10px] text-slate-500 italic leading-snug">
-                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. The <span className="text-emerald-400 font-bold">Available to withdraw</span> figure is your weekly dev-wallet take.
+                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools are funded.
             </p>
         </div>
     );
