@@ -107,7 +107,7 @@ export default function StaffPayoutAllocationPreview({
             )}
 
             <p className="text-[10px] text-slate-500 italic leading-snug">
-                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. <span className="text-slate-300 font-bold">Omen Treasury</span> is a fixed {(OMEN_TREASURY_PCT * 100).toFixed(0)}% platform fee taken off every OMENX spend by the Omen Foundation before funds reach the dev wallet. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools + the platform fee.
+                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools are funded.
             </p>
         </div>
     );
