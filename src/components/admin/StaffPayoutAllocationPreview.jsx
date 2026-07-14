@@ -15,6 +15,11 @@ import { AlertTriangle } from 'lucide-react';
 // owner edits the input, a "preview after save" delta sits below the bar.
 const SOFT_CAP_PCT = 0.75;
 const HARD_CAP_PCT = 0.85;
+// Fixed platform fee taken off the top of every OMENX spend by the Omen
+// Foundation before it reaches the dev wallet. Not configurable from this app
+// — hard-coded here purely so the allocation bar / Discord screenshots reflect
+// the true split. Update this number if Omen ever changes the treasury cut.
+const OMEN_TREASURY_PCT = 0.03;
 
 export default function StaffPayoutAllocationPreview({
     weeklyPlayerPct,
@@ -25,13 +30,15 @@ export default function StaffPayoutAllocationPreview({
     numericPct,         // per-staff weekly % from the INPUT (preview only)
     liveStaffTotalPct,  // SUMMED effective pct across all staff (drives real payouts; respects per-wallet overrides)
 }) {
-    // Live (saved) values — what the bar reflects.
-    const liveCommittedPct = weeklyPlayerPct + killPoolPct + liveStaffTotalPct + seasonalPlayerPct + squadChampionsPct;
+    // Live (saved) values — what the bar reflects. Omen Treasury is included
+    // in the committed total because it's a real deduction from every OMENX
+    // spend (just taken off-code by Omen, not by this app).
+    const liveCommittedPct = weeklyPlayerPct + killPoolPct + liveStaffTotalPct + seasonalPlayerPct + squadChampionsPct + OMEN_TREASURY_PCT;
     const liveAvailablePct = Math.max(0, 1 - liveCommittedPct);
 
     // Preview (unsaved) values — what it WOULD become if the owner saves.
     const previewStaffTotalPct = staffCount * numericPct;
-    const previewCommittedPct = weeklyPlayerPct + killPoolPct + previewStaffTotalPct + seasonalPlayerPct + squadChampionsPct;
+    const previewCommittedPct = weeklyPlayerPct + killPoolPct + previewStaffTotalPct + seasonalPlayerPct + squadChampionsPct + OMEN_TREASURY_PCT;
     const previewAvailablePct = Math.max(0, 1 - previewCommittedPct);
     // Epsilon widened from 1e-5 → 1e-4 so floating-point noise (e.g. 0.02 × 3
     // producing 0.06000000000000001 vs. a saved 0.06) doesn't spuriously trip
@@ -59,6 +66,7 @@ export default function StaffPayoutAllocationPreview({
                 <div className="bg-amber-500 h-full"   style={{ width: `${liveStaffTotalPct * 100}%` }}  title={`Staff payouts (live): ${(liveStaffTotalPct * 100).toFixed(2)}%`} />
                 <div className="bg-indigo-600 h-full"  style={{ width: `${seasonalPlayerPct * 100}%` }}  title={`Seasonal players pool: ${(seasonalPlayerPct * 100).toFixed(2)}%`} />
                 <div className="bg-purple-600 h-full"  style={{ width: `${squadChampionsPct * 100}%` }}  title={`Squad Champions pool: ${(squadChampionsPct * 100).toFixed(2)}%`} />
+                <div className="bg-slate-400 h-full"   style={{ width: `${OMEN_TREASURY_PCT * 100}%` }} title={`Omen Treasury (platform fee): ${(OMEN_TREASURY_PCT * 100).toFixed(2)}%`} />
                 <div className="bg-emerald-700/60 h-full flex-1" title={`Dev wallet share: ${(liveAvailablePct * 100).toFixed(2)}%`} />
                 <div className="absolute top-0 bottom-0 w-px bg-amber-300/80" style={{ left: `${SOFT_CAP_PCT * 100}%` }} title="Soft cap 75%" />
                 <div className="absolute top-0 bottom-0 w-px bg-red-400"      style={{ left: `${HARD_CAP_PCT * 100}%` }} title="Hard cap 85%" />
@@ -71,6 +79,7 @@ export default function StaffPayoutAllocationPreview({
                 </span>
                 <span className="text-indigo-400">■ Seasonal players {(seasonalPlayerPct * 100).toFixed(2)}%</span>
                 <span className="text-purple-400">■ Squad Champions {(squadChampionsPct * 100).toFixed(2)}%</span>
+                <span className="text-slate-300">■ Omen Treasury {(OMEN_TREASURY_PCT * 100).toFixed(2)}% (platform fee)</span>
                 <span className="text-emerald-400">■ Dev wallet share {(liveAvailablePct * 100).toFixed(2)}%</span>
                 <span className="text-amber-300">┊ Soft cap {(SOFT_CAP_PCT * 100).toFixed(0)}%</span>
                 <span className="text-red-400">┊ Hard cap {(HARD_CAP_PCT * 100).toFixed(0)}%</span>
@@ -98,7 +107,7 @@ export default function StaffPayoutAllocationPreview({
             )}
 
             <p className="text-[10px] text-slate-500 italic leading-snug">
-                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools are funded.
+                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. <span className="text-slate-300 font-bold">Omen Treasury</span> is a fixed {(OMEN_TREASURY_PCT * 100).toFixed(0)}% platform fee taken off every OMENX spend by the Omen Foundation before funds reach the dev wallet. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools + the platform fee.
             </p>
         </div>
     );
