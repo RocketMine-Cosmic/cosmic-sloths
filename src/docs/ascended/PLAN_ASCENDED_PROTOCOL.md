@@ -280,7 +280,58 @@ automate once trusted).
 - ✅ Blacklist/mute checks same as saveScore
 - ✅ Kill-switch: `ascendedConfig.enabled = false` hides the lobby + rejects starts (maintenance-gate pattern)
 
-## 12. Open items (decide before build)
+## 12. Long-term ecosystem — Ascended as ENDGAME, not replacement
+
+**Working assumption: Ascended becomes the main mode players play.** That
+has knock-on effects on every interconnected system, planned here so we
+migrate deliberately instead of discovering starvation in week 3.
+
+### 12a. What starves under strict isolation
+| System | Fed by | Effect if play migrates |
+|---|---|---|
+| Weekly kill leaderboard + kill pool | Normal-mode sector kills | Ghost town — contested only by whoever still grinds normal |
+| Squad weekly kills / wars / champions / daily goals | Normal-mode kills | Squad layer goes quiet; champions pool pays a shrinking activity base |
+| Weekly/seasonal/kill/staff pools (the money loop) | % of weekly spend through normal pools | **All shrink — including staff payouts** — as spend shifts into the 80/20 Ascended pool. Structural revenue shift, not a bug, but must be watched from day 1 |
+
+### 12b. The target architecture (two stages, one journey)
+- **Normal mode = the account-building game.** Progression, gold, relics,
+  upgrades. Its narrative purpose becomes *earning your Ascension*.
+  Optional (phase 2 decision): literal unlock gate — e.g. beat Sector 10
+  or account milestone — so Ascended is aspirational endgame, new players
+  live in normal mode, and the grind has a destination.
+- **Ascended = the ranked endgame** where the weekly competitive economy
+  lives.
+- **Squads bridge both modes.** Ascended kills SHOULD eventually credit
+  squad weekly kills / wars / champions — arguably *fairer* than today,
+  since template kills measure participation + skill instead of whale
+  power. Needs a **normalization factor** (template kill rates are high;
+  e.g. Ascended kills × 0.5 into squad counters — tune from real data).
+  Same option available for the personal weekly kill leaderboard.
+
+### 12c. Migration path — isolate first, fold deliberately
+- **Launch: strict isolation** (as specced in §7). Protects every existing
+  pool and squad system while real migration numbers come in.
+- **Instrument from day 1:** admin metrics comparing normal vs Ascended —
+  runs/week, spend/week, unique wallets. The decision to fold is made on
+  this data, not vibes.
+- **Fold levers — build the seams now so each is a config flip later:**
+  1. `ascendedConfig.squad_kill_credit_pct` (0 at launch) — saveAscendedScore
+     routes `kills × pct` into the existing squad kill path
+  2. `ascendedConfig.kill_lb_credit_pct` (0 at launch) — same for
+     `weekly_sector_kills` / WeeklyKillSnapshot
+  3. Pool consolidation options (pick later, data-driven): extend staff %
+     to cover Ascended spend, or route a slice of Ascended's 20% dev share
+     into the kill pool, or retire the normal-mode kill pool in favour of
+     the Ascended pool once Ascended is dominant
+- **Trigger to revisit:** if Ascended exceeds ~50% of weekly spend or
+  weekly kill-board participation drops below a floor you're comfortable
+  with, activate levers 1–2 and decide on 3.
+
+Design rule for the build: every place Ascended *doesn't* credit something,
+implement it as a **zero-valued config**, not a hard skip — so folding the
+ecosystems later is a config change, not a refactor.
+
+## 13. Open items (decide before build)
 
 1. Exact run length — 15:00 assumed; config value either way
 2. Payout curve top-N (suggest: mirror weekly players pool initially)
@@ -288,8 +339,10 @@ automate once trusted).
 4. Attempts: unlimited assumed (free entry). Consider a soft "best of unlimited" messaging so grinding attempts is explicitly fine
 5. Elite spawn cadence + E constant (Practice Range tuning session)
 6. Weekly #1 cosmetic reward (phase 2?)
+7. Ascended unlock gate (aspirational endgame vs open to all — see §12b)
+8. Squad kill normalization factor starting value (see §12b)
 
-## 13. Build phases
+## 14. Build phases
 
 - **Phase 1 — Core loop:** entities + startAscendedRun + template/ramp in
   engine + saveAscendedScore + basic lobby/leaderboard. Pool ACCUMULATES
