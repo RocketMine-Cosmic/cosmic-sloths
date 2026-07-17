@@ -302,10 +302,19 @@ The pitch writes itself: **"The campaign is free. The arena pays."**
 No OMENX payout anywhere in the game can ever again be influenced by
 spending — the single cleanest integrity story available.
 
+**Free ≠ easy.** The campaign keeps its teeth: difficulty tiers, DD/HEAT
+ramp, Outer Galaxy scaling and the gold-grind progression curve all stay
+as-is. Removing OMENX shortcuts actually *sharpens* the challenge — you
+can't buy your way past a wall anymore, you earn through it. Tuning goal:
+fun but never a walk in the park.
+
 ### 12b. What gets RETIRED (sunset over one full season)
+**Locked 2026-07-17: nothing weekly/seasonal survives on the campaign side
+— pools AND upgrade monetisation both go. No partial keeps.**
 - **Weekly players pool** — retired. Ascended weekly pool replaces it.
-- **Seasonal players pool** — retired (or: Ascended gains a seasonal
-  best-week-sum board later, phase 3+ decision).
+- **Seasonal players pool** — retired. (Ascended may gain a seasonal
+  best-week-sum board later — phase 3+ decision — but that's an Ascended
+  feature, not a campaign pool.)
 - **Kill pool** — retired. The kill leaderboard itself survives as a
   bragging-rights board (campaign + Ascended kills, separate tabs or
   merged with the §12d normalization) but pays nothing.
@@ -368,13 +377,16 @@ upgrades they don't need.
    before the public post. Their OMENX outlet becomes cosmetics + Ascended
    runs; their campaign dominance is untouched.
 
-### 12f. Fallback — gradual fold (if the split proves too disruptive)
-If sunset-season data shows Ascended spend can't carry payouts, revert to
-the incremental path: keep campaign pools alive at reduced %, fold via the
-§12d config levers, revisit each season. The build makes this cheap because
-every retirement in §12b is a config flip (pool % → 0, SKU disabled flag),
-not deleted code — **nothing gets hard-deleted until one full season after
-the split ships.**
+### 12f. Fallback — Ascended-side levers only (campaign pools never return)
+Locked 2026-07-17: weekly/seasonal campaign pools and upgrade SKUs do NOT
+come back under any fallback — that decision is final. If sunset-season
+data shows Ascended spend can't carry payouts, the levers are all on the
+Ascended/cosmetics side instead: adjust the 80/20 split, lean harder on
+cosmetics + chests, push the Pool Patron top-up SKU, or shrink the payout
+curve until spend catches up. Retirements in §12b still ship as config
+flips (pool % → 0, SKU disabled flag), not deleted code — purely so the
+sunset season can run both economies in parallel; **the code gets
+hard-deleted one full season after the split ships.**
 
 ## 13. Open items (decide before build)
 
