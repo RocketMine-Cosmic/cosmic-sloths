@@ -38,7 +38,7 @@ honest we are about that, is §7b.)
 | Time in score | **ZERO** — the timer is run length only | S5 `time × 5` lesson: time-scoring rewards passivity |
 | Score formula | kills + level² + elite/boss bonus (§6) | Aggression is the only path up the board |
 | Rotation | **Weekly**: arena skin + enemy roster + 1–2 modifiers, seeded by `week_id` | Variety without retuning; same combo for everyone all week |
-| Economy | **Isolated pool, 80% players / 20% dev**, funded by in-run spends only | One pool, simple pitch, self-balancing; nothing shared with legacy pools |
+| Economy | **One pool, 80% players / 20% dev** — post-split, fed by ALL OMENX spend anywhere in the game (§7a) | One pool, simple pitch, self-balancing; every purchase grows the prize |
 | Revives | Allowed, existing escalation pricing, **1 per run** | A spicy decision under a running clock; feeds the pool |
 | Entry cost | **Free to enter**, unlimited attempts, best run counts | Maximum attempts → healthier pool; barrier-free skill showcase |
 | Endgame role | **The only OMENX payout in the game** after the Great Split (§12) | One competitive economy instead of five |
@@ -158,17 +158,27 @@ can't contain more than the cadence-derived N).
 
 ## 7. Economy — the Ascended Pool
 
-### 7a. Spend routing
-Every OMENX spent **inside an Ascended run** (reroll, banish, revive, ult)
-is tagged and routed:
-- `purchaseSku` receives `context: 'ascended'`, server-verified against an
-  open AscendedRun row (§8)
-- Logged to `TokenSpendLog` with `pool_scope: 'ascended'`; **excluded
-  from** legacy `TokenPool` accumulation
-- Accumulates in an **AscendedPool** row per `week_id`
+### 7a. Spend routing — ALL spend feeds the one pool (locked 2026-07-17)
+
+**End-state: no spend tagging at all.** With the legacy pools retired
+(§12b) there is exactly one destination — so **every OMENX spent anywhere
+in the game** (Ascended in-run, cosmetics, chests, Pool Patron top-ups)
+accumulates into the same weekly AscendedPool row. No `pool_scope`
+markers, no context routing, no per-source accounting. The marketing line
+is free: *"every OMENX spent anywhere grows the weekly prize pool."*
+
+Transition-only scaffold: **during the sunset season** (§12e), while old
+pools still run in parallel, Ascended in-run spends carry a
+`context: 'ascended'` tag purely to keep them OUT of the legacy TokenPool
+accumulation. The tag is deleted with the legacy pools at split rollover
+— it is not a permanent system.
+
+Still needed regardless of tagging:
+- `purchaseSku` verifies an open AscendedRun row (§8) before accepting
+  **in-run** SKUs (reroll/banish/revive/ult) — that check is anti-abuse
+  (no buying revives from the lobby), not pool routing
 - Ascended revives use the run's elapsed time for escalation tier and do
-  **not** touch the player's normal-mode weekly revive counter (isolation
-  cuts both ways)
+  **not** touch the player's normal-mode weekly revive counter
 
 ### 7b. Honest framing — in-run spend DOES influence runs
 
@@ -201,12 +211,20 @@ score-tax on revived runs (e.g. −10%), a "pure run" flag/side-board for
 zero-spend runs, or cutting advantage SKUs to revive-only. Decide from
 data, not upfront (open item 13).
 
-### 7c. Distribution — 80 / 20
+### 7c. Distribution — 80 / 20 of ALL weekly spend
 - **80%** → paid to that week's Ascended leaderboard at rollover
-- **20%** → dev wallet (no staff %, no seasonal carve-out — this pool
-  touches nothing else)
+- **20%** → dev side. **Staff payouts now come out of this 20%** (they
+  can't sit on top — 80 + staff% + 20 would exceed 100). Worth checking
+  the staff % against a 20% ceiling before locking.
 - Omen Treasury's 3% platform fee still comes off the top off-code, same
   as everything (footnote in the mode's info panel)
+
+Deliberate implication to be comfortable with: since cosmetics/chests
+also feed the pool, the dev side keeps ~20% of cosmetic revenue rather
+than ~100%. That's the trade for the pitch — every chest sold makes the
+weekly prize headline bigger, which is itself the acquisition engine.
+If the pool over-fills relative to revenue needs, the 80/20 ratio is a
+single config knob (`ascendedPayoutConfig`), not a redesign.
 
 Payout curve: reuse the weekly players pool shape (top-N, decaying
 percentages) via a new `ascendedPayoutConfig` AppConfig key — editable
@@ -266,7 +284,7 @@ enabled kill-switch), `ascendedPayoutConfig` (curve).
 | `saveAscendedScore` | Validate (envelope, §6) → upsert-if-higher into AscendedScore → close AscendedRun. **Zero PlayerSave writes.** |
 | `getAscendedLeaderboard` | Week's board + pool size + my best + rotation card |
 | `distributeAscendedPool` | Admin/scheduled: freeze board → 80% by curve → OMENX rewards API (same TX machinery as distributeRewards) → AscendedPayoutLog → mark distributed. Idempotent. Launch manual-first, automate once trusted. |
-| `purchaseSku` (modify) | Accept `context: 'ascended'` → verify active run → route spend to AscendedPool, skip legacy TokenPool. Revive tier from run elapsed time, not weekly counters. |
+| `purchaseSku` (modify) | In-run SKUs require an active AscendedRun (anti-abuse). Sunset season only: `context: 'ascended'` keeps in-run spend out of legacy TokenPool. Post-split: ALL spend accumulates to AscendedPool, tag deleted (§7a). Revive tier from run elapsed time, not weekly counters. |
 | `checkpointRun` (modify) | Reject `is_ascended` snapshots same as sandbox (10-min runs don't need crash recovery; keeps flushPendingScores clean) |
 
 ---
@@ -336,8 +354,8 @@ upgrade monetisation both go. No partial keeps.**
 ### 12c. What SURVIVES and how it's funded
 | System | New basis |
 |---|---|
-| **Revenue** | Three pillars: ① Ascended in-run spend (20% dev share), ② **cosmetics** (chests, wardrobe, skins — pure vanity, zero integrity conflict), ③ VIP/NFT perks re-scoped to campaign conveniences + cosmetic flair (never touching Ascended) |
-| **Staff payouts** | % of **total weekly OMENX spend across everything** (Ascended + cosmetics) — mode-agnostic |
+| **Revenue** | **20% dev share of ALL weekly OMENX spend** (§7c) — in-run spends, cosmetics, chests, Pool Patron all feed the same pool. Spend sources: ① Ascended in-run SKUs, ② **cosmetics** (pure vanity, zero integrity conflict), ③ VIP/NFT perks re-scoped to campaign conveniences + cosmetic flair (never touching Ascended) |
+| **Staff payouts** | Carved out of the dev-side 20% (§7c) — mode-agnostic by construction since all spend lands in one pool |
 | **Squad champions** | Fed by normalized Ascended kills (§12d), funded as a slice of the pool's player side (e.g. 80 → 70 individual / 10 squad) |
 | **Squad wars / weekly kills / daily goals** | Campaign kills credit at 1.0 forever + normalized Ascended kills (§12d) — squads stay alive wherever members play |
 | **Omen Treasury 3%** | Unchanged — off the top of everything |
