@@ -401,15 +401,18 @@ Ascended itself can soft-launch earlier in the season (staff testing /
 no pool, per §14 Phase 1) so the mode is proven before it becomes the
 only payout on cutover day.
 
-### 12f. Fallback — Ascended-side levers only
-**Campaign pools and upgrade SKUs never return under any fallback.** If
-post-switch data shows Ascended spend can't carry payouts, the levers
-are all on the Ascended side: adjust the 80/20 split, push the Pool
-Patron SKU, introduce OMENX-priced cosmetics (which feed the pool
-automatically, §7a), or shrink the payout curve until spend catches up.
-§12b retirements still ship as config flips (pool % → 0, SKU disabled
-flag) so the cutover is reversible for emergencies only; the legacy code
-gets hard-deleted one full season after the switch.
+### 12f. No solvency fallback needed — the pool can't fail
+**Campaign pools and upgrade SKUs never return, and no fallback is
+required.** The pool is a fixed percentage of actual spend — it pays out
+80% of whatever came in, so it is solvent by construction. A quiet week
+just means a smaller prize, never a shortfall.
+
+The only lever worth having is a growth lever if the headline number
+feels small: push the Pool Patron SKU, introduce OMENX-priced cosmetics
+(which feed the pool automatically, §7a), or seed a dev top-up for a
+promo week. §12b retirements still ship as config flips (pool % → 0,
+SKU disabled flag) purely as an emergency brake; the legacy code gets
+hard-deleted one full season after the switch.
 
 ---
 
