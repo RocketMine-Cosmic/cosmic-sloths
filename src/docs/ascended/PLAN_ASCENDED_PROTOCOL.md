@@ -323,13 +323,24 @@ spending — the single cleanest integrity story available.
 | **Squad wars / weekly kills / daily goals** | Campaign kills + normalized Ascended kills both credit (config pcts, §12d) — squads stay alive regardless of where members play |
 | **Omen Treasury 3%** | Unchanged — off the top of everything, as always |
 
-**The honest revenue risk:** today's biggest spend stream is campaign
-upgrades. Going F2P deletes it and bets the business on Ascended volume +
-cosmetics. Mitigations: (1) F2P campaign is itself the biggest possible
-player-acquisition lever — more pilots → bigger Ascended pool → bigger
-prize headlines → more pilots; (2) cosmetics get first-class investment
-(the Wardrobe/chest machinery already exists); (3) the sunset season
-(§12e) gives real data on Ascended spend velocity before the old SKUs die.
+**Revenue risk: MEASURED AND LOW.** Spend audit (TokenSpendLog,
+2026-07-01 → 07-17, 500 rows):
+- In-run spend (reroll/revive/banish/ult/xp): **10,651 OMENX** — the
+  dominant stream, broad player base. Maps 1:1 to what Ascended monetises.
+- Upgrade spend: 6,560 — **but 3,925 (60%) is one player (Scooby)
+  deliberately topping up the pool because upgrades were the only route
+  in.** Organic upgrade spend ≈ 2,600 over 2.5 weeks and falling.
+- Fragments: 820. Other: 20.
+
+The upgrade economy is already dead as a revenue stream — F2P campaign
+formalises reality rather than gambling on it. Upsides stack on top:
+(1) F2P campaign is the biggest possible acquisition lever — more pilots
+→ bigger Ascended pool → bigger prize headlines; (2) cosmetics get
+first-class investment (Wardrobe/chest machinery already exists);
+(3) give pool-toppers like Scooby a **direct "top up the pool" SKU** —
+donate straight into the Ascended prize pool, with a leaderboard-visible
+"pool patron" credit — instead of forcing them to launder it through
+upgrades they don't need.
 
 ### 12d. Squad + kill-board bridging (build as configs, not skips)
 - `ascendedConfig.squad_kill_credit_pct` — Ascended kills × pct → squad
@@ -376,6 +387,7 @@ the split ships.**
 9. Which season the sunset (§12e) starts — Ascended must ship at least one season earlier
 10. VIP/NFT perk re-scope list — exactly which perks survive as campaign conveniences (§12c)
 11. Squad champions slice of the Ascended pool (e.g. 80 → 70 individual / 10 squad, see §12c)
+12. "Pool Patron" direct top-up SKU — donate straight into the Ascended pool with visible credit (replaces the Scooby workaround, see §12c)
 
 ## 14. Build phases
 
