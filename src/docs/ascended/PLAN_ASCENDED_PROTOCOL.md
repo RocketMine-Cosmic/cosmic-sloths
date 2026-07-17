@@ -160,20 +160,22 @@ can't contain more than the cadence-derived N).
 
 ### 7a. Spend routing — ALL spend feeds the one pool (locked 2026-07-17)
 
-**End-state: no spend tagging at all.** With the legacy pools retired
-(§12b) there is exactly one destination — so **every OMENX spent anywhere
-in the game** (Ascended in-run, cosmetics, chests, Pool Patron top-ups)
-accumulates into the same weekly AscendedPool row. No `pool_scope`
-markers, no context routing, no per-source accounting. The marketing line
-is free: *"every OMENX spent anywhere grows the weekly prize pool."*
+**No spend tagging at all.** With the legacy pools retired (§12b) there
+is exactly one destination — so **every OMENX spent anywhere in the
+game** accumulates into the same weekly AscendedPool row. No `pool_scope`
+markers, no context routing, no per-source accounting. And because the
+switch is a hard cutover at a season rollover (§12e) rather than a
+parallel-running sunset, no transition tagging is ever needed either.
+The marketing line is free: *"every OMENX spent anywhere grows the
+weekly prize pool."*
 
-Transition-only scaffold: **during the sunset season** (§12e), while old
-pools still run in parallel, Ascended in-run spends carry a
-`context: 'ascended'` tag purely to keep them OUT of the legacy TokenPool
-accumulation. The tag is deleted with the legacy pools at split rollover
-— it is not a permanent system.
+Reality check on sources: today that means **in-run SKUs + the Pool
+Patron top-up** — cosmetics currently have no OMENX pricing (they're
+sold via GMT/chests). If OMENX-priced cosmetics ever ship, they'd feed
+the pool automatically with zero extra code — that's the point of no
+routing.
 
-Still needed regardless of tagging:
+Still needed:
 - `purchaseSku` verifies an open AscendedRun row (§8) before accepting
   **in-run** SKUs (reroll/banish/revive/ult) — that check is anti-abuse
   (no buying revives from the lobby), not pool routing
@@ -219,12 +221,9 @@ data, not upfront (open item 13).
 - Omen Treasury's 3% platform fee still comes off the top off-code, same
   as everything (footnote in the mode's info panel)
 
-Deliberate implication to be comfortable with: since cosmetics/chests
-also feed the pool, the dev side keeps ~20% of cosmetic revenue rather
-than ~100%. That's the trade for the pitch — every chest sold makes the
-weekly prize headline bigger, which is itself the acquisition engine.
-If the pool over-fills relative to revenue needs, the 80/20 ratio is a
-single config knob (`ascendedPayoutConfig`), not a redesign.
+If the pool ever over- or under-fills relative to revenue needs, the
+80/20 ratio is a single config knob (`ascendedPayoutConfig`), not a
+redesign.
 
 Payout curve: reuse the weekly players pool shape (top-N, decaying
 percentages) via a new `ascendedPayoutConfig` AppConfig key — editable
@@ -284,7 +283,7 @@ enabled kill-switch), `ascendedPayoutConfig` (curve).
 | `saveAscendedScore` | Validate (envelope, §6) → upsert-if-higher into AscendedScore → close AscendedRun. **Zero PlayerSave writes.** |
 | `getAscendedLeaderboard` | Week's board + pool size + my best + rotation card |
 | `distributeAscendedPool` | Admin/scheduled: freeze board → 80% by curve → OMENX rewards API (same TX machinery as distributeRewards) → AscendedPayoutLog → mark distributed. Idempotent. Launch manual-first, automate once trusted. |
-| `purchaseSku` (modify) | In-run SKUs require an active AscendedRun (anti-abuse). Sunset season only: `context: 'ascended'` keeps in-run spend out of legacy TokenPool. Post-split: ALL spend accumulates to AscendedPool, tag deleted (§7a). Revive tier from run elapsed time, not weekly counters. |
+| `purchaseSku` (modify) | In-run SKUs require an active AscendedRun (anti-abuse). ALL OMENX spend accumulates to AscendedPool — no tagging (§7a). Revive tier from run elapsed time, not weekly counters. |
 | `checkpointRun` (modify) | Reject `is_ascended` snapshots same as sandbox (10-min runs don't need crash recovery; keeps flushPendingScores clean) |
 
 ---
@@ -337,7 +336,7 @@ ramp, Outer Galaxy scaling and the gold-grind curve all stay. Removing
 OMENX shortcuts *sharpens* the challenge — you can't buy past a wall
 anymore, you earn through it. Tuning goal: fun, never a walk in the park.
 
-### 12b. What gets RETIRED (sunset over one full season)
+### 12b. What gets RETIRED (hard switch at season rollover, §12e)
 **Nothing weekly/seasonal survives on the campaign side — pools AND
 upgrade monetisation both go. No partial keeps.**
 - **Weekly players pool** — retired; Ascended weekly pool replaces it
@@ -354,7 +353,7 @@ upgrade monetisation both go. No partial keeps.**
 ### 12c. What SURVIVES and how it's funded
 | System | New basis |
 |---|---|
-| **Revenue** | **20% dev share of ALL weekly OMENX spend** (§7c) — in-run spends, cosmetics, chests, Pool Patron all feed the same pool. Spend sources: ① Ascended in-run SKUs, ② **cosmetics** (pure vanity, zero integrity conflict), ③ VIP/NFT perks re-scoped to campaign conveniences + cosmetic flair (never touching Ascended) |
+| **Revenue** | **20% dev share of ALL weekly OMENX spend** (§7c). OMENX sources today: ① Ascended in-run SKUs, ② Pool Patron top-ups. Cosmetics have no OMENX pricing currently (GMT/chests) — they stay a separate revenue line unless OMENX-priced cosmetics ship, in which case they feed the pool automatically. VIP/NFT perks re-scope to campaign conveniences + cosmetic flair (never touching Ascended) |
 | **Staff payouts** | Carved out of the dev-side 20% (§7c) — mode-agnostic by construction since all spend lands in one pool |
 | **Squad champions** | Fed by normalized Ascended kills (§12d), funded as a slice of the pool's player side (e.g. 80 → 70 individual / 10 squad) |
 | **Squad wars / weekly kills / daily goals** | Campaign kills credit at 1.0 forever + normalized Ascended kills (§12d) — squads stay alive wherever members play |
@@ -383,29 +382,34 @@ of laundering it through upgrades they don't need.
   board (`weekly_sector_kills` / WeeklyKillSnapshot).
 - Campaign kills credit squads at 1.0 forever.
 
-### 12e. Transition — one full season of sunset
-1. **Announce a season ahead** — "final season of the old pools" is
-   itself a marketing beat.
-2. **Sunset season:** Ascended live with its pool; old pools run in
-   parallel at full rate, both economies visible side-by-side.
-3. **Rollover:** old pools pay their final distribution (send-off Discord
-   post honouring all-time earners); campaign OMENX SKUs switch off;
-   campaign goes fully F2P; staff % re-bases to total spend.
-4. **Grandfathering:** nothing clawed back — every upgrade/talent/relic
+### 12e. Transition — hard switch at a season rollover (no sunset)
+No parallel-running period. One clean cutover at an end-of-season
+rollover:
+1. **Announce ahead of the rollover** — "final season of the old pools"
+   is itself a marketing beat; players get a full heads-up window.
+2. **At rollover:** old pools pay their final distribution (send-off
+   Discord post honouring all-time earners) → campaign OMENX power SKUs
+   switch off → campaign goes fully F2P → Ascended pool goes live as the
+   only payout, all in the same rollover.
+3. **Grandfathering:** nothing clawed back — every upgrade/talent/relic
    ever bought stays. Early spenders keep a permanently stronger campaign
    account; it costs nothing since the campaign no longer pays out.
-5. **Top-spender comms:** personally flag the change to known whales
+4. **Top-spender comms:** personally flag the change to known whales
    before the public post.
+
+Ascended itself can soft-launch earlier in the season (staff testing /
+no pool, per §14 Phase 1) so the mode is proven before it becomes the
+only payout on cutover day.
 
 ### 12f. Fallback — Ascended-side levers only
 **Campaign pools and upgrade SKUs never return under any fallback.** If
-sunset-season data shows Ascended spend can't carry payouts, the levers
-are all on the Ascended/cosmetics side: adjust the 80/20 split, lean
-harder on cosmetics + chests, push the Pool Patron SKU, or shrink the
-payout curve until spend catches up. §12b retirements still ship as
-config flips (pool % → 0, SKU disabled flag) purely so the sunset season
-can run both economies in parallel; the code gets hard-deleted one full
-season after the split ships.
+post-switch data shows Ascended spend can't carry payouts, the levers
+are all on the Ascended side: adjust the 80/20 split, push the Pool
+Patron SKU, introduce OMENX-priced cosmetics (which feed the pool
+automatically, §7a), or shrink the payout curve until spend catches up.
+§12b retirements still ship as config flips (pool % → 0, SKU disabled
+flag) so the cutover is reversible for emergencies only; the legacy code
+gets hard-deleted one full season after the switch.
 
 ---
 
@@ -417,7 +421,7 @@ season after the split ships.
 4. Weekly #1 cosmetic reward — "the Ascended" title flair (phase 2?)
 5. Ascended unlock gate (aspirational endgame — e.g. beat Sector 10 — vs open to all)
 6. Squad kill normalization starting values (§12d)
-7. Which season the sunset (§12e) starts — Ascended must ship ≥ 1 season earlier
+7. Which season rollover the switch (§12e) lands on — Ascended should soft-launch earlier that season
 8. VIP/NFT perk re-scope list — exactly which perks survive as campaign conveniences (§12c)
 9. Squad champions slice of the pool (§12c)
 10. Pool Patron SKU details — pricing tiers, "patron" credit surface (§12c)
