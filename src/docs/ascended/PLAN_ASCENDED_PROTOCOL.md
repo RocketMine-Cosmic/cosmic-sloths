@@ -280,56 +280,88 @@ automate once trusted).
 - ✅ Blacklist/mute checks same as saveScore
 - ✅ Kill-switch: `ascendedConfig.enabled = false` hides the lobby + rejects starts (maintenance-gate pattern)
 
-## 12. Long-term ecosystem — Ascended as ENDGAME, not replacement
+## 12. Long-term ecosystem — THE GREAT SPLIT (target end-state)
 
-**Working assumption: Ascended becomes the main mode players play.** That
-has knock-on effects on every interconnected system, planned here so we
-migrate deliberately instead of discovering starvation in week 3.
+**Locked direction (2026-07-17): the campaign goes completely FREE-TO-PLAY,
+and ALL competitive OMENX economy consolidates into Ascended.** The gradual
+"fold levers" approach (previous §12 draft) is demoted to a fallback if the
+transition proves too disruptive — see §12f.
 
-### 12a. What starves under strict isolation
-| System | Fed by | Effect if play migrates |
+### 12a. The two games
+
+| | **Campaign (Sectors 1–20 + Endless)** | **Ascended Protocol** |
 |---|---|---|
-| Weekly kill leaderboard + kill pool | Normal-mode sector kills | Ghost town — contested only by whoever still grinds normal |
-| Squad weekly kills / wars / champions / daily goals | Normal-mode kills | Squad layer goes quiet; champions pool pays a shrinking activity base |
-| Weekly/seasonal/kill/staff pools (the money loop) | % of weekly spend through normal pools | **All shrink — including staff payouts** — as spend shifts into the 80/20 Ascended pool. Structural revenue shift, not a bug, but must be watched from day 1 |
+| Costs | **100% free.** Gold-only economy — every upgrade, talent, relic, revive, forge roll is bought with earned gold. No OMENX power SKUs at all. | Free entry; optional in-run OMENX spends (reroll / banish / revive / ult) |
+| Pays | Gold + progression + unlocks. **Zero OMENX payouts.** | **The only OMENX payouts in the game.** One pool, 80% players / 20% dev |
+| Purpose | Build your account, learn the game, *earn your Ascension* | Prove your skill, get paid |
+| Pay-for-power | Irrelevant — nothing here pays out, so buying power (there's nothing to buy anyway) can't buy income | Impossible — flattened template |
 
-### 12b. The target architecture (two stages, one journey)
-- **Normal mode = the account-building game.** Progression, gold, relics,
-  upgrades. Its narrative purpose becomes *earning your Ascension*.
-  Optional (phase 2 decision): literal unlock gate — e.g. beat Sector 10
-  or account milestone — so Ascended is aspirational endgame, new players
-  live in normal mode, and the grind has a destination.
-- **Ascended = the ranked endgame** where the weekly competitive economy
-  lives.
-- **Squads bridge both modes.** Ascended kills SHOULD eventually credit
-  squad weekly kills / wars / champions — arguably *fairer* than today,
-  since template kills measure participation + skill instead of whale
-  power. Needs a **normalization factor** (template kill rates are high;
-  e.g. Ascended kills × 0.5 into squad counters — tune from real data).
-  Same option available for the personal weekly kill leaderboard.
+The pitch writes itself: **"The campaign is free. The arena pays."**
+No OMENX payout anywhere in the game can ever again be influenced by
+spending — the single cleanest integrity story available.
 
-### 12c. Migration path — isolate first, fold deliberately
-- **Launch: strict isolation** (as specced in §7). Protects every existing
-  pool and squad system while real migration numbers come in.
-- **Instrument from day 1:** admin metrics comparing normal vs Ascended —
-  runs/week, spend/week, unique wallets. The decision to fold is made on
-  this data, not vibes.
-- **Fold levers — build the seams now so each is a config flip later:**
-  1. `ascendedConfig.squad_kill_credit_pct` (0 at launch) — saveAscendedScore
-     routes `kills × pct` into the existing squad kill path
-  2. `ascendedConfig.kill_lb_credit_pct` (0 at launch) — same for
-     `weekly_sector_kills` / WeeklyKillSnapshot
-  3. Pool consolidation options (pick later, data-driven): extend staff %
-     to cover Ascended spend, or route a slice of Ascended's 20% dev share
-     into the kill pool, or retire the normal-mode kill pool in favour of
-     the Ascended pool once Ascended is dominant
-- **Trigger to revisit:** if Ascended exceeds ~50% of weekly spend or
-  weekly kill-board participation drops below a floor you're comfortable
-  with, activate levers 1–2 and decide on 3.
+### 12b. What gets RETIRED (sunset over one full season)
+- **Weekly players pool** — retired. Ascended weekly pool replaces it.
+- **Seasonal players pool** — retired (or: Ascended gains a seasonal
+  best-week-sum board later, phase 3+ decision).
+- **Kill pool** — retired. The kill leaderboard itself survives as a
+  bragging-rights board (campaign + Ascended kills, separate tabs or
+  merged with the §12d normalization) but pays nothing.
+- **Campaign OMENX power SKUs** — retired/converted: stat & weapon
+  upgrades, talents, revives, fragment express → gold-priced or removed.
+  Gold prices already exist for most (dual-currency SKUs); the OMENX side
+  is simply switched off.
+- **StaffPayoutAllocationPreview five-slice bar** — collapses to a
+  one-pool view. Weekly ops overhead drops massively.
 
-Design rule for the build: every place Ascended *doesn't* credit something,
-implement it as a **zero-valued config**, not a hard skip — so folding the
-ecosystems later is a config change, not a refactor.
+### 12c. What SURVIVES and how it's funded
+| System | New basis |
+|---|---|
+| **Revenue** | Three pillars: ① Ascended in-run spend (20% dev share), ② **cosmetics** (chests, wardrobe, skins — pure vanity, sellable anywhere, no integrity conflict), ③ VIP/NFT perks *re-scoped to campaign-only conveniences + cosmetic flair* (must never touch Ascended) |
+| **Staff payouts** | % of **total weekly OMENX spend across everything** (Ascended + cosmetics) — mode-agnostic, so staff income no longer depends on which mode is fashionable |
+| **Squad champions** | Fed by **Ascended kills** (normalized, §12d) — fairer than today since template kills measure participation + skill, not whale power. Funded as a slice of the Ascended pool's player side (e.g. 80% splits into 70 individual / 10 squad) |
+| **Squad wars / weekly kills / daily goals** | Campaign kills + normalized Ascended kills both credit (config pcts, §12d) — squads stay alive regardless of where members play |
+| **Omen Treasury 3%** | Unchanged — off the top of everything, as always |
+
+**The honest revenue risk:** today's biggest spend stream is campaign
+upgrades. Going F2P deletes it and bets the business on Ascended volume +
+cosmetics. Mitigations: (1) F2P campaign is itself the biggest possible
+player-acquisition lever — more pilots → bigger Ascended pool → bigger
+prize headlines → more pilots; (2) cosmetics get first-class investment
+(the Wardrobe/chest machinery already exists); (3) the sunset season
+(§12e) gives real data on Ascended spend velocity before the old SKUs die.
+
+### 12d. Squad + kill-board bridging (build as configs, not skips)
+- `ascendedConfig.squad_kill_credit_pct` — Ascended kills × pct → squad
+  weekly kills / wars / champions path. Start ~0.5, tune from data.
+- `ascendedConfig.kill_lb_credit_pct` — same for the personal weekly kill
+  board (`weekly_sector_kills` / WeeklyKillSnapshot).
+- Campaign kills keep crediting squads at 1.0 forever — the campaign must
+  still *feel* like it matters to your squad.
+
+### 12e. Transition plan — one full season of sunset
+1. **Announce a season ahead.** "Final season of weekly/seasonal pools"
+   is itself a marketing beat — last chance at the old boards.
+2. **Sunset season:** Ascended launches with its pool live; old pools run
+   in parallel at full rate. Both economies visible side-by-side.
+3. **Rollover:** old pools pay their final distribution (send-off Discord
+   post honouring all-time earners), campaign OMENX power SKUs switch off,
+   campaign goes fully F2P, staff % re-bases to total spend.
+4. **Grandfathering:** nothing is clawed back — every upgrade/talent/relic
+   ever bought with OMENX stays. Early spenders keep a permanently
+   stronger campaign account; that's their reward, and it costs nothing
+   since the campaign no longer pays out.
+5. **Top-spender comms:** personally flag the change to known whales
+   before the public post. Their OMENX outlet becomes cosmetics + Ascended
+   runs; their campaign dominance is untouched.
+
+### 12f. Fallback — gradual fold (if the split proves too disruptive)
+If sunset-season data shows Ascended spend can't carry payouts, revert to
+the incremental path: keep campaign pools alive at reduced %, fold via the
+§12d config levers, revisit each season. The build makes this cheap because
+every retirement in §12b is a config flip (pool % → 0, SKU disabled flag),
+not deleted code — **nothing gets hard-deleted until one full season after
+the split ships.**
 
 ## 13. Open items (decide before build)
 
@@ -339,8 +371,11 @@ ecosystems later is a config change, not a refactor.
 4. Attempts: unlimited assumed (free entry). Consider a soft "best of unlimited" messaging so grinding attempts is explicitly fine
 5. Elite spawn cadence + E constant (Practice Range tuning session)
 6. Weekly #1 cosmetic reward (phase 2?)
-7. Ascended unlock gate (aspirational endgame vs open to all — see §12b)
-8. Squad kill normalization factor starting value (see §12b)
+7. Ascended unlock gate (aspirational endgame — e.g. beat Sector 10 — vs open to all)
+8. Squad kill normalization factor starting value (see §12d)
+9. Which season the sunset (§12e) starts — Ascended must ship at least one season earlier
+10. VIP/NFT perk re-scope list — exactly which perks survive as campaign conveniences (§12c)
+11. Squad champions slice of the Ascended pool (e.g. 80 → 70 individual / 10 squad, see §12c)
 
 ## 14. Build phases
 
