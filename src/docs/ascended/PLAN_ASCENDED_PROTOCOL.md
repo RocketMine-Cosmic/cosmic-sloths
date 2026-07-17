@@ -10,16 +10,18 @@ Author notes locked in design discussion 2026-07-16.
 
 A weekly ranked game mode where **every pilot plays the exact same maxxed
 loadout** — all meta-progression flattened to a fixed template — in a
-**fixed-length (15 min) gauntlet** whose enemy ramp never stops climbing.
+**fixed-length (10 min) gauntlet** whose enemy ramp never stops climbing.
 The map, enemy roster and modifiers **rotate weekly** (same for everyone,
-seeded by `week_id`). Score comes **only from what you did** (kills, level,
+seeded by `week_id`). Ten minutes keeps runs snackable — more attempts per
+session, tighter anti-cheat window, faster "run it back" loop. Score comes
+**only from what you did** (kills, level,
 boss kills) — never from time survived. All OMENX spent inside Ascended runs
 feeds a **mode-isolated weekly pool: 80% paid back to the Ascended
 leaderboard, 20% dev wallet** — completely separate from the weekly /
 seasonal / kill / staff pools.
 
 **The pitch:** pure skill. No grind advantage, no whale advantage, no relic
-RNG. Same ship, same battlefield, same 15 minutes. Best pilot wins.
+RNG. Same ship, same battlefield, same 10 minutes. Best pilot wins.
 
 ---
 
@@ -29,7 +31,7 @@ RNG. Same ship, same battlefield, same 15 minutes. Best pilot wins.
 |---|---|---|
 | Progression | **Full flatten** — template save, player's real save ignored for run stats | Zero drift, zero "my relic didn't apply" tickets, tune once |
 | Relics / NFT / VIP / titles / forge / pool bias | **All OFF** | Level playing field; only cosmetics carry over (visual-only) |
-| Run length | **Fixed 15:00 hard cap** (config value, not hard-coded) | Endless invites AFK marathons; fixed cap = bounded server cost, tight anti-cheat, cheap retries |
+| Run length | **Fixed 10:00 hard cap** (config value, not hard-coded) | Endless invites AFK marathons; fixed cap = bounded server cost, tight anti-cheat, cheap retries; snackable enough to grind attempts |
 | Difficulty | **Infinite ramp within the window** (starts steep, ends absurd) | Maxxed template steamrolls any fixed sector tuning; ramp always catches up |
 | Time in score | **ZERO** — timer is run length only | S5 `time × 5` lesson: time-scoring rewards passivity and creates clamping bugs |
 | Score formula | kills + level² + elite/boss bonus (see §6) | Aggression is the only path up the board |
@@ -74,27 +76,27 @@ GameEngine → saveScore.
 
 ---
 
-## 4. Run structure — the 15-minute gauntlet
+## 4. Run structure — the 10-minute gauntlet
 
-- **Hard cap 15:00.** Run ends at the horn (a "victory"-style end screen) or
+- **Hard cap 10:00.** Run ends at the horn (a "victory"-style end screen) or
   on death, whichever first. No extension mechanics.
 - **Ramp:** reuse the endless scaling loop + DD/HEAT machinery but with an
   Ascended curve: starts at roughly "S18 Cosmic" pressure and multiplies
-  continuously. Target tuning: **a great pilot dies at ~12–14 min**;
-  surviving to 15:00 is a genuine feat, not the norm.
+  continuously. Target tuning: **a great pilot dies at ~8–9 min**;
+  surviving to 10:00 is a genuine feat, not the norm.
 - **Final minutes are the densest** — the run crescendos. Since score is
   kill-driven, the endgame is worth the most points; two horn-survivors are
   separated by how hard they farmed the chaos.
 - **Death = final.** One paid revive allowed (escalation tier by minutes
-  elapsed, same table as normal mode — 15:00 runs land in the 25 OMENX tier
-  naturally).
+  elapsed, same table as normal mode — late-run deaths land in the
+  8–11 min / 15 OMENX tier naturally).
 - **Bosses:** ramp spawns elites/minibosses on a fixed cadence (e.g. every
-  2:30) so the boss-bonus term in the score has a predictable, equal supply
+  1:40) so the boss-bonus term in the score has a predictable, equal supply
   for everyone.
 
 Tuning workflow: play the template in the **Practice Range** (Sandbox
 already unlocks everything + has time fast-forward) against the Ascended
-curve until the 12–14 min death target holds. The curve constants live in
+curve until the 8–9 min death target holds. The curve constants live in
 one place (`ascendedRamp.js` + mirrored in validation) — tune once, holds
 forever because there's no per-player variance.
 
@@ -113,11 +115,11 @@ server agree with zero coordination and no new admin chore:
    different to fight, not just look different.
 3. **1–2 modifiers** from a curated list, e.g.:
    - Elites spawn in pairs
-   - Miniboss cadence 2:30 → 1:45
+   - Miniboss cadence 1:40 → 1:10
    - Enemy projectiles +25% speed
    - XP gems decay after 5s (forces aggressive collection)
-   - "Frenzy finale" — last 3 min density ×1.5
-   - No health drops after 10:00
+   - "Frenzy finale" — last 2 min density ×1.5
+   - No health drops after 7:00
 
    Modifier list starts small (6–8) and grows. Some pairs are excluded
    (config table) so a week can't roll two health-starvation mods together.
@@ -153,8 +155,8 @@ Properties:
 **Anti-cheat is dramatically tighter than normal mode:** fixed template +
 fixed window + known ramp = a computable "max plausible kills per minute
 elapsed" envelope. Validation can reject hard rather than clamp loose.
-Also: max level reachable in 15 min with template XP gain is knowable →
-hard level cap; elite kills capped by the spawn cadence (e.g. 15-min run
+Also: max level reachable in 10 min with template XP gain is knowable →
+hard level cap; elite kills capped by the spawn cadence (e.g. 10-min run
 can't contain more than `cadence-derived N` elites).
 
 ---
@@ -243,7 +245,7 @@ enabled flag / kill-switch), `ascendedPayoutConfig` (curve).
 | `getAscendedLeaderboard` | Week's board + pool size + my best + this week's rotation card |
 | `distributeAscendedPool` | Admin/scheduled: freeze week board → 80% by curve → OMENX rewards API (same TX machinery as distributeRewards) → AscendedPayoutLog, mark pool distributed. Idempotent. |
 | `purchaseSku` (modify) | Accept `context: 'ascended'` → verify active run → route spend to AscendedPool, skip weekly/seasonal TokenPool accumulation. Revive escalation reads run elapsed time from AscendedRun, NOT weekly revive counters (mode isolation cuts both ways — Ascended revives shouldn't burn the player's normal-mode weekly cap). |
-| `checkpointRun` (modify) | Reject `is_ascended` snapshots same as sandbox (15-min runs don't need crash recovery; keeps flushPendingScores clean) |
+| `checkpointRun` (modify) | Reject `is_ascended` snapshots same as sandbox (10-min runs don't need crash recovery; keeps flushPendingScores clean) |
 
 Rollover: `rolloverStalePeriods` / existing weekly cron gains an Ascended
 step (or distribution stays manual-first like other pools — launch manual,
@@ -258,7 +260,7 @@ automate once trusted).
   (all 10), LAUNCH button. Countdown to weekly rollover.
 - **In-run:** distinct HUD accent (the mode should *feel* premium —
   suggestion: gold/white "ascended" trim vs sandbox's warning-yellow),
-  prominent 15:00 countdown, banner strip like SandboxBanner but branded
+  prominent 10:00 countdown, banner strip like SandboxBanner but branded
   ("ASCENDED PROTOCOL — RANKED · WEEK 2026-W37").
 - **End screen:** score breakdown (kills / level / elites), week rank
   achieved, pool share projection if in top-N, "RUN IT BACK" button.
@@ -376,7 +378,7 @@ the split ships.**
 
 ## 13. Open items (decide before build)
 
-1. Exact run length — 15:00 assumed; config value either way
+1. ~~Exact run length~~ — **DECIDED 2026-07-17: 10:00** (config value either way)
 2. Payout curve top-N (suggest: mirror weekly players pool initially)
 3. Which in-run SKUs are available in Ascended (reroll/banish/revive/ult assumed; anything else?)
 4. Attempts: unlimited assumed (free entry). Consider a soft "best of unlimited" messaging so grinding attempts is explicitly fine
@@ -401,4 +403,4 @@ the split ships.**
   weekly #1 title flair, PlayCarousel slide art.
 
 Tuning gate between Phase 1 and 2: at least one full internal week where
-the 12–14 min death target and the score envelope hold up.
+the 8–9 min death target and the score envelope hold up.
