@@ -1,5 +1,4 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
-import { stampAuthWeek } from '@/lib/omenxSessionWeek';
 
 const getBaseUrl = () => {
   if (typeof window === 'undefined') return '';
@@ -25,11 +24,18 @@ export const omenx = new OmenXGameSDK({
           if (existing.player_title !== undefined) preserved.player_title = existing.player_title;
           if (existing.pilot_icon !== undefined) preserved.pilot_icon = existing.pilot_icon;
           if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
+          // Carry the EXISTING mint week forward — never stamp a new one here.
+          // onAuth fires for any session the SDK surfaces, including iframe /
+          // parent-pushed and restored-from-storage tokens where no PKCE flow ran
+          // and Omen recorded no new session. Stamping here refreshed the week on
+          // every boot, permanently exempting those players from
+          // enforceWeeklyOmenSession — which is how a wallet ends up on a
+          // months-stale Omen session. Only OmenXCallback (a real completed OAuth
+          // flow) is allowed to stamp a fresh week.
+          if (existing.auth_week !== undefined) preserved.auth_week = existing.auth_week;
         }
       } catch {}
-      // Stamp the ISO week this token was minted in — enforceWeeklyOmenSession
-      // uses it to force a fresh OAuth (= recorded Omen session) each rollover.
-      const merged = stampAuthWeek({ ...authData, ...preserved });
+      const merged = { ...authData, ...preserved };
       localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
       // Fresh session recorded — the "why were you signed out" notice is done.
       try { localStorage.removeItem('omen_reauth_notice'); } catch {}
