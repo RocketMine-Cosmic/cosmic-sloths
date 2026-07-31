@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { saveAuthToIndexedDB } from '@/lib/indexedDbAuth';
+import { stampAuthWeek } from '@/lib/omenxSessionWeek';
 
 export default function OmenXCallback() {
     const [status, setStatus] = useState('Processing login...');
@@ -61,7 +62,10 @@ export default function OmenXCallback() {
                     return;
                 }
 
-                const authData = {
+                // stampAuthWeek marks the ISO week this token was minted in. Without
+                // it, enforceWeeklyOmenSession sees an "unknown age" session on the
+                // very next page load and forces a full re-login — an endless loop.
+                const authData = stampAuthWeek({
                     accessToken: tokenData.accessToken,
                     refreshToken: tokenData.refreshToken,
                     expiresIn: tokenData.expiresIn,
@@ -80,7 +84,7 @@ export default function OmenXCallback() {
                             };
                         } catch { return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' }; }
                     })(),
-                };
+                });
 
                 // Save to IndexedDB (survives history clear) and localStorage (fallback)
                 try {
@@ -89,6 +93,8 @@ export default function OmenXCallback() {
                     console.error('[OmenXCallback] Storage error');
                 }
                 localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
+                // Fresh session recorded — drop the "why were you signed out" notice.
+                try { localStorage.removeItem('omen_reauth_notice'); } catch {}
                 
                 // Generate and store sessionId for multi-device detection
                 const sessionId = `${authData.walletAddress}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
