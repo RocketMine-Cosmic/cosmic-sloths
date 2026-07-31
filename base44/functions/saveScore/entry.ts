@@ -127,6 +127,17 @@ const ALL_CHARACTER_IDS = [
     'codebreaker', 'dataphantom', 'neonvortex', 'synthbeats', 'skybyte'
 ];
 
+// Numeric season compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
+function seasonAtLeast(seasonId, year, seas) {
+    const m = String(seasonId || '').match(/^(\d{4})-S(\d{1,2})$/);
+    if (!m) return false;
+    const y = Number(m[1]);
+    const s = Number(m[2]);
+    if (y > year) return true;
+    if (y < year) return false;
+    return s >= seas;
+}
+
 function getArenaMultiplier(arenaId) {
     if (arenaId === 'endless') return 2.0;
     const idx = ARENA_ORDER.indexOf(arenaId);
@@ -146,7 +157,7 @@ function validateAndRecompute(scoreData) {
     const isS6OrLater = runSeasonId !== '2026-S5';
     // S7 §4f: HEAT score bonus — up to +1.0× score based on DD peak vs the
     // difficulty's own DD cap. Server-side mirror of lib/seasonGate.isS7OrLater.
-    const isS7OrLater = runSeasonId >= '2026-S7';
+    const isS7OrLater = seasonAtLeast(runSeasonId, 2026, 7);
 
     // S6 Phase 1: time max raised from 60 → 120 min, eliminates the false-reject
     // on legit 60+ min endless runs. S5 keeps the original 60 min cap.

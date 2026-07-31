@@ -6,6 +6,17 @@
 // Used by: GameEngine.js, PickupSystem.js, pages/Game.js (HUD score mirror).
 import { getCurrentPeriodIds } from './periodIds';
 
+// Numeric season compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
+function seasonAtLeast(seasonId, year, seas) {
+    const m = String(seasonId || '').match(/^(\d{4})-S(\d{1,2})$/);
+    if (!m) return false;
+    const y = Number(m[1]);
+    const s = Number(m[2]);
+    if (y > year) return true;
+    if (y < year) return false;
+    return s >= seas;
+}
+
 export function isS6OrLater() {
     try {
         const { season_id } = getCurrentPeriodIds();
@@ -53,7 +64,7 @@ export function isBossVacuumEnabled() {
 export function isS7OrLater() {
     try {
         const { season_id } = getCurrentPeriodIds();
-        return season_id >= '2026-S7';
+        return seasonAtLeast(season_id, 2026, 7);
     } catch {
         return false;
     }
@@ -84,7 +95,7 @@ export function isS8OrLater() {
     }
     try {
         const { season_id } = getCurrentPeriodIds();
-        return season_id >= '2026-S8';
+        return seasonAtLeast(season_id, 2026, 8);
     } catch {
         return false;
     }

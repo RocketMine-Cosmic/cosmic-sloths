@@ -328,8 +328,19 @@ const FRAGMENT_WEEKLY_CAP   = 40;
 
 // S8 gate — mirrors lib/seasonGate.isS8OrLater. New sinks + sandbox reject
 // gated by this so the in-flight S7 leaderboard isn't retroactively changed.
+// Numeric season compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
+function seasonAtLeast(seasonId, year, seas) {
+    const m = String(seasonId || '').match(/^(\d{4})-S(\d{1,2})$/);
+    if (!m) return false;
+    const y = Number(m[1]);
+    const s = Number(m[2]);
+    if (y > year) return true;
+    if (y < year) return false;
+    return s >= seas;
+}
+
 function isS8OrLater(periodIds) {
-    return (periodIds?.season_id || '') >= '2026-S8';
+    return seasonAtLeast(periodIds?.season_id, 2026, 8);
 }
 
 function getReviveTierForRun(timeSec, arenaId) {
