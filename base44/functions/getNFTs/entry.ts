@@ -41,7 +41,10 @@ Deno.serve(async (req) => {
             lastStatus = res.status;
             if (res.status !== 429 && res.status < 500) {
                 console.error('[getNFTs] HTTP', res.status, '— not retrying');
-                return Response.json({ error: `HTTP ${res.status}`, nfts: null }, { status: 502 });
+                // 404 = Omen refuses this wallet (PLAYER_NOT_FOUND) because it has no
+                // recorded session in the last 30 days. Surface the reason so the client
+                // can force a re-auth, exactly like getPlayerBalance does.
+                return Response.json({ error: `HTTP ${res.status}`, nfts: null, reason: `http_${res.status}` }, { status: 502 });
             }
             console.warn('[getNFTs] HTTP', res.status, '— trying next key');
         }

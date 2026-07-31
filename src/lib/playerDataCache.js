@@ -155,6 +155,14 @@ async function fetchNfts() {
             // cached NFTs in that case, otherwise NFT-unlocked characters would
             // momentarily disappear from the UI.
             if (res.data?.nfts == null) {
+                // Same stale-session case as the balance path — a 404 here means Omen
+                // has no recorded session for this wallet, so bounce to Connect Wallet
+                // instead of silently serving stale NFT-gated unlocks forever.
+                if (res.data?.reason === 'http_404') {
+                    const { forceOmenReauth } = await import('@/lib/omenxSessionWeek');
+                    await forceOmenReauth('NFT fetch returned 404 (no recorded Omen session)');
+                    return;
+                }
                 console.warn('[playerDataCache] nft fetch returned null (upstream error) — keeping cache');
                 return;
             }

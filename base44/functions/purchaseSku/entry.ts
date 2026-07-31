@@ -754,8 +754,29 @@ Deno.serve(async (req) => {
                 lastErr = err;
                 const msg = err?.message || String(err);
 
+                // 404 PLAYER_NOT_FOUND — Omen refuses this wallet because it has no
+                // recorded session in the last 30 days. This is NOT a SKU problem, but
+                // it arrives as a 404 just like SKU_NOT_FOUND, so it must be matched
+                // FIRST or it gets misreported as a missing SKU (and never heals).
+                // Nothing was charged — the player just needs to reconnect their wallet.
+                if (/player_not_found/i.test(msg) || (/\b404\b/.test(msg) && !/sku_not_found/i.test(msg))) {
+                    console.warn(`[purchaseSku] OmenX 404 PLAYER_NOT_FOUND wallet=${walletAddress} sku=${skuId} — stale Omen session`);
+                    postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
+                        title: '🔄 Purchase blocked — stale Omen session',
+                        description: 'OmenX returned PLAYER_NOT_FOUND: this wallet has no recorded session in the last 30 days. Player was asked to reconnect. No charge was made.',
+                        fields: [
+                            { name: 'SKU', value: skuId, inline: true },
+                            { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
+                        ],
+                    });
+                    return Response.json({
+                        error: 'Your OmenX session has expired. Please reconnect your wallet and try again — you have not been charged.',
+                        omenSessionStale: true,
+                    }, { status: 409 });
+                }
+
                 // 404 SKU_NOT_FOUND — terminal, SKU not configured on OmenX side.
-                if (/\b404\b/.test(msg) || /sku_not_found/i.test(msg)) {
+                if (/sku_not_found/i.test(msg)) {
                     console.error(`[purchaseSku] OmenX 404 SKU_NOT_FOUND sku=${skuId}:`, msg.slice(0, 200));
                     postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
                         title: '❌ SKU not found on OmenX',
