@@ -42,18 +42,19 @@ export async function enforceWeeklyOmenSession() {
 
     const { week_id } = getCurrentPeriodIds();
 
-    // No stamp yet (auth predates this feature) → adopt the current week so the
-    // player isn't bounced the moment they update. They re-auth next rollover.
+    // No stamp = auth minted before this feature existed, so its true age is
+    // unknown — it could be a month+ old and already refused by the developer
+    // API. Treat unknown as stale and clear it: that's the one-time sweep that
+    // flushes every legacy session on its owner's next refresh. After this,
+    // every blob is stamped, so nobody hits this branch twice.
     if (!parsed.auth_week) {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, auth_week: week_id }));
-        } catch {}
+        console.log('[omenSession] Auth has no mint week (legacy) — clearing to force re-auth.');
+    } else if (parsed.auth_week === week_id) {
         return false;
+    } else {
+        console.log(`[omenSession] Auth minted in ${parsed.auth_week}, now ${week_id} — clearing to force re-auth.`);
     }
 
-    if (parsed.auth_week === week_id) return false;
-
-    console.log(`[omenSession] Auth minted in ${parsed.auth_week}, now ${week_id} — clearing to force re-auth.`);
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
     try { await clearAuthFromIndexedDB(); } catch {}
     try {
