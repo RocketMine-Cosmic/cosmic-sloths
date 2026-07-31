@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
             // Returning ok:false so the client preserves its cached balance instead of
             // flashing "0 OMENX" to a player whose real balance just temporarily failed to fetch.
             if (res.status !== 429 && res.status < 500) {
-                console.error('[getPlayerBalance] HTTP', res.status, '— not retrying');
+                console.error(`[getPlayerBalance] HTTP ${res.status} wallet=${walletAddress} player=${me.full_name || 'unknown'} — not retrying`);
                 return Response.json({ balance: 0, ok: false, reason: `http_${res.status}` });
             }
             console.warn('[getPlayerBalance] HTTP', res.status, '— trying next key');

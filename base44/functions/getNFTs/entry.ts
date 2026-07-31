@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
             // a live wallet, verified 2026-07-31), so retrying across keys can never
             // succeed — it just multiplies one 404 into nine.
             if (res.status !== 429 && res.status < 500) {
-                console.error('[getNFTs] HTTP', res.status, '— not retrying');
+                console.error(`[getNFTs] HTTP ${res.status} wallet=${walletAddress} player=${me.full_name || 'unknown'} — not retrying`);
                 return Response.json({ error: `HTTP ${res.status}`, nfts: null, reason: `http_${res.status}` }, { status: 502 });
             }
             console.warn('[getNFTs] HTTP', res.status, '— trying next key');
