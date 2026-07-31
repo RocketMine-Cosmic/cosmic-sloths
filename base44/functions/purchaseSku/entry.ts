@@ -204,6 +204,8 @@ async function ownsCharacter(save, walletAddress, charId) {
                 const nfts = data?.nfts || [];
                 return nfts.some(nft => normalizeNftCharacterName(nft?.metadata?.name) === charId);
             }
+            // 404 is key-dependent (some keys can't see the player) — try the next key.
+            if (res.status === 404) continue;
             if (res.status !== 429 && res.status < 500) return false;
         }
         return false;

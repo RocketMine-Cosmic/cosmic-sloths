@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
         const shuffled = apiKeys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 
         let lastStatus = 0;
+        let all404 = true;
         for (const key of shuffled) {
             const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
                 headers: { 'Authorization': `Bearer ${key}` },
@@ -53,8 +54,17 @@ Deno.serve(async (req) => {
                 return Response.json({ balance, ok: true });
             }
             lastStatus = res.status;
-            // Only fall through to the next key on rate-limit / server errors. Other errors
-            // (e.g. 401/404) won't be fixed by trying another key — bail immediately.
+            // 404 is KEY-DEPENDENT, not just session-dependent — dev portal logs show
+            // the same wallet 404ing on some balance keys and 200ing on others (keys
+            // registered under a different project have no player record). So a 404
+            // means "this key can't see the player" — try the next key. Only if
+            // EVERY key 404s is the wallet genuinely session-stale.
+            if (res.status === 404) {
+                console.warn(`[getPlayerBalance] HTTP 404 on key ${key.slice(0, 12)}… — trying next key (bad key vs stale session)`);
+                continue;
+            }
+            all404 = false;
+            // Other non-retryable client errors (e.g. 401) — bail immediately.
             // Returning ok:false so the client preserves its cached balance instead of
             // flashing "0 OMENX" to a player whose real balance just temporarily failed to fetch.
             if (res.status !== 429 && res.status < 500) {
@@ -63,7 +73,11 @@ Deno.serve(async (req) => {
             }
             console.warn('[getPlayerBalance] HTTP', res.status, '— trying next key');
         }
-        console.error('[getPlayerBalance] All', shuffled.length, 'keys exhausted, last status:', lastStatus);
+        console.error('[getPlayerBalance] All', shuffled.length, 'keys exhausted, last status:', lastStatus, 'all404:', all404);
+        // Every single key said 404 → the wallet truly has no recorded Omen session.
+        if (all404 && lastStatus === 404) {
+            return Response.json({ balance: 0, ok: false, reason: 'http_404' });
+        }
         return Response.json({ balance: 0, ok: false, reason: `exhausted_${lastStatus}` });
     } catch (error) {
         console.error('[getPlayerBalance]', error.message);
