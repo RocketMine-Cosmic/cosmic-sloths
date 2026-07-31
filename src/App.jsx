@@ -40,7 +40,7 @@ const SquadLeaderDashboard = React.lazy(() => import('./pages/SquadLeaderDashboa
 const SquadMeteor = React.lazy(() => import('./pages/SquadMeteor'));
 const Sandbox = React.lazy(() => import('./pages/Sandbox'));
 import { initOmenX } from '@/lib/omenx';
-import { enforceWeeklyOmenSession, stampAuthWeek } from '@/lib/omenxSessionWeek';
+import { enforceWeeklyOmenSession } from '@/lib/omenxSessionWeek';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { SoundManager } from './game/SoundManager';
@@ -195,7 +195,14 @@ function App() {
         console.log('[OmenX] Received auth from parent iframe');
         try {
           const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-          const merged = stampAuthWeek({ ...existing, ...authData });
+          // Do NOT stamp a fresh auth_week here. This token was pushed in by the
+          // parent page — no PKCE flow ran, so Omen recorded NO new session for
+          // it. Stamping it would mark the session "fresh" every single week and
+          // permanently exempt these players from enforceWeeklyOmenSession, which
+          // is exactly how a wallet ends up with a months-stale Omen session.
+          // Keeping the existing stamp (or none at all) lets the weekly check
+          // clear it and run the real OAuth flow.
+          const merged = { ...existing, ...authData };
           localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'omenx_auth_data',
