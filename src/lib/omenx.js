@@ -1,4 +1,5 @@
 import { OmenXGameSDK } from '@omen.foundation/game-sdk';
+import { stampAuthWeek } from '@/lib/omenxSessionWeek';
 
 const getBaseUrl = () => {
   if (typeof window === 'undefined') return '';
@@ -26,7 +27,9 @@ export const omenx = new OmenXGameSDK({
           if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
         }
       } catch {}
-      const merged = { ...authData, ...preserved };
+      // Stamp the ISO week this token was minted in — enforceWeeklyOmenSession
+      // uses it to force a fresh OAuth (= recorded Omen session) each rollover.
+      const merged = stampAuthWeek({ ...authData, ...preserved });
       localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'omenx_auth_data',

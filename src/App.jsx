@@ -40,6 +40,7 @@ const SquadLeaderDashboard = React.lazy(() => import('./pages/SquadLeaderDashboa
 const SquadMeteor = React.lazy(() => import('./pages/SquadMeteor'));
 const Sandbox = React.lazy(() => import('./pages/Sandbox'));
 import { initOmenX } from '@/lib/omenx';
+import { enforceWeeklyOmenSession, stampAuthWeek } from '@/lib/omenxSessionWeek';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { SoundManager } from './game/SoundManager';
@@ -169,6 +170,13 @@ const MainApp = () => {
 
 function App() {
   useEffect(() => {
+    // Weekly Omen session refresh — clears cached auth minted in an earlier ISO
+    // week so the player re-runs the OAuth flow (recording a fresh Omen session,
+    // which the developer API now requires within 30 days). Skipped on /game so
+    // nobody is ever bounced to a Connect Wallet gate mid-run.
+    if (!window.location.pathname.startsWith('/game')) {
+      enforceWeeklyOmenSession().catch(err => console.error('[omenSession]', err));
+    }
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
     // Retry any runs that failed to save in a previous session.
     flushPendingScores().catch(err => console.error('[flushPendingScores]', err));
@@ -186,7 +194,7 @@ function App() {
         console.log('[OmenX] Received auth from parent iframe');
         try {
           const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-          const merged = { ...existing, ...authData };
+          const merged = stampAuthWeek({ ...existing, ...authData });
           localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'omenx_auth_data',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { omenx, getRedirectUri } from '@/lib/omenx';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
+import { stampAuthWeek } from '@/lib/omenxSessionWeek';
 import { base44 } from '@/api/base44Client';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 
@@ -13,7 +14,9 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
-    const applyAuthData = (data) => {
+    const applyAuthData = (rawData) => {
+        // Stamp the mint week so weekly re-auth enforcement can age it out.
+        const data = rawData ? stampAuthWeek(rawData) : null;
         if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         else localStorage.removeItem(STORAGE_KEY);
         setLoading(false);
