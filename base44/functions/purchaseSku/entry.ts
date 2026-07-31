@@ -204,8 +204,8 @@ async function ownsCharacter(save, walletAddress, charId) {
                 const nfts = data?.nfts || [];
                 return nfts.some(nft => normalizeNftCharacterName(nft?.metadata?.name) === charId);
             }
-            // 404 is key-dependent (some keys can't see the player) — try the next key.
-            if (res.status === 404) continue;
+            // 404 is wallet-dependent, not key-dependent (all keys verified 200 on a
+            // live wallet 2026-07-31) — retrying across keys just multiplies the 404s.
             if (res.status !== 429 && res.status < 500) return false;
         }
         return false;

@@ -28,7 +28,6 @@ Deno.serve(async (req) => {
         const shuffled = apiKeys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
 
         let lastStatus = 0;
-        let all404 = true;
         for (const key of shuffled) {
             const res = await fetch(`${apiBaseUrlEnv}/v1/players/${walletAddress}?chainId=56`, {
                 headers: { 'Authorization': `Bearer ${key}` },
@@ -40,24 +39,16 @@ Deno.serve(async (req) => {
                 return Response.json({ nfts });
             }
             lastStatus = res.status;
-            // 404 is KEY-DEPENDENT — some balance keys can't see the player (wrong
-            // project scope) while others can. Try every key; only if ALL 404 is the
-            // wallet genuinely session-stale.
-            if (res.status === 404) {
-                console.warn(`[getNFTs] HTTP 404 on key ${key.slice(0, 12)}… — trying next key`);
-                continue;
-            }
-            all404 = false;
+            // 404 is WALLET-dependent, not key-dependent (all 9 keys returned 200 for
+            // a live wallet, verified 2026-07-31), so retrying across keys can never
+            // succeed — it just multiplies one 404 into nine.
             if (res.status !== 429 && res.status < 500) {
                 console.error('[getNFTs] HTTP', res.status, '— not retrying');
                 return Response.json({ error: `HTTP ${res.status}`, nfts: null, reason: `http_${res.status}` }, { status: 502 });
             }
             console.warn('[getNFTs] HTTP', res.status, '— trying next key');
         }
-        console.error('[getNFTs] All keys exhausted, last status:', lastStatus, 'all404:', all404);
-        if (all404 && lastStatus === 404) {
-            return Response.json({ error: 'HTTP 404', nfts: null, reason: 'http_404' }, { status: 502 });
-        }
+        console.error('[getNFTs] All keys exhausted, last status:', lastStatus);
         return Response.json({ error: `HTTP ${lastStatus}`, nfts: null }, { status: 502 });
     } catch (error) {
         console.error('[getNFTs]', error.message);
