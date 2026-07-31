@@ -38,7 +38,7 @@ export default function ReauthNotice() {
     if (!msg || dismissed) return null;
 
     return (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] md:max-w-md pointer-events-auto">
+        <div className="fixed top-16 md:top-20 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] md:max-w-md pointer-events-auto">
             <div className="bg-amber-950/95 border-2 border-amber-500 rounded-lg px-3 py-2 md:px-4 md:py-2.5 shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div className="flex-1 text-[11px] md:text-xs text-amber-100 leading-tight">
