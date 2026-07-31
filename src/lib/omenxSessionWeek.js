@@ -30,16 +30,35 @@ const STORAGE_KEY = 'omenx_auth_data';
  * Returns true if auth was expired (caller may want to skip other boot work).
  */
 /**
- * Clears stored OmenX auth (localStorage + IndexedDB) and tells the app, so the
- * gate falls back to "Connect Wallet" → full PKCE flow → recorded Omen session.
+ * Drops the ENTIRE session — Omen AND Base44 — so the player re-runs the full
+ * sign-in chain: Base44 Sign In → Connect Wallet → PKCE → recorded Omen session.
+ *
+ * Why the full chain and not just Omen: clearing Omen alone sends the player
+ * straight to Omen's authorize page, which shows a bare "Connect Account" card
+ * when there's no Omen session in that browser — a dead end. It also leaves the
+ * stale wallet linked on the Base44 User record, so the backend keeps asking
+ * Omen about a wallet with no session and keeps 404ing. A full logout re-runs
+ * linkWalletToUser after fresh auth and rebuilds the whole chain.
+ *
  * Never fires during a run — a mid-run bounce would cost the player their score.
+ * Dynamic imports keep this module free of an import cycle (omenx.js imports
+ * stampAuthWeek from here).
  */
 export async function forceOmenReauth(reason) {
     if (window.location.pathname.startsWith('/game')) {
         console.warn(`[omenSession] ${reason} — deferring re-auth until the run ends.`);
         return false;
     }
-    console.log(`[omenSession] ${reason} — clearing auth to force re-auth.`);
+    console.log(`[omenSession] ${reason} — clearing Omen + Base44 session for a full re-login.`);
+
+    // Flush the save first so nothing in-flight is lost to the logout reload.
+    try {
+        const { SaveManager } = await import('@/game/SaveManager');
+        await SaveManager.syncToBackend();
+    } catch (e) {
+        console.error('[omenSession] save flush failed:', e?.message);
+    }
+
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
     try { await clearAuthFromIndexedDB(); } catch {}
     try {
@@ -49,6 +68,15 @@ export async function forceOmenReauth(reason) {
             storageArea: localStorage,
         }));
     } catch {}
+    try {
+        const { omenx } = await import('@/lib/omenx');
+        await omenx.logout();
+    } catch {}
+    try {
+        const { base44 } = await import('@/api/base44Client');
+        await base44.auth.logout();
+    } catch {}
+    window.location.reload();
     return true;
 }
 
