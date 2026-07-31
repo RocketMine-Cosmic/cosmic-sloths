@@ -3,7 +3,6 @@ import SpaceBackground from './SpaceBackground';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { base44 } from '@/api/base44Client';
 import { omenx, getRedirectUri } from '@/lib/omenx';
-import ReauthNotice from './ReauthNotice';
 
 export default function OmenXGate({ children, isCarousel }) {
     // Read shared auth state — no per-gate `me` call (was 13× across the carousel).
@@ -80,7 +79,6 @@ export default function OmenXGate({ children, isCarousel }) {
                 <div className="text-6xl mb-2">{icon}</div>
                 <h2 className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white">{title}</h2>
                 <p className="text-slate-400 text-sm max-w-xs">{subtitle}</p>
-                <ReauthNotice />
                 {ctaAction && (
                     <button
                         onClick={ctaAction}

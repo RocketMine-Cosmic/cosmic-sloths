@@ -51,6 +51,7 @@ import SyncStatusBanner from './components/SyncStatusBanner';
 import DailyGoalBanner from './components/squads/DailyGoalBanner';
 import FirstTimeSetupLoader from './components/FirstTimeSetupLoader';
 import SaveStatusIndicator from './components/SaveStatusIndicator';
+import ReauthNotice from './components/game/ReauthNotice';
 import S6WelcomeModal from './components/onboarding/S6WelcomeModal';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
@@ -236,6 +237,7 @@ function App() {
           <DailyGoalBanner />
           <FirstTimeSetupLoader />
           <SaveStatusIndicator />
+          <ReauthNotice />
           <S6WelcomeModal />
           <Router>
           <MaintenanceGate />
