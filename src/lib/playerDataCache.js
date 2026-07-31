@@ -68,6 +68,25 @@ function getAuthData() {
     } catch { return null; }
 }
 
+// Omen's developer API says "No OmenX user exists for this wallet" on every
+// key — an Omen-side account problem our re-auth flow cannot fix. Stop the
+// polling (each poll is a guaranteed 404 in the API log) and surface a
+// non-logout notice so the player knows balance/purchases are affected while
+// gameplay and saves keep working.
+function markWalletUnrecognized(source) {
+    if (sessionStale) return;
+    sessionStale = true;
+    stopPolling();
+    console.warn(`[playerDataCache] Omen has no user record for this wallet (${source}) — pausing balance polling.`);
+    try {
+        localStorage.setItem('omen_reauth_notice', JSON.stringify({ kind: 'unrecognized', at: Date.now() }));
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'omen_reauth_notice',
+            storageArea: localStorage,
+        }));
+    } catch {}
+}
+
 function notify() { listeners.forEach(fn => fn(cachedData)); }
 function applyData(patch) {
     cachedData = { ...(cachedData || { balance: 0, vipLevel: 0, nfts: [] }), ...patch };
@@ -99,13 +118,12 @@ async function fetchBalance(force = false) {
                 // them straight to Connect Wallet — that mints a fresh session and heals
                 // balance, purchases and NFT custody in one go.
                 if (res.data?.reason === 'http_404') {
-                    // Stop polling BEFORE attempting re-auth. forceOmenReauth defers
-                    // while the player is mid-run (/game), and without this latch the
-                    // 5-min poll would keep firing guaranteed 404s for the whole run.
-                    sessionStale = true;
-                    stopPolling();
-                    const { forceOmenReauth } = await import('@/lib/omenxSessionWeek');
-                    await forceOmenReauth('Balance returned 404 (no recorded Omen session)');
+                    // PLAYER_NOT_FOUND on ALL keys = Omen has no user record for this
+                    // wallet at all. Proven 2026-07-31: players who log in daily through
+                    // our OAuth flow still 404 — so forcing a re-login can NOT heal this
+                    // and only loops them through pointless sign-outs. Latch off the
+                    // polling and show a notice instead; gameplay and saves still work.
+                    markWalletUnrecognized('balance');
                     return;
                 }
                 console.warn('[playerDataCache] balance fetch returned ok=false — keeping cached balance');
@@ -169,10 +187,9 @@ async function fetchNfts() {
                 // has no recorded session for this wallet, so bounce to Connect Wallet
                 // instead of silently serving stale NFT-gated unlocks forever.
                 if (res.data?.reason === 'http_404') {
-                    sessionStale = true;
-                    stopPolling();
-                    const { forceOmenReauth } = await import('@/lib/omenxSessionWeek');
-                    await forceOmenReauth('NFT fetch returned 404 (no recorded Omen session)');
+                    // Same unrecognized-wallet case as the balance path — latch, notify,
+                    // never force a logout (re-auth can't fix a missing Omen user record).
+                    markWalletUnrecognized('nfts');
                     return;
                 }
                 console.warn('[playerDataCache] nft fetch returned null (upstream error) — keeping cache');

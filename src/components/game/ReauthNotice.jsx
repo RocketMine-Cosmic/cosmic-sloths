@@ -12,6 +12,10 @@ const MESSAGES = {
         title: 'Wallet session expired',
         body: 'We signed you out. Sign in and reconnect your wallet — nothing was lost and you were not charged.',
     },
+    unrecognized: {
+        title: 'Wallet not recognized by OmenX',
+        body: 'Your progress and scores still save normally, but OMENX balance and purchases are unavailable — OmenX has no account record for this wallet. Please sign in at omen.foundation or contact Omen support to restore it.',
+    },
 };
 
 // Explains WHY the player was suddenly signed out. forceOmenReauth writes the
