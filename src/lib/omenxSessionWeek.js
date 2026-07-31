@@ -97,6 +97,17 @@ export async function enforceWeeklyOmenSession() {
 
     const { week_id } = getCurrentPeriodIds();
 
+    // Only ever force ONE re-auth per browser per ISO week. Without this guard,
+    // sessions that can never carry a mint stamp — auth pushed in by the Omen
+    // parent page, where no PKCE flow runs — loop forever: we clear the session,
+    // the parent immediately pushes the same unstamped blob back, and we clear it
+    // again on the next boot. That reads to the player as "I can't log in at all".
+    // One forced logout per week still flushes stale sessions; after that the
+    // player is left alone (and can reconnect manually) until the next rollover.
+    try {
+        if (localStorage.getItem('omen_reauth_forced_week') === week_id) return false;
+    } catch {}
+
     // No stamp = auth minted before this feature existed, so its true age is
     // unknown — it could be a month+ old and already refused by the developer
     // API. Treat unknown as stale and clear it: that's the one-time sweep that
@@ -107,6 +118,9 @@ export async function enforceWeeklyOmenSession() {
     const why = parsed.auth_week
         ? `Auth minted in ${parsed.auth_week}, now ${week_id}`
         : 'Auth has no mint week (legacy session of unknown age)';
+    // Mark BEFORE the logout — forceOmenReauth reloads the page, so anything
+    // after it never runs.
+    try { localStorage.setItem('omen_reauth_forced_week', week_id); } catch {}
     return forceOmenReauth(why, 'weekly');
 }
 
