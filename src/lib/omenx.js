@@ -31,6 +31,8 @@ export const omenx = new OmenXGameSDK({
       // uses it to force a fresh OAuth (= recorded Omen session) each rollover.
       const merged = stampAuthWeek({ ...authData, ...preserved });
       localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
+      // Fresh session recorded — the "why were you signed out" notice is done.
+      try { localStorage.removeItem('omen_reauth_notice'); } catch {}
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'omenx_auth_data',
         newValue: JSON.stringify(merged),

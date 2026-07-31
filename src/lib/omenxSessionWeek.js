@@ -44,12 +44,16 @@ const STORAGE_KEY = 'omenx_auth_data';
  * Dynamic imports keep this module free of an import cycle (omenx.js imports
  * stampAuthWeek from here).
  */
-export async function forceOmenReauth(reason) {
+export async function forceOmenReauth(reason, kind = 'stale') {
     if (window.location.pathname.startsWith('/game')) {
         console.warn(`[omenSession] ${reason} — deferring re-auth until the run ends.`);
         return false;
     }
     console.log(`[omenSession] ${reason} — clearing Omen + Base44 session for a full re-login.`);
+
+    // Tell the login gate why it's showing, so the forced sign-out doesn't read
+    // as a bug. Cleared by omenx.js onAuth once fresh auth lands.
+    try { localStorage.setItem('omen_reauth_notice', JSON.stringify({ kind, at: Date.now() })); } catch {}
 
     // Flush the save first so nothing in-flight is lost to the logout reload.
     try {
@@ -103,7 +107,7 @@ export async function enforceWeeklyOmenSession() {
     const why = parsed.auth_week
         ? `Auth minted in ${parsed.auth_week}, now ${week_id}`
         : 'Auth has no mint week (legacy session of unknown age)';
-    return forceOmenReauth(why);
+    return forceOmenReauth(why, 'weekly');
 }
 
 /** Stamps the current ISO week onto an auth blob at mint time. */
