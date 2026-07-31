@@ -39,6 +39,10 @@ let lastNftFetchAt     = persistedNfts?.timestamp || 0;
 let scheduledBalanceTimer = null;
 let refreshBalanceTimer = null;
 let userFetched = false;
+// Set once the Omen developer API has refused this wallet (404 PLAYER_NOT_FOUND).
+// Until a fresh session is minted there is nothing to gain from polling — every
+// call is another guaranteed 404 in the API log. Cleared on wallet re-link.
+let sessionStale = false;
 
 // Seed from persisted caches immediately (no flicker)
 if (persistedBalance || persistedVip || persistedNfts) {
@@ -73,6 +77,7 @@ function applyData(patch) {
 // ── Balance fetch (frequent) ─────────────────────────────
 async function fetchBalance(force = false) {
     if (inFlightBalance) return inFlightBalance;
+    if (sessionStale) return;
     if (!force && Date.now() - lastBalanceFetchAt < BALANCE_TTL) return;
 
     const auth = getAuthData();
@@ -94,6 +99,11 @@ async function fetchBalance(force = false) {
                 // them straight to Connect Wallet — that mints a fresh session and heals
                 // balance, purchases and NFT custody in one go.
                 if (res.data?.reason === 'http_404') {
+                    // Stop polling BEFORE attempting re-auth. forceOmenReauth defers
+                    // while the player is mid-run (/game), and without this latch the
+                    // 5-min poll would keep firing guaranteed 404s for the whole run.
+                    sessionStale = true;
+                    stopPolling();
                     const { forceOmenReauth } = await import('@/lib/omenxSessionWeek');
                     await forceOmenReauth('Balance returned 404 (no recorded Omen session)');
                     return;
@@ -159,6 +169,8 @@ async function fetchNfts() {
                 // has no recorded session for this wallet, so bounce to Connect Wallet
                 // instead of silently serving stale NFT-gated unlocks forever.
                 if (res.data?.reason === 'http_404') {
+                    sessionStale = true;
+                    stopPolling();
                     const { forceOmenReauth } = await import('@/lib/omenxSessionWeek');
                     await forceOmenReauth('NFT fetch returned 404 (no recorded Omen session)');
                     return;
@@ -240,7 +252,7 @@ export function fetchPlayerData(force = false) {
 // fetch immediately (if cache is stale) and resume the loop.
 let pollTimer = null;
 function startPolling() {
-    if (pollTimer) return;
+    if (pollTimer || sessionStale) return;
     pollTimer = setInterval(() => fetchBalance(), BALANCE_TTL);
 }
 function stopPolling() {
@@ -322,6 +334,9 @@ export function subscribePlayerData(fn) {
             // (rarely change); cleared only when the wallet itself changes.
             lastBalanceFetchAt = 0;
             userFetched = false;
+            // Fresh auth landed — the wallet has a recorded Omen session again.
+            sessionStale = false;
+            startPolling();
 
             // Detect wallet change → wipe VIP + NFT caches.
             const auth = getAuthData();
