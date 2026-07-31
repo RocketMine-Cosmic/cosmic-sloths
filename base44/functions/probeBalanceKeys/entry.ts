@@ -35,6 +35,29 @@ Deno.serve(async (req) => {
     const wallet = (body.wallet || me.wallet_address || '').toLowerCase();
     if (!wallet) return Response.json({ error: 'no wallet' }, { status: 400 });
 
+    // Chain mode — one wallet, one key, many chainId variants (plus no chainId
+    // and mixed-case address). Answers "is the 404 caused by OUR query shape?"
+    if (Array.isArray(body.chainIds)) {
+        const key = Deno.env.get('OMENX_BALANCE_API_KEY');
+        const variants = [
+            ...body.chainIds.map(c => ({ label: `chainId=${c}`, url: `${apiBaseUrl}/v1/players/${wallet}?chainId=${c}` })),
+            { label: 'no chainId', url: `${apiBaseUrl}/v1/players/${wallet}` },
+            { label: 'checksum-case', url: `${apiBaseUrl}/v1/players/${body.wallet}?chainId=56` },
+        ];
+        const chain = [];
+        for (const v of variants) {
+            try {
+                const res = await fetch(v.url, { headers: { 'Authorization': `Bearer ${key}` } });
+                let preview = '';
+                try { preview = (await res.text()).slice(0, 160); } catch {}
+                chain.push({ variant: v.label, status: res.status, body: res.ok ? 'ok' : preview });
+            } catch (e) {
+                chain.push({ variant: v.label, status: 'fetch error', body: String(e?.message).slice(0, 120) });
+            }
+        }
+        return Response.json({ wallet, chain });
+    }
+
     const keyNames = ['OMENX_BALANCE_API_KEY', 'OMENX_BALANCE_API_KEY_2', 'OMENX_BALANCE_API_KEY_3',
         'OMENX_BALANCE_API_KEY_4', 'OMENX_BALANCE_API_KEY_5', 'OMENX_BALANCE_API_KEY_6',
         'OMENX_BALANCE_API_KEY_7', 'OMENX_BALANCE_API_KEY_8', 'OMENX_BALANCE_API_KEY_9'];

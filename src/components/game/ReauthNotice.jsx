@@ -13,8 +13,8 @@ const MESSAGES = {
         body: 'We signed you out. Sign in and reconnect your wallet — nothing was lost and you were not charged.',
     },
     unrecognized: {
-        title: 'Wallet not recognized by OmenX',
-        body: 'Your progress and scores still save normally, but OMENX balance and purchases are unavailable — OmenX has no account record for this wallet. Please sign in at omen.foundation or contact Omen support to restore it.',
+        title: 'Balance temporarily unavailable',
+        body: "We can't read your OMENX balance right now, so it may look out of date. Your wallet is fine — purchases, rewards and saves all still work as normal.",
     },
 };
 

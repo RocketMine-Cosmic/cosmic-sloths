@@ -68,11 +68,17 @@ function getAuthData() {
     } catch { return null; }
 }
 
-// Omen's developer API says "No OmenX user exists for this wallet" on every
-// key — an Omen-side account problem our re-auth flow cannot fix. Stop the
-// polling (each poll is a guaranteed 404 in the API log) and surface a
-// non-logout notice so the player knows balance/purchases are affected while
-// gameplay and saves keep working.
+// GET /v1/players/:wallet returns 404 PLAYER_NOT_FOUND on every balance key for
+// a handful of wallets — but those SAME wallets settle purchases and receive
+// reward transfers normally (verified 2026-07-31: two of the three affected
+// players bought OMENX on Jul 28 and all three took payouts with tx ids on
+// Jul 27). So the wallet is valid and this is a read-side gap on that one
+// endpoint, NOT a dead account and NOT a stale session.
+//
+// Therefore: never force a logout (re-auth cannot fix an endpoint gap and only
+// loops the player through pointless sign-outs), and never tell them purchases
+// are broken — they aren't. Just stop the polling (every poll is a guaranteed
+// 404) and show a quiet "balance may be out of date" notice.
 function markWalletUnrecognized(source) {
     if (sessionStale) return;
     sessionStale = true;
