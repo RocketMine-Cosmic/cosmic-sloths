@@ -29,6 +29,29 @@ const STORAGE_KEY = 'omenx_auth_data';
  * Safe to call on every boot — a no-op when the session is current.
  * Returns true if auth was expired (caller may want to skip other boot work).
  */
+/**
+ * Clears stored OmenX auth (localStorage + IndexedDB) and tells the app, so the
+ * gate falls back to "Connect Wallet" → full PKCE flow → recorded Omen session.
+ * Never fires during a run — a mid-run bounce would cost the player their score.
+ */
+export async function forceOmenReauth(reason) {
+    if (window.location.pathname.startsWith('/game')) {
+        console.warn(`[omenSession] ${reason} — deferring re-auth until the run ends.`);
+        return false;
+    }
+    console.log(`[omenSession] ${reason} — clearing auth to force re-auth.`);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try { await clearAuthFromIndexedDB(); } catch {}
+    try {
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: STORAGE_KEY,
+            newValue: null,
+            storageArea: localStorage,
+        }));
+    } catch {}
+    return true;
+}
+
 export async function enforceWeeklyOmenSession() {
     let parsed;
     try {
@@ -47,24 +70,12 @@ export async function enforceWeeklyOmenSession() {
     // API. Treat unknown as stale and clear it: that's the one-time sweep that
     // flushes every legacy session on its owner's next refresh. After this,
     // every blob is stamped, so nobody hits this branch twice.
-    if (!parsed.auth_week) {
-        console.log('[omenSession] Auth has no mint week (legacy) — clearing to force re-auth.');
-    } else if (parsed.auth_week === week_id) {
-        return false;
-    } else {
-        console.log(`[omenSession] Auth minted in ${parsed.auth_week}, now ${week_id} — clearing to force re-auth.`);
-    }
+    if (parsed.auth_week === week_id) return false;
 
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    try { await clearAuthFromIndexedDB(); } catch {}
-    try {
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: STORAGE_KEY,
-            newValue: null,
-            storageArea: localStorage,
-        }));
-    } catch {}
-    return true;
+    const why = parsed.auth_week
+        ? `Auth minted in ${parsed.auth_week}, now ${week_id}`
+        : 'Auth has no mint week (legacy session of unknown age)';
+    return forceOmenReauth(why);
 }
 
 /** Stamps the current ISO week onto an auth blob at mint time. */

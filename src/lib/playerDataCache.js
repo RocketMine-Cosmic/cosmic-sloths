@@ -88,6 +88,16 @@ async function fetchBalance(force = false) {
             // the previous cached balance and let the next poll heal it.
             const ok = res.data?.ok !== false; // treat missing field as success (legacy)
             if (!ok) {
+                // http_404 = the Omen developer API refuses this wallet (PLAYER_NOT_FOUND)
+                // because it has no recorded session in the last 30 days. Waiting for the
+                // weekly rollover would leave the player broken until Monday, so bounce
+                // them straight to Connect Wallet — that mints a fresh session and heals
+                // balance, purchases and NFT custody in one go.
+                if (res.data?.reason === 'http_404') {
+                    const { forceOmenReauth } = await import('@/lib/omenxSessionWeek');
+                    await forceOmenReauth('Balance returned 404 (no recorded Omen session)');
+                    return;
+                }
                 console.warn('[playerDataCache] balance fetch returned ok=false — keeping cached balance');
                 return;
             }
