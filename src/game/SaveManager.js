@@ -353,6 +353,7 @@ export const SaveManager = {
         'permanentTalents', 'weeklyTalents', 'seasonalTalents',
         'relicLevels',
         'sessionBuffs', // server-owned: xp_buff grant via purchaseSku is the only writer
+        'owned_chest_cosmetics', // server-owned: OmenX VIP chest grants are the only writer
       ];
       const payload = { ...parsed };
       for (const k of SERVER_OWNED) delete payload[k];
