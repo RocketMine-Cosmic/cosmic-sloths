@@ -72,6 +72,14 @@ const SERVER_OWNED_UNLOCK_ARRAYS = [
     'unlockedCosmetics',
     'unlockedKillEffects',
     'unlockedSkins',
+    // Chest cosmetics are granted ONLY by the OmenX VIP chest path (webhook capture
+    // -> manual/automated grant). Without this line the key falls through the base
+    // merge below and the client's array wins, so (a) a hand-granted cosmetic is
+    // silently wiped by the player's next sync from a stale browser copy, and
+    // (b) all 12 SKUs are pasteable from the console -- which also defeats the
+    // verifyOwned() check on the leaderboard mirror in saveScore, since that
+    // verifies against this same array.
+    'owned_chest_cosmetics',
 ];
 
 // Upgrade levels: cloud is the truth (granted via purchaseSku / spendGold in 3b).
