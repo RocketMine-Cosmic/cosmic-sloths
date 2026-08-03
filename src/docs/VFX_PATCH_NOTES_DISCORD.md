@@ -38,7 +38,25 @@ You'll see proper ground markers now, at the real blast radius, filling up as th
 
 **Plasma Swarm's main damage had no visual whatsoever.** The lash from each drone hits a big area every single tick, and there was nothing to see — enemies just died several body-lengths away from anything on screen. There's a ring now showing the actual reach.
 
-## 📱 Performance — especially on phones
+## 🔥 The overheating / "my DPS drops" bug — found it, and it was a proper one
+
+Some of you have reported phones getting hot, laptops struggling, and **Quantum Collapse and Toxic Emitter feeling like they lose damage** in big fights. Those all turned out to be the same bug, and it wasn't a graphics problem at all.
+
+**The game was writing your entire save file to disk every single time you killed an enemy.**
+
+Not every few seconds. Every kill. Each one meant packaging up your whole save, writing it to storage, and making the interface rebuild itself — all while the game was trying to draw the next frame.
+
+At a few kills a second you'd never notice. But **Quantum Collapse and Toxic Emitter are the best mass-killers in the game** — a single Quantum Collapse pulse can kill twenty or thirty enemies at once. That was twenty or thirty full save-writes crammed into one frame. The game would stall, the frame would take a fraction of a second instead of a fraction of that, and the damage you were dealing appeared to drop off a cliff.
+
+**It wasn't your damage dropping. It was the game freezing up mid-swing.**
+
+And because it happened on every kill for a whole run, your phone was doing constant disk writes for twenty minutes straight — which is exactly how you cook a battery.
+
+Your kill counts are still saved. They're just written on a sensible schedule now, and at the end of a run, instead of a thousand times a minute. **Nothing about your progress or your stats changes.**
+
+If Quantum Collapse or Toxic Emitter felt weaker than the numbers said they should be, that's why, and it should feel right now.
+
+## 📱 The rest of the performance work
 
 A fair few of you play on mobile, so this got bumped up the list.
 
@@ -46,8 +64,10 @@ A fair few of you play on mobile, so this got bumped up the list.
 - **Four different draw loops were rendering things that were off screen.** Projectiles, particles, pickups and enemy bullets are all properly culled now.
 - **Bullet-hell boss attacks** were doing hundreds of expensive gradient rebuilds every frame — during the busiest, most dangerous moments of a run, which is exactly when your phone can least afford it.
 - Some effects were being drawn **up to 2,400 pixels wide**, far off the edge of your screen where nobody could see them. There's a sensible ceiling now.
+- Your weapon's upgrade totals were being recalculated from scratch several times a frame instead of once. Same numbers, a lot less work.
+- Every hit rebuilt the kill-milestone damage tables from nothing. They're constants now, as they always should have been.
 
-Nothing about how any of it looks has changed. It just costs a lot less to draw.
+Nothing about how any of it looks has changed. It just costs a lot less to run.
 
 ## 🎯 Smaller things you might notice
 
@@ -69,5 +89,7 @@ Every single one of these fixes is in the display layer — so **all of it moves
 The new version is still the plan and it's still coming. This just means you're not waiting on a worse game in the meantime.
 
 As always — if something looks off after this, shout. Colour changes especially: I've tried to make every weapon distinct, but I'm one bloke and there are a lot of weapons.
+
+And genuinely — **thank you to everyone who reported the overheating and the weapons feeling weak.** I'd assumed both were graphics problems and spent a while looking in the wrong place. The reports are what made me keep digging until the real cause turned up.
 
 **GLHF, Sloths.** 🌌
