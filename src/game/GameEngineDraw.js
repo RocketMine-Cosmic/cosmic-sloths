@@ -713,6 +713,11 @@ export function renderGame() {
         // Cache is per-frame deliberately: no staleness if the canvas is resized.
         const haloCache = new Map();
         this.enemyProjectiles.forEach(p => {
+            // P1: enemy bullets weren't culled either. Halo is radius * 3.5, so
+            // a 4x margin is comfortably outside anything this branch draws.
+            const cm = (p.radius || 0) * 4 + 32;
+            if (p.x < camX - cm || p.x > camX + vWidth + cm ||
+                p.y < camY - cm || p.y > camY + vHeight + cm) return;
             const r = Math.max(0.1, p.radius);
             // Outer warning halo — pulsing red gradient, wider than the bullet itself.
             const haloR = Math.max(1, Math.round(r * 3.5));
