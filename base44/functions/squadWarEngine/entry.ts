@@ -164,6 +164,33 @@ async function pairSquadsForWeek(base44, weekId) {
         ordered.push(...buckets.get(bId));
     }
 
+    // Repeat-avoidance: don't give a squad the same opponent as last week when
+    // an alternative exists. Greedy pass over the pairing order — if a pair
+    // would be a rematch, swap the second slot with the nearest later squad
+    // that isn't last week's opponent. Levels barely move week-over-week, so
+    // without this most squads would draw identical matchups every Monday.
+    const prevWeekId = getPreviousWeekId(weekId);
+    if (prevWeekId) {
+        const prevWars = await base44.asServiceRole.entities.SquadWar.filter({ week_id: prevWeekId });
+        const prevOpponent = new Map();
+        prevWars.forEach(w => {
+            if (w.squad_a_id && w.squad_b_id) {
+                prevOpponent.set(w.squad_a_id, w.squad_b_id);
+                prevOpponent.set(w.squad_b_id, w.squad_a_id);
+            }
+        });
+        for (let i = 0; i + 1 < ordered.length; i += 2) {
+            if (prevOpponent.get(ordered[i].id) === ordered[i + 1].id) {
+                for (let j = i + 2; j < ordered.length; j++) {
+                    if (prevOpponent.get(ordered[i].id) !== ordered[j].id) {
+                        [ordered[i + 1], ordered[j]] = [ordered[j], ordered[i + 1]];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     let paired = 0, byes = 0;
     for (let i = 0; i < ordered.length; i += 2) {
         const a = ordered[i];
