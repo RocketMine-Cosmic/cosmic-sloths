@@ -68,7 +68,26 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
     const texShockwave = particleManager?.textures?.shockwave;
     const texSmoke = particleManager?.textures?.smoke;
 
+    // P1 2026-08-03 — this function has ALWAYS accepted camX/camY/vWidth/vHeight
+    // and never read them: a grep for camX in this file returned the parameter
+    // list and nothing else. Everything off screen was drawn in full, including
+    // per-frame gradient construction for long-lived pools (life up to 15s) that
+    // the player walked away from ten seconds ago. The enemy loop in
+    // GameEngineDraw already does this correctly; this is the same pattern.
+    //
+    // The margin is deliberately generous. Several branches draw far outside the
+    // hitbox — the railgun slash is radius * 12, which is the worst case — so a
+    // tight margin would pop effects at the screen edge. Culling small, numerous
+    // projectiles is where the win is; big ones keep a big margin and are few.
+    const cullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
+    const DRAW_EXTENT_MULT = 12;
+
     projectiles.forEach(p => {
+        if (cullOn) {
+            const m = (p.visualMaxRadius || p.visualRadius || p.radius || 0) * DRAW_EXTENT_MULT + 64;
+            if (p.x < camX - m || p.x > camX + vWidth + m ||
+                p.y < camY - m || p.y > camY + vHeight + m) return;
+        }
         // Decouple visual radius from damage radius. AoE weapons with S6 visual caps
         // set `p.visualRadius` (separate from `p.radius` damage hitbox) so the drawn
         // bubble stays readable while area upgrades continue to expand the actual AoE.
