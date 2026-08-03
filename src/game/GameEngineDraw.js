@@ -389,9 +389,12 @@ export function renderGame() {
             drawEnemy(this.ctx, e, this.time, this.player.x);
             
             if (e.hp < e.maxHp || e.isBoss) {
-                const barW = e.isBoss ? 80 : 20;
-                const barH = e.isBoss ? 6 : 4;
-                const yOffset = e.isBoss ? 16 : 8;
+                // C8 2026-08-03 — an elite has ~2.5x the HP of a trash mob and
+                // was given an identical 20px bar, so the bar actively said
+                // "this is trash" while the aura said "this is elite".
+                const barW = e.isBoss ? 80 : (e.isElite ? 40 : 20);
+                const barH = e.isBoss ? 6 : (e.isElite ? 5 : 4);
+                const yOffset = e.isBoss ? 16 : (e.isElite ? 10 : 8);
                 this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW, barH);
                 this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW * (e.hp / e.maxHp), barH);
             }
@@ -518,6 +521,65 @@ export function renderGame() {
         this.player.frameTimer -= FRAME_DURATION;
         this.player.currentFrame = (this.player.currentFrame + 1) % SPRITE_FRAMES;
     }
+
+    // ── THREAT LAYER (2026-08-03) ──────────────────────────────────────
+    // Everything that is about to damage the player, drawn last in the world
+    // pass — above enemies, pickups, drones and particles, below the player.
+    //
+    // (A) Boss AoE telegraphs. BossSystem creates and ticks _bombWarning,
+    // _novaWarning and _meteorWarning, and until today NOTHING DREW THEM.
+    // The player saw a damage-text label fade, then took boss.damage * 1.5
+    // from a circle that was never on screen. Meteor Shower was worst: 3-8
+    // simultaneous impacts, each signalled by three small sparks.
+    //
+    // 🔴 The radii below MUST stay equal to the takeDamage checks in
+    // BossSystem.js. If one moves, move the other:
+    //     _bombWarning    dist < 120
+    //     _novaWarning    dist < 100
+    //     _meteorWarning  dist < 90
+    //
+    // source-over, never additive — these are floor decals, not glow, and the
+    // whole point is that they read clearly over a busy bright background.
+    //
+    // ⚠️ Balance-visible by design: these attacks become dodgeable as they were
+    // always meant to be, so bosses get easier. That is the fix, not a side
+    // effect. Draw-only — no hitbox, timer or damage value is touched.
+    const BOSS_TELEGRAPHS = [
+        { key: '_bombWarning',   radius: 120, rgb: '168,85,247', defaultT0: 2.0 },
+        { key: '_novaWarning',   radius: 100, rgb: '239,68,68',  defaultT0: 1.2 },
+        { key: '_meteorWarning', radius: 90,  rgb: '245,158,11', defaultT0: 2.0 }
+    ];
+    this.enemies.forEach(e => {
+        if (!e.isBoss) return;
+        BOSS_TELEGRAPHS.forEach(t => {
+            const list = e[t.key];
+            if (!list || !list.length) return;
+            list.forEach(w => {
+                const t0 = w.t0 || t.defaultT0;
+                const p = Math.max(0, Math.min(1, 1 - (w.timer / t0)));
+                this.ctx.save();
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.globalAlpha = 1;
+                this.ctx.translate(w.x, w.y);
+                // Filling disc — reaching the ring means impact.
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, t.radius * p, 0, Math.PI * 2);
+                this.ctx.fillStyle = `rgba(${t.rgb},${0.10 + p * 0.22})`;
+                this.ctx.fill();
+                // Hard ring, always at the TRUE damage radius so the safe
+                // distance is readable from the moment the warning appears.
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, t.radius, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(${t.rgb},${0.45 + p * 0.5})`;
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+                this.ctx.restore();
+            });
+        });
+    });
+
+    // (B) Ground hazards — defined near the top of this function, invoked here.
+    drawHazardLayer();
 
     const spriteSheet = this.player.isMoving
         ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
