@@ -69,7 +69,12 @@ Deno.serve(async (req) => {
 
         const payments = Object.entries(refundMap).map(([walletAddress, data]) => ({
             walletAddress,
-            amount: Math.floor(data.amount).toString(),
+            // 2026-08-03 — was .toString(). Omen changed the Game Rewards API:
+            // amounts are token units as NUMBERS and grant-batch rejects a string
+            // with VALIDATION_ERROR. Math.floor is kept as-is — the API allows
+            // decimals now, but rounding down is this function's existing
+            // behaviour and changing it would change what players are refunded.
+            amount: Math.floor(data.amount),
             player_name: data.player_name
         }));
 
