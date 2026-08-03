@@ -775,7 +775,7 @@ export function renderGame() {
     this.ctx.globalCompositeOperation = 'screen';
     const texSmoke = this.particleManager?.textures?.smoke;
 
-    // P5 2026-08-03 — env particles were the last uncrulled draw loop. They are
+    // P5 2026-08-03 — env particles were the last unculled draw loop. They are
     // spawned across 1.5-2x the viewport around the player (GameEngine.js:1239-
     // 1247), so a meaningful share of them is off screen at any moment, and
     // neon_rain in particular respawns continuously. Filtered once here rather
