@@ -147,7 +147,13 @@ export function renderGame() {
         });
     }
 
-    if (this.hazards) {
+    // MOVED 2026-08-03 (VFX fix B) — this block used to RUN here, which put the
+    // hazard warning underneath every particle, pickup, enemy, drone, aura and
+    // kill effect drawn after it. It is now only DEFINED here and invoked just
+    // before the player sprite, so the thing that is about to hurt you is drawn
+    // on top of the things that are not.
+    const drawHazardLayer = () => {
+      if (this.hazards) {
         this.hazards.forEach(h => {
             this.ctx.save(); this.ctx.translate(h.x, h.y);
             if (!h.active) {
@@ -172,7 +178,8 @@ export function renderGame() {
             }
             this.ctx.restore();
         });
-    }
+      }
+    };
 
     const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
     if (swarm) {
