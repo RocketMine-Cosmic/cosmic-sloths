@@ -1526,6 +1526,11 @@ export class GameEngine {
     }
 
     shake(amount) {
+        // C3 2026-08-03 — floor. Anything under 0.08 is sub-perceptual as an
+        // event but still holds the camera off-centre, which is what turned a
+        // stream of small shakes into a permanent tremor. Ignore them outright
+        // so screenshake only ever means "something happened".
+        if (!(amount >= 0.08)) return;
         this.shakeTimer = Math.max(this.shakeTimer, amount);
     }
 

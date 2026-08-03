@@ -27,7 +27,11 @@ export function drawEnemy(ctx, e, time, playerX) {
         const elitePulse = 0.6 + Math.sin(eliteT * 2) * 0.25;
         const auraRadius = e.radius * 1.6;
         ctx.save();
-        ctx.globalCompositeOperation = 'screen';
+        // C8 2026-08-03 — was globalCompositeOperation = 'screen'. Additive
+        // orange over a bright background saturates straight to white, so in
+        // exactly the busy moments where you most need to spot an elite, the
+        // elite tell disappeared. source-over keeps the orange orange.
+        ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = elitePulse;
         const eliteGrad = ctx.createRadialGradient(0, 0, e.radius * 0.5, 0, 0, auraRadius);
         eliteGrad.addColorStop(0, '#ff6600');
@@ -37,8 +41,20 @@ export function drawEnemy(ctx, e, time, playerX) {
         ctx.beginPath();
         ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
         ctx.fill();
-        // Spinning rune rings
-        ctx.globalAlpha = 0.5;
+        // Spinning rune rings. C8: dark backing stroke first so the rings hold
+        // their shape against a light background, then the rune colour at 0.8
+        // instead of 0.5 — they were the part that washed out first.
+        ctx.globalAlpha = 0.45;
+        ctx.strokeStyle = 'rgba(40,10,0,1)';
+        ctx.lineWidth = 4;
+        for (let ri = 0; ri < 2; ri++) {
+            const rot = eliteT * (ri === 0 ? 1 : -0.7) + ri * Math.PI * 0.5;
+            const ringR = e.radius * (1.1 + ri * 0.3);
+            ctx.beginPath();
+            ctx.arc(0, 0, ringR, rot, rot + Math.PI * 1.3);
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 0.8;
         ctx.strokeStyle = '#ffaa00';
         ctx.lineWidth = 2;
         for (let ri = 0; ri < 2; ri++) {
