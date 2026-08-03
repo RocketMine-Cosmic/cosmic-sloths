@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, ARENAS, CHARACTER_TALENTS, DIFFICULTIES, SKIN_COSMETICS, RELICS, ENEMIES, UPGRADES, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
+import { CHARACTERS, WEAPONS, ARENAS, CHARACTER_TALENTS, DIFFICULTIES, SKIN_COSMETICS, RELICS, ENEMIES, UPGRADES, getCharacterMastery, getWeaponStatsAndMastery, bustWeaponStatsCache } from './Constants';
 import { SFXManager } from './SFXManager';
 import { ParticleManager } from './ParticleManager';
 import { SaveManager } from './SaveManager';
@@ -887,6 +887,14 @@ export class GameEngine {
     update(dt) {
         if (dt > 0.1) dt = 0.1;
         this.lastDt = dt;
+
+        // PERF 2026-08-03 — drop the weapon-stats memo at the top of every tick.
+        // getWeaponStatsAndMastery is allocation-heavy and was recomputed twice per
+        // weapon fire and twice per frame from the draw path. Its inputs are meta
+        // progression, which cannot change within a single frame, so a one-tick
+        // cache is safe by construction. Clearing HERE (not in draw) means an
+        // upgrade picked on a level-up is always live on the very next tick.
+        bustWeaponStatsCache();
         
         // Dynamic Difficulty
         if (!this.dynamicDifficulty) this.dynamicDifficulty = {
