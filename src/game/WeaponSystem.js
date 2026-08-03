@@ -346,7 +346,16 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'shieldBubble') {
-        const color = isMastered ? '#ffd700' : engine.player.color;
+        // C6/C7 2026-08-03 — the gold three-way. Unmastered used engine.player.color,
+        // and SynthBeats' character colour is #FFD700, so playing SynthBeats an
+        // unmastered bubble was pixel-identical to the mastered "(Golden Shield)".
+        // The shield line now ramps within one identity instead of colliding:
+        //   shieldBubble unmastered #d9a441 (amber-bronze)
+        //   shieldBubble mastered   #ffd700 (true gold)
+        //   aegisMatrix             #fff3a0 (pale platinum-gold, see that branch)
+        // Also gives the weapon its own colour from level 1 rather than merging
+        // with the player sprite, which is drawn in the same character colour.
+        const color = isMastered ? '#ffd700' : '#d9a441';
         // Removed the 8-circle activation burst (was: addParticle ... 8, 'circle', ..., {speed: 200}).
         // Texxy 2026-05-20: when the bubble fires on a short cooldown, each refresh
         // spawned 8 expanding circle particles from the player position. Stacked
@@ -542,7 +551,11 @@ export function fireWeaponLogic(engine, w) {
         engine.particleManager.particles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0, life: 0.25, maxLife: 0.25,
-            color: '#ffffff', tint: '#ff00ff', type: 'slash', size: 80 * area, rotation: Math.random() * Math.PI * 2
+            // C6 2026-08-03 — Seismic Whip flashed magenta then emitted a cyan ring,
+            // reading as two different weapons. Unified on amber, which matches its
+            // "Quake Force" label; #ff00ff also collided exactly with Glitch's
+            // character colour, and #00ffff is shared by five other effects.
+            color: '#ffffff', tint: '#ff9500', type: 'slash', size: 80 * area, rotation: Math.random() * Math.PI * 2
         });
         let hitAny = false;
         let hitX = engine.player.x;
@@ -551,7 +564,7 @@ export function fireWeaponLogic(engine, w) {
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
                 engine.damageEnemy(e, dmg, { weaponId: w.id });
-                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 4, 'spark', 1.5);
+                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff9500', 4, 'spark', 1.5);
                 hitAny = true;
                 hitX = e.x;
                 hitY = e.y;
@@ -559,7 +572,7 @@ export function fireWeaponLogic(engine, w) {
         });
         
         if (hitAny) {
-            engine.addParticle(hitX, hitY, '#00ffff', 15, 'spark', 2);
+            engine.addParticle(hitX, hitY, '#ffc46b', 15, 'spark', 2);
             const swR = 30 * area;
             engine.projectiles.push({
                 x: hitX, y: hitY,
@@ -570,7 +583,7 @@ export function fireWeaponLogic(engine, w) {
                 damage: dmg * 1.5,
                 pierce: 999,
                 life: 0.5,
-                color: '#00ffff',
+                color: '#ff9500',
                 isAoe: true,
                 pulse: true,
                 type: 'seismic_shockwave'
@@ -726,8 +739,12 @@ export function fireWeaponLogic(engine, w) {
             life: Math.min(15, 5 + w.level),
             // Hellfire description says "Blue flames that persist" — was red (#ff0000)
             // which contradicted the description and clashed visually with napalm.
-            // Deep sky blue distinguishes it from napalm mastery's lighter blue.
-            color: '#1E90FF',
+            // C6 2026-08-03 — #1E90FF did NOT distinguish it from mastered napalm
+            // (#00BFFF): both render through the same pool branch differing only by
+            // alpha 0.4/0.3 and 5/4 segments, so the *evolution* read as slightly
+            // more of the base weapon. Pushed to violet-blue, which stays inside
+            // "blue flames" while being unmistakably not napalm.
+            color: '#4d5bff',
             isAoe: true,
             burn: true,
             isMastered: true,
@@ -801,7 +818,9 @@ export function fireWeaponLogic(engine, w) {
             life: 2.5,
             // S7 §4b: pushback-decay reference (see shieldBubble).
             maxLife: 2.5,
-            color: '#ffd700',
+            // C6 2026-08-03 — was #ffd700, identical to a mastered shieldBubble.
+            // Aegis is the evolution, so it sits one step brighter on the same ramp.
+            color: '#fff3a0',
             isAoe: true,
             pushback: 300,
             isMastered: true,
