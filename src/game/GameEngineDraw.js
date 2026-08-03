@@ -123,6 +123,9 @@ export function renderGame() {
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('🚩', b.x, b.y);
+            // C12 2026-08-03 — textBaseline was set here with no save()/restore(),
+            // so it leaked into every later text draw in the frame. Reset it.
+            this.ctx.textBaseline = 'alphabetic';
             this.ctx.globalAlpha = 1.0;
         });
     }
@@ -140,6 +143,8 @@ export function renderGame() {
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('👤', d.x, d.y + 2);
+            // C12: same leak as the squad-flag block above.
+            this.ctx.textBaseline = 'alphabetic';
             this.ctx.globalAlpha = 1.0;
             
             this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(d.x - 10, d.y - 20, 20, 4);
@@ -378,13 +383,14 @@ export function renderGame() {
     // projectiles + AoE pools (player request 2026-05-14).
     drawPickups(this.ctx, this.pickups, this.time, 'major', camX, camY, vWidth, vHeight);
 
-    const viewMinX = camX - 150;
-    const viewMaxX = camX + vWidth + 150;
-    const viewMinY = camY - 150;
-    const viewMaxY = camY + vHeight + 150;
-
+    // C11 2026-08-03 — the margin was a flat 150, but drawEnemy renders sprites at
+    // radius * 1.8. The squad meteor (radius 220) has a half-extent of 198, so it
+    // was culled — and visibly popped out of existence — with roughly a 50-unit
+    // sliver still on screen. Scale the margin with the enemy instead.
     this.enemies.forEach(e => {
-        if (e.x < viewMinX || e.x > viewMaxX || e.y < viewMinY || e.y > viewMaxY) return;
+        const m = Math.max(150, (e.radius || 20) * 2);
+        if (e.x < camX - m || e.x > camX + vWidth + m ||
+            e.y < camY - m || e.y > camY + vHeight + m) return;
         if (!e.burrowed) {
             drawEnemy(this.ctx, e, this.time, this.player.x);
             
@@ -758,6 +764,12 @@ export function renderGame() {
     }
 
     this.ctx.textAlign = 'center';
+    // C12 2026-08-03 — this loop never set textBaseline, so it inherited whatever
+    // the last text draw left behind. Playing NeoByte or HoloDrift set it to
+    // 'middle' earlier in the frame and EVERY damage number sat ~9px low,
+    // overlapping the enemy sprites. Set explicitly rather than relying on the
+    // resets above — this is the block players actually notice.
+    this.ctx.textBaseline = 'alphabetic';
     this.damageTexts.forEach(t => {
         this.ctx.globalAlpha = Math.max(0, t.life);
         this.ctx.strokeStyle = '#000000';
