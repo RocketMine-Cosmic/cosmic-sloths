@@ -23,6 +23,51 @@ import { getCurrentPeriodIds } from '@/lib/periodIds';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 
 const STORAGE_KEY = 'omenx_auth_data';
+const FORCED_WEEK_KEY = 'omen_reauth_forced_week';
+
+/**
+ * iPhone lockout fix, 2026-08-03 (Shjin: "haven't been able to play for a couple
+ * of days, works on my PC").
+ *
+ * Every await in forceOmenReauth was unbounded. `window.location.reload()` sits
+ * at the END of that chain, so ANY of them hanging means the reload never fires
+ * and the player is left on a page that has been told to log out and never does.
+ * On desktop wifi these settle in milliseconds and you never see it; on a phone
+ * on mobile data a stalled fetch hangs forever and never rejects, so the catch
+ * blocks don't help. That is a lockout that survives refreshes, because the next
+ * boot runs the same code and hangs in the same place.
+ *
+ * Everything below is defensive: bound every await, and guarantee the reload.
+ */
+function withTimeout(promise, ms, label) {
+    return Promise.race([
+        promise,
+        new Promise((resolve) => setTimeout(() => {
+            console.warn(`[omenSession] ${label} timed out after ${ms}ms — continuing.`);
+            resolve(undefined);
+        }, ms)),
+    ]);
+}
+
+/**
+ * The once-per-week guard has to survive `base44.auth.logout()` and a reload.
+ * If it doesn't, the loop it exists to prevent comes straight back. localStorage
+ * is the natural home but it is also the thing being cleared, and iOS Safari
+ * evicts script-writable storage far more aggressively than desktop — i.e. it is
+ * least durable exactly where this bug bites. Write both; a hit in either counts.
+ * sessionStorage survives a reload in the same tab, which is the window that
+ * matters here.
+ */
+function readForcedWeek() {
+    try { const v = localStorage.getItem(FORCED_WEEK_KEY); if (v) return v; } catch {}
+    try { return sessionStorage.getItem(FORCED_WEEK_KEY); } catch {}
+    return null;
+}
+
+function writeForcedWeek(week_id) {
+    try { localStorage.setItem(FORCED_WEEK_KEY, week_id); } catch {}
+    try { sessionStorage.setItem(FORCED_WEEK_KEY, week_id); } catch {}
+}
 
 /**
  * Clears stored OmenX auth if it was minted in an earlier ISO week.
@@ -51,36 +96,51 @@ export async function forceOmenReauth(reason, kind = 'stale') {
     }
     console.log(`[omenSession] ${reason} — clearing Omen + Base44 session for a full re-login.`);
 
-    // Tell the login gate why it's showing, so the forced sign-out doesn't read
-    // as a bug. Cleared by omenx.js onAuth once fresh auth lands.
-    try { localStorage.setItem('omen_reauth_notice', JSON.stringify({ kind, at: Date.now() })); } catch {}
+    // Last-resort watchdog. If the body below wedges in a way not covered by the
+    // per-step timeouts, the page still reloads instead of sitting dead forever.
+    const watchdog = setTimeout(() => {
+        console.warn('[omenSession] re-auth watchdog fired — forcing reload.');
+        window.location.reload();
+    }, 15000);
 
-    // Flush the save first so nothing in-flight is lost to the logout reload.
     try {
-        const { SaveManager } = await import('@/game/SaveManager');
-        await SaveManager.syncToBackend();
-    } catch (e) {
-        console.error('[omenSession] save flush failed:', e?.message);
+        // Tell the login gate why it's showing, so the forced sign-out doesn't read
+        // as a bug. Cleared by omenx.js onAuth once fresh auth lands.
+        try { localStorage.setItem('omen_reauth_notice', JSON.stringify({ kind, at: Date.now() })); } catch {}
+
+        // Flush the save first so nothing in-flight is lost to the logout reload.
+        // Bounded: losing a few seconds of save state is recoverable, being locked
+        // out of the game is not. This is the await that hung on iOS.
+        try {
+            const { SaveManager } = await import('@/game/SaveManager');
+            await withTimeout(SaveManager.syncToBackend(), 4000, 'save flush');
+        } catch (e) {
+            console.error('[omenSession] save flush failed:', e?.message);
+        }
+
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+        try { await withTimeout(clearAuthFromIndexedDB(), 2000, 'indexedDB clear'); } catch {}
+        try {
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: STORAGE_KEY,
+                newValue: null,
+                storageArea: localStorage,
+            }));
+        } catch {}
+        try {
+            const { omenx } = await import('@/lib/omenx');
+            await withTimeout(omenx.logout(), 3000, 'omenx logout');
+        } catch {}
+        try {
+            const { base44 } = await import('@/api/base44Client');
+            await withTimeout(base44.auth.logout(), 3000, 'base44 logout');
+        } catch {}
+    } finally {
+        // ALWAYS reload. Previously this line was reachable only if every await
+        // above settled, which is precisely what failed.
+        clearTimeout(watchdog);
+        window.location.reload();
     }
-
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    try { await clearAuthFromIndexedDB(); } catch {}
-    try {
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: STORAGE_KEY,
-            newValue: null,
-            storageArea: localStorage,
-        }));
-    } catch {}
-    try {
-        const { omenx } = await import('@/lib/omenx');
-        await omenx.logout();
-    } catch {}
-    try {
-        const { base44 } = await import('@/api/base44Client');
-        await base44.auth.logout();
-    } catch {}
-    window.location.reload();
     return true;
 }
 
@@ -104,9 +164,8 @@ export async function enforceWeeklyOmenSession() {
     // again on the next boot. That reads to the player as "I can't log in at all".
     // One forced logout per week still flushes stale sessions; after that the
     // player is left alone (and can reconnect manually) until the next rollover.
-    try {
-        if (localStorage.getItem('omen_reauth_forced_week') === week_id) return false;
-    } catch {}
+    // Read from localStorage AND sessionStorage — see readForcedWeek.
+    if (readForcedWeek() === week_id) return false;
 
     // No stamp = auth minted before this feature existed, so its true age is
     // unknown — it could be a month+ old and already refused by the developer
@@ -119,8 +178,9 @@ export async function enforceWeeklyOmenSession() {
         ? `Auth minted in ${parsed.auth_week}, now ${week_id}`
         : 'Auth has no mint week (legacy session of unknown age)';
     // Mark BEFORE the logout — forceOmenReauth reloads the page, so anything
-    // after it never runs.
-    try { localStorage.setItem('omen_reauth_forced_week', week_id); } catch {}
+    // after it never runs. Written to both storages so a logout that clears
+    // localStorage can't resurrect the loop this guard exists to prevent.
+    writeForcedWeek(week_id);
     return forceOmenReauth(why, 'weekly');
 }
 
