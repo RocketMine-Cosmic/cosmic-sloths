@@ -187,17 +187,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         }
 
         if (p.type === 'blaster_shot') {
+            // C5 2026-08-03 — same white-core problem as the default branch: the
+            // gradient handed 20% to white before the colour started, then a solid
+            // white ellipse was painted over the middle at radius * 1.2. Colour now
+            // starts at 0.08 and the solid core is halved, so the shot reads as its
+            // weapon colour with a white centre rather than white with a fringe.
             ctx.globalCompositeOperation = 'lighter';
             const grad = ctx.createLinearGradient(p.radius, 0, -p.radius * 3, 0);
             grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, p.color || '#00ffff');
+            grad.addColorStop(0.08, p.color || '#00ffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath(); ctx.ellipse(-p.radius * 0.5, 0, Math.max(0.1, p.radius * 2.5), Math.max(0.1, p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 1.2), Math.max(0.1, p.radius * 0.5), 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.1, p.radius * 0.6), Math.max(0.1, p.radius * 0.35), 0, 0, Math.PI * 2); ctx.fill();
             if (texStar && texStar.isReady) {
-                ctx.globalAlpha = 0.8;
+                ctx.globalAlpha = 0.4;
                 ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
                 ctx.globalAlpha = 1.0;
             }
@@ -394,16 +399,22 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalAlpha = 1.0;
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'supernova_beam') {
+            // C5 2026-08-03 — the white core here spanned radius * 2.5 against a
+            // coloured body of radius * 3.5, so 70% of the beam's length was pure
+            // additive white. Core pulled back to 1.2 and the star overlay halved.
+            // C4: the drawn extents are clamped — this is the widest-drawing
+            // projectile in the game and its aura tail was the worst offender.
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = 0.9;
             ctx.fillStyle = p.color || '#ffaa00';
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 3.5, p.radius * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, clampExtent(p.radius * 3.5), clampExtent(p.radius * 1.2), 0, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1.0;
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(0, 0, p.radius * 2.5, p.radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, clampExtent(p.radius * 1.2), clampExtent(p.radius * 0.3), 0, 0, Math.PI * 2); ctx.fill();
             if (texStar && texStar.isReady) {
-                ctx.globalAlpha = 0.8;
-                ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
+                ctx.globalAlpha = 0.4;
+                const ss = clampExtent(p.radius * 3);
+                ctx.drawImage(texStar, -ss, -ss, ss * 2, ss * 2);
             }
             ctx.globalCompositeOperation = 'screen';
         } else if (p.type === 'shield_bubble' || p.type === 'burning_barrier') {
@@ -710,18 +721,26 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.globalCompositeOperation = 'screen';
         } else {
             // Default projectile - HD Upgrade
+            // C5 2026-08-03 — colour never got to communicate anything. The inner
+            // 20% was solid #ffffff, additive, over a radius * 2.5 disc, on top of
+            // the shared aura. Even weapons with genuinely distinct hues read as a
+            // white dot with a thin coloured fringe, which is why the mastery and
+            // evolution colours in C6 weren't landing either. White stop pulled in
+            // to 0.08 and the colour brought forward to 0.35 so the hue occupies
+            // most of the projectile instead of a rim.
             ctx.globalCompositeOperation = 'lighter';
             const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(0.1, p.radius * 2.5));
             grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, '#ffffff');
-            grad.addColorStop(0.5, p.color || '#00ffff');
+            grad.addColorStop(0.08, '#ffffff');
+            grad.addColorStop(0.35, p.color || '#00ffff');
             grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, Math.max(0.1, p.radius * 2.5), 0, Math.PI*2);
             ctx.fill();
             if (texStar && texStar.isReady) {
-                ctx.globalAlpha = 0.7;
+                // C5: star overlay is a second white pass on top of the white core.
+                ctx.globalAlpha = 0.4;
                 ctx.drawImage(texStar, -p.radius * 3, -p.radius * 3, p.radius * 6, p.radius * 6);
                 ctx.globalAlpha = 1.0;
             }
