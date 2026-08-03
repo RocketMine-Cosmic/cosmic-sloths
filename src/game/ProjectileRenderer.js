@@ -9,6 +9,17 @@ const RADIUS_QUANT = 16;
 // 2000×2000 canvases, which on mobile silently fails canvas creation and
 // returns a broken context → drawImage throws and the run crashes.
 const MAX_GLOW_SIZE = 512;
+
+// ── Shared VFX knobs (2026-08-03) ────────────────────────────────────────────
+// Every non-AoE projectile gets the aura below BEFORE its own branch, so these
+// two numbers set the additive load for the entire game. This is what makes the
+// screen go white at high level, far more than particle count: once a projectile
+// reaches radius ~68px the glow texture clamps to a full 512x512 additive blob,
+// and Laser Nova alone keeps 20-40 of those in flight. Six DIFFERENTLY coloured
+// additive blobs still composite to white, so tinting does not fix it — area and
+// alpha do. Tune here, never in the branch.
+const AURA_MULT = 1.8;   // was 3   - roughly a third of the additive area
+const AURA_ALPHA = 0.22; // was 0.4
 function getGlowTexture(color, radius) {
     if (radius <= 0) return null;
     const quantR = Math.max(RADIUS_QUANT, Math.round(radius / RADIUS_QUANT) * RADIUS_QUANT);
@@ -87,9 +98,9 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
         // visual punch without the additive halo.
         if (!p.isAoe && p.type !== 'buzzsaw') {
             ctx.globalCompositeOperation = 'lighter';
-            const auraRadius = Math.max(0.1, p.radius * 3);
+            const auraRadius = Math.max(0.1, p.radius * AURA_MULT);
             
-            ctx.globalAlpha = 0.4; // Boosted aura alpha
+            ctx.globalAlpha = AURA_ALPHA;
             
             if (isElongated) {
                 // For elongated, we scale the pre-rendered circle
@@ -443,7 +454,17 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             // × 7 overlapping swarm blades the spike edges created a flickering
             // moiré pattern that strained the eyes. 6 rad/s still reads as
             // "spinning fast" without the strobe.
-            ctx.rotate((p.rotation || time * 6) * (p.vx < 0 ? -1 : 1));
+            // FIXED 2026-08-03 — the 6 rad/s cap described above never ran.
+            // ProjectileSystem:64 sets p.rotation every frame from rotSpeed (15
+            // for bouncingBlade, 25 for buzzsawSwarm), so `p.rotation || time * 6`
+            // took the accumulator branch from frame two onward and the blades
+            // kept strobing for the whole 4s life. Scaling the accumulator to an
+            // effective 6 rad/s keeps each blade's own phase (they spawn at
+            // different times, so they stay desynced) without the moire.
+            // The `p.vx < 0` mirror is dropped as well: it negated a CONTINUOUSLY
+            // GROWING accumulator, so the drawn angle snapped to a mirrored
+            // position on every horizontal bounce - a visible pop per ricochet.
+            ctx.rotate((p.rotation || 0) * (6 / (p.rotSpeed || 6)));
             // Use source-over (normal blending) for the blade body so overlapping
             // saws don't stack additively to pure white (Texxy bug 2026-05-14 —
             // 11 saws on screen looked like a stream of bright shurikens).
@@ -461,7 +482,13 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
             }
             ctx.closePath();
-            ctx.fillStyle = p.weaponId === 'buzzsawSwarm' ? '#b8bcc4' : '#8a8e96';
+            // Honour p.color so mastery is actually visible. WeaponSystem:849
+            // sets '#888888' -> '#c0c0c0' on mastery - the "(Silver Blade)" that
+            // WEAPONS.bouncingBlade.masteryDesc promises - and :872 sets '#e0e0e0'
+            // for the Buzzsaw Swarm evolution. p.color was ignored here, so a
+            // player who maxed three upgrades to earn the silver blade saw the
+            // blade look exactly the same.
+            ctx.fillStyle = p.color || (p.weaponId === 'buzzsawSwarm' ? '#b8bcc4' : '#8a8e96');
             ctx.fill();
             ctx.strokeStyle = '#2a2d33';
             ctx.lineWidth = Math.max(1.5, p.radius * 0.08);
