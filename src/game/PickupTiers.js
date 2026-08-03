@@ -217,12 +217,9 @@ export function drawGoldByTier(ctx, tier, time) {
     ctx.translate(0, bounce);
 
     // Glow halo (sized by tier — stays modest, not a balloon)
-    const glowR = [16, 20, 22, 26, 30][tier];
-    const glowAlpha = [0.4, 0.55, 0.65, 0.75, 0.9][tier];
+    const glowR = GOLD_GLOW_R[tier];
     ctx.globalCompositeOperation = 'screen';
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-    grad.addColorStop(0, `rgba(255, 215, 0, ${glowAlpha})`);
-    grad.addColorStop(1, 'transparent');
+    const grad = cachedRadialGlow(ctx, GOLD_GLOW_KEY[tier], glowR, GOLD_GLOW_INNER[tier], null, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(0, 0, glowR, 0, Math.PI * 2);
@@ -333,10 +330,7 @@ function drawShardCore(ctx, time, color) {
     const pulse = 1 + Math.sin(time * 5) * 0.15;
     // Outer aura
     ctx.globalCompositeOperation = 'screen';
-    const aura = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
-    aura.addColorStop(0, color);
-    aura.addColorStop(0.5, color + '88');
-    aura.addColorStop(1, 'transparent');
+    const aura = cachedRadialGlow(ctx, 'sc' + color, 18, color, color + '88', 'transparent');
     ctx.fillStyle = aura;
     ctx.beginPath();
     ctx.arc(0, 0, 18 * pulse, 0, Math.PI * 2);
@@ -377,13 +371,13 @@ function drawShardCore(ctx, time, color) {
     }
 }
 
+const XP_GLOW_R = [14, 18, 22, 24];
+
 export function drawXpByTier(ctx, tier, time, color) {
     // Glow halo (modest, doesn't make hitbox feel huge)
-    const glowR = [14, 18, 22, 24][tier];
+    const glowR = XP_GLOW_R[tier];
     ctx.globalCompositeOperation = 'screen';
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-    grad.addColorStop(0, color);
-    grad.addColorStop(1, 'transparent');
+    const grad = cachedRadialGlow(ctx, 'x' + tier + color, glowR, color, null, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(0, 0, glowR, 0, Math.PI * 2);
