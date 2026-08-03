@@ -367,6 +367,13 @@ export class ParticleManager {
     draw(ctx, camX, camY, vWidth, vHeight, layerFilter = null) {
         ctx.save();
 
+        // P1 2026-08-03 — same defect as ProjectileRenderer: these four camera
+        // parameters were accepted and never read, and GameEngineDraw calls this
+        // method THREE times per frame (main pass, trail layer, killfx layer).
+        // Margin scales with particle size because several types draw at a
+        // multiple of it (shockwaves are the worst).
+        const cullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
+
         this.particles.forEach(p => {
             // Cosmetic-layer routing — see comment above draw().
             if (layerFilter === null) {
@@ -376,6 +383,12 @@ export class ParticleManager {
             }
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
+
+            if (cullOn) {
+                const m = (p.size || 8) * 4 + 64;
+                if (p.x < camX - m || p.x > camX + vWidth + m ||
+                    p.y < camY - m || p.y > camY + vHeight + m) return;
+            }
 
             ctx.save();
             ctx.translate(p.x, p.y);
