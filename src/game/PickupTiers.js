@@ -2,6 +2,46 @@
 // Each tier produces a visually distinct icon (not just bigger), so a 1-gold
 // pip and a 1000-gold pile read as completely different objects.
 
+// ── Cached local-space glow gradients (P5, 2026-08-03) ─────────────────────
+// Every glow in this file and in PickupRenderer.js was a fresh
+// createRadialGradient plus two or three addColorStop calls, rebuilt for every
+// pickup on every frame. Late in a run a screenful of XP orbs meant dozens of
+// allocations per frame for what is really a handful of distinct gradients.
+//
+// They are all drawn at (0,0) after a translate, so they are position
+// independent and cache cleanly. Callers pass an explicit key rather than the
+// helper building one from the arguments — the fixed glows can then pass a
+// string literal and allocate nothing at all on the hot path.
+//
+// The cache is dropped whenever the context changes (canvas remount / resize),
+// so a gradient can never outlive the context that made it.
+const _glowCache = new Map();
+let _glowCtx = null;
+export function cachedRadialGlow(ctx, key, radius, inner, mid, outer) {
+    if (_glowCtx !== ctx) { _glowCache.clear(); _glowCtx = ctx; }
+    let g = _glowCache.get(key);
+    if (!g) {
+        g = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+        g.addColorStop(0, inner);
+        if (mid) g.addColorStop(0.5, mid);
+        g.addColorStop(1, outer);
+        _glowCache.set(key, g);
+    }
+    return g;
+}
+
+const GOLD_GLOW_R = [16, 20, 22, 26, 30];
+// Pre-built strings so the hot path never formats a template literal.
+// These were `rgba(255, 215, 0, ${[0.4,0.55,0.65,0.75,0.9][tier]})`.
+const GOLD_GLOW_INNER = [
+    'rgba(255, 215, 0, 0.4)',
+    'rgba(255, 215, 0, 0.55)',
+    'rgba(255, 215, 0, 0.65)',
+    'rgba(255, 215, 0, 0.75)',
+    'rgba(255, 215, 0, 0.9)'
+];
+const GOLD_GLOW_KEY = ['g0', 'g1', 'g2', 'g3', 'g4'];
+
 export function getGoldTier(value) {
     if (value >= 1000) return 4; // Pile of gold
     if (value >= 200)  return 3; // Treasure chest
