@@ -9,6 +9,14 @@ const RADIUS_QUANT = 16;
 // 2000×2000 canvases, which on mobile silently fails canvas creation and
 // returns a broken context → drawImage throws and the run crashes.
 const MAX_GLOW_SIZE = 512;
+// P2 2026-08-03 — the OOM this file's header was written to prevent, arriving by
+// a different route. Above quantR 208 the SIZE always clamps to MAX_GLOW_SIZE,
+// but the cache KEY still varied per 16px bucket — so one Nova Pulse sweep
+// (radius grows 500px/s, well past 208) cached ~14 byte-identical 512x512
+// canvases for a single colour, roughly 14 MB, module-level and never evicted.
+// Clamping the key as well as the size collapses all of those to one entry.
+// 208 = the first 16px bucket at or above MAX_GLOW_SIZE / 2.5.
+const MAX_QUANT_R = Math.ceil((MAX_GLOW_SIZE / 2.5) / RADIUS_QUANT) * RADIUS_QUANT;
 
 // ── Shared VFX knobs (2026-08-03) ────────────────────────────────────────────
 // Every non-AoE projectile gets the aura below BEFORE its own branch, so these
@@ -22,7 +30,10 @@ const AURA_MULT = 1.8;   // was 3   - roughly a third of the additive area
 const AURA_ALPHA = 0.22; // was 0.4
 function getGlowTexture(color, radius) {
     if (radius <= 0) return null;
-    const quantR = Math.max(RADIUS_QUANT, Math.round(radius / RADIUS_QUANT) * RADIUS_QUANT);
+    const quantR = Math.min(
+        MAX_QUANT_R,
+        Math.max(RADIUS_QUANT, Math.round(radius / RADIUS_QUANT) * RADIUS_QUANT)
+    );
     const key = `${color}_${quantR}`;
     if (glowCache[key]) return glowCache[key];
     
