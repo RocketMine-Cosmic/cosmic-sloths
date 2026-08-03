@@ -85,7 +85,11 @@ export function updateEnemies(engine, dt) {
             });
 
             engine.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 2 : 0.6, e.id);
-            engine.shake(e.isBoss ? 0.5 : 0.05);
+            // C3 2026-08-03 — there was no elite branch: killing an elite shook
+            // the camera 0.05, i.e. LESS than a single projectile landing a hit
+            // (0.1, since removed). An elite kill is an event and should feel
+            // like one, without approaching the boss-kill 0.5.
+            engine.shake(e.isBoss ? 0.5 : (e.isElite ? 0.22 : 0.05));
 
             if (engine.killEffect !== 'none') {
                 engine.particleManager.createKillEffect(e.x, e.y, engine.killEffect);
