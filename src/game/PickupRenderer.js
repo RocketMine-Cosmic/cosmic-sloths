@@ -1,4 +1,9 @@
-import { getGoldTier, getXpTier, drawGoldByTier, drawXpByTier } from './PickupTiers.js';
+import { getGoldTier, getXpTier, drawGoldByTier, drawXpByTier, cachedRadialGlow } from './PickupTiers.js';
+
+// P5 2026-08-03 — the six glows below were rebuilt per pickup per frame. They
+// are constant, so they now come from the shared cache in PickupTiers.js. The
+// keys are string literals: nothing is allocated on the hot path. Colours,
+// radii and stops are byte-for-byte what they were.
 
 // Desktop = no coarse pointer (no touchscreen). Cached once per module load —
 // browsers don't change pointer type at runtime in practice.
@@ -68,9 +73,7 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
 
             // Outer purple glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
-            grad.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
-            grad.addColorStop(1, 'transparent');
+            const grad = cachedRadialGlow(ctx, 'pk_frag', 30, 'rgba(168, 85, 247, 0.7)', null, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 30, 0, Math.PI * 2);
@@ -111,9 +114,7 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
             ctx.rotate(Math.sin(time * 3 + p.y) * 0.3);
             
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 28);
-            grad.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
-            grad.addColorStop(1, 'transparent');
+            const grad = cachedRadialGlow(ctx, 'pk_reroll', 28, 'rgba(255, 0, 255, 0.6)', null, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 28, 0, Math.PI * 2);
@@ -141,9 +142,7 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
 
             // Red danger glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 32);
-            grad.addColorStop(0, 'rgba(255, 50, 50, 0.8)');
-            grad.addColorStop(1, 'transparent');
+            const grad = cachedRadialGlow(ctx, 'pk_nuke', 32, 'rgba(255, 50, 50, 0.8)', null, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 32, 0, Math.PI * 2);
@@ -191,10 +190,7 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
             const pulse = 1 + Math.sin(time * 6) * 0.15;
 
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 42);
-            grad.addColorStop(0, 'rgba(120, 170, 255, 0.95)');
-            grad.addColorStop(0.5, 'rgba(80, 130, 255, 0.6)');
-            grad.addColorStop(1, 'transparent');
+            const grad = cachedRadialGlow(ctx, 'pk_magnet', 42, 'rgba(120, 170, 255, 0.95)', 'rgba(80, 130, 255, 0.6)', 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 42, 0, Math.PI * 2);
@@ -239,9 +235,7 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
 
             // Cyan outer glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 34);
-            grad.addColorStop(0, 'rgba(120, 200, 255, 0.85)');
-            grad.addColorStop(1, 'transparent');
+            const grad = cachedRadialGlow(ctx, 'pk_shield', 34, 'rgba(120, 200, 255, 0.85)', null, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 34, 0, Math.PI * 2);
@@ -302,9 +296,7 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
             
             // Pre-rendered glow behind icon
             ctx.globalCompositeOperation = 'screen';
-            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
-            grad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-            grad.addColorStop(1, 'transparent');
+            const grad = cachedRadialGlow(ctx, 'pk_icon', 30, 'rgba(255, 255, 255, 0.6)', null, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 30, 0, Math.PI * 2);
