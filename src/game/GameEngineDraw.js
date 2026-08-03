@@ -158,9 +158,18 @@ export function renderGame() {
             this.ctx.save(); this.ctx.translate(h.x, h.y);
             if (!h.active) {
                 const p = 1 - (h.timer / 2.0);
-                this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(255,50,0,${0.3 + p * 0.5})`; this.ctx.lineWidth = 2; this.ctx.stroke();
-                this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius * p, 0, Math.PI * 2);
+                // FIXED 2026-08-03 (VFX fix B) — the ring lied about its size.
+                // GameEngine.js damages at `player.radius + h.radius`, but this
+                // stroked at h.radius alone (60), so a player standing visibly
+                // OUTSIDE the red circle still took 30-75 damage. Stroke the real
+                // danger radius. The hitbox is unchanged — this corrects the
+                // drawing to match it. Alpha and lineWidth raised too: at
+                // rgba(255,50,0,0.3) / 2px the ring was barely visible when it
+                // first appeared, which is exactly when you need to move.
+                const dangerR = h.radius + (this.player?.radius || 0);
+                this.ctx.beginPath(); this.ctx.arc(0, 0, dangerR, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(255,50,0,${0.5 + p * 0.45})`; this.ctx.lineWidth = 3; this.ctx.stroke();
+                this.ctx.beginPath(); this.ctx.arc(0, 0, dangerR * p, 0, Math.PI * 2);
                 this.ctx.fillStyle = `rgba(255,50,0,${0.1 + p * 0.2})`; this.ctx.fill();
                 this.ctx.fillStyle = `rgba(255,0,0,${Math.sin(this.time * 15) * 0.5 + 0.5})`;
                 this.ctx.font = 'bold 24px Arial'; this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle'; this.ctx.fillText('⚠', 0, 0);
