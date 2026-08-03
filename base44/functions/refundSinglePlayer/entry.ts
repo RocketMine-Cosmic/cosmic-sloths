@@ -114,7 +114,13 @@ Deno.serve(async (req) => {
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                     body: JSON.stringify({
                         walletAddress: target,
-                        amount: String(refundAmount),
+                        // 2026-08-03 — was String(refundAmount). Omen changed the Game
+                        // Rewards API: amounts are token units as NUMBERS, decimals
+                        // allowed (send 1.5, never "1500000000000000000"), and BOTH
+                        // /grant and /grant-batch now reject a string with
+                        // VALIDATION_ERROR. Matches the batch-endpoint fix applied
+                        // across the distribute* functions the same day.
+                        amount: refundAmount,
                         gameId: GAME_ID,
                         gameName: GAME_NAME,
                         metadata: {
