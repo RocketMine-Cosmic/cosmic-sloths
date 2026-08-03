@@ -147,14 +147,7 @@ export function updateProjectiles(engine, dt) {
 
                                         // Impact Effects
                                         if (!e.isWorldBoss || Math.random() < 0.1) {
-                                            // C3 2026-08-03 — removed engine.shake(0.1).
-                                            // shake() is Math.max, so it doesn't compound,
-                                            // but a multi-pierce build re-topped the timer
-                                            // every frame: the camera held a permanent
-                                            // ~1-unit tremor and nothing ever read as an
-                                            // event. Kills now own the screenshake.
-                                            // The hitstop and hit effect below are
-                                            // deliberately kept.
+                                            engine.shake(0.1);
                                             if (Math.random() < 0.05) {
                                                 engine.hitStopTimer = 0.01;
                                             }

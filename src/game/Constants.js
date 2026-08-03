@@ -593,32 +593,8 @@ const EVOLUTION_PARENT = {
     venomLash:      ['toxicCloud', 'vineWhip'],
 };
 
-// PERF 2026-08-03 — frame-scoped memo for getWeaponStatsAndMastery.
-//
-// The function below is not cheap: it builds a parents array, runs pickMax three
-// times (each allocating a result object), does a flatMap, a Set, an Array.from
-// and a counts object. It was being called TWICE per weapon fire (GameEngine
-// updateWeapons + WeaponSystem fireWeapon) across six weapons on short cooldowns,
-// AND twice per FRAME from the draw path (GameEngineDraw slothSwarm / thornySwarm).
-//
-// The inputs are meta-progression that cannot change mid-frame, so caching for the
-// duration of one frame is safe by construction — no staleness window longer than
-// 16ms, and a level-up or forge lands on a later frame. GameEngine.update() calls
-// bustWeaponStatsCache() once per tick.
-const _wsCache = new Map();
-export function bustWeaponStatsCache() { _wsCache.clear(); }
-
 export const getWeaponStatsAndMastery = (save, wId, isOuterGalaxy = false) => {
     if (!save) return { dmgMult: 1, areaMult: 1, cdMult: 1, isMastered: false };
-    const _ck = isOuterGalaxy ? wId + '|o' : wId;
-    const _hit = _wsCache.get(_ck);
-    if (_hit !== undefined) return _hit;
-    const _res = _computeWeaponStatsAndMastery(save, wId, isOuterGalaxy);
-    _wsCache.set(_ck, _res);
-    return _res;
-};
-
-const _computeWeaponStatsAndMastery = (save, wId, isOuterGalaxy = false) => {
     // For evolved weapons (single parent) — direct lookup. For synergies (array of two
     // parents) — take the MAX of each tier across both parents. This rewards players
     // who invested in either source weapon without doubling totals when both are stacked.

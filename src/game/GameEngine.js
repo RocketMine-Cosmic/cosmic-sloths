@@ -1,4 +1,4 @@
-import { CHARACTERS, WEAPONS, ARENAS, CHARACTER_TALENTS, DIFFICULTIES, SKIN_COSMETICS, RELICS, ENEMIES, UPGRADES, getCharacterMastery, getWeaponStatsAndMastery, bustWeaponStatsCache } from './Constants';
+import { CHARACTERS, WEAPONS, ARENAS, CHARACTER_TALENTS, DIFFICULTIES, SKIN_COSMETICS, RELICS, ENEMIES, UPGRADES, getCharacterMastery, getWeaponStatsAndMastery } from './Constants';
 import { SFXManager } from './SFXManager';
 import { ParticleManager } from './ParticleManager';
 import { SaveManager } from './SaveManager';
@@ -17,29 +17,6 @@ import { getCurrentPeriodIds } from '@/lib/periodIds';
 // S7 §4a: pushback weapons share a lifted CD floor (0.85× vs default 0.5×) so
 // stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
 const S7_PUSHBACK_WEAPONS = new Set(['shieldBubble', 'aegisMatrix', 'burningBarrier']);
-
-// PERF 2026-08-03 — kill-milestone damage tables, hoisted out of damageEnemy().
-// They were four array literals of five object literals built INSIDE the function,
-// so every damage event allocated the default table and then, on most paths, a
-// second one to replace it — up to ~25 short-lived objects per hit. AoE weapons
-// land hundreds of hits a second, which is real GC pressure on a phone. The values
-// are unchanged; they are just constants now, as they always should have been.
-const KILL_MILESTONES_DEFAULT = [
-    { kills: 200, bonus: 2 }, { kills: 500, bonus: 4 }, { kills: 1000, bonus: 6 },
-    { kills: 1500, bonus: 8 }, { kills: 2000, bonus: 10 }
-];
-const KILL_MILESTONES_BOSS = [
-    { kills: 5, bonus: 2 }, { kills: 15, bonus: 4 }, { kills: 25, bonus: 6 },
-    { kills: 35, bonus: 8 }, { kills: 50, bonus: 10 }
-];
-const KILL_MILESTONES_TIER9 = [
-    { kills: 50, bonus: 2 }, { kills: 125, bonus: 4 }, { kills: 250, bonus: 6 },
-    { kills: 375, bonus: 8 }, { kills: 500, bonus: 10 }
-];
-const KILL_MILESTONES_TIER5 = [
-    { kills: 100, bonus: 2 }, { kills: 250, bonus: 4 }, { kills: 500, bonus: 6 },
-    { kills: 750, bonus: 8 }, { kills: 1000, bonus: 10 }
-];
 
 // S7 §4i: armor → % damage reduction with sector-scaled cap (Inner Galaxy 20-25%,
 // Outer Galaxy 30-35%). Replaces S6's flat subtraction + 25% hybrid model.
@@ -562,10 +539,7 @@ export class GameEngine {
         
         this.bindEvents();
         this.lastTime = performance.now();
-        // PERF 2026-08-03 — bind ONCE. `this.loop.bind(this)` inside loop() allocated
-        // a fresh bound function on every single frame, for the entire run.
-        this._boundLoop = this.loop.bind(this);
-        this.animationId = requestAnimationFrame(this._boundLoop);
+        this.animationId = requestAnimationFrame(this.loop.bind(this));
     }
 
     triggerSquadUltimate(tier) {
@@ -881,20 +855,12 @@ export class GameEngine {
             console.error("Game loop error:", e);
         }
         this.lastTime = timestamp;
-        this.animationId = requestAnimationFrame(this._boundLoop || (this._boundLoop = this.loop.bind(this)));
+        this.animationId = requestAnimationFrame(this.loop.bind(this));
     }
 
     update(dt) {
         if (dt > 0.1) dt = 0.1;
         this.lastDt = dt;
-
-        // PERF 2026-08-03 — drop the weapon-stats memo at the top of every tick.
-        // getWeaponStatsAndMastery is allocation-heavy and was recomputed twice per
-        // weapon fire and twice per frame from the draw path. Its inputs are meta
-        // progression, which cannot change within a single frame, so a one-tick
-        // cache is safe by construction. Clearing HERE (not in draw) means an
-        // upgrade picked on a level-up is always live on the very next tick.
-        bustWeaponStatsCache();
         
         // Dynamic Difficulty
         if (!this.dynamicDifficulty) this.dynamicDifficulty = {
@@ -1385,12 +1351,30 @@ export class GameEngine {
         if (enemy && enemy.id) {
             const pastKills = this.save?.enemyKills?.[enemy.id] || 0;
             
-            // PERF 2026-08-03 — tables hoisted to module constants (see top of file).
-            // Same values, same precedence, zero allocation per hit.
-            let milestones = KILL_MILESTONES_DEFAULT;
-            if (enemy.isBoss) milestones = KILL_MILESTONES_BOSS;
-            else if (enemy.tier >= 9) milestones = KILL_MILESTONES_TIER9;
-            else if (enemy.tier >= 5) milestones = KILL_MILESTONES_TIER5;
+            let milestones = [
+                { kills: 200, bonus: 2 },
+                { kills: 500, bonus: 4 },
+                { kills: 1000, bonus: 6 },
+                { kills: 1500, bonus: 8 },
+                { kills: 2000, bonus: 10 }
+            ];
+            
+            if (enemy.isBoss) {
+                milestones = [
+                    { kills: 5, bonus: 2 }, { kills: 15, bonus: 4 }, { kills: 25, bonus: 6 },
+                    { kills: 35, bonus: 8 }, { kills: 50, bonus: 10 }
+                ];
+            } else if (enemy.tier >= 9) {
+                milestones = [
+                    { kills: 50, bonus: 2 }, { kills: 125, bonus: 4 }, { kills: 250, bonus: 6 },
+                    { kills: 375, bonus: 8 }, { kills: 500, bonus: 10 }
+                ];
+            } else if (enemy.tier >= 5) {
+                milestones = [
+                    { kills: 100, bonus: 2 }, { kills: 250, bonus: 4 }, { kills: 500, bonus: 6 },
+                    { kills: 750, bonus: 8 }, { kills: 1000, bonus: 10 }
+                ];
+            }
 
             let achievedBonus = 0;
             for (let i = milestones.length - 1; i >= 0; i--) {
@@ -1542,11 +1526,6 @@ export class GameEngine {
     }
 
     shake(amount) {
-        // C3 2026-08-03 — floor. Anything under 0.08 is sub-perceptual as an
-        // event but still holds the camera off-centre, which is what turned a
-        // stream of small shakes into a permanent tremor. Ignore them outright
-        // so screenshake only ever means "something happened".
-        if (!(amount >= 0.08)) return;
         this.shakeTimer = Math.max(this.shakeTimer, amount);
     }
 

@@ -1,9 +1,4 @@
-import { getGoldTier, getXpTier, drawGoldByTier, drawXpByTier, cachedRadialGlow } from './PickupTiers.js';
-
-// P5 2026-08-03 — the six glows below were rebuilt per pickup per frame. They
-// are constant, so they now come from the shared cache in PickupTiers.js. The
-// keys are string literals: nothing is allocated on the hot path. Colours,
-// radii and stops are byte-for-byte what they were.
+import { getGoldTier, getXpTier, drawGoldByTier, drawXpByTier } from './PickupTiers.js';
 
 // Desktop = no coarse pointer (no touchscreen). Cached once per module load —
 // browsers don't change pointer type at runtime in practice.
@@ -25,30 +20,15 @@ const PICKUP_SCALE = 1.35;
 //   undefined → all pickups (legacy behaviour)
 const MINOR_PICKUP_TYPES = new Set(['xp', 'gold', 'reroll']);
 
-// P1 2026-08-03 — pickups were never viewport-culled, and this function was
-// called twice per frame, each call doing filter → spread → sort over the WHOLE
-// pickup array. Late in a run that array is long and most of it is off screen.
-// One pass now does layer filtering and culling together, then sorts only what
-// will actually be drawn. Margin covers the largest pickup icon comfortably.
-const PICKUP_CULL_MARGIN = 80;
-const PICKUP_DRAW_ORDER = { gold: 0, reroll: 1, xp: 2 };
+export function drawPickups(ctx, pickups, time, layer) {
+    let list = pickups;
+    if (layer === 'minor') list = pickups.filter(p => MINOR_PICKUP_TYPES.has(p.type));
+    else if (layer === 'major') list = pickups.filter(p => !MINOR_PICKUP_TYPES.has(p.type));
 
-export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeight) {
-    const cullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
-    const minX = camX - PICKUP_CULL_MARGIN, maxX = camX + vWidth + PICKUP_CULL_MARGIN;
-    const minY = camY - PICKUP_CULL_MARGIN, maxY = camY + vHeight + PICKUP_CULL_MARGIN;
-
-    const sorted = [];
-    for (let i = 0; i < pickups.length; i++) {
-        const p = pickups[i];
-        const isMinor = MINOR_PICKUP_TYPES.has(p.type);
-        if (layer === 'minor' && !isMinor) continue;
-        if (layer === 'major' && isMinor) continue;
-        if (cullOn && (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY)) continue;
-        sorted.push(p);
-    }
-    sorted.sort((a, b) => (PICKUP_DRAW_ORDER[a.type] ?? 1) - (PICKUP_DRAW_ORDER[b.type] ?? 1));
-
+    const sorted = [...list].sort((a, b) => {
+        const order = { gold: 0, reroll: 1, xp: 2 };
+        return (order[a.type] ?? 1) - (order[b.type] ?? 1);
+    });
     sorted.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -73,7 +53,9 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
 
             // Outer purple glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = cachedRadialGlow(ctx, 'pk_frag', 30, 'rgba(168, 85, 247, 0.7)', null, 'transparent');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+            grad.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 30, 0, Math.PI * 2);
@@ -114,7 +96,9 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
             ctx.rotate(Math.sin(time * 3 + p.y) * 0.3);
             
             ctx.globalCompositeOperation = 'screen';
-            const grad = cachedRadialGlow(ctx, 'pk_reroll', 28, 'rgba(255, 0, 255, 0.6)', null, 'transparent');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 28);
+            grad.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 28, 0, Math.PI * 2);
@@ -142,7 +126,9 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
 
             // Red danger glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = cachedRadialGlow(ctx, 'pk_nuke', 32, 'rgba(255, 50, 50, 0.8)', null, 'transparent');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 32);
+            grad.addColorStop(0, 'rgba(255, 50, 50, 0.8)');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 32, 0, Math.PI * 2);
@@ -190,7 +176,10 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
             const pulse = 1 + Math.sin(time * 6) * 0.15;
 
             ctx.globalCompositeOperation = 'screen';
-            const grad = cachedRadialGlow(ctx, 'pk_magnet', 42, 'rgba(120, 170, 255, 0.95)', 'rgba(80, 130, 255, 0.6)', 'transparent');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 42);
+            grad.addColorStop(0, 'rgba(120, 170, 255, 0.95)');
+            grad.addColorStop(0.5, 'rgba(80, 130, 255, 0.6)');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 42, 0, Math.PI * 2);
@@ -235,7 +224,9 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
 
             // Cyan outer glow
             ctx.globalCompositeOperation = 'screen';
-            const grad = cachedRadialGlow(ctx, 'pk_shield', 34, 'rgba(120, 200, 255, 0.85)', null, 'transparent');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 34);
+            grad.addColorStop(0, 'rgba(120, 200, 255, 0.85)');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 34, 0, Math.PI * 2);
@@ -296,7 +287,9 @@ export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeig
             
             // Pre-rendered glow behind icon
             ctx.globalCompositeOperation = 'screen';
-            const grad = cachedRadialGlow(ctx, 'pk_icon', 30, 'rgba(255, 255, 255, 0.6)', null, 'transparent');
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+            grad.addColorStop(1, 'transparent');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(0, 0, 30, 0, Math.PI * 2);

@@ -28,41 +28,9 @@ export function updateEnemies(engine, dt) {
             if (e._lastWeaponId) {
                 engine.weaponKills[e._lastWeaponId] = (engine.weaponKills[e._lastWeaponId] || 0) + 1;
             }
-            // 🔴 PERF 2026-08-03 — THE BIG ONE. This block used to call
-            // SaveManager.save() on EVERY SINGLE KILL, and that does, synchronously:
-            //   1. JSON.stringify of the ~100-key save blob
-            //   2. localStorage.setItem — SYNCHRONOUS, and SQLite-backed on iOS
-            //      WebKit, so genuine disk I/O on the main thread
-            //   3. dispatchEvent('saveUpdated'), which runs listeners synchronously
-            //   4. → CurrencyContext (App.jsx wraps the whole app) does setSave(),
-            //      i.e. a React re-render of the app tree, PER KILL
-            //
-            // The 8s debounce inside SaveManager only covers the NETWORK sync. Its
-            // own comment says it "coalesces bursts of in-game saves (gold pickups,
-            // kills)" — true of the network call, false of everything above it, and
-            // that comment is why nobody looked again.
-            //
-            // Player-visible symptoms this produced: phones overheating, laptops
-            // struggling, and Quantum Collapse / Toxic Emitter appearing to "lose
-            // DPS". Those two are the game's best mass-killers (both pierce 999 —
-            // QC is a triple-pulse expanding ring, toxic pools grow at mastery), so
-            // one tick could kill 20-30 enemies = 20-30 full serialise + disk write
-            // + app re-render cycles IN A SINGLE FRAME. The frame blows out and the
-            // game frame-starves; it reads as damage loss but it's the loop stalling.
-            //
-            // The per-kill save also achieved nothing: `engine.enemyKills` is
-            // accumulated in memory anyway and gameOver() persists it at run end.
-            // A 30s throttle is kept purely so a mid-run crash doesn't lose bestiary
-            // counts — same protection, ~1/1000th of the cost.
             if (engine.save) {
-                // Free after the first assignment — same object reference, so
-                // damageEnemy's kill-milestone lookup still sees live counts.
                 engine.save.enemyKills = engine.enemyKills;
-                const now = engine.time || 0;
-                if (now - (engine._lastKillSaveAt || 0) >= 30) {
-                    engine._lastKillSaveAt = now;
-                    SaveManager.save(engine.save);
-                }
+                SaveManager.save(engine.save);
             }
 
             if (engine.player.charAugments?.includes('dat_drain')) {
@@ -117,11 +85,7 @@ export function updateEnemies(engine, dt) {
             });
 
             engine.particleManager.createExplosion(e.x, e.y, e.color, e.isBoss ? 2 : 0.6, e.id);
-            // C3 2026-08-03 — there was no elite branch: killing an elite shook
-            // the camera 0.05, i.e. LESS than a single projectile landing a hit
-            // (0.1, since removed). An elite kill is an event and should feel
-            // like one, without approaching the boss-kill 0.5.
-            engine.shake(e.isBoss ? 0.5 : (e.isElite ? 0.22 : 0.05));
+            engine.shake(e.isBoss ? 0.5 : 0.05);
 
             if (engine.killEffect !== 'none') {
                 engine.particleManager.createKillEffect(e.x, e.y, engine.killEffect);

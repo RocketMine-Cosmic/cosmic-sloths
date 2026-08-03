@@ -2,46 +2,6 @@
 // Each tier produces a visually distinct icon (not just bigger), so a 1-gold
 // pip and a 1000-gold pile read as completely different objects.
 
-// ── Cached local-space glow gradients (P5, 2026-08-03) ─────────────────────
-// Every glow in this file and in PickupRenderer.js was a fresh
-// createRadialGradient plus two or three addColorStop calls, rebuilt for every
-// pickup on every frame. Late in a run a screenful of XP orbs meant dozens of
-// allocations per frame for what is really a handful of distinct gradients.
-//
-// They are all drawn at (0,0) after a translate, so they are position
-// independent and cache cleanly. Callers pass an explicit key rather than the
-// helper building one from the arguments — the fixed glows can then pass a
-// string literal and allocate nothing at all on the hot path.
-//
-// The cache is dropped whenever the context changes (canvas remount / resize),
-// so a gradient can never outlive the context that made it.
-const _glowCache = new Map();
-let _glowCtx = null;
-export function cachedRadialGlow(ctx, key, radius, inner, mid, outer) {
-    if (_glowCtx !== ctx) { _glowCache.clear(); _glowCtx = ctx; }
-    let g = _glowCache.get(key);
-    if (!g) {
-        g = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-        g.addColorStop(0, inner);
-        if (mid) g.addColorStop(0.5, mid);
-        g.addColorStop(1, outer);
-        _glowCache.set(key, g);
-    }
-    return g;
-}
-
-const GOLD_GLOW_R = [16, 20, 22, 26, 30];
-// Pre-built strings so the hot path never formats a template literal.
-// These were `rgba(255, 215, 0, ${[0.4,0.55,0.65,0.75,0.9][tier]})`.
-const GOLD_GLOW_INNER = [
-    'rgba(255, 215, 0, 0.4)',
-    'rgba(255, 215, 0, 0.55)',
-    'rgba(255, 215, 0, 0.65)',
-    'rgba(255, 215, 0, 0.75)',
-    'rgba(255, 215, 0, 0.9)'
-];
-const GOLD_GLOW_KEY = ['g0', 'g1', 'g2', 'g3', 'g4'];
-
 export function getGoldTier(value) {
     if (value >= 1000) return 4; // Pile of gold
     if (value >= 200)  return 3; // Treasure chest
@@ -257,9 +217,12 @@ export function drawGoldByTier(ctx, tier, time) {
     ctx.translate(0, bounce);
 
     // Glow halo (sized by tier — stays modest, not a balloon)
-    const glowR = GOLD_GLOW_R[tier];
+    const glowR = [16, 20, 22, 26, 30][tier];
+    const glowAlpha = [0.4, 0.55, 0.65, 0.75, 0.9][tier];
     ctx.globalCompositeOperation = 'screen';
-    const grad = cachedRadialGlow(ctx, GOLD_GLOW_KEY[tier], glowR, GOLD_GLOW_INNER[tier], null, 'transparent');
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
+    grad.addColorStop(0, `rgba(255, 215, 0, ${glowAlpha})`);
+    grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(0, 0, glowR, 0, Math.PI * 2);
@@ -370,7 +333,10 @@ function drawShardCore(ctx, time, color) {
     const pulse = 1 + Math.sin(time * 5) * 0.15;
     // Outer aura
     ctx.globalCompositeOperation = 'screen';
-    const aura = cachedRadialGlow(ctx, 'sc' + color, 18, color, color + '88', 'transparent');
+    const aura = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
+    aura.addColorStop(0, color);
+    aura.addColorStop(0.5, color + '88');
+    aura.addColorStop(1, 'transparent');
     ctx.fillStyle = aura;
     ctx.beginPath();
     ctx.arc(0, 0, 18 * pulse, 0, Math.PI * 2);
@@ -411,13 +377,13 @@ function drawShardCore(ctx, time, color) {
     }
 }
 
-const XP_GLOW_R = [14, 18, 22, 24];
-
 export function drawXpByTier(ctx, tier, time, color) {
     // Glow halo (modest, doesn't make hitbox feel huge)
-    const glowR = XP_GLOW_R[tier];
+    const glowR = [14, 18, 22, 24][tier];
     ctx.globalCompositeOperation = 'screen';
-    const grad = cachedRadialGlow(ctx, 'x' + tier + color, glowR, color, null, 'transparent');
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(0, 0, glowR, 0, Math.PI * 2);

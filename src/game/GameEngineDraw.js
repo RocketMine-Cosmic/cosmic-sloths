@@ -123,9 +123,6 @@ export function renderGame() {
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('🚩', b.x, b.y);
-            // C12 2026-08-03 — textBaseline was set here with no save()/restore(),
-            // so it leaked into every later text draw in the frame. Reset it.
-            this.ctx.textBaseline = 'alphabetic';
             this.ctx.globalAlpha = 1.0;
         });
     }
@@ -143,8 +140,6 @@ export function renderGame() {
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('👤', d.x, d.y + 2);
-            // C12: same leak as the squad-flag block above.
-            this.ctx.textBaseline = 'alphabetic';
             this.ctx.globalAlpha = 1.0;
             
             this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(d.x - 10, d.y - 20, 20, 4);
@@ -152,29 +147,14 @@ export function renderGame() {
         });
     }
 
-    // MOVED 2026-08-03 (VFX fix B) — this block used to RUN here, which put the
-    // hazard warning underneath every particle, pickup, enemy, drone, aura and
-    // kill effect drawn after it. It is now only DEFINED here and invoked just
-    // before the player sprite, so the thing that is about to hurt you is drawn
-    // on top of the things that are not.
-    const drawHazardLayer = () => {
-      if (this.hazards) {
+    if (this.hazards) {
         this.hazards.forEach(h => {
             this.ctx.save(); this.ctx.translate(h.x, h.y);
             if (!h.active) {
                 const p = 1 - (h.timer / 2.0);
-                // FIXED 2026-08-03 (VFX fix B) — the ring lied about its size.
-                // GameEngine.js damages at `player.radius + h.radius`, but this
-                // stroked at h.radius alone (60), so a player standing visibly
-                // OUTSIDE the red circle still took 30-75 damage. Stroke the real
-                // danger radius. The hitbox is unchanged — this corrects the
-                // drawing to match it. Alpha and lineWidth raised too: at
-                // rgba(255,50,0,0.3) / 2px the ring was barely visible when it
-                // first appeared, which is exactly when you need to move.
-                const dangerR = h.radius + (this.player?.radius || 0);
-                this.ctx.beginPath(); this.ctx.arc(0, 0, dangerR, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(255,50,0,${0.5 + p * 0.45})`; this.ctx.lineWidth = 3; this.ctx.stroke();
-                this.ctx.beginPath(); this.ctx.arc(0, 0, dangerR * p, 0, Math.PI * 2);
+                this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(255,50,0,${0.3 + p * 0.5})`; this.ctx.lineWidth = 2; this.ctx.stroke();
+                this.ctx.beginPath(); this.ctx.arc(0, 0, h.radius * p, 0, Math.PI * 2);
                 this.ctx.fillStyle = `rgba(255,50,0,${0.1 + p * 0.2})`; this.ctx.fill();
                 this.ctx.fillStyle = `rgba(255,0,0,${Math.sin(this.time * 15) * 0.5 + 0.5})`;
                 this.ctx.font = 'bold 24px Arial'; this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle'; this.ctx.fillText('⚠', 0, 0);
@@ -192,8 +172,7 @@ export function renderGame() {
             }
             this.ctx.restore();
         });
-      }
-    };
+    }
 
     const swarm = this.player.weapons.find(w => w.id === 'slothSwarm');
     if (swarm) {
@@ -372,7 +351,7 @@ export function renderGame() {
     // currency litter doesn't visually mask dangerous bullets. Player can still
     // see what they're collecting since enemy projectiles are small bright dots
     // that read clearly over the larger XP/gold icons.
-    drawPickups(this.ctx, this.pickups, this.time, 'minor', camX, camY, vWidth, vHeight);
+    drawPickups(this.ctx, this.pickups, this.time, 'minor');
 
     // (Enemy projectiles now render at the very end of the world pass —
     // see block after the invincibility ring below.)
@@ -381,26 +360,22 @@ export function renderGame() {
     // chests, power-ups with custom icons. These are rare/high-value drops the
     // player MUST be able to spot through the chaos, so they sit above enemy
     // projectiles + AoE pools (player request 2026-05-14).
-    drawPickups(this.ctx, this.pickups, this.time, 'major', camX, camY, vWidth, vHeight);
+    drawPickups(this.ctx, this.pickups, this.time, 'major');
 
-    // C11 2026-08-03 — the margin was a flat 150, but drawEnemy renders sprites at
-    // radius * 1.8. The squad meteor (radius 220) has a half-extent of 198, so it
-    // was culled — and visibly popped out of existence — with roughly a 50-unit
-    // sliver still on screen. Scale the margin with the enemy instead.
+    const viewMinX = camX - 150;
+    const viewMaxX = camX + vWidth + 150;
+    const viewMinY = camY - 150;
+    const viewMaxY = camY + vHeight + 150;
+
     this.enemies.forEach(e => {
-        const m = Math.max(150, (e.radius || 20) * 2);
-        if (e.x < camX - m || e.x > camX + vWidth + m ||
-            e.y < camY - m || e.y > camY + vHeight + m) return;
+        if (e.x < viewMinX || e.x > viewMaxX || e.y < viewMinY || e.y > viewMaxY) return;
         if (!e.burrowed) {
             drawEnemy(this.ctx, e, this.time, this.player.x);
             
             if (e.hp < e.maxHp || e.isBoss) {
-                // C8 2026-08-03 — an elite has ~2.5x the HP of a trash mob and
-                // was given an identical 20px bar, so the bar actively said
-                // "this is trash" while the aura said "this is elite".
-                const barW = e.isBoss ? 80 : (e.isElite ? 40 : 20);
-                const barH = e.isBoss ? 6 : (e.isElite ? 5 : 4);
-                const yOffset = e.isBoss ? 16 : (e.isElite ? 10 : 8);
+                const barW = e.isBoss ? 80 : 20;
+                const barH = e.isBoss ? 6 : 4;
+                const yOffset = e.isBoss ? 16 : 8;
                 this.ctx.fillStyle = '#ff0000'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW, barH);
                 this.ctx.fillStyle = '#00ff00'; this.ctx.fillRect(e.x - barW/2, e.y - e.radius - yOffset, barW * (e.hp / e.maxHp), barH);
             }
@@ -528,65 +503,6 @@ export function renderGame() {
         this.player.currentFrame = (this.player.currentFrame + 1) % SPRITE_FRAMES;
     }
 
-    // ── THREAT LAYER (2026-08-03) ──────────────────────────────────────
-    // Everything that is about to damage the player, drawn last in the world
-    // pass — above enemies, pickups, drones and particles, below the player.
-    //
-    // (A) Boss AoE telegraphs. BossSystem creates and ticks _bombWarning,
-    // _novaWarning and _meteorWarning, and until today NOTHING DREW THEM.
-    // The player saw a damage-text label fade, then took boss.damage * 1.5
-    // from a circle that was never on screen. Meteor Shower was worst: 3-8
-    // simultaneous impacts, each signalled by three small sparks.
-    //
-    // 🔴 The radii below MUST stay equal to the takeDamage checks in
-    // BossSystem.js. If one moves, move the other:
-    //     _bombWarning    dist < 120
-    //     _novaWarning    dist < 100
-    //     _meteorWarning  dist < 90
-    //
-    // source-over, never additive — these are floor decals, not glow, and the
-    // whole point is that they read clearly over a busy bright background.
-    //
-    // ⚠️ Balance-visible by design: these attacks become dodgeable as they were
-    // always meant to be, so bosses get easier. That is the fix, not a side
-    // effect. Draw-only — no hitbox, timer or damage value is touched.
-    const BOSS_TELEGRAPHS = [
-        { key: '_bombWarning',   radius: 120, rgb: '168,85,247', defaultT0: 2.0 },
-        { key: '_novaWarning',   radius: 100, rgb: '239,68,68',  defaultT0: 1.2 },
-        { key: '_meteorWarning', radius: 90,  rgb: '245,158,11', defaultT0: 2.0 }
-    ];
-    this.enemies.forEach(e => {
-        if (!e.isBoss) return;
-        BOSS_TELEGRAPHS.forEach(t => {
-            const list = e[t.key];
-            if (!list || !list.length) return;
-            list.forEach(w => {
-                const t0 = w.t0 || t.defaultT0;
-                const p = Math.max(0, Math.min(1, 1 - (w.timer / t0)));
-                this.ctx.save();
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.globalAlpha = 1;
-                this.ctx.translate(w.x, w.y);
-                // Filling disc — reaching the ring means impact.
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, t.radius * p, 0, Math.PI * 2);
-                this.ctx.fillStyle = `rgba(${t.rgb},${0.10 + p * 0.22})`;
-                this.ctx.fill();
-                // Hard ring, always at the TRUE damage radius so the safe
-                // distance is readable from the moment the warning appears.
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, t.radius, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(${t.rgb},${0.45 + p * 0.5})`;
-                this.ctx.lineWidth = 3;
-                this.ctx.stroke();
-                this.ctx.restore();
-            });
-        });
-    });
-
-    // (B) Ground hazards — defined near the top of this function, invoked here.
-    drawHazardLayer();
-
     const spriteSheet = this.player.isMoving
         ? (this.player.walkImage && this.player.walkImage.complete ? this.player.walkImage : null)
         : (this.player.idleImage && this.player.idleImage.complete ? this.player.idleImage : null);
@@ -701,48 +617,18 @@ export function renderGame() {
     if (this.enemyProjectiles) {
         this.ctx.globalCompositeOperation = 'source-over';
         const pulse = 0.7 + Math.sin(this.time * 14) * 0.3;
-        // P3 2026-08-03 — this loop built a fresh createRadialGradient for EVERY
-        // bullet EVERY frame. A bullet-hell boss puts up to 40 on screen per
-        // attack, so this was hundreds of gradient allocations per frame during
-        // the densest and most dangerous moments of a run — exactly when a phone
-        // can least afford it.
-        //
-        // Two changes, no visual difference. The palette, the stops, the layer
-        // order and the no-white-core rule (Anubis 2026-05-23) are untouched:
-        //   1. The gradient is built in LOCAL space (0,0) and keyed by radius, so
-        //      all bullets sharing a radius share one gradient. Enemy bullet radii
-        //      come from a handful of literals, so 40 bullets now cost ~2.
-        //   2. `pulse` moved out of the colour stops and onto globalAlpha. It was
-        //      the only time-varying term and it multiplied every stop equally,
-        //      which is exactly what globalAlpha does — so the gradient stops
-        //      changing frame to frame and becomes cacheable at all.
-        // Cache is per-frame deliberately: no staleness if the canvas is resized.
-        const haloCache = new Map();
         this.enemyProjectiles.forEach(p => {
-            // P1: enemy bullets weren't culled either. Halo is radius * 3.5, so
-            // a 4x margin is comfortably outside anything this branch draws.
-            const cm = (p.radius || 0) * 4 + 32;
-            if (p.x < camX - cm || p.x > camX + vWidth + cm ||
-                p.y < camY - cm || p.y > camY + vHeight + cm) return;
             const r = Math.max(0.1, p.radius);
             // Outer warning halo — pulsing red gradient, wider than the bullet itself.
-            const haloR = Math.max(1, Math.round(r * 3.5));
-            let halo = haloCache.get(haloR);
-            if (!halo) {
-                halo = this.ctx.createRadialGradient(0, 0, 0, 0, 0, haloR);
-                halo.addColorStop(0, 'rgba(255, 60, 20, 0.55)');
-                halo.addColorStop(0.5, 'rgba(255, 20, 0, 0.25)');
-                halo.addColorStop(1, 'rgba(120, 0, 0, 0)');
-                haloCache.set(haloR, halo);
-            }
-            this.ctx.save();
-            this.ctx.translate(p.x, p.y);
-            this.ctx.globalAlpha = pulse;
+            const haloR = r * 3.5;
+            const halo = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloR);
+            halo.addColorStop(0, `rgba(255, 60, 20, ${0.55 * pulse})`);
+            halo.addColorStop(0.5, `rgba(255, 20, 0, ${0.25 * pulse})`);
+            halo.addColorStop(1, 'rgba(120, 0, 0, 0)');
             this.ctx.fillStyle = halo;
             this.ctx.beginPath();
-            this.ctx.arc(0, 0, haloR, 0, Math.PI * 2);
+            this.ctx.arc(p.x, p.y, haloR, 0, Math.PI * 2);
             this.ctx.fill();
-            this.ctx.restore();
             // Dark outline for contrast against bright AoE pools / environments.
             this.ctx.strokeStyle = 'rgba(60, 0, 0, 0.95)';
             this.ctx.lineWidth = 1.5;
@@ -764,12 +650,6 @@ export function renderGame() {
     }
 
     this.ctx.textAlign = 'center';
-    // C12 2026-08-03 — this loop never set textBaseline, so it inherited whatever
-    // the last text draw left behind. Playing NeoByte or HoloDrift set it to
-    // 'middle' earlier in the frame and EVERY damage number sat ~9px low,
-    // overlapping the enemy sprites. Set explicitly rather than relying on the
-    // resets above — this is the block players actually notice.
-    this.ctx.textBaseline = 'alphabetic';
     this.damageTexts.forEach(t => {
         this.ctx.globalAlpha = Math.max(0, t.life);
         this.ctx.strokeStyle = '#000000';
@@ -787,23 +667,9 @@ export function renderGame() {
     this.ctx.globalCompositeOperation = 'screen';
     const texSmoke = this.particleManager?.textures?.smoke;
 
-    // P5 2026-08-03 — env particles were the last unculled draw loop. They are
-    // spawned across 1.5-2x the viewport around the player (GameEngine.js:1239-
-    // 1247), so a meaningful share of them is off screen at any moment, and
-    // neon_rain in particular respawns continuously. Filtered once here rather
-    // than per branch — only one of the three ever runs in a given arena.
-    // Margin scales with p.size because fog and flares draw at 2x their size;
-    // rain and embers have no size and fall back to the flat 96.
-    const envCullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
-    const envVisible = envCullOn ? this.envParticles.filter(p => {
-        const m = (p.size || 8) * 2 + 96;
-        return p.x >= camX - m && p.x <= camX + vWidth + m &&
-               p.y >= camY - m && p.y <= camY + vHeight + m;
-    }) : this.envParticles;
-
     if (this.envEffect === 'neon_rain') {
         this.ctx.globalCompositeOperation = 'screen';
-        envVisible.forEach(p => {
+        this.envParticles.forEach(p => {
             this.ctx.globalAlpha = (p.life / 2) * 0.8;
             this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 3;
             this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); this.ctx.stroke();
@@ -815,7 +681,7 @@ export function renderGame() {
         });
         this.ctx.globalAlpha = 1.0; this.ctx.globalCompositeOperation = 'source-over';
     } else if (this.envEffect === 'fog') {
-        envVisible.forEach(p => {
+        this.envParticles.forEach(p => {
             this.ctx.globalAlpha = 0.15 * (p.life / 10);
             if (texSmoke && texSmoke.isReady) {
                 this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
@@ -827,7 +693,7 @@ export function renderGame() {
         });
         this.ctx.globalAlpha = 1.0;
     } else if (this.envEffect === 'solar_flare') {
-        envVisible.forEach(p => {
+        this.envParticles.forEach(p => {
             const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
             this.ctx.globalAlpha = alpha;
             
