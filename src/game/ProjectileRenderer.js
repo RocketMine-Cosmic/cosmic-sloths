@@ -179,46 +179,15 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.globalAlpha = 1.0;
             }
             ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'wrench_swing') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.max(0, p.life / 0.25);
-            const swingAngle = (1 - (p.life / 0.25)) * Math.PI * 1.5; 
-            ctx.rotate(swingAngle);
-            ctx.fillStyle = '#ffffff';
-            ctx.strokeStyle = p.color || '#00ffff';
-            ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.roundRect(0, -6, p.radius * 0.9, 12, 6); ctx.fill(); ctx.stroke();
-            ctx.beginPath(); ctx.arc(p.radius * 0.9, 0, 18, Math.PI * 0.2, Math.PI * 1.8); ctx.lineTo(p.radius * 0.9 - 6, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'blade_swing') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.max(0, p.life / 0.2);
-            const swingAngle = (1 - (p.life / 0.2)) * Math.PI * 1.5; 
-            ctx.rotate(swingAngle);
-            ctx.fillStyle = '#ffffff';
-            // Pre-rendered glow approach for blade_swing
-            const glow = getGlowTexture(p.color, p.radius * 1.5);
-            if (glow) {
-                ctx.globalAlpha = ctx.globalAlpha * 0.5;
-                ctx.drawImage(glow, p.radius*0.4 - glow.width/2, -glow.height/2);
-                ctx.globalAlpha = ctx.globalAlpha * 2;
-            }
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(p.radius * 0.8, -p.radius * 0.2, p.radius * 0.8, 0); ctx.quadraticCurveTo(p.radius * 0.8, p.radius * 0.2, 0, 0); ctx.fill();
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
-        } else if (p.type === 'grenade_explosion') {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 3));
-            const maxR = p.radius;
-            const lifeRatio = p.weaponId === 'fragGrenade' ? 0.4 : 0.3;
-            const progress = Math.max(0, 1 - (p.life / lifeRatio));
-            const currentR = maxR * Math.pow(progress, 0.5); 
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.arc(0, 0, Math.max(0, currentR), 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = p.color; ctx.lineWidth = Math.max(2, 6 * p.life); ctx.stroke();
-            ctx.globalAlpha = 1.0;
-            ctx.globalCompositeOperation = 'screen';
+        // C13 2026-08-03 — three dead branches deleted here: 'wrench_swing',
+        // 'blade_swing' and 'grenade_explosion'. A repo-wide grep found those
+        // three strings in this file and NOWHERE else — no weapon, system or
+        // particle emitter has ever produced one. 'blade_swing' was also a live
+        // crash waiting for an emitter: it called getGlowTexture(p.color, …)
+        // without the `|| '#ffffff'` fallback every other call site uses, so a
+        // null colour would have thrown and killed the whole projectile pass for
+        // that frame. Removing them also fixes the "how additive is this file"
+        // count, which they were skewing by three.
         } else if (p.type === 'beam' || p.type === 'dual_laser') {
             ctx.globalCompositeOperation = 'lighter';
             const trailGrad = ctx.createLinearGradient(p.radius, 0, -p.radius * 4, 0);
