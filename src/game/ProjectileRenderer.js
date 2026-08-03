@@ -28,6 +28,18 @@ const MAX_QUANT_R = Math.ceil((MAX_GLOW_SIZE / 2.5) / RADIUS_QUANT) * RADIUS_QUA
 // alpha do. Tune here, never in the branch.
 const AURA_MULT = 1.8;   // was 3   - roughly a third of the additive area
 const AURA_ALPHA = 0.22; // was 0.4
+
+// P4/C4 2026-08-03 — the ceiling that did not exist. Before this, every branch
+// had its own hardcoded radius multiplier between 2.5x and 12x with nothing
+// stopping it, so area stacking scaled the DRAWING as well as the hitbox:
+// supernovaBeam's tail reached ~1780px (about a full screen width), the railgun
+// slash drew at radius * 12, and the damage-radius indicator ring was stroked
+// uncapped at up to 2480px across for quantumCollapse. None of that is visible
+// — it is off screen — but it is all rasterised, every frame, additively.
+// This is a half-extent: the furthest anything should be drawn from a
+// projectile's centre. Hitboxes are never clamped by it.
+const MAX_DRAW_EXTENT = 900;
+const clampExtent = (v) => (v > MAX_DRAW_EXTENT ? MAX_DRAW_EXTENT : v);
 function getGlowTexture(color, radius) {
     if (radius <= 0) return null;
     const quantR = Math.min(
@@ -106,7 +118,11 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
             ctx.setLineDash([6, 10]);
             ctx.lineDashOffset = -time * 20;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            // C4: clamped. This ring exists to prove area upgrades are working
+            // (Texxy 2026-05-18), but past MAX_DRAW_EXTENT it is entirely off
+            // screen, so the player learns nothing from the extra thousand pixels
+            // of stroked arc — they just pay for it.
+            ctx.arc(p.x, p.y, clampExtent(p.radius), 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.restore();
@@ -143,14 +159,21 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 }
                 
                 // Tail (Pre-rendered or simple shape)
-                const tailGrad = ctx.createLinearGradient(0, 0, -auraRadius * 2, 0);
+                // C4 2026-08-03 — two bugs here. The gradient ran to -auraRadius*2
+                // but the triangle ran to -auraRadius*2.5, so the last fifth of the
+                // shape was filled with the gradient's final stop: transparent.
+                // Pure rasterisation cost for nothing visible. The two now agree,
+                // and the length is clamped — on supernovaBeam this tail reached
+                // roughly a full screen width.
+                const tailLen = clampExtent(auraRadius * 2);
+                const tailGrad = ctx.createLinearGradient(0, 0, -tailLen, 0);
                 tailGrad.addColorStop(0, p.color || '#ffffff');
                 tailGrad.addColorStop(1, 'transparent');
                 ctx.fillStyle = tailGrad;
                 ctx.globalAlpha = 0.3;
                 ctx.beginPath();
                 ctx.moveTo(0, auraRadius * 0.4);
-                ctx.lineTo(-auraRadius * 2.5, 0);
+                ctx.lineTo(-tailLen, 0);
                 ctx.lineTo(0, -auraRadius * 0.4);
                 ctx.fill();
             } else {
@@ -350,8 +373,10 @@ export function drawProjectiles(ctx, projectiles, particleManager, time, camX, c
                 ctx.stroke();
             }
             if (texSlash && texSlash.isReady) {
+                // C4: was a flat p.radius * 12 — the largest multiplier in the file.
                 ctx.globalAlpha = 0.8;
-                ctx.drawImage(texSlash, -p.radius * 6, -p.radius * 3, p.radius * 12, p.radius * 6);
+                const sx = clampExtent(p.radius * 6), sy = clampExtent(p.radius * 3);
+                ctx.drawImage(texSlash, -sx, -sy, sx * 2, sy * 2);
                 ctx.globalAlpha = 1.0;
             }
             ctx.globalCompositeOperation = 'screen';
