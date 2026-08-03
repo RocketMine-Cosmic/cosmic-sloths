@@ -18,6 +18,29 @@ import { getCurrentPeriodIds } from '@/lib/periodIds';
 // stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
 const S7_PUSHBACK_WEAPONS = new Set(['shieldBubble', 'aegisMatrix', 'burningBarrier']);
 
+// PERF 2026-08-03 — kill-milestone damage tables, hoisted out of damageEnemy().
+// They were four array literals of five object literals built INSIDE the function,
+// so every damage event allocated the default table and then, on most paths, a
+// second one to replace it — up to ~25 short-lived objects per hit. AoE weapons
+// land hundreds of hits a second, which is real GC pressure on a phone. The values
+// are unchanged; they are just constants now, as they always should have been.
+const KILL_MILESTONES_DEFAULT = [
+    { kills: 200, bonus: 2 }, { kills: 500, bonus: 4 }, { kills: 1000, bonus: 6 },
+    { kills: 1500, bonus: 8 }, { kills: 2000, bonus: 10 }
+];
+const KILL_MILESTONES_BOSS = [
+    { kills: 5, bonus: 2 }, { kills: 15, bonus: 4 }, { kills: 25, bonus: 6 },
+    { kills: 35, bonus: 8 }, { kills: 50, bonus: 10 }
+];
+const KILL_MILESTONES_TIER9 = [
+    { kills: 50, bonus: 2 }, { kills: 125, bonus: 4 }, { kills: 250, bonus: 6 },
+    { kills: 375, bonus: 8 }, { kills: 500, bonus: 10 }
+];
+const KILL_MILESTONES_TIER5 = [
+    { kills: 100, bonus: 2 }, { kills: 250, bonus: 4 }, { kills: 500, bonus: 6 },
+    { kills: 750, bonus: 8 }, { kills: 1000, bonus: 10 }
+];
+
 // S7 §4i: armor → % damage reduction with sector-scaled cap (Inner Galaxy 20-25%,
 // Outer Galaxy 30-35%). Replaces S6's flat subtraction + 25% hybrid model.
 // 1 armor = 1% reduction, clamped to the cap for the player's current sector.
@@ -539,7 +562,10 @@ export class GameEngine {
         
         this.bindEvents();
         this.lastTime = performance.now();
-        this.animationId = requestAnimationFrame(this.loop.bind(this));
+        // PERF 2026-08-03 — bind ONCE. `this.loop.bind(this)` inside loop() allocated
+        // a fresh bound function on every single frame, for the entire run.
+        this._boundLoop = this.loop.bind(this);
+        this.animationId = requestAnimationFrame(this._boundLoop);
     }
 
     triggerSquadUltimate(tier) {
@@ -855,7 +881,7 @@ export class GameEngine {
             console.error("Game loop error:", e);
         }
         this.lastTime = timestamp;
-        this.animationId = requestAnimationFrame(this.loop.bind(this));
+        this.animationId = requestAnimationFrame(this._boundLoop || (this._boundLoop = this.loop.bind(this)));
     }
 
     update(dt) {
@@ -1351,30 +1377,12 @@ export class GameEngine {
         if (enemy && enemy.id) {
             const pastKills = this.save?.enemyKills?.[enemy.id] || 0;
             
-            let milestones = [
-                { kills: 200, bonus: 2 },
-                { kills: 500, bonus: 4 },
-                { kills: 1000, bonus: 6 },
-                { kills: 1500, bonus: 8 },
-                { kills: 2000, bonus: 10 }
-            ];
-            
-            if (enemy.isBoss) {
-                milestones = [
-                    { kills: 5, bonus: 2 }, { kills: 15, bonus: 4 }, { kills: 25, bonus: 6 },
-                    { kills: 35, bonus: 8 }, { kills: 50, bonus: 10 }
-                ];
-            } else if (enemy.tier >= 9) {
-                milestones = [
-                    { kills: 50, bonus: 2 }, { kills: 125, bonus: 4 }, { kills: 250, bonus: 6 },
-                    { kills: 375, bonus: 8 }, { kills: 500, bonus: 10 }
-                ];
-            } else if (enemy.tier >= 5) {
-                milestones = [
-                    { kills: 100, bonus: 2 }, { kills: 250, bonus: 4 }, { kills: 500, bonus: 6 },
-                    { kills: 750, bonus: 8 }, { kills: 1000, bonus: 10 }
-                ];
-            }
+            // PERF 2026-08-03 — tables hoisted to module constants (see top of file).
+            // Same values, same precedence, zero allocation per hit.
+            let milestones = KILL_MILESTONES_DEFAULT;
+            if (enemy.isBoss) milestones = KILL_MILESTONES_BOSS;
+            else if (enemy.tier >= 9) milestones = KILL_MILESTONES_TIER9;
+            else if (enemy.tier >= 5) milestones = KILL_MILESTONES_TIER5;
 
             let achievedBonus = 0;
             for (let i = milestones.length - 1; i >= 0; i--) {
