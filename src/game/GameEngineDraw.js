@@ -775,9 +775,23 @@ export function renderGame() {
     this.ctx.globalCompositeOperation = 'screen';
     const texSmoke = this.particleManager?.textures?.smoke;
 
+    // P5 2026-08-03 — env particles were the last uncrulled draw loop. They are
+    // spawned across 1.5-2x the viewport around the player (GameEngine.js:1239-
+    // 1247), so a meaningful share of them is off screen at any moment, and
+    // neon_rain in particular respawns continuously. Filtered once here rather
+    // than per branch — only one of the three ever runs in a given arena.
+    // Margin scales with p.size because fog and flares draw at 2x their size;
+    // rain and embers have no size and fall back to the flat 96.
+    const envCullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
+    const envVisible = envCullOn ? this.envParticles.filter(p => {
+        const m = (p.size || 8) * 2 + 96;
+        return p.x >= camX - m && p.x <= camX + vWidth + m &&
+               p.y >= camY - m && p.y <= camY + vHeight + m;
+    }) : this.envParticles;
+
     if (this.envEffect === 'neon_rain') {
         this.ctx.globalCompositeOperation = 'screen';
-        this.envParticles.forEach(p => {
+        envVisible.forEach(p => {
             this.ctx.globalAlpha = (p.life / 2) * 0.8;
             this.ctx.strokeStyle = p.color; this.ctx.lineWidth = 3;
             this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); this.ctx.stroke();
@@ -789,7 +803,7 @@ export function renderGame() {
         });
         this.ctx.globalAlpha = 1.0; this.ctx.globalCompositeOperation = 'source-over';
     } else if (this.envEffect === 'fog') {
-        this.envParticles.forEach(p => {
+        envVisible.forEach(p => {
             this.ctx.globalAlpha = 0.15 * (p.life / 10);
             if (texSmoke && texSmoke.isReady) {
                 this.ctx.drawImage(texSmoke, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
@@ -801,7 +815,7 @@ export function renderGame() {
         });
         this.ctx.globalAlpha = 1.0;
     } else if (this.envEffect === 'solar_flare') {
-        this.envParticles.forEach(p => {
+        envVisible.forEach(p => {
             const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 0.4;
             this.ctx.globalAlpha = alpha;
             
