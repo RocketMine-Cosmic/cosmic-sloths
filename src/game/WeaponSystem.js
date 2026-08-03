@@ -152,7 +152,12 @@ export function fireWeaponLogic(engine, w) {
                 x: engine.player.x, y: engine.player.y,
                 vx: Math.cos(a) * 500 * engine.player.projSpeedMult,
                 vy: Math.sin(a) * 500 * engine.player.projSpeedMult,
-                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: engine.player.color, type: 'blaster_shot'
+                // C7 2026-08-03 — was engine.player.color, UNCONDITIONALLY: the
+                // starter weapon had no identity of its own at any level, and
+                // because GameEngineDraw paints the player sprite in that same
+                // colour, the shots visually merged with the character firing
+                // them. Mastery is still read from the shot count (1 -> 3).
+                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: '#9dff5c', type: 'blaster_shot'
             });
         }
     }
@@ -166,7 +171,11 @@ export function fireWeaponLogic(engine, w) {
         
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
-        let projColor = isMastered ? '#4169E1' : engine.player.color;
+        // C7 2026-08-03 — unmastered was the character colour (see neoBlaster).
+        // Pale blue -> royal blue keeps mastery as a shift WITHIN one identity
+        // rather than a swap into a different one, which is the rule the rest of
+        // this pass follows.
+        let projColor = isMastered ? '#4169E1' : '#8fb8ff';
         let projType = 'beam';
         
         if (engine.characterId === 'skybyte') { projType = 'dual_laser'; }
@@ -206,8 +215,10 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'vineWhip') {
-        const charColor = engine.player.color;
-        const color1 = isMastered ? '#ff0055' : charColor;
+        // C7 2026-08-03 — `charColor` deleted; it existed only to feed color1 the
+        // player's colour. Pale rose -> crimson, same shift-within-an-identity
+        // rule as napBeam above. Mastered #ff0055 is unchanged.
+        const color1 = isMastered ? '#ff0055' : '#ff7a9c';
         const color2 = isMastered ? '#ffaa00' : '#ffffff';
         
         engine.particleManager.particles.push({
@@ -547,7 +558,8 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'seismicWhip') {
-        const charColor = engine.player.color;
+        // C7 2026-08-03 — removed a dead `const charColor = engine.player.color;`
+        // here. It was assigned and never read.
         engine.particleManager.particles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0, life: 0.25, maxLife: 0.25,
