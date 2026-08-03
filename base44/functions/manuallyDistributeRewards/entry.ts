@@ -277,7 +277,7 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                 body: JSON.stringify({
-                    payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                     gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
                 }),
             });
@@ -445,7 +445,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                 body: JSON.stringify({
-                    payments: remainingStaff.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    payments: remainingStaff.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                     gameId: GAME_ID, gameName: GAME_NAME, note: `${playerBase} — Staff share`,
                 }),
             });

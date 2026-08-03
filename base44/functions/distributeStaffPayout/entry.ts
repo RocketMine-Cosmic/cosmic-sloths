@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                 body: JSON.stringify({
-                    payments: remaining.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    payments: remaining.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                     gameId: GAME_ID, gameName: GAME_NAME,
                     note: `Cosmic Sloths weekly payout ${period_id} — Staff share`,
                 }),

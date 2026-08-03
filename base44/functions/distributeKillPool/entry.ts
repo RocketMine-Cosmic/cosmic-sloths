@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                     body: JSON.stringify({
-                        payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                        payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                         gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
                     }),
                 });

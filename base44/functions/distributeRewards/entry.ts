@@ -267,7 +267,7 @@ async function grantBatchChunked(allPayments, apiBaseUrl, rewardsKeys, gameId, g
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
                 body: JSON.stringify({
-                    payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount.toString() })),
+                    payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                     gameId, gameName, note: `${note} chunk ${ci + 1}/${chunks.length}`,
                 }),
             });
