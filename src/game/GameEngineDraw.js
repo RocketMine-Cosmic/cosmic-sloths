@@ -695,18 +695,43 @@ export function renderGame() {
     if (this.enemyProjectiles) {
         this.ctx.globalCompositeOperation = 'source-over';
         const pulse = 0.7 + Math.sin(this.time * 14) * 0.3;
+        // P3 2026-08-03 — this loop built a fresh createRadialGradient for EVERY
+        // bullet EVERY frame. A bullet-hell boss puts up to 40 on screen per
+        // attack, so this was hundreds of gradient allocations per frame during
+        // the densest and most dangerous moments of a run — exactly when a phone
+        // can least afford it.
+        //
+        // Two changes, no visual difference. The palette, the stops, the layer
+        // order and the no-white-core rule (Anubis 2026-05-23) are untouched:
+        //   1. The gradient is built in LOCAL space (0,0) and keyed by radius, so
+        //      all bullets sharing a radius share one gradient. Enemy bullet radii
+        //      come from a handful of literals, so 40 bullets now cost ~2.
+        //   2. `pulse` moved out of the colour stops and onto globalAlpha. It was
+        //      the only time-varying term and it multiplied every stop equally,
+        //      which is exactly what globalAlpha does — so the gradient stops
+        //      changing frame to frame and becomes cacheable at all.
+        // Cache is per-frame deliberately: no staleness if the canvas is resized.
+        const haloCache = new Map();
         this.enemyProjectiles.forEach(p => {
             const r = Math.max(0.1, p.radius);
             // Outer warning halo — pulsing red gradient, wider than the bullet itself.
-            const haloR = r * 3.5;
-            const halo = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloR);
-            halo.addColorStop(0, `rgba(255, 60, 20, ${0.55 * pulse})`);
-            halo.addColorStop(0.5, `rgba(255, 20, 0, ${0.25 * pulse})`);
-            halo.addColorStop(1, 'rgba(120, 0, 0, 0)');
+            const haloR = Math.max(1, Math.round(r * 3.5));
+            let halo = haloCache.get(haloR);
+            if (!halo) {
+                halo = this.ctx.createRadialGradient(0, 0, 0, 0, 0, haloR);
+                halo.addColorStop(0, 'rgba(255, 60, 20, 0.55)');
+                halo.addColorStop(0.5, 'rgba(255, 20, 0, 0.25)');
+                halo.addColorStop(1, 'rgba(120, 0, 0, 0)');
+                haloCache.set(haloR, halo);
+            }
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            this.ctx.globalAlpha = pulse;
             this.ctx.fillStyle = halo;
             this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, haloR, 0, Math.PI * 2);
+            this.ctx.arc(0, 0, haloR, 0, Math.PI * 2);
             this.ctx.fill();
+            this.ctx.restore();
             // Dark outline for contrast against bright AoE pools / environments.
             this.ctx.strokeStyle = 'rgba(60, 0, 0, 0.95)';
             this.ctx.lineWidth = 1.5;
