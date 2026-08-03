@@ -20,15 +20,30 @@ const PICKUP_SCALE = 1.35;
 //   undefined → all pickups (legacy behaviour)
 const MINOR_PICKUP_TYPES = new Set(['xp', 'gold', 'reroll']);
 
-export function drawPickups(ctx, pickups, time, layer) {
-    let list = pickups;
-    if (layer === 'minor') list = pickups.filter(p => MINOR_PICKUP_TYPES.has(p.type));
-    else if (layer === 'major') list = pickups.filter(p => !MINOR_PICKUP_TYPES.has(p.type));
+// P1 2026-08-03 — pickups were never viewport-culled, and this function was
+// called twice per frame, each call doing filter → spread → sort over the WHOLE
+// pickup array. Late in a run that array is long and most of it is off screen.
+// One pass now does layer filtering and culling together, then sorts only what
+// will actually be drawn. Margin covers the largest pickup icon comfortably.
+const PICKUP_CULL_MARGIN = 80;
+const PICKUP_DRAW_ORDER = { gold: 0, reroll: 1, xp: 2 };
 
-    const sorted = [...list].sort((a, b) => {
-        const order = { gold: 0, reroll: 1, xp: 2 };
-        return (order[a.type] ?? 1) - (order[b.type] ?? 1);
-    });
+export function drawPickups(ctx, pickups, time, layer, camX, camY, vWidth, vHeight) {
+    const cullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
+    const minX = camX - PICKUP_CULL_MARGIN, maxX = camX + vWidth + PICKUP_CULL_MARGIN;
+    const minY = camY - PICKUP_CULL_MARGIN, maxY = camY + vHeight + PICKUP_CULL_MARGIN;
+
+    const sorted = [];
+    for (let i = 0; i < pickups.length; i++) {
+        const p = pickups[i];
+        const isMinor = MINOR_PICKUP_TYPES.has(p.type);
+        if (layer === 'minor' && !isMinor) continue;
+        if (layer === 'major' && isMinor) continue;
+        if (cullOn && (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY)) continue;
+        sorted.push(p);
+    }
+    sorted.sort((a, b) => (PICKUP_DRAW_ORDER[a.type] ?? 1) - (PICKUP_DRAW_ORDER[b.type] ?? 1));
+
     sorted.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
