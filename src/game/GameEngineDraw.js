@@ -367,7 +367,7 @@ export function renderGame() {
     // currency litter doesn't visually mask dangerous bullets. Player can still
     // see what they're collecting since enemy projectiles are small bright dots
     // that read clearly over the larger XP/gold icons.
-    drawPickups(this.ctx, this.pickups, this.time, 'minor');
+    drawPickups(this.ctx, this.pickups, this.time, 'minor', camX, camY, vWidth, vHeight);
 
     // (Enemy projectiles now render at the very end of the world pass —
     // see block after the invincibility ring below.)
@@ -376,7 +376,7 @@ export function renderGame() {
     // chests, power-ups with custom icons. These are rare/high-value drops the
     // player MUST be able to spot through the chaos, so they sit above enemy
     // projectiles + AoE pools (player request 2026-05-14).
-    drawPickups(this.ctx, this.pickups, this.time, 'major');
+    drawPickups(this.ctx, this.pickups, this.time, 'major', camX, camY, vWidth, vHeight);
 
     const viewMinX = camX - 150;
     const viewMaxX = camX + vWidth + 150;
