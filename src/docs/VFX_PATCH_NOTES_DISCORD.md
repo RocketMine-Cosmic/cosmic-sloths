@@ -38,7 +38,7 @@ You'll see proper ground markers now, at the real blast radius, filling up as th
 
 **Plasma Swarm's main damage had no visual whatsoever.** The lash from each drone hits a big area every single tick, and there was nothing to see — enemies just died several body-lengths away from anything on screen. There's a ring now showing the actual reach.
 
-## 🔥 The overheating / "my DPS drops" bug — found it, and it was a proper one
+## 🌡️ The overheating / "my DPS drops" bug — found it, and it was a proper one
 
 Some of you have reported phones getting hot, laptops struggling, and **Quantum Collapse and Toxic Emitter feeling like they lose damage** in big fights. Those all turned out to be the same bug, and it wasn't a graphics problem at all.
 
@@ -84,7 +84,7 @@ Nothing about how any of it looks has changed. It just costs a lot less to run.
 
 Fair question, since I've said the focus is the new version.
 
-Every single one of these fixes is in the display layer — so **all of it moves across to the new build with me.** None of it is throwaway work. And honestly, a lot of it is things you've reported that I hadn't got to yet. Felt wrong to keep building the future while the thing you actually play still had a boss attack with no warning circle.
+Almost all of this is display-layer work — so **it moves across to the new build with me.** None of it is throwaway. And honestly, a lot of it is things you've reported that I hadn't got to yet. Felt wrong to keep building the future while the thing you actually play still had a boss attack with no warning circle, and a save bug quietly eating your framerate.
 
 The new version is still the plan and it's still coming. This just means you're not waiting on a worse game in the meantime.
 
