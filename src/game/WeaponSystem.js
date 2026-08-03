@@ -499,23 +499,62 @@ export function fireWeaponLogic(engine, w) {
             // Lash radius bumped 120 → 170 (2026-06-04, Anubis Discord) so the
             // kill-zones around adjacent drones overlap and there are no "dead
             // lanes" between drones that enemies could slip through.
+            // C10 2026-08-03 — DRAWING ONLY. Read the guard below before editing.
+            let lashHit = false;
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 170 * area) {
                     engine.damageEnemy(e, dmg * 0.6, { weaponId: w.id });
                     if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 10);
+                    lashHit = true;
                 }
             });
+            // C10: the lash is this weapon's main damage and had NO visual at all
+            // — not a projectile, not a particle, only a 30%-chance spark on each
+            // victim. Enemies died several body-lengths from anything the player
+            // could see. One faint ring per drone that actually connected, at the
+            // reach it actually has.
+            //
+            // 🔴 The 170 * area below is READ FROM the damage check above, never
+            // the other way round. If these ever disagree, change the drawing.
+            // Aligning the hit radius to a drawing is a gameplay change and is
+            // explicitly out of scope for this pass.
+            //
+            // size * 0.9 is the drawn radius for a 'ring' particle (ParticleManager
+            // draws the shockwave texture at size * 1.8, centred), hence the 1.11.
+            // 'ring' is deliberately not 'shockwave' — shockwave self-expands in
+            // the update loop and would drift off the real radius.
+            if (lashHit) {
+                engine.particleManager.particles.push({
+                    x: px, y: py, vx: 0, vy: 0,
+                    life: 0.18, maxLife: 0.18,
+                    color: '#ff00ff', tint: '#ff00ff',
+                    type: 'ring', size: (170 * area) * 1.11, rotation: 0
+                });
+            }
         }
         // Player-centered plasma aura (2026-06-04, Anubis Discord). Small
         // continuous tick around the player so close-range enemies that get
         // inside the drone orbit aren't ignored. Lower DPS than the lashes
         // — fixes the "feels useless at point-blank" complaint without
         // turning the weapon into a no-fly ring.
+        let auraHit = false;
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 90 * area) {
                 engine.damageEnemy(e, dmg * 0.25, { weaponId: w.id });
+                auraHit = true;
             }
         });
+        // C10: the point-blank aura was the other invisible damage source. Same
+        // rule as the lash ring above — 90 * area is read from the check, and the
+        // check is not to be changed to match it.
+        if (auraHit) {
+            engine.particleManager.particles.push({
+                x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
+                life: 0.15, maxLife: 0.15,
+                color: '#00ffff', tint: '#00ffff',
+                type: 'ring', size: (90 * area) * 1.11, rotation: 0
+            });
+        }
     }
     else if (w.id === 'orbitalLasers') {
         // Drone count capped at 7 (was 14 at lvl 25). Each drone runs TWO full
