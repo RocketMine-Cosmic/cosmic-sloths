@@ -100,25 +100,32 @@ currency, so "log in to Cosmic Sloths every day → grow your OmenX VIP tier" is
 reason for the whole Omen ecosystem to open the game daily. With a 300/quest
 ceiling we can make daily rewards feel genuinely meaningful, not token.
 
+**Benchmark:** the Omen website's own daily login quest pays **50+/day**. Playing an
+actual game must beat passively clicking a website, or nobody diverts their daily
+habit here. Target: **~100 pts for a full active day**, ~25 for login alone.
+
 **Daily grants** (hook into existing server-validated flows):
 
 | Event | Hook | Points | Idempotency key |
 |---|---|---|---|
-| Daily login | `claimDailyLogin` | 5 | `login_${date}_${wallet}` |
-| Login streak milestones | `claimDailyLogin` | day 3: 10 · day 7: 25 · day 14: 50 · day 30: 100 | `streak${n}_${wallet}_${cycle}` |
-| All daily tasks complete | `claimDailyTask` (last claim) | 10 | `tasks_${date}_${wallet}` |
-| First sector clear of the day | `saveScore` (uses `DailyActivityLog` upsert) | 5 | `firstrun_${date}_${wallet}` |
-| Daily kill target (e.g. 300 kills) | `saveScore` vs server kill counter | 10 | `dkills_${date}_${wallet}` |
+| Daily login | `claimDailyLogin` | 25 | `login_${date}_${wallet}` |
+| Login streak milestones | `claimDailyLogin` | day 3: 30 · day 7: 75 · day 14: 150 · day 30: 300 (max-per-quest) | `streak${n}_${wallet}_${cycle}` |
+| All daily tasks complete | `claimDailyTask` (last claim) | 25 | `tasks_${date}_${wallet}` |
+| First sector clear of the day | `saveScore` (uses `DailyActivityLog` upsert) | 20 | `firstrun_${date}_${wallet}` |
+| Daily kill target (e.g. 300 kills) | `saveScore` vs server kill counter | 30 | `dkills_${date}_${wallet}` |
 
-Perfect day = ~30 pts; a 30-day streak month ≈ ~1,100 pts/player. Numbers are
-tunable via `AppConfig` (like `staff_pct_per_wallet`) so we can throttle without a deploy
+Perfect day = 100 pts (plus streak milestones); a full 30-day streak month ≈ ~3,500
+pts/player. Login alone (25) deliberately pays LESS than the website — the extra 75
+requires actually playing, which is the behaviour we're buying. Numbers are tunable
+via `AppConfig` (like `staff_pct_per_wallet`) so we can throttle without a deploy
 once we know the pool size.
 
 **UX:** the Dailys page gets a "VIP Points" strip showing today's earned/available
 points and the streak track — visible progress is what pulls players back tomorrow.
 
-**Safety:** hard per-wallet daily cap (e.g. 35) enforced in our backend before any
-grant call, blacklist check, all counters server-authoritative.
+**Safety:** hard per-wallet daily cap (e.g. 130 — perfect day + one milestone)
+enforced in our backend before any grant call, blacklist check, all counters
+server-authoritative.
 
 ### Tier 2 — competitive grants, server-authoritative already (cheap wins)
 
