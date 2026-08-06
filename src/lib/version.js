@@ -8,7 +8,7 @@
 // value: { version: '1.0.2' } } in the DB or admin tools, then ship the new
 // client with APP_VERSION bumped to 1.0.2. Old clients will see the gate within
 // ~60s (maintenanceStatus poll interval) or instantly on next tab focus.
-export const APP_VERSION = '1.0.7';
+export const APP_VERSION = '1.0.8';
 
 // Lightweight numeric semver compare. Returns:
 //   -1 if a < b
