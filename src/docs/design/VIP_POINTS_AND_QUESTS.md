@@ -89,31 +89,51 @@ the biggest rewards on rare, verifiable events.
 
 ## 3. Integration ideas (ranked)
 
-### Tier 1 — cheap wins, server-authoritative already (recommended first)
+**Known limits:** max per quest = **300 points**. Total pool allocation = unknown
+(check dev portal / ask Omen) — treat the local `VipPointGrantLog` as the working
+balance tracker until we know it.
+
+### Tier 1 — DAILY LOOP (build first — this is the player magnet)
+
+The daily loop is the acquisition + retention driver: VIP points are platform
+currency, so "log in to Cosmic Sloths every day → grow your OmenX VIP tier" is a
+reason for the whole Omen ecosystem to open the game daily. With a 300/quest
+ceiling we can make daily rewards feel genuinely meaningful, not token.
+
+**Daily grants** (hook into existing server-validated flows):
+
+| Event | Hook | Points | Idempotency key |
+|---|---|---|---|
+| Daily login | `claimDailyLogin` | 5 | `login_${date}_${wallet}` |
+| Login streak milestones | `claimDailyLogin` | day 3: 10 · day 7: 25 · day 14: 50 · day 30: 100 | `streak${n}_${wallet}_${cycle}` |
+| All daily tasks complete | `claimDailyTask` (last claim) | 10 | `tasks_${date}_${wallet}` |
+| First sector clear of the day | `saveScore` (uses `DailyActivityLog` upsert) | 5 | `firstrun_${date}_${wallet}` |
+| Daily kill target (e.g. 300 kills) | `saveScore` vs server kill counter | 10 | `dkills_${date}_${wallet}` |
+
+Perfect day = ~30 pts; a 30-day streak month ≈ ~1,100 pts/player. Numbers are
+tunable via `AppConfig` (like `staff_pct_per_wallet`) so we can throttle without a deploy
+once we know the pool size.
+
+**UX:** the Dailys page gets a "VIP Points" strip showing today's earned/available
+points and the streak track — visible progress is what pulls players back tomorrow.
+
+**Safety:** hard per-wallet daily cap (e.g. 35) enforced in our backend before any
+grant call, blacklist check, all counters server-authoritative.
+
+### Tier 2 — competitive grants, server-authoritative already (cheap wins)
 
 These hook into events our backend **already validates**, so a grant is one extra call:
 
 | Event | Where it fires today | Suggested points | Idempotency key |
 |---|---|---|---|
-| Weekly kill leaderboard top 10 | `distributeKillPool` | 50 / 30 / 20 (1st/2nd/3rd), 10 (4–10) | `killlb_${week}_${wallet}` |
+| Weekly kill leaderboard top 10 | `distributeKillPool` | 100 / 60 / 40 (1st/2nd/3rd), 20 (4–10) | `killlb_${week}_${wallet}` |
 | Weekly score leaderboard top 10 | `manuallyDistributeRewards` | same band | `scorelb_${week}_${wallet}` |
-| Squad War win | `squadWarEngine` claim path | 15 per member | `war_${warId}_${wallet}` |
-| Global Boss kill contribution | `claimBossReward` | 5–20 by damage band | `boss_${bossId}_${wallet}` |
-| Squad Champions (seasonal) | `distributeSquadChampions` | 100 per champion member | `champ_${season}_${wallet}` |
+| Squad War win | `squadWarEngine` claim path | 25 per member | `war_${warId}_${wallet}` |
+| Global Boss kill contribution | `claimBossReward` | 10–40 by damage band | `boss_${bossId}_${wallet}` |
+| Squad Champions (seasonal) | `distributeSquadChampions` | 300 per champion member (max-per-quest) | `champ_${season}_${wallet}` |
 
 All grants happen **alongside** OMENX payouts in the same functions — the log-first
 pattern we already use protects against double-grants.
-
-### Tier 2 — daily engagement loop
-
-| Event | Hook | Points |
-|---|---|---|
-| Daily login streak (7 days) | `claimDailyLogin` | 5 on day 7 |
-| All daily tasks complete | `claimDailyTask` | 3 |
-| First sector clear of the day | `saveScore` | 2 |
-
-Small numbers, but daily — budget ~10 pts/player/day max, and consider a weekly cap
-per wallet (enforced in our backend before calling grant) to protect the pool.
 
 ### Tier 3 — hosted quests (bigger build, nicest UX)
 
@@ -141,15 +161,17 @@ Use Omen's quest system so quests show up in the player's OmenX profile too:
 
 ## 4. Suggested rollout
 
-1. **Phase 1:** `VipPointGrantLog` entity + grants wired into the weekly kill/score
-   payout functions (Tier 1, two functions touched). Admin panel card showing pool
-   spend from the log.
-2. **Phase 2:** daily loop grants (Tier 2) with weekly caps.
-3. **Phase 3:** hosted quests (Tier 3) once portal quest templates exist — replaces or
-   augments our in-game Dailys with platform-visible quests.
+1. **Phase 1 — Daily loop:** `VipPointGrantLog` entity + grants wired into
+   `claimDailyLogin`, `claimDailyTask`, and `saveScore` (first-run + daily kill
+   target), plus the Dailys-page VIP points strip. Point values in `AppConfig`
+   so they're tunable live. Admin panel card showing pool spend from the log.
+2. **Phase 2 — Competitive grants:** weekly kill/score leaderboards, Squad Wars,
+   boss and champion rewards.
+3. **Phase 3 — Hosted quests:** once portal quest templates exist — augments the
+   in-game Dailys with platform-visible quests.
 
 Open questions for Omen / the dev portal:
-- What's our current pool allocation and max-per-quest?
+- What's our current total pool allocation? (Max-per-quest confirmed: **300**.)
 - Is there an API to read pool remaining? (Not in the SDK — likely portal-only, so
   our local grant log is the working balance tracker.)
 - Do granted points appear instantly in `getPlayerVipStatus` (`entitlement`)?
