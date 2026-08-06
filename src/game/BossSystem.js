@@ -180,7 +180,11 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
             boss.bombTimer = phase3 ? 2.5 : (phase2 ? 4 : 7);
             const tx = player.x, ty = player.y;
             boss._bombWarning = boss._bombWarning || [];
-            boss._bombWarning.push({ x: tx, y: ty, timer: phase3 ? 1.2 : 2.0 });
+            // t0 added 2026-08-03: the telegraph renderer needs the initial timer
+            // to compute how full the warning decal is. Draw-only — nothing in
+            // this file or in EnemyAI reads t0.
+            const bombT0 = phase3 ? 1.2 : 2.0;
+            boss._bombWarning.push({ x: tx, y: ty, timer: bombT0, t0: bombT0 });
             addDamageText(tx, ty - 40, '⚠ VOID BOMB!', '#581c87');
         }
         if (boss._bombWarning) {
@@ -231,7 +235,9 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
             boss.novaTimer = phase3 ? 3 : (phase2 ? 5 : 8);
             const tx = player.x, ty = player.y;
             boss._novaWarning = boss._novaWarning || [];
-            boss._novaWarning.push({ x: tx, y: ty, timer: phase3 ? 0.8 : 1.2 });
+            // t0: see the Void Bomb note above. Draw-only.
+            const novaT0 = phase3 ? 0.8 : 1.2;
+            boss._novaWarning.push({ x: tx, y: ty, timer: novaT0, t0: novaT0 });
             addDamageText(tx, ty - 30, '⚠ PLASMA NOVA!', '#ef4444');
         }
         if (boss._novaWarning) {
@@ -323,7 +329,9 @@ export function updateBossAbilities(boss, dt, player, enemyProjectiles, addParti
             for(let i=0; i<mCount; i++) {
                 const tx = player.x + (Math.random() - 0.5) * 400;
                 const ty = player.y + (Math.random() - 0.5) * 400;
-                boss._meteorWarning.push({ x: tx, y: ty, timer: 1.5 + Math.random() * 0.5 });
+                // t0: see the Void Bomb note above. Draw-only.
+                const meteorT0 = 1.5 + Math.random() * 0.5;
+                boss._meteorWarning.push({ x: tx, y: ty, timer: meteorT0, t0: meteorT0 });
                 addParticle(tx, ty, '#f59e0b', 5, 'glow', 2);
             }
             addDamageText(boss.x, boss.y - boss.radius - 40, 'METEOR SHOWER!', '#f59e0b');

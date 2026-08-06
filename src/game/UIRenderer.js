@@ -1,6 +1,11 @@
 export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPickup, camera, zoom, pickups) {
     // --- Off-screen Indicators ---
-    enemies.forEach(e => {
+    // C9 2026-08-03 — this block used to RUN first, so the pickup markers below
+    // painted OVER it: a 💰 could cover a 💀 in exactly the screen region players
+    // scan for danger. Both blocks are now defined and invoked at the bottom of
+    // this function, rewards first, threats last. Nothing inside either block
+    // changed — only the order they run in.
+    const drawThreatArrows = () => enemies.forEach(e => {
         if (e.isBoss || e.isElite) {
             const vWidth = canvas.width / zoom;
             const vHeight = canvas.height / zoom;
@@ -63,7 +68,8 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
     // --- Off-screen Boss Drop Indicators ---
     // After a boss dies its relic fragment / nuke / big gold drops can land
     // far off-screen. Show small directional markers so the player can find them.
-    if (pickups && pickups.length) {
+    const drawRewardArrows = () => {
+      if (pickups && pickups.length) {
         const vWidth = canvas.width / zoom;
         const vHeight = canvas.height / zoom;
         const minX = camera.x;
@@ -146,5 +152,10 @@ export function drawUI(ctx, canvas, time, player, hazards, enemies, characterPic
             ctx.restore();
         });
         ctx.globalAlpha = 1;
-    }
+      }
+    };
+
+    // C9: rewards first, threats last — a skull is never hidden by a coin.
+    drawRewardArrows();
+    drawThreatArrows();
 }

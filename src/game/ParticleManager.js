@@ -175,13 +175,23 @@ export class ParticleManager {
         const key = `${color}_${Math.round(radius)}`;
         if (this.glowCache[key]) return this.glowCache[key];
         
-        const size = Math.ceil(radius * 2.5); // Enough padding
+        // P2 2026-08-03 — this copy of getGlowTexture had NO size cap and NO
+        // null-context guard, unlike the one in ProjectileRenderer.js. A large
+        // radius could ask for a multi-thousand-pixel canvas; on mobile that
+        // silently fails, getContext returns null, and the next line threw and
+        // killed the frame. Cap and guard, matching the other implementation.
+        // The key is left unquantised on purpose: every caller here (player and
+        // squad-clone glow) passes a stable radius, so there is nothing to
+        // collapse, and quantising would visibly change the player's glow size.
+        let size = Math.ceil(radius * 2.5); // Enough padding
         if (size <= 0) return null;
+        if (size > 512) size = 512;
 
         const canvas = document.createElement('canvas');
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
         
         const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
         grad.addColorStop(0, color);
@@ -357,6 +367,13 @@ export class ParticleManager {
     draw(ctx, camX, camY, vWidth, vHeight, layerFilter = null) {
         ctx.save();
 
+        // P1 2026-08-03 — same defect as ProjectileRenderer: these four camera
+        // parameters were accepted and never read, and GameEngineDraw calls this
+        // method THREE times per frame (main pass, trail layer, killfx layer).
+        // Margin scales with particle size because several types draw at a
+        // multiple of it (shockwaves are the worst).
+        const cullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
+
         this.particles.forEach(p => {
             // Cosmetic-layer routing — see comment above draw().
             if (layerFilter === null) {
@@ -366,6 +383,12 @@ export class ParticleManager {
             }
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
+
+            if (cullOn) {
+                const m = (p.size || 8) * 4 + 64;
+                if (p.x < camX - m || p.x > camX + vWidth + m ||
+                    p.y < camY - m || p.y > camY + vHeight + m) return;
+            }
 
             ctx.save();
             ctx.translate(p.x, p.y);

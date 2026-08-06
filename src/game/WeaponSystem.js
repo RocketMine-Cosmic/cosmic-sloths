@@ -152,7 +152,12 @@ export function fireWeaponLogic(engine, w) {
                 x: engine.player.x, y: engine.player.y,
                 vx: Math.cos(a) * 500 * engine.player.projSpeedMult,
                 vy: Math.sin(a) * 500 * engine.player.projSpeedMult,
-                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: engine.player.color, type: 'blaster_shot'
+                // C7 2026-08-03 — was engine.player.color, UNCONDITIONALLY: the
+                // starter weapon had no identity of its own at any level, and
+                // because GameEngineDraw paints the player sprite in that same
+                // colour, the shots visually merged with the character firing
+                // them. Mastery is still read from the shot count (1 -> 3).
+                radius: 6 * area, damage: dmg, pierce: 1, life: 1.5, color: '#9dff5c', type: 'blaster_shot'
             });
         }
     }
@@ -166,7 +171,11 @@ export function fireWeaponLogic(engine, w) {
         
         let angle = nearest ? Math.atan2(nearest.y - engine.player.y, nearest.x - engine.player.x) : Math.random() * Math.PI * 2;
         
-        let projColor = isMastered ? '#4169E1' : engine.player.color;
+        // C7 2026-08-03 — unmastered was the character colour (see neoBlaster).
+        // Pale blue -> royal blue keeps mastery as a shift WITHIN one identity
+        // rather than a swap into a different one, which is the rule the rest of
+        // this pass follows.
+        let projColor = isMastered ? '#4169E1' : '#8fb8ff';
         let projType = 'beam';
         
         if (engine.characterId === 'skybyte') { projType = 'dual_laser'; }
@@ -206,8 +215,10 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'vineWhip') {
-        const charColor = engine.player.color;
-        const color1 = isMastered ? '#ff0055' : charColor;
+        // C7 2026-08-03 — `charColor` deleted; it existed only to feed color1 the
+        // player's colour. Pale rose -> crimson, same shift-within-an-identity
+        // rule as napBeam above. Mastered #ff0055 is unchanged.
+        const color1 = isMastered ? '#ff0055' : '#ff7a9c';
         const color2 = isMastered ? '#ffaa00' : '#ffffff';
         
         engine.particleManager.particles.push({
@@ -346,7 +357,16 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'shieldBubble') {
-        const color = isMastered ? '#ffd700' : engine.player.color;
+        // C6/C7 2026-08-03 — the gold three-way. Unmastered used engine.player.color,
+        // and SynthBeats' character colour is #FFD700, so playing SynthBeats an
+        // unmastered bubble was pixel-identical to the mastered "(Golden Shield)".
+        // The shield line now ramps within one identity instead of colliding:
+        //   shieldBubble unmastered #d9a441 (amber-bronze)
+        //   shieldBubble mastered   #ffd700 (true gold)
+        //   aegisMatrix             #fff3a0 (pale platinum-gold, see that branch)
+        // Also gives the weapon its own colour from level 1 rather than merging
+        // with the player sprite, which is drawn in the same character colour.
+        const color = isMastered ? '#ffd700' : '#d9a441';
         // Removed the 8-circle activation burst (was: addParticle ... 8, 'circle', ..., {speed: 200}).
         // Texxy 2026-05-20: when the bubble fires on a short cooldown, each refresh
         // spawned 8 expanding circle particles from the player position. Stacked
@@ -479,23 +499,62 @@ export function fireWeaponLogic(engine, w) {
             // Lash radius bumped 120 → 170 (2026-06-04, Anubis Discord) so the
             // kill-zones around adjacent drones overlap and there are no "dead
             // lanes" between drones that enemies could slip through.
+            // C10 2026-08-03 — DRAWING ONLY. Read the guard below before editing.
+            let lashHit = false;
             engine.enemies.forEach(e => {
                 if (Math.hypot(e.x - px, e.y - py) < 170 * area) {
                     engine.damageEnemy(e, dmg * 0.6, { weaponId: w.id });
                     if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 10);
+                    lashHit = true;
                 }
             });
+            // C10: the lash is this weapon's main damage and had NO visual at all
+            // — not a projectile, not a particle, only a 30%-chance spark on each
+            // victim. Enemies died several body-lengths from anything the player
+            // could see. One faint ring per drone that actually connected, at the
+            // reach it actually has.
+            //
+            // 🔴 The 170 * area below is READ FROM the damage check above, never
+            // the other way round. If these ever disagree, change the drawing.
+            // Aligning the hit radius to a drawing is a gameplay change and is
+            // explicitly out of scope for this pass.
+            //
+            // size * 0.9 is the drawn radius for a 'ring' particle (ParticleManager
+            // draws the shockwave texture at size * 1.8, centred), hence the 1.11.
+            // 'ring' is deliberately not 'shockwave' — shockwave self-expands in
+            // the update loop and would drift off the real radius.
+            if (lashHit) {
+                engine.particleManager.particles.push({
+                    x: px, y: py, vx: 0, vy: 0,
+                    life: 0.18, maxLife: 0.18,
+                    color: '#ff00ff', tint: '#ff00ff',
+                    type: 'ring', size: (170 * area) * 1.11, rotation: 0
+                });
+            }
         }
         // Player-centered plasma aura (2026-06-04, Anubis Discord). Small
         // continuous tick around the player so close-range enemies that get
         // inside the drone orbit aren't ignored. Lower DPS than the lashes
         // — fixes the "feels useless at point-blank" complaint without
         // turning the weapon into a no-fly ring.
+        let auraHit = false;
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 90 * area) {
                 engine.damageEnemy(e, dmg * 0.25, { weaponId: w.id });
+                auraHit = true;
             }
         });
+        // C10: the point-blank aura was the other invisible damage source. Same
+        // rule as the lash ring above — 90 * area is read from the check, and the
+        // check is not to be changed to match it.
+        if (auraHit) {
+            engine.particleManager.particles.push({
+                x: engine.player.x, y: engine.player.y, vx: 0, vy: 0,
+                life: 0.15, maxLife: 0.15,
+                color: '#00ffff', tint: '#00ffff',
+                type: 'ring', size: (90 * area) * 1.11, rotation: 0
+            });
+        }
     }
     else if (w.id === 'orbitalLasers') {
         // Drone count capped at 7 (was 14 at lvl 25). Each drone runs TWO full
@@ -538,11 +597,16 @@ export function fireWeaponLogic(engine, w) {
         }
     }
     else if (w.id === 'seismicWhip') {
-        const charColor = engine.player.color;
+        // C7 2026-08-03 — removed a dead `const charColor = engine.player.color;`
+        // here. It was assigned and never read.
         engine.particleManager.particles.push({
             x: engine.player.x, y: engine.player.y,
             vx: 0, vy: 0, life: 0.25, maxLife: 0.25,
-            color: '#ffffff', tint: '#ff00ff', type: 'slash', size: 80 * area, rotation: Math.random() * Math.PI * 2
+            // C6 2026-08-03 — Seismic Whip flashed magenta then emitted a cyan ring,
+            // reading as two different weapons. Unified on amber, which matches its
+            // "Quake Force" label; #ff00ff also collided exactly with Glitch's
+            // character colour, and #00ffff is shared by five other effects.
+            color: '#ffffff', tint: '#ff9500', type: 'slash', size: 80 * area, rotation: Math.random() * Math.PI * 2
         });
         let hitAny = false;
         let hitX = engine.player.x;
@@ -551,7 +615,7 @@ export function fireWeaponLogic(engine, w) {
         engine.enemies.forEach(e => {
             if (Math.hypot(e.x - engine.player.x, e.y - engine.player.y) < 120 * area) {
                 engine.damageEnemy(e, dmg, { weaponId: w.id });
-                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff00ff', 4, 'spark', 1.5);
+                if (Math.random() < 0.3) engine.addParticle(e.x, e.y, '#ff9500', 4, 'spark', 1.5);
                 hitAny = true;
                 hitX = e.x;
                 hitY = e.y;
@@ -559,7 +623,7 @@ export function fireWeaponLogic(engine, w) {
         });
         
         if (hitAny) {
-            engine.addParticle(hitX, hitY, '#00ffff', 15, 'spark', 2);
+            engine.addParticle(hitX, hitY, '#ffc46b', 15, 'spark', 2);
             const swR = 30 * area;
             engine.projectiles.push({
                 x: hitX, y: hitY,
@@ -570,7 +634,7 @@ export function fireWeaponLogic(engine, w) {
                 damage: dmg * 1.5,
                 pierce: 999,
                 life: 0.5,
-                color: '#00ffff',
+                color: '#ff9500',
                 isAoe: true,
                 pulse: true,
                 type: 'seismic_shockwave'
@@ -726,8 +790,12 @@ export function fireWeaponLogic(engine, w) {
             life: Math.min(15, 5 + w.level),
             // Hellfire description says "Blue flames that persist" — was red (#ff0000)
             // which contradicted the description and clashed visually with napalm.
-            // Deep sky blue distinguishes it from napalm mastery's lighter blue.
-            color: '#1E90FF',
+            // C6 2026-08-03 — #1E90FF did NOT distinguish it from mastered napalm
+            // (#00BFFF): both render through the same pool branch differing only by
+            // alpha 0.4/0.3 and 5/4 segments, so the *evolution* read as slightly
+            // more of the base weapon. Pushed to violet-blue, which stays inside
+            // "blue flames" while being unmistakably not napalm.
+            color: '#4d5bff',
             isAoe: true,
             burn: true,
             isMastered: true,
@@ -801,7 +869,9 @@ export function fireWeaponLogic(engine, w) {
             life: 2.5,
             // S7 §4b: pushback-decay reference (see shieldBubble).
             maxLife: 2.5,
-            color: '#ffd700',
+            // C6 2026-08-03 — was #ffd700, identical to a mastered shieldBubble.
+            // Aegis is the evolution, so it sits one step brighter on the same ramp.
+            color: '#fff3a0',
             isAoe: true,
             pushback: 300,
             isMastered: true,
