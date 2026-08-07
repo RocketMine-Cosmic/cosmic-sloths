@@ -1288,11 +1288,18 @@ export class GameEngine {
         // Particles & Text
         this.particleManager.update(dt);
         
-        this.damageTexts = this.damageTexts.filter(t => {
-            t.life -= dt;
-            t.y -= 20 * dt;
-            return t.life > 0;
-        });
+        // PERF 2026-08-07 — in-place compaction instead of allocating a new array
+        // every frame (same for envParticles below).
+        {
+            let w = 0;
+            for (let i = 0; i < this.damageTexts.length; i++) {
+                const t = this.damageTexts[i];
+                t.life -= dt;
+                t.y -= 20 * dt;
+                if (t.life > 0) this.damageTexts[w++] = t;
+            }
+            this.damageTexts.length = w;
+        }
 
         // Environmental Effects Update
         const vWidth = this.canvas.width / this.zoom;
@@ -1311,12 +1318,17 @@ export class GameEngine {
             }
         }
 
-        this.envParticles = this.envParticles.filter(p => {
-            p.life -= dt;
-            if (p.vx) p.x += p.vx * dt;
-            if (p.vy) p.y += p.vy * dt;
-            return p.life > 0;
-        });
+        {
+            let w = 0;
+            for (let i = 0; i < this.envParticles.length; i++) {
+                const p = this.envParticles[i];
+                p.life -= dt;
+                if (p.vx) p.x += p.vx * dt;
+                if (p.vy) p.y += p.vy * dt;
+                if (p.life > 0) this.envParticles[w++] = p;
+            }
+            this.envParticles.length = w;
+        }
     }
 
     spawnEnemies(dt) { spawnEnemiesLogic(this, dt); }
@@ -1352,7 +1364,9 @@ export class GameEngine {
             });
         }
 
-        this.hazards = this.hazards.filter(h => {
+        let hw = 0;
+        for (let hi = 0; hi < this.hazards.length; hi++) {
+            const h = this.hazards[hi];
             h.timer -= dt;
             if (h.timer <= 0 && !h.active) {
                 h.active = true;
@@ -1362,8 +1376,9 @@ export class GameEngine {
                 }
                 this.addParticle(h.x, h.y, '#ff4500', 20);
             }
-            return h.timer > 0;
-        });
+            if (h.timer > 0) this.hazards[hw++] = h;
+        }
+        this.hazards.length = hw;
     }
 
     updateWeapons(dt) {

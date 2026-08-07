@@ -10,13 +10,11 @@ export function renderGame() {
     this.ctx.globalCompositeOperation = 'source-over';
     this.ctx.globalAlpha = 1.0;
     
-    if (this.webglBg && this.webglBg.gl && this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
-        const camCenterX = this.camera.x + (this.canvas.width / this.zoom) / 2;
-        const camCenterY = this.camera.y + (this.canvas.height / this.zoom) / 2;
-        this.webglBg.resize(this.canvas.width, this.canvas.height);
-        const bgCanvas = this.webglBg.render(this.time, camCenterX, camCenterY, this.zoom);
-        this.ctx.drawImage(bgCanvas, 0, 0);
-    } else if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
+    // PERF 2026-08-07 — the old `this.webglBg` branch here was dead code: nothing
+    // in the codebase ever assigned engine.webglBg, so the WebGL background has
+    // never rendered a single frame. Removed along with the matching dead guard
+    // on the star loop below (WebGLBackground.js is now unused).
+    if (this.arenaImage && this.arenaImage.complete && this.arenaImage.naturalWidth > 0) {
         // Cache the rendered background to avoid expensive scaling and blending every frame
         if (!this.cachedArenaImage || this.cachedArenaImage.width !== this.canvas.width || this.cachedArenaImage.height !== this.canvas.height) {
             this.cachedArenaImage = document.createElement('canvas');
@@ -46,7 +44,7 @@ export function renderGame() {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    if (!this.webglBg || !this.webglBg.gl) {
+    {
         this.ctx.fillStyle = '#ffffff';
         this.stars.forEach(star => {
             let sx = (star.x - this.camera.x * star.parallax) % 2000;
@@ -800,12 +798,23 @@ export function renderGame() {
     // than per branch — only one of the three ever runs in a given arena.
     // Margin scales with p.size because fog and flares draw at 2x their size;
     // rain and embers have no size and fall back to the flat 96.
+    // PERF 2026-08-07 — this used to allocate a fresh filtered array every frame.
+    // Reuse one scratch array on the engine instead; same cull, zero allocation.
     const envCullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
-    const envVisible = envCullOn ? this.envParticles.filter(p => {
-        const m = (p.size || 8) * 2 + 96;
-        return p.x >= camX - m && p.x <= camX + vWidth + m &&
-               p.y >= camY - m && p.y <= camY + vHeight + m;
-    }) : this.envParticles;
+    let envVisible;
+    if (envCullOn) {
+        if (!this._envVisible) this._envVisible = [];
+        envVisible = this._envVisible;
+        envVisible.length = 0;
+        for (let i = 0; i < this.envParticles.length; i++) {
+            const p = this.envParticles[i];
+            const m = (p.size || 8) * 2 + 96;
+            if (p.x >= camX - m && p.x <= camX + vWidth + m &&
+                p.y >= camY - m && p.y <= camY + vHeight + m) envVisible.push(p);
+        }
+    } else {
+        envVisible = this.envParticles;
+    }
 
     if (this.envEffect === 'neon_rain') {
         this.ctx.globalCompositeOperation = 'screen';
