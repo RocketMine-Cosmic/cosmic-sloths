@@ -8,6 +8,62 @@ per-run setup and the React bridge** — where the worse problems actually are.
 
 ---
 
+## ⭐ PLAYER REPORT (Briantjeuh, Discord, 2026-08-07 07:26–07:30)
+
+> "my fps got worse **since the update** mate"
+> "also looks like **i get less kills** then usual"
+> "**the more mobs spawn the lower my fps goes**"
+> "idk maybe its because of **the red circles around them, they look different**"
+
+This is a near-perfect diagnostic. Taken literally it identifies the regression:
+
+**"the red circles around them, they look different" = the elite aura, changed by
+this very update.** `EnemyRenderer.js` C8 (2026-08-03) did two things at once:
+
+1. Flipped the aura from `globalCompositeOperation = 'screen'` to `'source-over'`
+   — which is exactly why it now reads as a solid **red circle** instead of a soft
+   additive glow. He is describing the C8 change verbatim.
+2. **Doubled the stroked ring work**: the rune rings are now drawn *twice* — a dark
+   backing pass (`lineWidth 4`) and then the colour pass (`lineWidth 2`) — so each
+   elite went from 2 stroked arcs to **4 stroked arcs plus a radial gradient built
+   fresh every frame**.
+
+**"the more mobs spawn the lower my fps" is then explained by §1 (the pool bug).**
+`isElite` is never cleared when an enemy object is recycled, so as a run progresses
+an ever-growing share of ordinary mobs render the full (now doubled, now opaque)
+elite aura. Elite cost per mob went up ~2× in the same update where the *number* of
+mobs paying that cost grows over time. That compounding is precisely the curve he
+describes, and it explains why it tracks mob count rather than being a flat drop.
+
+**Second regression from the same update: the particle layer split.** Before
+2026-08-03, `particleManager.draw()` ran **once** per frame. The cosmetic-layer work
+(`_cosmeticLayer` = trail / killfx) made it run **three times**, each pass iterating
+the *entire* particle array (cap 800) to filter by tag. Particle count scales with
+mob count too — so this is a second "more mobs = worse FPS" term added by the update.
+See §7.
+
+**Third: boss AoE telegraphs** (also 2026-08-03) added per-frame filled disc +
+stroked ring draws that previously did not exist. Correct fix for a real bug, but
+it is new per-frame cost.
+
+**"less kills than usual" — likely real, and *probably not* a balance change.** Two
+candidates, in order of suspicion:
+- Lower FPS itself. Several systems still tick on `frameCount`, not real time —
+  projectile trail spawns (`frameCount % 2`), `shieldBubble`'s mastery beam
+  (`frameCount % 30`), `black_hole_tick` damage (`frameCount % 30`), and on S7-and-
+  earlier the pool/shield damage ticks. At 30 fps instead of 60 these fire **half as
+  often**. S8 converted the pool/shield ticks to real-time accumulators, but the
+  others were not converted — so a frame-rate drop still directly reduces output.
+- §1 again: recycled mobs spawning `burrowed` (un-hittable, never un-burrows) or
+  `hacked` would distort kill counts in both directions.
+
+**Recommended response to this report:** §1 (pool reset) + revert/optimise the C8
+elite aura (cache the gradient by radius, and drop the doubled ring pass — keep the
+`source-over` readability fix, it was the point) + §7 particle layer arrays. Those
+three target exactly what he described.
+
+---
+
 ## 0. 🔴 `engine.webglBg` is NEVER ASSIGNED — dead branch, wrong fallback active
 
 `GameEngineDraw.js` branches on `this.webglBg && this.webglBg.gl` in two places.
@@ -166,6 +222,9 @@ cached. The arena-image fallback is pre-rendered once.
 
 ## Suggested order
 
+0. **Regression triage for the live report** (see ⭐ above): §1 pool reset +
+   elite-aura gradient cache / un-double the rings + §7 particle layer arrays.
+   These three are what Briantjeuh is feeling right now.
 1. **§1 pool reset** — it's a correctness bug (runs can end early) *and* a growing
    render cost. Highest priority regardless of FPS.
 2. **§2 init cancellation** — one leaked loop halves your frame budget for the
