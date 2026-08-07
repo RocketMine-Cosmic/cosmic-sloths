@@ -1,6 +1,7 @@
 // Projectile update logic extracted from GameEngine.
 // Handles player projectile movement, AoE, collisions, chains, and enemy projectiles.
 import { isS7OrLater, isS8OrLater } from '@/lib/seasonGate';
+import { CELL_SIZE, cellKey } from './GameEngine';
 
 // Cached at module load — same pattern as PickupSystem/_IS_S6.
 const _IS_S7 = isS7OrLater();
@@ -104,7 +105,7 @@ export function updateProjectiles(engine, dt) {
                 for (let bi = 0; bi < bosses.length; bi++) candidates.push(bosses[bi]);
                 for (let x = cx - 1; x <= cx + 1; x++) {
                     for (let y = cy - 1; y <= cy + 1; y++) {
-                        const cellEnemies = engine.spatialHash?.get(`${x},${y}`);
+                        const cellEnemies = engine.spatialHash?.get(cellKey(x, y));
                         if (cellEnemies) {
                             cellEnemies.forEach(e => {
                                 if (!e.isBoss) candidates.push(e);
@@ -264,7 +265,7 @@ export function updateProjectiles(engine, dt) {
                 }
                 for (let x = minX; x <= maxX; x++) {
                     for (let y = minY; y <= maxY; y++) {
-                        const cellEnemies = engine.spatialHash?.get(`${x},${y}`);
+                        const cellEnemies = engine.spatialHash?.get(cellKey(x, y));
                         if (cellEnemies) cellEnemies.forEach(e => {
                             if (!seen.has(e)) {
                                 seen.add(e);

@@ -3,6 +3,7 @@
 import { SFXManager } from './SFXManager';
 import { SaveManager } from './SaveManager';
 import { updateBossAbilities } from './BossSystem';
+import { CELL_SIZE, cellKey } from './GameEngine';
 import { isS6OrLater, isBossVacuumEnabled, isS7OrLater } from '@/lib/seasonGate';
 
 // Cached at module load — see PickupSystem for rationale.
@@ -354,7 +355,7 @@ export function updateEnemies(engine, dt) {
             const cy = Math.floor(e.y / cellSize);
             for (let x = cx - 1; x <= cx + 1; x++) {
                 for (let y = cy - 1; y <= cy + 1; y++) {
-                    const cellEnemies = engine.spatialHash?.get(`${x},${y}`);
+                    const cellEnemies = engine.spatialHash?.get(cellKey(x, y));
                     if (cellEnemies) {
                         cellEnemies.forEach(other => {
                             if (other.id === 'quantum_swarm' && Math.hypot(other.x - e.x, other.y - e.y) < 100) nearby++;

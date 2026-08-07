@@ -377,12 +377,6 @@ export function renderGame() {
     // (Enemy projectiles now render at the very end of the world pass —
     // see block after the invincibility ring below.)
 
-    // LAYER 3 (top): Major pickups — magnets, shields, nukes, relic fragments,
-    // chests, power-ups with custom icons. These are rare/high-value drops the
-    // player MUST be able to spot through the chaos, so they sit above enemy
-    // projectiles + AoE pools (player request 2026-05-14).
-    drawPickups(this.ctx, this.pickups, this.time, 'major', camX, camY, vWidth, vHeight);
-
     // C11 2026-08-03 — the margin was a flat 150, but drawEnemy renders sprites at
     // radius * 1.8. The squad meteor (radius 220) has a half-extent of 198, so it
     // was culled — and visibly popped out of existence — with roughly a 50-unit
@@ -416,6 +410,18 @@ export function renderGame() {
             this.ctx.beginPath(); this.ctx.ellipse(e.x, e.y, e.radius, e.radius * 0.5, 0, 0, Math.PI * 2); this.ctx.fill();
         }
     });
+
+    // LAYER 3 (top): Major pickups — magnets, shields, nukes, relic fragments,
+    // chests, power-ups with custom icons. These are rare/high-value drops the
+    // player MUST be able to spot through the chaos (player request 2026-05-14).
+    //
+    // 🔴 2026-08-07 — this pass USED to sit above, i.e. before the enemy loop,
+    // so every mob standing on a nuke / shield / magnet painted straight over
+    // it. In a swarm — the only time those drops matter — they were invisible
+    // (Briantjeuh, Discord). "Top layer" only means anything if it runs after
+    // the enemies; it now does. Minor pickups (xp/gold litter) deliberately
+    // stay BELOW enemies so they don't mask incoming threats.
+    drawPickups(this.ctx, this.pickups, this.time, 'major', camX, camY, vWidth, vHeight);
 
     if (this.player.trail !== 'default' && this.frameCount % 6 === 0) {
         this.particleManager.createTrail(this.player.x, this.player.y, this.player.trail, this.frameCount);
