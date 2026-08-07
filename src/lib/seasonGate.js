@@ -100,3 +100,47 @@ export function isS8OrLater() {
         return false;
     }
 }
+
+// Hitstop frame-accounting fix (G2) - activates at the S8->S9 rollover
+// (Mon Aug 10 2026 00:00 UTC). Named after what it gates rather than the
+// season, following isBossVacuumEnabled above: the justification travels with
+// the condition, and it retires cleanly when the old path is deleted.
+//
+// THE BUG. ProjectileSystem sets `engine.hitStopTimer = 0.01` on 5% of hits.
+// GameEngine returns early while that timer is positive, and that early return
+// sits ABOVE `this.time += dt`. At 60fps dt is ~0.0167 - larger than the 0.01
+// timer - so every trigger discards a whole update frame AND that frame never
+// advances the run clock. A build landing ~200 hits/sec trips it 10-15 times a
+// second: the game micro-stutters exactly when the build is strongest, and
+// `this.time` runs ~13-15% slow for precisely the players at the top of the
+// board.
+//
+// WHY IT IS GATED. Fixing the clock changes the effective length of a run for
+// heavy builds - sector runs end sooner in wall-clock, endless records more
+// time for the same play. Small, but these are boards that pay real OMENX, so
+// runs either side of the change are not strictly comparable. Holding it to a
+// rollover means no player's week contains both versions, and the publish
+// itself can happen whenever.
+//
+// NO VERSION GATE NEEDED. SaveManager.load() rebuilds the weekly/seasonal
+// containers on a period change and runs on essentially every render, so at
+// rollover every client re-derives its period state anyway. min_client_version
+// stays where it is and nobody sees a forced-update modal.
+//
+// CHECKED AGAINST LIVE DATA, not assumed: the runs nearest the 7200s ceiling
+// are the near-idle ones (6164s / 208 kills) and hitstop only fires on hits, so
+// their clocks are already accurate and this does not touch them. The heaviest
+// run (5031s / 53912 kills) lands ~5800s. Kill rates move DOWN, away from every
+// cap. No server-side mirror is required: saveScore only bounds-checks the
+// duration the client reports.
+//
+// Used by: game/ProjectileSystem.js.
+export function isHitstopFrameFixEnabled() {
+    try {
+        const { season_id } = getCurrentPeriodIds();
+        return seasonAtLeast(season_id, 2026, 9);
+    } catch {
+        // Defensive - if the period calc ever throws, keep today's behaviour.
+        return false;
+    }
+}
