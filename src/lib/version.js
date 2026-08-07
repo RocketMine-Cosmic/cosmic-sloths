@@ -8,7 +8,17 @@
 // value: { version: '1.0.2' } } in the DB or admin tools, then ship the new
 // client with APP_VERSION bumped to 1.0.2. Old clients will see the gate within
 // ~60s (maintenanceStatus poll interval) or instantly on next tab focus.
-export const APP_VERSION = '1.0.8';
+// 1.0.9 (2026-08-07) — bumped because 1.0.8 had come to name FOUR different
+// live builds: the original publish plus three perf batches on 08-07 that all
+// shipped without a bump. That left no rollback handle and made "it broke since
+// the update" impossible to pin to a build.
+//
+// ⚠️ `min_client_version` deliberately STAYS at 1.0.6. Bumping it would throw a
+// full-screen forced-update modal at every player, and nothing in this release
+// breaks an older client — the one behavioural change (the hitstop fix) is
+// behind a rollover gate, not a version gate, so old and new clients converge
+// on their own at the S9 boundary. See seasonGate.js isHitstopFrameFixEnabled().
+export const APP_VERSION = '1.0.9';
 
 // Lightweight numeric semver compare. Returns:
 //   -1 if a < b
