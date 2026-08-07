@@ -160,6 +160,27 @@ export const ALL_WARDROBE_ITEMS = [
 export function isItemOwned(item, save) {
     if (!item || !save) return false;
     if (item.source === 'free') return true;
+
+    // SOURCE FIRST, CATEGORY SECOND — fixed 2026-08-07.
+    //
+    // EVERY chest-granted item lands in `owned_chest_cosmetics`, whatever its
+    // category: that array is the VIP chest path's only writer (and it is in
+    // syncSave's SERVER_OWNED_UNLOCK_ARRAYS for exactly that reason).
+    //
+    // The switch below dispatches on CATEGORY, so the 3 mythic trails and the
+    // 2 mythic kill FX were being checked against `unlockedCosmetics` /
+    // `unlockedKillEffects` — the arrays the *standard* items live in. They
+    // could be won from a chest and never equipped: granted into one array,
+    // checked against another. Nothing had dropped yet, so nobody hit it.
+    //
+    // The epic pilot icons / LB frames / title flair were unaffected only
+    // because their categories happen to have no standard-array equivalent —
+    // i.e. the old code was right by accident for those three and wrong for
+    // the five where a category genuinely holds both sources.
+    if (item.source === 'chest') {
+        return (save.owned_chest_cosmetics || []).includes(item.id);
+    }
+
     switch (item.category) {
         case 'trail':
             return (save.unlockedCosmetics || ['default']).includes(item.id);
