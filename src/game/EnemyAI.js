@@ -383,7 +383,19 @@ export function updateEnemies(engine, dt) {
                 e.x = engine.player.x;
                 e.y = engine.player.y;
                 e.radius += dt * 2;
-                if (engine.frameCount % 30 === 0) {
+                // S8+: real-time 0.5s tick so the latch does the same damage per
+                // second regardless of frame rate (the frameCount tick below ran
+                // at half rate on 30fps devices). S7 and earlier keep the legacy
+                // tick so the in-flight S7 leaderboard isn't retroactively changed.
+                let _latchTick;
+                if (engine._isS8) {
+                    e._latchAcc = (e._latchAcc || 0) + dt;
+                    _latchTick = e._latchAcc >= 0.5;
+                    if (_latchTick) e._latchAcc -= 0.5;
+                } else {
+                    _latchTick = engine.frameCount % 30 === 0;
+                }
+                if (_latchTick) {
                     engine.takeDamage(2 + engine.player.armor, e.name || 'Black Hole Tick');
                 }
             }

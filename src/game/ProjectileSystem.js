@@ -34,6 +34,9 @@ function sweptHit(px0, py0, px, py, ex, ey, r) {
     return ddx * ddx + ddy * ddy < r2;
 }
 
+// Scratch set reused by checkAoe (see comment at its use site).
+const _aoeSeen = new Set();
+
 export function updateProjectiles(engine, dt) {
     // Drain deferred spawns whose fireAt has elapsed. Replaces the old
     // setTimeout-based quantum-collapse / nova-pulse-echo pattern — those
@@ -252,7 +255,12 @@ export function updateProjectiles(engine, dt) {
                 const maxX = Math.floor((p.x + r + 50) / cellSize);
                 const minY = Math.floor((p.y - r - 50) / cellSize);
                 const maxY = Math.floor((p.y + r + 50) / cellSize);
-                const seen = new Set();
+                // PERF 2026-08-07 — reuse one module-level Set instead of
+                // allocating a fresh one per AoE projectile per frame. Safe
+                // because checkAoe runs synchronously to completion and never
+                // nests (the callbacks only read/damage enemies).
+                const seen = _aoeSeen;
+                seen.clear();
                 // Always include active bosses — their large radii can miss the cell window.
                 // Use the cached per-frame active-boss list to skip the full enemy scan.
                 const bosses = engine._activeBosses || engine.enemies;
@@ -340,7 +348,19 @@ export function updateProjectiles(engine, dt) {
                     }
                 });
 
-                if (p.isMastered && p.weaponId === 'shieldBubble' && engine.frameCount % 30 === 0) {
+                // Mastered Shield Bubble fires a beam on a fixed cadence. S8+:
+                // real-time 0.5s accumulator so a 30fps phone fires as often as a
+                // 60fps PC (the frameCount tick below halved its rate at 30fps —
+                // same FPS-fairness bug already fixed for pool/shield damage).
+                let _beamDoTick;
+                if (_IS_S8) {
+                    p._beamAcc = (p._beamAcc || 0) + dt;
+                    _beamDoTick = p._beamAcc >= 0.5;
+                    if (_beamDoTick) p._beamAcc -= 0.5;
+                } else {
+                    _beamDoTick = engine.frameCount % 30 === 0;
+                }
+                if (p.isMastered && p.weaponId === 'shieldBubble' && _beamDoTick) {
                     const inRange = [];
                     checkAoe(e => {
                         if (Math.hypot(e.x - p.x, e.y - p.y) < p.radius * 2) inRange.push(e);

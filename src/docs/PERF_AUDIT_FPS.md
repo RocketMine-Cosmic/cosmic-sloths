@@ -37,30 +37,47 @@ applied and reflected in the polled HUD, no console errors.
 **Not verified in gameplay:** batch 2 was checked for build + page load only —
 the preview browser lost its wallet session so no run could be launched.
 
+### Batch 3 (2026-08-07)
+
+- ✅ **Frame-tied ticks → real-time (S8-gated, same pattern as the S8 pool/shield
+  fix).** `shieldBubble` mastery beam now fires on a 0.5s accumulator instead of
+  `frameCount % 30`, and the `black_hole_tick` latch damages on a 0.5s
+  accumulator instead of `frameCount % 30`. At 30fps both ran at HALF rate —
+  the beam was a real DPS loss for low-end devices. S7-and-earlier keep the
+  legacy tick so the in-flight leaderboard isn't retroactively changed.
+- ✅ **`shadowBlur = 15` removed from animated particles** — replaced with one
+  scaled-up low-alpha copy of the same frame. Canvas `shadowBlur` is a true
+  per-draw Gaussian blur and explosions spawn these in bursts.
+- ✅ **`checkAoe` Set allocation** — reuses one module-level scratch Set instead
+  of allocating per AoE projectile per frame.
+
+**Deliberately NOT changed:** projectile trail throttling (`frameCount % 2`) is
+purely visual — fewer trail sparks at 30fps costs no damage, and making it
+real-time would ADD particles on exactly the devices that are struggling.
+
 ---
 
 ## STILL OPEN (in rough priority order)
 
-1. **Frame-tied gameplay ticks** — real output loss at low FPS, and the likely
+1. ~~**Frame-tied gameplay ticks**~~ — done in batch 3, except: — real output loss at low FPS, and the likely
    cause of "less kills than usual". Several systems still tick on `frameCount`
    rather than elapsed time, so at 30 fps they fire HALF as often:
    `frameCount % 2` projectile trails, `shieldBubble` mastery beam
    (`% 30`), `black_hole_tick` damage (`% 30`). S8 converted the pool/shield
    damage ticks to real-time accumulators; these were missed. **This is a
    fairness bug, not just perf — low-end devices are doing less damage.**
-2. **`shadowBlur = 15` on every coloured `anim_*` particle** — a per-draw Gaussian
-   blur; every explosion pays it. Bake the glow into the cached tinted variant.
-3. **`filter()` per frame in `updateProjectiles`** and `updatePickups` — still
-   allocating a new array every frame. (A `updatePickups` rewrite was attempted
-   in batch 2 and backed out — the edit wouldn't validate. Retry carefully; the
-   magnet branch iterates the same array it's compacting.)
-4. **`checkAoe` allocates a `Set` + closure per AoE projectile per frame** —
-   pulse-type projectiles run it every frame while expanding.
-5. **Decide the background** — `WebGLBackground.js` is now provably unused. Either
+2. **`filter()` per frame in `updateProjectiles`** and `updatePickups` — still
+   allocating a new array every frame. **Not a mechanical change:** the
+   projectile loop PUSHES new projectiles mid-iteration (chain lightning,
+   mastered napBeam), and `filter` deliberately doesn't visit those. A naive
+   in-place compaction would visit and/or overwrite them. Needs a two-array
+   swap, not a write-back. (`updatePickups` was attempted in batch 2 and backed
+   out — same care needed, its magnet branch iterates the array it compacts.)
+3. **Decide the background** — `WebGLBackground.js` is now provably unused. Either
    delete it, or wire it up as its own stacked canvas (NOT `drawImage`d into the
    2D context). The current 150-star fallback loop does 150 `globalAlpha` state
    changes + fillRects per frame and doesn't parallax correctly anyway.
-6. **§8 small stuff** — `SpritePreloader.preload()` fires a network+decode burst
+4. **§8 small stuff** — `SpritePreloader.preload()` fires a network+decode burst
    exactly as the run starts; `SFXManager.playGoldPickup` schedules up to 7
    `setTimeout`s per call; the 100 ms HUD poll + 500 ms watchdog keep running
    after game-over while the modal is up; `handleResume`'s 1500 ms timeout is

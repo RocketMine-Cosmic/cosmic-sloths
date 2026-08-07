@@ -450,13 +450,20 @@ export class ParticleManager {
                     const fw = sheet.img.width / sheet.cols;
                     const fh = sheet.img.height / sheet.rows;
                     
+                    // PERF 2026-08-07 — this used to set shadowBlur = 15 on every
+                    // coloured anim particle. Canvas shadowBlur is a real Gaussian
+                    // blur recomputed per draw call, and explosions spawn these in
+                    // bursts, so it was one of the most expensive things in the
+                    // frame. Same soft halo is faked with one extra scaled-up,
+                    // low-alpha copy underneath — a plain drawImage, no blur.
                     if (p.color && p.color !== '#ffffff') {
-                        ctx.shadowColor = p.color;
-                        ctx.shadowBlur = 15;
+                        const gs = p.size * 1.35;
+                        ctx.globalAlpha = alpha * 0.4;
+                        ctx.drawImage(sheet.img, col * fw, row * fh, fw, fh, -gs/2, -gs/2, gs, gs);
+                        ctx.globalAlpha = alpha;
                     }
-                    
+
                     ctx.drawImage(sheet.img, col * fw, row * fh, fw, fh, -p.size/2, -p.size/2, p.size, p.size);
-                    ctx.shadowBlur = 0;
                 }
                 ctx.restore();
                 return; // Skip rest of the drawing for animated sprites
