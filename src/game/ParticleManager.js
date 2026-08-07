@@ -39,6 +39,19 @@ const loadTexture = (url, name) => {
 
 let proceduralSpriteSheetsCache = null;
 
+// 2026-08-07 — textures and the derived tint/glow/outline caches are now shared
+// across GameEngine instances. Previously every `new ParticleManager()` (i.e.
+// every run, including every Try Again) rebuilt five texture canvases — each one
+// running a 128×128 = 16,384-pixel getImageData → JS loop → putImageData on the
+// main thread — and threw away every tinted/glow variant, so all of them were
+// regenerated and re-uploaded to the GPU during the first seconds of the next
+// run. The procedural sprite sheets were already cached this way; the textures
+// should always have been too. They're immutable once loaded, so sharing is safe.
+let sharedTexturesCache = null;
+const sharedTintCache = {};
+const sharedGlowCache = {};
+const sharedOutlineCache = {};
+
 // Low-FX mode (set via Settings → Low FX Mode toggle). Slashes particle counts
 // and skips the procedural sprite-sheet animations — the two biggest thermal
 // drivers on mobile per Texxy's 2026-05-29 report. Cached for 1s so we don't
@@ -56,15 +69,31 @@ function isLowFx() {
 
 export class ParticleManager {
     constructor() {
-        this.particles = [];
+        // 2026-08-07 — particles are split into three lists, one per render layer.
+        // GameEngineDraw calls draw() THREE times per frame (combat, trail, killfx),
+        // and each call used to iterate the ENTIRE array (cap 800) just to skip the
+        // particles tagged for the other two layers — up to ~2,400 iterations/frame
+        // of pure filtering. Particle volume scales with mob count, so this was a
+        // second "more mobs = lower FPS" term introduced by the 2026-08-03 cosmetic
+        // layering. Each pass now touches only its own particles.
+        this.particles = [];        // combat VFX (impacts, explosions, AoE)
+        this.trailParticles = [];   // cosmetic trail layer
+        this.killfxParticles = [];  // cosmetic kill-effect layer
+        // Where addParticle/addAnim currently write. createTrail / createKillEffect
+        // point this at their own list for the duration of the call — replaces the
+        // old "spawn, then loop back over the array tagging _cosmeticLayer" pattern.
+        this._activeList = this.particles;
         this.pool = [];
-        this.textures = {
-            star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png', 'star'),
-            explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png', 'explosion'),
-            smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png', 'smoke'),
-            slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png', 'slash'),
-            shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
-        };
+        if (!sharedTexturesCache) {
+            sharedTexturesCache = {
+                star: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/0ea8232ec_generated_image.png', 'star'),
+                explosion: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/d54e51f9e_generated_image.png', 'explosion'),
+                smoke: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/882cab418_generated_image.png', 'smoke'),
+                slash: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/55426dc86_generated_image.png', 'slash'),
+                shockwave: loadTexture('https://media.base44.com/images/public/69c5d61e39690bf20f763b4c/371ac242b_generated_image.png', 'shockwave'),
+            };
+        }
+        this.textures = sharedTexturesCache;
 
         const loadSprite = (url) => {
             const img = new Image();
@@ -165,9 +194,9 @@ export class ParticleManager {
 
         this.spriteSheets = proceduralSpriteSheetsCache;
 
-        this.tintCache = {};
-        this.glowCache = {};
-        this.outlineCache = {};
+        this.tintCache = sharedTintCache;
+        this.glowCache = sharedGlowCache;
+        this.outlineCache = sharedOutlineCache;
     }
 
     getGlowTexture(color, radius) {
@@ -299,14 +328,20 @@ export class ParticleManager {
     }
 
     update(dt) {
-        if (this.particles.length > 800) {
-            const removed = this.particles.splice(0, this.particles.length - 800);
+        this._updateList(this.particles, dt, 800);
+        this._updateList(this.trailParticles, dt, 250);
+        this._updateList(this.killfxParticles, dt, 250);
+    }
+
+    _updateList(list, dt, cap) {
+        if (list.length > cap) {
+            const removed = list.splice(0, list.length - cap);
             for (let i = 0; i < removed.length; i++) {
                 this.pool.push(removed[i]);
             }
         }
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            let p = this.particles[i];
+        for (let i = list.length - 1; i >= 0; i--) {
+            let p = list[i];
             p.life -= dt;
             p.x += p.vx * dt;
             p.y += p.vy * dt;
@@ -348,8 +383,8 @@ export class ParticleManager {
 
             if (p.life <= 0) {
                 this.pool.push(p);
-                this.particles[i] = this.particles[this.particles.length - 1];
-                this.particles.pop();
+                list[i] = list[list.length - 1];
+                list.pop();
             }
         }
     }
@@ -374,13 +409,13 @@ export class ParticleManager {
         // multiple of it (shockwaves are the worst).
         const cullOn = Number.isFinite(camX) && vWidth > 0 && vHeight > 0;
 
-        this.particles.forEach(p => {
-            // Cosmetic-layer routing — see comment above draw().
-            if (layerFilter === null) {
-                if (p._cosmeticLayer) { return; }
-            } else if (p._cosmeticLayer !== layerFilter) {
-                return;
-            }
+        // Layer routing is now a list selection instead of a per-particle tag check
+        // across the whole array — see the constructor comment.
+        const list = layerFilter === 'trail' ? this.trailParticles
+                   : layerFilter === 'killfx' ? this.killfxParticles
+                   : this.particles;
+
+        list.forEach(p => {
             const alpha = Math.max(0, p.life / (p.maxLife || 1));
             if (alpha <= 0) return;
 
@@ -524,10 +559,8 @@ export class ParticleManager {
         p.rotSpeed = 0;
         p.animName = animName;
         p.gravity = false;
-        // Clear any cosmetic tag inherited from a recycled pool object.
-        p._cosmeticLayer = null;
         
-        this.particles.push(p);
+        this._activeList.push(p);
     }
 
     addParticle(x, y, color, count, type = 'star', sizeMult = 1, options = {}) {
@@ -559,11 +592,8 @@ export class ParticleManager {
             p.growthRate = options.growthRate;
             p.targetX = options.targetX;
             p.targetY = options.targetY;
-            // Clear any cosmetic tag inherited from a recycled pool object.
-            // createTrail / createKillEffect will re-tag if they're the caller.
-            p._cosmeticLayer = null;
 
-            this.particles.push(p);
+            this._activeList.push(p);
         }
     }
 
@@ -593,10 +623,10 @@ export class ParticleManager {
     }
 
     createKillEffect(x, y, effectId) {
-        // Tag every particle this call adds so they render in the dedicated
-        // late 'killfx' pass on top of the player sprite — paid kill effects
-        // were getting buried under enemy spawns / projectiles on busy screens.
-        const startLen = this.particles.length;
+        // Everything spawned in this call lands in the dedicated 'killfx' list so
+        // it renders in the late pass on top of the player sprite — paid kill
+        // effects were getting buried under enemy spawns / projectiles.
+        this._activeList = this.killfxParticles;
         switch (effectId) {
             case 'explosion':
                 this.addAnim(x, y, 'explosion_anim', 3.0, Math.random() * Math.PI * 2, '#ff4500');
@@ -656,9 +686,7 @@ export class ParticleManager {
                 this.addParticle(x, y, '#ffffff', 1, 'flash', 3.5, { speed: 0 });
                 break;
         }
-        for (let i = startLen; i < this.particles.length; i++) {
-            this.particles[i]._cosmeticLayer = 'killfx';
-        }
+        this._activeList = this.particles;
     }
 
     createTrail(x, y, trailId, frameCount) {
@@ -693,7 +721,7 @@ export class ParticleManager {
         const config = trailConfigs[trailId];
         if (!config) return;
 
-        const startLen = this.particles.length;
+        this._activeList = this.trailParticles;
         const color = config.colors[frameCount % config.colors.length];
         this.addParticle(x, y, color, 1, config.type, config.size, config.options);
 
@@ -703,9 +731,6 @@ export class ParticleManager {
             const a = config.accent;
             this.addParticle(x, y, a.color, 1, a.type, a.size, a.options);
         }
-
-        for (let i = startLen; i < this.particles.length; i++) {
-            this.particles[i]._cosmeticLayer = 'trail';
-        }
+        this._activeList = this.particles;
     }
 }

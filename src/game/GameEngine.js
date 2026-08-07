@@ -18,6 +18,19 @@ import { getCurrentPeriodIds } from '@/lib/periodIds';
 // stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
 const S7_PUSHBACK_WEAPONS = new Set(['shieldBubble', 'aegisMatrix', 'burningBarrier']);
 
+// PERF 2026-08-07 — the spatial hash was keyed by the template string `${cx},${cy}`.
+// That built one throwaway string per living enemy per frame when filling the hash,
+// plus up to 9 more per pierce-projectile per frame on lookup (and 9 per quantum_swarm
+// mob in EnemyAI). At 200 enemies + 100 projectiles that's well over a thousand string
+// allocations every frame — steady GC pressure of exactly the kind already removed
+// from the kill-milestone tables.
+// An integer key is exact (no collisions) for any |cy| < 2^21 cells, which at the
+// 100-unit cell size is ±200 million world units — far beyond anything reachable.
+export const CELL_SIZE = 100;
+export function cellKey(cx, cy) {
+    return cx * 4194304 + cy;
+}
+
 // PERF 2026-08-03 — kill-milestone damage tables, hoisted out of damageEnemy().
 // They were four array literals of five object literals built INSIDE the function,
 // so every damage event allocated the default table and then, on most paths, a
@@ -545,8 +558,18 @@ export class GameEngine {
         // whose timestamp is within the last DPS_WINDOW seconds. Lets the HUD's DPS
         // value reflect *recent* output so post-boss buffs / new evolutions show up
         // in real time instead of being averaged-out across the whole run.
-        this.dpsWindow = [];
+        // PERF 2026-08-07 — was an array of {t, dmg} objects pushed on EVERY hit.
+        // An AoE build lands hundreds of hits a second, so this allocated hundreds
+        // of short-lived objects per second purely to feed one HUD number, and it
+        // was only trimmed inside getRollingDps() — which the HUD calls only while
+        // UNPAUSED, so it grew without bound while a level-up modal was open, then
+        // trimmed with Array.shift() (O(n) per element).
+        // Now: fixed 0.5s buckets in a 20-slot ring (10s window). Zero allocation
+        // per hit, O(1) trim, same rolling-window semantics.
         this.DPS_WINDOW = 10;
+        this._dpsBuckets = new Float64Array(20);
+        this._dpsBucketIdx = 0;
+        this._dpsBucketTime = 0;
         
         this.characterMechanics = {
             bannerTimer: 0,
@@ -565,6 +588,12 @@ export class GameEngine {
         // PERF 2026-08-03 — bind ONCE. `this.loop.bind(this)` inside loop() allocated
         // a fresh bound function on every single frame, for the entire run.
         this._boundLoop = this.loop.bind(this);
+        // PERF 2026-08-07 — EnemyAI passed `engine.addParticle.bind(engine)` and
+        // `engine.addDamageText.bind(engine)` to updateBossAbilities for EVERY boss
+        // on EVERY frame, allocating two functions per boss per frame. Same defect
+        // as the loop bind above; bind once here.
+        this._boundAddParticle = this.addParticle.bind(this);
+        this._boundAddDamageText = this.addDamageText.bind(this);
         this.animationId = requestAnimationFrame(this._boundLoop);
     }
 
@@ -1218,14 +1247,14 @@ export class GameEngine {
         // Cache active bosses once per frame so projectile code doesn't re-filter
         // engine.enemies for every single bullet (was O(projectiles × enemies)).
         this._activeBosses = [];
-        const cellSize = 100;
+        const cellSize = CELL_SIZE;
         for (let i = 0; i < this.enemies.length; i++) {
             const e = this.enemies[i];
             if (e.hp <= 0) continue;
             if (e.isBoss) this._activeBosses.push(e);
             const cx = Math.floor(e.x / cellSize);
             const cy = Math.floor(e.y / cellSize);
-            const key = `${cx},${cy}`;
+            const key = cellKey(cx, cy);
             let cell = this.spatialHash.get(key);
             if (!cell) { cell = []; this.spatialHash.set(key, cell); }
             cell.push(e);
@@ -1434,10 +1463,8 @@ export class GameEngine {
         enemy.hp -= finalDamage;
         this.totalDamageDealt += finalDamage;
 
-        // Push into rolling DPS window (used by HUD).
-        if (this.dpsWindow) {
-            this.dpsWindow.push({ t: this.time, dmg: finalDamage });
-        }
+        // Accumulate into the current 0.5s DPS bucket (used by the HUD).
+        this._addDps(finalDamage);
 
         // Credit damage to source weapon (if any) and remember last hitter for kill credit.
         // If the caller didn't tag this hit, bucket it under 'untaggedAoE' so it
@@ -1553,16 +1580,35 @@ export class GameEngine {
     // Rolling 10s DPS — averages only the most recent damage so the HUD reflects
     // upgrades immediately (vs. dividing total run damage by total run time, which
     // makes late-run buffs invisible).
-    getRollingDps() {
-        if (!this.dpsWindow || this.dpsWindow.length === 0) return 0;
-        const cutoff = this.time - this.DPS_WINDOW;
-        // Drop expired entries (cheap — array stays bounded by recent damage rate).
-        while (this.dpsWindow.length && this.dpsWindow[0].t < cutoff) {
-            this.dpsWindow.shift();
+    // Advance the ring to the bucket for `this.time`, zeroing any buckets skipped
+    // along the way (a gap means no damage was dealt during them). Rolling past 10s
+    // of buckets just clears the whole ring.
+    _addDps(amount) {
+        const BUCKET = 0.5;
+        const slots = this._dpsBuckets.length;
+        const steps = Math.floor((this.time - this._dpsBucketTime) / BUCKET);
+        if (steps > 0) {
+            if (steps >= slots) {
+                this._dpsBuckets.fill(0);
+                this._dpsBucketIdx = 0;
+            } else {
+                for (let i = 0; i < steps; i++) {
+                    this._dpsBucketIdx = (this._dpsBucketIdx + 1) % slots;
+                    this._dpsBuckets[this._dpsBucketIdx] = 0;
+                }
+            }
+            this._dpsBucketTime += steps * BUCKET;
         }
-        if (this.dpsWindow.length === 0) return 0;
+        this._dpsBuckets[this._dpsBucketIdx] += amount;
+    }
+
+    getRollingDps() {
+        // Roll the ring forward first so stale buckets expire even when no damage
+        // has been dealt recently (otherwise the HUD would freeze on an old value).
+        this._addDps(0);
         let sum = 0;
-        for (let i = 0; i < this.dpsWindow.length; i++) sum += this.dpsWindow[i].dmg;
+        for (let i = 0; i < this._dpsBuckets.length; i++) sum += this._dpsBuckets[i];
+        if (sum === 0) return 0;
         // Use elapsed window length (clamped to actual observed span) to keep early-run DPS sane.
         const span = Math.max(1, Math.min(this.DPS_WINDOW, this.time));
         return sum / span;

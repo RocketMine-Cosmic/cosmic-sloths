@@ -41,6 +41,24 @@ const OUTER_GALAXY_TIER_BANDS = {
     19: { min: 12, max: 14 }, 20: { min: 12, max: 14 },
 };
 
+// 🔴 2026-08-07 — pooled enemy objects were reused with `Object.assign(obj, template)`,
+// which ONLY overwrites keys present on the template. Every field the AI wrote at
+// runtime survived into the next enemy that reused that object, and EnemyAI pooled
+// EVERY dead enemy including bosses and elites. Consequences seen live:
+//   • `isElite` persisted → ordinary mobs rendered the full elite aura (gradient +
+//     4 stroked arcs per frame). The share of mobs paying that cost grew as a run
+//     went on — this is the "the more mobs spawn the lower my fps" report.
+//   • `isBoss` persisted → a trash mob could set `sectorBossDefeated` on death and
+//     END THE SECTOR RUN early.
+//   • `hacked` → spawns green and infights. `latched` → glued to the player.
+//     `burrowed` → invisible and un-hittable forever (only void_crawler un-burrows).
+// Wiping every own key before the assign is the only future-proof fix: any new
+// runtime field added to an enemy later is cleared automatically.
+function resetPooledEnemy(obj) {
+    for (const k in obj) delete obj[k];
+    return obj;
+}
+
 // Helper: returns sector index 1-20 for the current arena, or 0 if not a sector.
 function getSectorNumber(arenaId) {
     const idx = ARENAS.findIndex(a => a.id === arenaId);
@@ -391,7 +409,7 @@ export function spawnEnemies(engine, dt) {
             const elites = ENEMIES.filter(e => !e.isBoss && e.tier >= eliteMin && e.tier <= eliteTierCap);
             if (elites.length > 0) {
                 const elite = elites[Math.floor(Math.random() * elites.length)];
-                let newElite = engine.enemyPool.length > 0 ? engine.enemyPool.pop() : {};
+                let newElite = engine.enemyPool.length > 0 ? resetPooledEnemy(engine.enemyPool.pop()) : {};
                 Object.assign(newElite, elite);
                 newElite.x = ex; newElite.y = ey;
                 newElite.maxHp = elite.hp * hpMult * 2.5;
@@ -415,7 +433,7 @@ export function spawnEnemies(engine, dt) {
             }
         }
 
-        let newEnemy = engine.enemyPool.length > 0 ? engine.enemyPool.pop() : {};
+        let newEnemy = engine.enemyPool.length > 0 ? resetPooledEnemy(engine.enemyPool.pop()) : {};
         Object.assign(newEnemy, type);
         newEnemy.x = ex; newEnemy.y = ey;
         newEnemy.speed = type.speed * spdMult;
@@ -435,7 +453,7 @@ export function spawnEnemies(engine, dt) {
             const offsetAngle = angle + (Math.random() - 0.5) * 0.8;
             const ex2 = engine.player.x + Math.cos(offsetAngle) * dist;
             const ey2 = engine.player.y + Math.sin(offsetAngle) * dist;
-            let extra = engine.enemyPool.length > 0 ? engine.enemyPool.pop() : {};
+            let extra = engine.enemyPool.length > 0 ? resetPooledEnemy(engine.enemyPool.pop()) : {};
             Object.assign(extra, type);
             extra.x = ex2; extra.y = ey2;
             extra.speed = type.speed * spdMult;

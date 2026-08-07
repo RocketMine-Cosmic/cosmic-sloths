@@ -156,6 +156,16 @@ export default function Game() {
         // previous run's tier-up cost (Hugo bug 2026-04-30).
         setBanishCount(0);
 
+        // 2026-08-07 — initGame awaits several things (SaveManager.initialize, the
+        // boss fetch, 5 dynamic imports) BEFORE the engine is constructed. If the
+        // component unmounted or runId bumped during those awaits (quitting fast,
+        // double-tapping Try Again, a slow cloud load), the effect's cleanup ran
+        // against the OLD engine and then this function went on to build a brand
+        // new engine whose requestAnimationFrame loop nobody owned — it kept
+        // ticking and drawing to a detached canvas for the rest of the session,
+        // stealing frames from the real run, and stacking one more loop each time.
+        let cancelled = false;
+
         const initGame = async () => {
             const { characterId, arenaId, difficultyId, isEndless, worldBossId, worldBossName, startingWeaponId, meteorAttackId } = runConfigRef.current || { characterId: 'neobyte', arenaId: 'station', difficultyId: 'normal', isEndless: false };
             // NG+ removed — ignore any legacy isNGPlus state passed via navigation.
@@ -376,9 +386,19 @@ export default function Game() {
         }
 
         const engine = new GameEngine(canvas, characterId, arenaId, difficultyId, save, {
-            onHpChange: (hp, maxHp) => setGameState(s => ({ ...s, hp, maxHp })),
-            onTimeChange: (time) => setGameState(s => ({ ...s, time })),
-            onGoldChange: (gold) => setGameState(s => ({ ...s, gold })),
+            // PERF 2026-08-07 — these three used to call setGameState directly.
+            // onHpChange fires on every hit taken and every regen tick, onGoldChange
+            // on every single gold pickup, and each one re-rendered the whole in-game
+            // React tree (UIOverlay + its weapon/passive lists, DD pill, ability
+            // meter) on the same main thread as the canvas loop. In a swarm that was
+            // dozens of reconciles per second, scaling with combat intensity —
+            // i.e. worst exactly when frames matter most.
+            // The 100ms poll below already reads hp/maxHp/gold/time straight off the
+            // engine, so these are now no-ops. HUD numbers land up to 100ms later,
+            // which is imperceptible.
+            onHpChange: () => {},
+            onTimeChange: () => {},
+            onGoldChange: () => {},
             onLevelUp: (choices) => {
                 setGameState(s => ({ ...s, level: engine.level, xp: engine.xp, xpRequired: engine.xpRequired }));
                 setLevelUpChoices(choices);
@@ -634,7 +654,13 @@ export default function Game() {
                 }
             }
         }, isEndless, worldBossId, worldBossName, startingWeaponId);
-        
+
+        // Lost the race — tear this engine down immediately instead of leaking it.
+        if (cancelled) {
+            engine.cleanup();
+            return;
+        }
+
         engineRef.current = engine;
 
         // Sandbox — pre-fire N starter level-ups so the player picks their build
@@ -666,6 +692,7 @@ export default function Game() {
         initGame();
         
         return () => {
+            cancelled = true;
             window.removeEventListener('resize', resizeCanvas);
             window.removeEventListener('orientationchange', resizeCanvas);
             if (engineRef.current) {
@@ -765,6 +792,13 @@ export default function Game() {
 
                 setGameState(s => ({
                     ...s,
+                    // Polled here instead of pushed from engine callbacks (see the
+                    // onHpChange / onGoldChange comment in the init effect).
+                    hp: engine.player.hp,
+                    maxHp: engine.player.maxHp,
+                    gold: engine.gold,
+                    time: Math.floor(engine.time),
+                    level: engine.level,
                     xp: engine.xp,
                     xpRequired: engine.xpRequired,
                     weapons: engine.player.weapons || [],

@@ -1,5 +1,30 @@
 # FPS Audit — 2026-08-07 (second pass, deep)
 
+## SHIPPED SO FAR (2026-08-07)
+
+- ✅ **§1 pooled-enemy state reset** — `EnemySpawner.resetPooledEnemy()` wipes every
+  own key before `Object.assign(template)`; `EnemyAI` no longer pools bosses.
+- ✅ **Elite aura gradient cached by radius** (`EnemyRenderer`) — no visual change,
+  the per-elite per-frame `createRadialGradient` is gone.
+- ✅ **§7 particle layer split** — three lists (combat / trail / killfx) instead of
+  three full-array passes over one tagged array.
+- ✅ **§2 init-race cancellation** (`Game.jsx`) — no more orphaned game loops.
+- ✅ **§6 bind-once** for the boss-ability callbacks.
+- ✅ **§3 React bridge** — `onHpChange` / `onTimeChange` / `onGoldChange` are no-ops;
+  the existing 100 ms poll reads hp/maxHp/gold/time/level off the engine.
+  `UIOverlay` is now `React.memo`.
+- ✅ **§4 particle textures + tint/glow/outline caches shared across runs.**
+- ✅ **§5 DPS ring buffer** — 20 × 0.5 s `Float64Array` buckets, zero alloc per hit.
+
+Verified in a live preview run: 0:15 elapsed, 16 kills, DPS 18, max-HP upgrade
+applied and reflected in the polled HUD, no console errors.
+
+**Still open:** §0 (dead WebGL background / fallback star loop), the remaining §7
+items (spatial-hash string keys, `shadowBlur` on animated particles, per-frame
+`filter()` allocations) and all of §8.
+
+---
+
 First pass covered per-frame hot paths. This pass covers **lifecycle, object reuse,
 per-run setup and the React bridge** — where the worse problems actually are.
 

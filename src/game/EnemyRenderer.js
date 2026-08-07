@@ -5,6 +5,27 @@
 // get a bright halo drawn BEHIND the sprite so the silhouette reads against
 // any background. Cost = one extra drawImage per instance, and only for
 // this ~handful of mob types — no perf impact on the rest of the roster.
+// 2026-08-07 (Briantjeuh FPS report) — the elite aura built a fresh
+// createRadialGradient for EVERY elite EVERY frame. Gradient construction is one
+// of the more expensive 2D canvas allocations, and the C8 change on 2026-08-03
+// made elites both more common on screen and more expensive to draw. The gradient
+// only depends on radius (colours are fixed), and it's built in LOCAL space (the
+// ctx is already translated to the enemy), so it caches perfectly by radius.
+// Rounded to whole pixels so near-identical radii share one entry.
+const _eliteGradCache = new Map();
+function getEliteGradient(ctx, radius) {
+    const key = Math.round(radius);
+    let g = _eliteGradCache.get(key);
+    if (!g) {
+        g = ctx.createRadialGradient(0, 0, key * 0.5 / 1.6, 0, 0, key);
+        g.addColorStop(0, '#ff6600');
+        g.addColorStop(0.5, '#ff2200');
+        g.addColorStop(1, 'transparent');
+        _eliteGradCache.set(key, g);
+    }
+    return g;
+}
+
 const RIM_LIGHT_IDS = new Set([
     't10_shadow',
     't11_shadow_mantling',
@@ -33,11 +54,7 @@ export function drawEnemy(ctx, e, time, playerX) {
         // elite tell disappeared. source-over keeps the orange orange.
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = elitePulse;
-        const eliteGrad = ctx.createRadialGradient(0, 0, e.radius * 0.5, 0, 0, auraRadius);
-        eliteGrad.addColorStop(0, '#ff6600');
-        eliteGrad.addColorStop(0.5, '#ff2200');
-        eliteGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = eliteGrad;
+        ctx.fillStyle = getEliteGradient(ctx, auraRadius);
         ctx.beginPath();
         ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
         ctx.fill();

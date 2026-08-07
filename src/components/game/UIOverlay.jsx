@@ -26,7 +26,7 @@ const stripOwnerPrefix = (name) => {
     return name;
 };
 
-export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, omenxPurchasesDisabled = false, arenaId = '', ddMult = 1.0 }) {
+function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, omenxBalance = 0, weapons = [], passives = [], score = 0, dps = 0, kills = 0, killsCapped = false, boss = null, xpBuffActive = false, xpBuffExpiry = 0, onPause, omenxPurchasesDisabled = false, arenaId = '', ddMult = 1.0 }) {
     // Squad Meteor runs don't feed the leaderboard — score has no meaning there,
     // so hide the row to avoid confusing players who think it matters.
     const isMeteorRun = arenaId === 'quantum_meteor';
@@ -236,3 +236,10 @@ export default function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequ
         </div>
     );
 }
+
+// PERF 2026-08-07 — memoised. The HUD polls the engine 10×/second, so this tree
+// (HP bar, weapon + passive lists, timer/score/DPS/kills, DD pill, boss bar, XP
+// bar) reconciles constantly during a run on the same thread as the game loop.
+// Most polls change only one or two numbers; memo lets React skip the whole
+// subtree whenever the props are actually identical.
+export default React.memo(UIOverlay);

@@ -267,7 +267,12 @@ export function updateEnemies(engine, dt) {
                 }
             }
 
-            engine.enemyPool.push(e);
+            // 2026-08-07 — never pool bosses. Boss objects carry a large amount of
+            // bespoke state (telegraph arrays, phase flags, weakSide, heads, custom
+            // sprite refs) and reusing one as a trash mob was how `isBoss` leaked
+            // into ordinary enemies. Spawner also resets pooled objects now, but
+            // bosses are rare enough that pooling them buys nothing.
+            if (!e.isBoss) engine.enemyPool.push(e);
             engine.enemies[i] = engine.enemies[engine.enemies.length - 1];
             engine.enemies.pop();
             continue;
@@ -510,7 +515,7 @@ export function updateEnemies(engine, dt) {
             if (e.isBoss) {
                 const beforeLen = engine.enemyProjectiles.length;
                 const bossTakeDamage = (amt) => engine.takeDamage(amt, e.name || 'Boss');
-                updateBossAbilities(e, dt, engine.player, engine.enemyProjectiles, engine.addParticle.bind(engine), engine.addDamageText.bind(engine), bossTakeDamage, engine.enemies, engine.frameCount, engine.arena.id, engine.bossModifiers);
+                updateBossAbilities(e, dt, engine.player, engine.enemyProjectiles, engine._boundAddParticle, engine._boundAddDamageText, bossTakeDamage, engine.enemies, engine.frameCount, engine.arena.id, engine.bossModifiers);
                 // Tag any newly-spawned boss projectiles with the boss's name for kill credit.
                 for (let pi = beforeLen; pi < engine.enemyProjectiles.length; pi++) {
                     const proj = engine.enemyProjectiles[pi];
