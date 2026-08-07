@@ -19,9 +19,57 @@
 Verified in a live preview run: 0:15 elapsed, 16 kills, DPS 18, max-HP upgrade
 applied and reflected in the polled HUD, no console errors.
 
-**Still open:** §0 (dead WebGL background / fallback star loop), the remaining §7
-items (spatial-hash string keys, `shadowBlur` on animated particles, per-frame
-`filter()` allocations) and all of §8.
+### Batch 2 (2026-08-07, after first publish)
+
+- ✅ **§7 spatial hash integer keys** — `cellKey(cx, cy) = cx * 4194304 + cy` in
+  `GameEngine` / `ProjectileSystem` / `EnemyAI`. Thousands of throwaway strings
+  per frame gone.
+- ✅ **Major-pickup draw order** (`GameEngineDraw`) — nukes / shields / magnets /
+  fragments now draw AFTER enemies, so mobs can't paint over them in a swarm
+  (Briantjeuh). XP/gold litter deliberately stays below enemies.
+- ✅ **§0 dead WebGL branch removed** — nothing ever assigned `engine.webglBg`, so
+  both branches were unreachable. `WebGLBackground.js` is now an unused file
+  (see "still open" — decide delete vs wire up).
+- ✅ **§7 per-frame `filter()`** for `damageTexts`, `envParticles`, `hazards`
+  (in-place compaction) and the env-particle cull list in the draw path (reuses
+  one scratch array on the engine).
+
+**Not verified in gameplay:** batch 2 was checked for build + page load only —
+the preview browser lost its wallet session so no run could be launched.
+
+---
+
+## STILL OPEN (in rough priority order)
+
+1. **Frame-tied gameplay ticks** — real output loss at low FPS, and the likely
+   cause of "less kills than usual". Several systems still tick on `frameCount`
+   rather than elapsed time, so at 30 fps they fire HALF as often:
+   `frameCount % 2` projectile trails, `shieldBubble` mastery beam
+   (`% 30`), `black_hole_tick` damage (`% 30`). S8 converted the pool/shield
+   damage ticks to real-time accumulators; these were missed. **This is a
+   fairness bug, not just perf — low-end devices are doing less damage.**
+2. **`shadowBlur = 15` on every coloured `anim_*` particle** — a per-draw Gaussian
+   blur; every explosion pays it. Bake the glow into the cached tinted variant.
+3. **`filter()` per frame in `updateProjectiles`** and `updatePickups` — still
+   allocating a new array every frame. (A `updatePickups` rewrite was attempted
+   in batch 2 and backed out — the edit wouldn't validate. Retry carefully; the
+   magnet branch iterates the same array it's compacting.)
+4. **`checkAoe` allocates a `Set` + closure per AoE projectile per frame** —
+   pulse-type projectiles run it every frame while expanding.
+5. **Decide the background** — `WebGLBackground.js` is now provably unused. Either
+   delete it, or wire it up as its own stacked canvas (NOT `drawImage`d into the
+   2D context). The current 150-star fallback loop does 150 `globalAlpha` state
+   changes + fillRects per frame and doesn't parallax correctly anyway.
+6. **§8 small stuff** — `SpritePreloader.preload()` fires a network+decode burst
+   exactly as the run starts; `SFXManager.playGoldPickup` schedules up to 7
+   `setTimeout`s per call; the 100 ms HUD poll + 500 ms watchdog keep running
+   after game-over while the modal is up; `handleResume`'s 1500 ms timeout is
+   never cleared on unmount.
+
+**No FPS baseline exists.** Nothing here has a measured before/after — all of it
+is "work removed per frame", reasoned from the code. If numbers are wanted, an
+in-game frame-time readout needs to land first so real devices can be compared
+across batches.
 
 ---
 
