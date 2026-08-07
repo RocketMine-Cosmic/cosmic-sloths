@@ -21,6 +21,27 @@ function CustomFieldEditor({ draft, setDraft }) {
 
     const handleApply = () => {
         if (!field.trim()) { setMsg('Please enter a field name.'); return; }
+
+        // GUARD ADDED 2026-08-07 — this editor REPLACES, it cannot append.
+        //
+        // The value types are number / text / true-false, and the write below
+        // is `{ ...d, [field]: parsed }`. So naming a field whose current value
+        // is an ARRAY silently swaps the whole array for a scalar: typing
+        // `unlockedCosmetics` + text + `weapon_trail_void` used to destroy every
+        // trail the player owned, with a ✓ success message.
+        //
+        // Refuse it. The array-backed fields all have proper toggle grids above
+        // (Characters, Arenas, Trail Cosmetics, Kill Effects, Skins, Relics),
+        // and those use toggleArrayItem, which appends.
+        if (Array.isArray(draft?.[field.trim()])) {
+            setMsg(`⚠ "${field.trim()}" is a list (${draft[field.trim()].length} item(s)). This editor would REPLACE it, not add to it — use the section above for that field instead.`);
+            return;
+        }
+        if (draft?.[field.trim()] && typeof draft[field.trim()] === 'object') {
+            setMsg(`⚠ "${field.trim()}" holds structured data. This editor would REPLACE it with a single value — not safe. Use the section above for that field.`);
+            return;
+        }
+
         let parsed;
         if (type === 'number') {
             parsed = Number(value);
@@ -374,7 +395,14 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                 {/* Cosmetics */}
                 <Section title="🎨 Trail Cosmetics" color="text-pink-400">
                     <div className="flex gap-2 mb-2">
-                        <button onClick={() => set('unlockedCosmetics', ALL_TRAIL_IDS)} className="text-xs bg-pink-800 hover:bg-pink-700 text-white px-3 py-1 rounded font-bold transition-colors">Grant All</button>
+                        {/* ADDITIVE since 2026-08-07. This used to be a bare
+                            set(...ALL_TRAIL_IDS), i.e. an OVERWRITE with the 12
+                            STANDARD ids — which silently removed any mythic
+                            chest trail the player owned, because those live in
+                            the same array conceptually but are defined in
+                            wardrobeData.jsx, not Constants.js. Union, never
+                            replace. */}
+                        <button onClick={() => set('unlockedCosmetics', [...new Set([...(draft.unlockedCosmetics || []), ...ALL_TRAIL_IDS])])} className="text-xs bg-pink-800 hover:bg-pink-700 text-white px-3 py-1 rounded font-bold transition-colors">Grant All</button>
                         <button onClick={() => set('unlockedCosmetics', ['default'])} className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded font-bold transition-colors">Reset</button>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -388,13 +416,19 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
 
                 <Section title="💥 Kill Effects" color="text-red-400">
                     <div className="flex gap-2 mb-2">
-                        <button onClick={() => set('unlockedKillCosmetics', ALL_KILL_IDS)} className="text-xs bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded font-bold transition-colors">Grant All</button>
+                        {/* KEY CORRECTED 2026-08-07: this section wrote
+                            `unlockedKillCosmetics`, a name that appears nowhere
+                            else in the codebase and that ZERO live saves carry.
+                            Every consumer reads `unlockedKillEffects`. This
+                            panel had never granted anything. Also made additive,
+                            same reasoning as Trail Cosmetics above. */}
+                        <button onClick={() => set('unlockedKillEffects', [...new Set([...(draft.unlockedKillEffects || []), ...ALL_KILL_IDS])])} className="text-xs bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded font-bold transition-colors">Grant All</button>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         {KILL_COSMETICS.map(k => (
                             <ToggleChip key={k.id} label={`${k.icon} ${k.name}`}
-                                active={(draft.unlockedKillCosmetics || []).includes(k.id)}
-                                onClick={() => toggleArrayItem('unlockedKillCosmetics', k.id)} />
+                                active={(draft.unlockedKillEffects || []).includes(k.id)}
+                                onClick={() => toggleArrayItem('unlockedKillEffects', k.id)} />
                         ))}
                     </div>
                 </Section>
