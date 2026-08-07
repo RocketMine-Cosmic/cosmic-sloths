@@ -1,6 +1,6 @@
 // Projectile update logic extracted from GameEngine.
 // Handles player projectile movement, AoE, collisions, chains, and enemy projectiles.
-import { isS7OrLater, isS8OrLater } from '@/lib/seasonGate';
+import { isS7OrLater, isS8OrLater, isHitstopFrameFixEnabled } from '@/lib/seasonGate';
 import { CELL_SIZE, cellKey } from './GameEngine';
 
 // Cached at module load — same pattern as PickupSystem/_IS_S6.
@@ -9,6 +9,15 @@ const _IS_S7 = isS7OrLater();
 // (unfair to 30fps mobile) to real-time accumulators (4Hz on every device).
 // Held back until W29 rollover so the in-flight S7 leaderboard stays fair.
 const _IS_S8 = isS8OrLater();
+// G2 hitstop frame-accounting fix. Held to the S8->S9 rollover so the in-flight
+// S8 leaderboard stays fair - same reasoning as _IS_S8 above.
+//
+// NOTE these gate constants are cached at MODULE LOAD, so a tab left open
+// across the rollover keeps the old behaviour until it reloads. That is fine
+// and is true of _IS_S7/_IS_S8 as well: the weekly Omen re-auth
+// (omenxSessionWeek.js) clears auth at Mon 00:00 UTC and ends in a
+// location.reload(), which sweeps up anyone still sitting on a stale module.
+const _HITSTOP_FRAME_FIX = isHitstopFrameFixEnabled();
 
 // Swept circle-vs-point hit test: returns true if the line segment from (px0,py0)
 // to (px,py) passes within `r` of point (ex,ey). Handles fast projectiles + moving
@@ -159,7 +168,27 @@ export function updateProjectiles(engine, dt) {
                                             // event. Kills now own the screenshake.
                                             // The hitstop and hit effect below are
                                             // deliberately kept.
-                                            if (Math.random() < 0.05) {
+                                            // The random hitstop is RETIRED at S9 (_HITSTOP_FRAME_FIX).
+                                            //
+                                            // It intends a 10ms freeze, but the engine's granularity is
+                                            // one frame: GameEngine returns early while hitStopTimer > 0,
+                                            // and at 60fps dt (~0.0167) always exceeds 0.01, so the freeze
+                                            // is never 10ms - it is always a whole discarded frame. Worse,
+                                            // that early return sits ABOVE `this.time += dt`, so the
+                                            // discarded frame does not advance the run clock either.
+                                            //
+                                            // At ~200 hits/sec it fires 10-15 times a second: the game
+                                            // micro-stutters exactly when a build is at its strongest, and
+                                            // the run clock drifts ~13-15% slow for the players at the top
+                                            // of the board.
+                                            //
+                                            // There is no sub-frame version available here - any positive
+                                            // timer costs a full frame - so the choice was between removing
+                                            // it and keeping the freeze while fixing the clock (moving
+                                            // `this.time += dt` above GameEngine's early return). Removed,
+                                            // because the stutter is the reported symptom and kills already
+                                            // own the screenshake (see the C3 note above).
+                                            if (!_HITSTOP_FRAME_FIX && Math.random() < 0.05) {
                                                 engine.hitStopTimer = 0.01;
                                             }
                                             engine.particleManager.createHitEffect(e.x, e.y, p.color, Math.atan2(p.vy, p.vx), 1.5);
