@@ -23,10 +23,10 @@ Where we use the SDK today:
 | 30-day player session gate | Handled — weekly re-auth + `PLAYER_NOT_FOUND` → 409 `omenSessionStale` in purchaseSku |
 | `chainId` limited to `'56' \| '97'` | We use `'56'` everywhere |
 
-## ⚠️ Platform-behavior corrections that apply EVEN ON v1 (docs were wrong before)
+## ✅ Platform-behavior corrections — FIXED ON v1 (2026-08-09)
 
-These are documented API semantics, not SDK code — worth fixing whenever convenient,
-independent of the upgrade:
+These are documented API semantics, not SDK code. All three are now fixed in
+`purchaseSku`; kept here for context.
 
 1. **purchaseSku accepts only `status === 'confirmed'`.** Per 2.0.1 docs, an idempotent
    replay of a legacy row can return `'completed'` (also a success). Right now that path

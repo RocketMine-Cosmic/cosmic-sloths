@@ -97,9 +97,22 @@ function isInRunSku(skuId) {
 //   401 INVALID_API_KEY       — this key disabled/expired. Cycle to next key.
 //   400 VALIDATION_ERROR      — malformed request. TERMINAL.
 //   428 IDEMPOTENCY_KEY_REQ   — we always send one, should never happen.
+// CORRECTED 2026-08-09 (per OmenX SDK v2 docs). Three codes arrive with a
+// retriable-looking 5xx status but are DEFINITIVE — the platform marks the
+// purchase failed BEFORE returning them, so a retry can only come back
+// 422 PAYMENT_FAILED ("payment failed on-chain") when no payment was ever
+// attempted. Retrying them replaces an accurate error with a misleading one.
+//   503 BALANCE_CHECK_FAILED  — RPC error reading balance. Purchase already failed.
+//   502 ALLOWANCE_READ_FAILED — same.
+//   502 GRANT_FAILED          — player WAS CHARGED, item delivery failed. Reconcile.
+function isTerminal5xx(msg) {
+    return /balance_check_failed|allowance_read_failed|grant_failed/i.test(msg);
+}
 function isRetryable5xx(msg) {
-    // 502/503/504 are all retry-safe per OmenX spec
-    return /\b50[234]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable|balance_check_failed|payment_pending/i.test(msg);
+    // Only genuinely-transient 5xx. PAYMENT_PENDING (502) is the main one:
+    // tx broadcast, receipt not yet seen — retry with the SAME idempotencyKey.
+    if (isTerminal5xx(msg)) return false;
+    return /\b50[234]\b/.test(msg) || /bad gateway|gateway timeout|service unavailable|payment_pending/i.test(msg);
 }
 
 // Client-side timeout for a single sdk.createPurchase call. The OmenX SDK has
@@ -822,9 +835,42 @@ Deno.serve(async (req) => {
                     return Response.json({ error: 'Payments are temporarily unavailable. Please try again shortly.' }, { status: 500 });
                 }
 
-                // 502/503/504 = retry-safe per OmenX spec (PAYMENT_PENDING /
-                // BALANCE_CHECK_FAILED / GATEWAY_TIMEOUT). Same idempotencyKey
-                // protects against double-charge if a previous attempt settled.
+                // GRANT_FAILED — the charge SUCCEEDED and delivery failed. Never
+                // retry (a replay returns 422 PAYMENT_FAILED, which reads as
+                // "never paid" and hides a real charge). Alert for reconcile and
+                // tell the player their payment went through.
+                if (/grant_failed/i.test(msg)) {
+                    console.error(`[purchaseSku] GRANT_FAILED — CHARGED but not granted. wallet=${walletAddress} sku=${skuId} key=${idempotencyKey}`);
+                    postDiscord('DISCORD_ERROR_WEBHOOK', 0xef4444, {
+                        title: '🚨 CHARGED but not granted (GRANT_FAILED)',
+                        description: 'OmenX took payment and item delivery failed. Needs manual reconcile — do NOT re-run the purchase.',
+                        fields: [
+                            { name: 'SKU', value: skuId, inline: true },
+                            { name: 'Amount', value: `${totalAmount} OMENX`, inline: true },
+                            { name: 'Wallet', value: `\`${walletAddress}\``, inline: false },
+                            { name: 'Idempotency key', value: `\`${idempotencyKey}\``, inline: false },
+                        ],
+                    });
+                    return Response.json({
+                        error: 'Your payment went through but the item failed to deliver. Our team has been alerted and will sort it out — please do not buy again.',
+                        grantFailed: true,
+                    }, { status: 500 });
+                }
+
+                // BALANCE_CHECK_FAILED / ALLOWANCE_READ_FAILED — look transient
+                // (503/502) but the purchase is already marked failed upstream.
+                // Nothing was charged; retrying only yields a misleading error.
+                if (isTerminal5xx(msg)) {
+                    console.warn(`[purchaseSku] terminal 5xx (no charge) wallet=${walletAddress} sku=${skuId}: ${msg.slice(0, 200)}`);
+                    return Response.json({
+                        error: "Couldn't confirm your OMENX balance right now. You haven't been charged — please try again in a moment.",
+                        omenxServiceDown: true,
+                    }, { status: 503 });
+                }
+
+                // Genuinely transient 5xx (PAYMENT_PENDING / gateway timeout).
+                // Same idempotencyKey protects against double-charge if a
+                // previous attempt actually settled.
                 if (isRetryable5xx(msg)) {
                     if (i < attempts - 1) {
                         console.warn(`[purchaseSku] OmenX retry-safe 5xx on key ${i + 1} — retrying (${i + 2}/${attempts}):`, msg.slice(0, 120));
@@ -937,9 +983,21 @@ Deno.serve(async (req) => {
         const txHash = purchaseData?.transactionId || purchaseData?.transactionHash || purchaseData?.txHash || purchaseData?.paymentTxHash || null;
         const status = purchaseData?.status || 'unknown';
         console.log(`[purchaseSku] OmenX status=${status} txHash=${txHash || 'NONE'}`);
-        if (status === 'confirmed') recordBreakerSuccess();
-        if (status !== 'confirmed') {
-            console.error('[purchaseSku] Purchase not confirmed:', JSON.stringify(purchaseData).slice(0, 500));
+        // 'confirmed' is the success value. 'completed' only ever comes back on an
+        // idempotent replay of a legacy row — also a success. Treating it as a
+        // failure told an already-charged player "you haven't been charged".
+        const isSettled = status === 'confirmed' || status === 'completed';
+        if (isSettled) recordBreakerSuccess();
+        if (!isSettled) {
+            console.error('[purchaseSku] Purchase not settled:', JSON.stringify(purchaseData).slice(0, 500));
+            // 'pending' = still settling on-chain. The charge MAY still land, so we
+            // must not claim they weren't charged. 'refunded' = reversed, safe to say so.
+            if (status === 'pending') {
+                return Response.json({
+                    error: "Your payment is still confirming on-chain. Give it a moment and refresh — please don't buy again.",
+                    paymentPending: true,
+                }, { status: 202 });
+            }
             return Response.json({ error: "Your payment didn't go through. Please try again — you haven't been charged." }, { status: 500 });
         }
 
