@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
 
 // Standalone weekly KILL leaderboard payout.
 //
@@ -167,12 +168,8 @@ Deno.serve(async (req) => {
         if (pools.length === 0) return Response.json({ error: 'No weekly pool found for this period' }, { status: 404 });
         const pool = pools[0];
 
-        // Load config
-        let cfg = DEFAULT_PAYOUT_CONFIG;
-        try {
-            const rows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
-            if (rows[0]?.value) cfg = rows[0].value;
-        } catch {}
+        // Config — period-locked snapshot wins over the live AppConfig.
+        const cfg = (await resolvePayoutConfig(base44.asServiceRole, pool)) || DEFAULT_PAYOUT_CONFIG;
 
         const killPoolPct = Number.isFinite(Number(cfg.kill_pool_pct)) ? Number(cfg.kill_pool_pct) : 0.05;
         const killRewardPool = Math.floor(pool.total_spent * killPoolPct);

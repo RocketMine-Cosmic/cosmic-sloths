@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Trophy, Save, RotateCcw, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import AdminPeriodConfigLock from './AdminPeriodConfigLock';
 
 // Owner-only panel for editing the leaderboard payout configuration.
 // - Dropdown to pick top N (1..50 quick picks, or custom)
@@ -352,6 +353,8 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
                     tiers={killTiers} setTiers={setKillTiers}
                     poolMultiplier={killPoolPct} topN={topN} />
             </div>
+
+            <AdminPeriodConfigLock isOwner={isOwner} />
         </div>
     );
 }

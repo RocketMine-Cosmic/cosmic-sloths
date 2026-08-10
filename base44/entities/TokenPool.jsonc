@@ -14,6 +14,20 @@
     "distributed": {
       "type": "boolean",
       "default": false
+    },
+    "locked_payout_config": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Frozen snapshot of the leaderboard payout config (top_n, pool %s, rank tiers) for THIS period. When present, every payout path (preview, distribute, kill pool) uses this instead of the current global AppConfig \u2014 so editing the live config only affects periods that aren't locked. Set via leaderboardPayoutConfig action='lock_period'; cleared with action='unlock_period'."
+    },
+    "config_locked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When locked_payout_config was frozen."
+    },
+    "config_locked_by": {
+      "type": "string",
+      "description": "Wallet of the admin who froze the config for this period."
     }
   },
   "required": [

@@ -194,6 +194,60 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, config: newConfig });
         }
 
+        // Freeze / unfreeze the payout config for ONE undistributed period.
+        // Locking copies the CURRENT config onto the TokenPool row, so later
+        // edits to the global config no longer change that period's payout.
+        if (action === 'lock_period' || action === 'unlock_period') {
+            let callerWallet = 'EMERGENCY_KEY';
+            if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
+                const me = await base44.auth.me();
+                if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+                callerWallet = me.wallet_address?.toLowerCase();
+                if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+                const records = await base44.asServiceRole.entities.AdminWallet.list();
+                const adminRec = records.find(r => r.wallet_address === callerWallet);
+                if (!adminRec || !(adminRec.permissions || []).includes('owner')) {
+                    return Response.json({ error: 'Forbidden — owner permission required' }, { status: 403 });
+                }
+            }
+
+            const { period_id, period_type } = body;
+            if (!period_id || !period_type) {
+                return Response.json({ error: 'period_id and period_type required' }, { status: 400 });
+            }
+            const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });
+            if (pools.length === 0) return Response.json({ error: 'No pool found for that period' }, { status: 404 });
+            const pool = pools[0];
+            if (pool.distributed) {
+                return Response.json({ error: 'That period is already distributed — nothing to lock' }, { status: 400 });
+            }
+
+            if (action === 'lock_period') {
+                await base44.asServiceRole.entities.TokenPool.update(pool.id, {
+                    locked_payout_config: currentConfig,
+                    config_locked_at: new Date().toISOString(),
+                    config_locked_by: callerWallet,
+                });
+            } else {
+                await base44.asServiceRole.entities.TokenPool.update(pool.id, {
+                    locked_payout_config: {},
+                    config_locked_at: '',
+                    config_locked_by: '',
+                });
+            }
+
+            try {
+                await base44.asServiceRole.entities.AdminChangesLog.create({
+                    wallet_address: callerWallet,
+                    action_type: 'reward_adjustment',
+                    description: `${action === 'lock_period' ? 'Locked' : 'Unlocked'} payout config for ${period_type} ${period_id}`,
+                    details: { period_id, period_type, config: action === 'lock_period' ? currentConfig : null },
+                });
+            } catch {}
+
+            return Response.json({ success: true, period_id, period_type, locked: action === 'lock_period' });
+        }
+
         if (action === 'reset') {
             // Auth check (same as 'set')
             let callerWallet = 'EMERGENCY_KEY';

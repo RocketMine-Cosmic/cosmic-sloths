@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolvePayoutConfig, isConfigLocked } from '../../shared/payoutConfig.ts';
 
 // Auth: Base44 session → linked wallet → AdminWallet lookup.
 
@@ -133,12 +134,10 @@ Deno.serve(async (req) => {
         // earlier periods keep the legacy hardcoded split.
         const useNewPools = isNewPoolPeriod(period_id, period_type);
 
-        // Load admin-configurable payout settings (top_n + per-rank tiers)
-        let payoutCfg = DEFAULT_PAYOUT_CONFIG;
-        try {
-            const cfgRows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
-            if (cfgRows[0]?.value) payoutCfg = cfgRows[0].value;
-        } catch {}
+        // Payout settings — a period-locked snapshot on the pool wins over the
+        // live AppConfig, so the preview always matches what distribution will do.
+        const payoutCfg = (await resolvePayoutConfig(base44.asServiceRole, pool)) || DEFAULT_PAYOUT_CONFIG;
+        const configLocked = isConfigLocked(pool);
 
         if (period_type === 'weekly') {
             const weeklyPoolPct = useNewPools
@@ -318,6 +317,8 @@ Deno.serve(async (req) => {
             staff_payments: annotatedStaff,
             kill_payments: annotatedKills,
             uses_new_pools: useNewPools,
+            config_locked: configLocked,
+            config_locked_at: pool.config_locked_at || null,
         });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

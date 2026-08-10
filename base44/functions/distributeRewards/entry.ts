@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
 
 // Service-role db client — set inside the request handler from
 // createClientFromRequest(req).asServiceRole. Module-level let so the helper
@@ -181,13 +182,9 @@ const DEFAULT_PAYOUT_CONFIG = {
     ],
 };
 
-async function loadPayoutConfig() {
-    try {
-        const rows = await db.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
-        return rows[0]?.value || DEFAULT_PAYOUT_CONFIG;
-    } catch {
-        return DEFAULT_PAYOUT_CONFIG;
-    }
+// Per-period frozen config wins over the live AppConfig (see shared/payoutConfig).
+async function loadPayoutConfig(pool) {
+    return await resolvePayoutConfig(db, pool);
 }
 
 function makeTierLookup(tiers) {
@@ -331,7 +328,7 @@ async function distributeWeekly(sdk, pool, apiBaseUrl, rewardsKeys) {
      } catch {}
      // S7 gate — periods >= S7 use config-driven pool %; earlier use legacy 20%.
      const useNewPools = isNewPoolPeriod(pool.period_id, 'weekly');
-     const cfg = await loadPayoutConfig();
+     const cfg = await loadPayoutConfig(pool);
      const weeklyPoolPct = useNewPools
          ? (Number.isFinite(Number(cfg.weekly_pool_pct)) ? Number(cfg.weekly_pool_pct) : 0.15)
          : 0.20;
@@ -457,7 +454,7 @@ async function distributeSeasonal(sdk, pool, apiBaseUrl, rewardsKeys) {
      // Seasonal pool split: pre-S7 = 30% top players, S7+ = 20% (config-driven).
      // 10% Squad Wars Champions (`distributeSquadChampions`) unchanged regardless.
      const useNewPools = isNewPoolPeriod(pool.period_id, 'seasonal');
-     const cfg = await loadPayoutConfig();
+     const cfg = await loadPayoutConfig(pool);
      const seasonalPoolPct = useNewPools
          ? (Number.isFinite(Number(cfg.seasonal_pool_pct)) ? Number(cfg.seasonal_pool_pct) : 0.20)
          : 0.30;

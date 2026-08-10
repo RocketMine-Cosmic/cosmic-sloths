@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
@@ -162,13 +163,9 @@ const DEFAULT_PAYOUT_CONFIG = {
     ],
 };
 
-async function loadPayoutConfig(base44) {
-    try {
-        const rows = await base44.asServiceRole.entities.AppConfig.filter({ key: 'leaderboard_payout_config' });
-        return rows[0]?.value || DEFAULT_PAYOUT_CONFIG;
-    } catch {
-        return DEFAULT_PAYOUT_CONFIG;
-    }
+// Per-period frozen config wins over the live AppConfig (see shared/payoutConfig).
+async function loadPayoutConfig(base44, pool) {
+    return await resolvePayoutConfig(base44.asServiceRole, pool);
 }
 
 function makeTierLookup(tiers) {
@@ -313,7 +310,7 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { includeStaff: true, includeKills: true }) {
     // S7 gate — periods >= S7 use config-driven pool % (15%); earlier use 20%.
     const useNewPools = isNewPoolPeriod(pool.period_id, 'weekly');
-    const cfg = await loadPayoutConfig(base44);
+    const cfg = await loadPayoutConfig(base44, pool);
     const weeklyPoolPct = useNewPools
         ? (Number.isFinite(Number(cfg.weekly_pool_pct)) ? Number(cfg.weekly_pool_pct) : 0.15)
         : 0.20;
@@ -506,7 +503,7 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
     // Seasonal pool split: pre-S7 = 30% top players, S7+ = 20% (config-driven).
     // 10% Squad Wars Champions (separate fn) unchanged regardless of season.
     const useNewPools = isNewPoolPeriod(pool.period_id, 'seasonal');
-    const cfg = await loadPayoutConfig(base44);
+    const cfg = await loadPayoutConfig(base44, pool);
     const seasonalPoolPct = useNewPools
         ? (Number.isFinite(Number(cfg.seasonal_pool_pct)) ? Number(cfg.seasonal_pool_pct) : 0.20)
         : 0.30;
