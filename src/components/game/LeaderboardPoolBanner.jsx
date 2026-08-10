@@ -58,9 +58,12 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
                 <OmenXIcon className="w-7 h-7" />
                 <span className={`text-3xl md:text-4xl font-black tabular-nums ${numColor}`}>{playerPool.toLocaleString()}</span>
                 <span className={`text-xs ${subColor} font-bold uppercase tracking-wider`}>OMENX</span>
+                <span className={`text-[10px] ${chipBg} px-2 py-0.5 rounded font-bold uppercase tracking-wider ml-1`}>
+                    {(resolvedPoolPct * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}% of all spend
+                </span>
             </div>
             <p className={`text-[10px] ${subColor}/70 mt-2 leading-snug`}>
-                Every OMENX spent increases the pool.
+                Every OMENX spent increases the pool — {(resolvedPoolPct * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}% of all {isSeasonal ? 'seasonal' : 'weekly'} OMENX spend funds this pool.
             </p>
         </div>
     );
