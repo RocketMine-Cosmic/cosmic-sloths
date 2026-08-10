@@ -62,7 +62,7 @@ export default function ChampionsPanel({ mySquadId }) {
                     <SeasonCountdown endIso={data.season_end_iso} />
                 </div>
                 <p className="text-[11px] text-amber-200/80 mt-3 leading-snug">
-                    10% of all seasonal OMENX spend funds this pool, reserved for the top squads. Distributed at season end:
+                    10% of all OMENX spend funds this pool, reserved for the top squads. Distributed at season end:
                     <strong className="text-amber-100"> 🥇 50%</strong> /
                     <strong className="text-amber-100"> 🥈 30%</strong> /
                     <strong className="text-amber-100"> 🥉 20%</strong>
