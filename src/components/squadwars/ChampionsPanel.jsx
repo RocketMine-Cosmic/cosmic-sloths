@@ -56,12 +56,13 @@ export default function ChampionsPanel({ mySquadId }) {
                     <OmenXIcon className="w-7 h-7" />
                     <span className="text-3xl md:text-4xl font-black text-amber-100 tabular-nums">{Math.floor(championsPool).toLocaleString()}</span>
                     <span className="text-xs text-amber-300 font-bold uppercase tracking-wider">OMENX</span>
+                    <span className="text-[10px] bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded font-bold uppercase tracking-wider ml-1">10% of all spend</span>
                 </div>
                 <div className="mt-3">
                     <SeasonCountdown endIso={data.season_end_iso} />
                 </div>
                 <p className="text-[11px] text-amber-200/80 mt-3 leading-snug">
-                    10% of the seasonal OMENX pool is reserved for the top squads. Distributed at season end:
+                    10% of all seasonal OMENX spend funds this pool, reserved for the top squads. Distributed at season end:
                     <strong className="text-amber-100"> 🥇 50%</strong> /
                     <strong className="text-amber-100"> 🥈 30%</strong> /
                     <strong className="text-amber-100"> 🥉 20%</strong>
