@@ -6,11 +6,34 @@ import PlayerNftsVipPanel from './PlayerNftsVipPanel';
 import PlayerForgeAugments from './PlayerForgeAugments';
 import PlayerProfileFlags from './PlayerProfileFlags';
 import PlayerTalentTree from './PlayerTalentTree';
+import { ALL_WARDROBE_ITEMS, CATEGORY_TABS } from '../wardrobe/wardrobeData';
 
 const ALL_CHARACTER_IDS = CHARACTERS.map(c => c.id);
 const ALL_ARENA_IDS = ARENAS.map(a => a.id);
 const ALL_TRAIL_IDS = TRAIL_COSMETICS.map(t => t.id);
 const ALL_KILL_IDS = KILL_COSMETICS.map(k => k.id);
+
+// CHEST COSMETICS — DERIVED FROM wardrobeData, NEVER RE-LISTED HERE.
+//
+// Writing the 20 ids out again in this file would be a second copy waiting to
+// diverge, and the divergence would be SILENT: an item missing from this panel
+// is an item that cannot be hand-granted, which is the exact failure this
+// section exists to prevent. Add a 21st chest cosmetic to wardrobeData.jsx and
+// it appears here for free.
+const CHEST_ITEMS = ALL_WARDROBE_ITEMS.filter(i => i.source === 'chest');
+const ALL_CHEST_IDS = CHEST_ITEMS.map(i => i.id);
+
+// Grouped by category for readability only. Tab order first, then ANY category
+// the tabs do not know about, so a new chest category can never be hidden.
+const CHEST_CATEGORIES = [...new Set([
+    ...CATEGORY_TABS.map(t => t.id),
+    ...CHEST_ITEMS.map(i => i.category),
+])].filter(cat => CHEST_ITEMS.some(i => i.category === cat));
+
+const chestCategoryLabel = (cat) => {
+    const tab = CATEGORY_TABS.find(t => t.id === cat);
+    return tab ? `${tab.icon} ${tab.label}` : cat;
+};
 
 function CustomFieldEditor({ draft, setDraft }) {
     const [open, setOpen] = useState(false);
@@ -455,6 +478,51 @@ export default function PlayerSaveEditor({ player, onSaved, onClose }) {
                             );
                         })}
                     </div>
+                </Section>
+
+                {/* Chest cosmetics — the OmenX VIP chest recovery path */}
+                <Section title="🎁 Chest Cosmetics" color="text-amber-400">
+                    <div className="text-[10px] text-slate-400 mb-1">
+                        The manual recovery path for a VIP chest win. Use this when a chest delivery
+                        failed or arrived without granting — it is the only way to put a chest item
+                        on a player by hand.
+                    </div>
+                    <div className="text-[10px] text-slate-500 mb-3">
+                        ⚠️ All {ALL_CHEST_IDS.length} live in ONE flat array — <span className="font-mono text-slate-400">owned_chest_cosmetics</span> —
+                        across every category, because ownership dispatches on <span className="font-mono text-slate-400">source</span> before
+                        category. That is why the three mythic chest trails are NOT in the Trail
+                        Cosmetics section above: same category, different array.
+                    </div>
+                    <div className="flex gap-2 mb-3 items-center flex-wrap">
+                        {/* ADDITIVE, like Trail Cosmetics and Kill Effects since 2026-08-07.
+                            A chest grant is a paid reward, so an overwrite here would destroy
+                            a real delivery. Union, never replace. */}
+                        <button onClick={() => set('owned_chest_cosmetics', [...new Set([...(draft.owned_chest_cosmetics || []), ...ALL_CHEST_IDS])])}
+                            className="text-xs bg-amber-700 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold transition-colors">Grant All</button>
+                        {/* DELIBERATELY NO "Reset" BUTTON. Every other section has one because
+                            what it clears is re-earnable. These are PAID, they are the only
+                            copy, and there is no audit trail on this side to restore from —
+                            one mis-click would destroy a real chest win silently. Removing a
+                            single item is still possible: click its chip. */}
+                        <span className="text-[10px] text-slate-500">
+                            {(draft.owned_chest_cosmetics || []).length} / {ALL_CHEST_IDS.length} owned
+                        </span>
+                    </div>
+                    <div className="space-y-3">
+                        {CHEST_CATEGORIES.map(cat => (
+                            <div key={cat}>
+                                <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">{chestCategoryLabel(cat)}</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {CHEST_ITEMS.filter(i => i.category === cat).map(i => (
+                                        <ToggleChip key={i.id} label={`${i.icon} ${i.name}${i.rarity === 'mythic' ? ' ★' : ''}`}
+                                            active={(draft.owned_chest_cosmetics || []).includes(i.id)}
+                                            onClick={() => toggleArrayItem('owned_chest_cosmetics', i.id)} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-[10px] text-slate-600 mt-3">★ = mythic.</div>
                 </Section>
 
                 {/* Equipped Relics (max 3 in game) */}
