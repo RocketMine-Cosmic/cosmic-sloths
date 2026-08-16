@@ -32,9 +32,7 @@ A roguelike where your weapons auto-fire, you dodge, level up, and chase the lea
 
 ## 🦥 PILOTS
 
-You start with **NeoByte**. Others unlock by **spending gold**, hitting **total-kill milestones**, or owning the **matching NFT**.
-
-Pandypaws 1,000g · NovaByte 2,000g · Glitch 4,000g · HoloDrift 6,000g · CodeBreaker 8,000g · DataPhantom 10,000g · NeonVortex 15,000g · SynthBeats 20,000g · SkyByte 25,000g
+You start with **NeoByte**. Others unlock hitting **total-kill milestones**, or owning the **matching NFT**.
 
 Each has a unique passive — tanks, glass cannons, gold farmers, hackers. Check the Hub card for details.
 
