@@ -21,7 +21,7 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 4. **Spend gold in the Hub** on permanent upgrades, talents, relics, mastery & more
 5. **Climb the weekly & seasonal leaderboards** for OMENX payouts
 
-⚡ New this season? Hit the **PRACTICE RANGE** first (Hub tile) — every character, sector and difficulty unlocked, with dev tools to test builds. Zero stakes, zero rewards, pure practice.
+⚡ Hit the **PRACTICE RANGE** first (Hub tile) — every character, sector and difficulty unlocked, with dev tools to test builds. Zero stakes, zero rewards, pure practice.
 
 ⬆️ END
 
