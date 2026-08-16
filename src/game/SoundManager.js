@@ -19,15 +19,29 @@ function loadJukebox() {
     }
 }
 
+function localPrefsTimestamp() {
+    try {
+        return Number(JSON.parse(localStorage.getItem(JUKEBOX_KEY) || '{}').updated_at) || 0;
+    } catch { return 0; }
+}
+
 function saveJukebox(state) {
-    try { localStorage.setItem(JUKEBOX_KEY, JSON.stringify(state)); } catch {}
-    // Also mirror into the cloud save so preferences sync across devices.
+    // Stamp every write so a stale cloud copy can never overwrite a newer local
+    // edit on the next page load (root cause of "jukebox never persists").
+    const stamped = { menu: state.menu || [], game: state.game || [], updated_at: Date.now() };
+    try { localStorage.setItem(JUKEBOX_KEY, JSON.stringify(stamped)); } catch {}
+    // Mirror into the cloud save so preferences sync across devices.
     // Loaded asynchronously to avoid a circular import at module init.
     try {
         import('./SaveManager').then(({ SaveManager }) => {
             const s = SaveManager.load();
-            s.jukeboxPrefs = state;
+            s.jukeboxPrefs = stamped;
             SaveManager.save(s);
+            // Push straight away rather than waiting on the 8s debounce — an
+            // unrelated save() (e.g. the game engine writing its pre-run
+            // snapshot) could otherwise clobber jukeboxPrefs out of the local
+            // save before it ever reached the cloud.
+            SaveManager.syncToBackendImmediate?.();
         }).catch(() => {});
     } catch {}
 }
@@ -36,9 +50,15 @@ function saveJukebox(state) {
 // jukebox preferences back into localStorage + the live SoundManager instance.
 export function applyCloudJukeboxPrefs(prefs) {
     if (!prefs || typeof prefs !== 'object') return;
+    // Only adopt the cloud copy when it is at least as new as what's on this
+    // device. Previously cloud always won, so an older cloud snapshot silently
+    // reverted the toggles the player had just made.
+    const cloudTs = Number(prefs.updated_at) || 0;
+    if (cloudTs < localPrefsTimestamp()) return;
     const next = {
         menu: Array.isArray(prefs.menu) ? prefs.menu : [...defaultEnabledIds],
         game: Array.isArray(prefs.game) ? prefs.game : [...defaultEnabledIds],
+        updated_at: cloudTs,
     };
     try { localStorage.setItem(JUKEBOX_KEY, JSON.stringify(next)); } catch {}
     if (SoundManager) {
