@@ -14,6 +14,8 @@
 
 Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through waves of enemies, build broken synergies, climb the leaderboards, and earn **real $OMENX rewards**.
 
+🔑 **Before you play:** you need to **sign in** and **connect your OmenX wallet**. That's what links your cloud save, your progression and your payouts to you — there's no guest mode.
+
 ## 🎮 THE CORE LOOP
 **Fight → Loot → Upgrade → Ascend**
 
@@ -237,11 +239,14 @@ Connect your Omen wallet — owned NFTs grant automatic perks including **instan
 
 ## ✨ COSMETICS
 
-Buyable with **gold OR OMENX**:
-- 💫 **12 Trails** — 3,000g/30 OMENX up to 30,000g/300 OMENX
+**Available now — buy with gold OR OMENX (in the Armoury):**
+- 💫 **12 Trails** — from 3,000g / 30 OMENX up to 30,000g / 300 OMENX
 - 💥 **9 Kill Effects** — Explosion, Freeze Burst, Implode, Black Hole, Gold Shatter and more
-- 🎨 **Skins** — per-pilot recolours (5,000g/50 or 20,000g/200), plus **free seasonal reward skins**
-- 🏷️ **Titles & Title Flairs**, 🖼️ **Leaderboard Frames**, 😎 **Animated Pilot Icons**, 🎵 **Jukebox tracks**
+- 🎨 **Skins** — per-pilot recolours (5,000g / 50 OMENX, or 20,000g / 200 OMENX). Every pilot also has a **free seasonal reward skin**
+
+**In the Wardrobe — NOT purchasable:**
+- 🖼️ Leaderboard Frames, 😎 Animated Pilot Icons and 🏷️ Title Flairs are **earned only** — they either **drop from chests** or unlock as **quest milestone rewards**. Anything you don't own shows "Coming soon" — there is no way to buy these yet.
+- 🏷️ **Titles** and 🎵 **Jukebox tracks** unlock through play.
 
 ⬆️ END
 
@@ -266,9 +271,9 @@ Plus **daily login rewards**, **boss reward claims** and **Global Raid milestone
 
 ## 🚀 QUICK START
 
-1. **PLAY** — you're in a run within seconds
-2. Connect your **Omen wallet** to be payout-eligible
-3. Learn the ropes in the **PRACTICE RANGE**
+1. **Sign in and connect your OmenX wallet** — required before you can play, and it's what makes you payout-eligible
+2. Learn the ropes in the **PRACTICE RANGE** — everything unlocked, nothing at stake
+3. Play your first sector run on **Normal** to get a feel for it
 4. Spend early gold on **permanent stats** — they're worth double the weekly/seasonal ones
 5. Unlock **Pandypaws (1,000g)** early if you keep dying
 6. **Join a squad** — treasury buffs and war bonuses are free power
