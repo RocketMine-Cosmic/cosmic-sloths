@@ -1,18 +1,19 @@
 # 🦥 COSMIC SLOTHS — COMPLETE GAME GUIDE (Season 8)
 
-*Copy-paste ready for Discord. Split at the `---` dividers if a section exceeds Discord's 2000-char message limit (or post as separate messages per section).*
+**How to use:** Each "POST" below is one Discord message. Copy everything between the `⬇️ COPY` and `⬆️ END` markers (not the markers themselves). Every post is under Discord's 2000-character limit. Post them in order — 9 posts total.
 
 ---
+
+## 📋 POST 1 — Intro + Core Loop
+
+⬇️ COPY
 
 # 🦥 COSMIC SLOTHS — THE COMPLETE PILOT'S GUIDE 🌌
 **Updated for Season 8**
 
-Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through waves of enemies, build broken synergies, climb the leaderboards, and earn **real $OMENX rewards** every single week. This guide covers everything you need — from your first run to top-10 payouts.
-
----
+Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through waves of enemies, build broken synergies, climb the leaderboards, and earn **real $OMENX rewards** every single week.
 
 ## 🎮 THE CORE LOOP
-
 **Fight → Loot → Upgrade → Ascend**
 
 1. **Pick a character + arena** and dive into a 5–25 min run
@@ -23,18 +24,35 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 
 ⚡ New this season? Hit the **PRACTICE RANGE** first (Hub tile) — every character, sector and difficulty unlocked, with dev tools to test builds. Zero stakes, zero rewards, pure practice.
 
+⬆️ END
+
 ---
+
+## 📋 POST 2 — Game Modes
+
+⬇️ COPY
 
 ## 🕹️ GAME MODES
 
 🌌 **Sectors** — Story progression arenas. Clear one to unlock the next. Rising difficulty, end-of-sector bosses.
+
 ♾️ **Endless** — No timer, no win condition. Difficulty ramps forever. The ultimate score chase.
+
 ☠️ **Leviathan Trials** — Stack modifiers for higher risk & bigger rewards.
+
 🐙 **Global Raid** — Server-wide co-op boss. Everyone chips at a shared HP pool; rewards scale with your contribution.
+
 ☄️ **Squad Meteor** — Short squad DPS-check arena. Cumulative damage unlocks squad-wide weekly buffs.
+
 🎯 **Practice Range (NEW S8)** — Sandbox mode. Spawn enemies, grant weapons, toggle invincibility, fast-forward time. Nothing here touches your save or the leaderboard.
 
+⬆️ END
+
 ---
+
+## 📋 POST 3 — Characters
+
+⬇️ COPY
 
 ## 🦥 CHARACTERS
 
@@ -52,7 +70,13 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 
 **Character Mastery:** kills-per-character earn tiers 1–7. T1–5 = stat bumps, T6 = multi-stat package, **T7 = ability boost** that upgrades their signature mechanic.
 
+⬆️ END
+
 ---
+
+## 📋 POST 4 — Weapons + Progression
+
+⬇️ COPY
 
 ## ⚔️ WEAPONS, SYNERGIES & EVOLUTIONS
 
@@ -60,8 +84,6 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 - Pair weapons with the right passive to unlock **synergies**
 - Max a synergy + evolution prerequisite = **evolved weapon** (2–4× stronger, visually distinct)
 - Check the **Synergy Codex** in the Hub to plan builds before every run
-
----
 
 ## 📈 PROGRESSION & CURRENCIES
 
@@ -79,7 +101,13 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 
 **Mystery Forge / Astral Lab:** gold-only RNG pulls for permanent stat buffs.
 
+⬆️ END
+
 ---
+
+## 📋 POST 5 — In-Run OMENX Spends
+
+⬇️ COPY
 
 ## 💀 IN-RUN OMENX SPENDS (S8)
 
@@ -101,7 +129,13 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 
 💡 *Every OMENX you spend feeds the prize pools — spending literally grows the pot everyone competes for.*
 
+⬆️ END
+
 ---
+
+## 📋 POST 6 — Leaderboards & Payouts
+
+⬇️ COPY
 
 ## 🏆 LEADERBOARDS & OMENX PAYOUTS
 
@@ -114,19 +148,35 @@ All pools are funded by **a % of ALL OMENX spent in-game** — every revive, rer
 
 **Fair play:** every score is recomputed server-side from validated run stats. Cheated submissions get flagged, cheating wallets get blacklisted. No exceptions.
 
+⬆️ END
+
 ---
+
+## 📋 POST 7 — Squads
+
+⬇️ COPY
 
 ## 🛡️ SQUADS
 
 Join or create a squad (8–50 members) — it's the heart of long-term play:
 
 ⚔️ **Squad Wars** — Every Monday, squads are paired head-to-head for a week. Most kills wins → war record, streaks & OMENX bonuses for members. Per-member breakdown shows who carried.
+
 💰 **Squad Treasury** — Donate gold, activate weekly squad-wide buff tiers (Bronze → Platinum): damage, AoE, gold, CDR for EVERY member in EVERY arena.
+
 ☄️ **Squad Meteor** — Vote a meteor target, hammer it together, unlock buffs.
+
 🎯 **Daily Goals** — Leaders set targets ("1500 kills today"); hitting them = squad XP.
+
 👑 **Squad Champions** — Top 3 squads each season split the Champions Pool.
 
+⬆️ END
+
 ---
+
+## 📋 POST 8 — NFT Perks + Cosmetics
+
+⬇️ COPY
 
 ## 💎 NFT PERKS & VIP
 
@@ -134,8 +184,6 @@ Connect your Omen wallet and owned NFTs grant automatic perks:
 - **Character-matched NFTs** → 5–25% gold multiplier (rarity-tiered)
 - **Omen Foundation core collections** → baseline boosts
 - No stacking — highest rarity wins
-
----
 
 ## ✨ COSMETICS
 
@@ -147,14 +195,18 @@ Make your pilot yours:
 - 💫 **Trails & Kill FX** — particle trails and custom death VFX
 - 🎵 **Jukebox** — unlock tracks and override the BGM
 
+⬆️ END
+
 ---
+
+## 📋 POST 9 — Resets + Quick Start
+
+⬇️ COPY
 
 ## 🗓️ KEY RESETS
 
-- **Weekly** — Monday 00:00 UTC: leaderboards, weekly stats/talents, war pairing, revive & fragment caps
+- **Weekly** — Monday 00:00 UTC: leaderboards, weekly stats/talents, war pairing, fragment caps
 - **Seasonal** — every 4 weeks: seasonal leaderboard, seasonal stats/talents, Squad Champions payout
-
----
 
 ## 🚀 QUICK START FOR NEW PILOTS
 
@@ -168,3 +220,5 @@ Make your pilot yours:
 8. Climb. Earn. Repeat. 🌌
 
 **GLHF, Sloths. See you in the void.** 🦥💜
+
+⬆️ END
