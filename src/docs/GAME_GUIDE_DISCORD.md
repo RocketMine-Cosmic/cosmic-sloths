@@ -43,7 +43,7 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 
 ☄️ **Squad Meteor** — Short squad DPS-check arena. Cumulative damage unlocks squad-wide weekly buffs.
 
-🎯 **Practice Range (NEW S8)** — Sandbox mode. Spawn enemies, grant weapons, toggle invincibility, fast-forward time. Nothing here touches your save or the leaderboard.
+🎯 **Practice Range** — Sandbox mode. Spawn enemies, grant weapons, toggle invincibility, fast-forward time. Nothing here touches your save or the leaderboard.
 
 ⬆️ END
 
