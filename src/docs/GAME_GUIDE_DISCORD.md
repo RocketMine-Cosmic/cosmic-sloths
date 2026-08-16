@@ -96,12 +96,14 @@ Weekly **Squad Wars** (most kills wins) · **Treasury** buffs everyone donates g
 
 ## ✨ COSMETICS
 
-**Buyable now (Armoury, gold or OMENX):** Trails, Kill Effects, Skins. Every pilot also has a free seasonal skin.
+**Buying cosmetics is currently disabled** — the Wardrobe is browse-only for now.
 
-**Not buyable:** Leaderboard Frames, Animated Pilot Icons and Title Flairs are **chest drops or quest rewards only** — they show "Coming soon" in the Wardrobe. Titles and Jukebox tracks unlock through play.
+**Titles** are earned by hitting milestones (kills, gold, score, level, survival time, Leviathan kills, raid damage) — 60+ of them across 7 rarity tiers, and many give a small in-run buff.
+
+**Jukebox** — all 7 tracks are available to everyone from the start, nothing to unlock. You just choose which ones play in the menus and which play in-game.
 
 ## 🚀 QUICK START
-Sign in + connect wallet → Practice Range → first run on Normal → buy **permanent** stats → grab Pandypaws → join a squad → do your dailies → push Cosmic.
+Sign in + connect wallet → Practice Range → first run on Normal → buy **permanent** stats → join a squad → do your dailies → push Cosmic.
 
 **GLHF, Sloths.** 🦥💜
 
