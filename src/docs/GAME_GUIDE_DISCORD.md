@@ -31,14 +31,14 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 ♾️ **Endless** — No timer, no win condition. Difficulty ramps forever. The ultimate score chase.
 ☠️ **Leviathan Trials** — Stack modifiers for higher risk & bigger rewards.
 🐙 **Global Raid** — Server-wide co-op boss. Everyone chips at a shared HP pool; rewards scale with your contribution.
-☄️ **Squad Meteor** — 90-second squad DPS check. Cumulative damage unlocks squad-wide weekly buffs.
+☄️ **Squad Meteor** — Short squad DPS-check arena. Cumulative damage unlocks squad-wide weekly buffs.
 🎯 **Practice Range (NEW S8)** — Sandbox mode. Spawn enemies, grant weapons, toggle invincibility, fast-forward time. Nothing here touches your save or the leaderboard.
 
 ---
 
 ## 🦥 CHARACTERS
 
-10 unique pilots, each with a signature mechanic — unlocked through kill milestones:
+10 unique pilots, each with a signature mechanic. You start with **NeoByte** — the other 9 unlock as **random drops at total-kill milestones** (2K, 5K, 10K, 20K, 35K, 55K, 80K, 115K, 160K kills = full roster). NFT holders get their matching character instantly.
 
 - **NeoByte** 🚩 — Plants a banner buffing damage & cooldowns in a radius
 - **Glitch** 👾 — Phase-shifts through hits; can hack enemies
@@ -95,7 +95,7 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 - ⚡ **XP Buff** (10 OMENX) — boost XP gain for the run
 - 🛡️ **Squad Ult** (5/10 OMENX) — trigger squad ultimate power
 
-**Fragment Express Lane (S8):**
+**Fragment Express Lane (S8)** — OMENX → **Relic Fragments** shortcut (skips the daily Forge grind cap):
 - 15 fragments → 10 OMENX | 150 fragments → 100 OMENX
 - Weekly cap: 40 batches (600 frags / 400 OMENX), resets Monday 00:00 UTC
 
@@ -107,9 +107,9 @@ Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through 
 
 All pools are funded by **a % of ALL OMENX spent in-game** — every revive, reroll and cosmetic purchase grows the pots:
 
-- 💠 **Weekly Score Pool (15% of all spend)** — Top 20 by weekly score, paid every Monday
-- 💜 **Seasonal Score Pool (20% of all spend)** — Top 20 across the 4-week season
-- 🔶 **Weekly Kill Pool (5% of all spend)** — Top 20 by sector kills (flatter payout curve — grinders eat!)
+- 💠 **Weekly Score Pool (30% of all spend)** — Top 20 by weekly score, distributed weekly
+- 💜 **Seasonal Score Pool (10% of all spend)** — Top 20 across the 4-week season
+- 🔶 **Weekly Kill Pool (30% of all spend)** — Top 20 by sector kills — grinders eat!
 - 👑 **Squad Champions Pool (10% of all spend)** — Top 3 squads at season end: 🥇 50% / 🥈 30% / 🥉 20%
 
 **Fair play:** every score is recomputed server-side from validated run stats. Cheated submissions get flagged, cheating wallets get blacklisted. No exceptions.
