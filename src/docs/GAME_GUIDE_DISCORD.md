@@ -9,7 +9,6 @@
 ⬇️ COPY
 
 # 🦥 COSMIC SLOTHS — THE COMPLETE PILOT'S GUIDE 🌌
-**Updated for Season 8**
 
 Welcome, pilot. Cosmic Sloths is a fast-paced roguelike where you blast through waves of enemies, build broken synergies, climb the leaderboards, and earn **real $OMENX rewards** every single week.
 
