@@ -24,7 +24,10 @@ function isNewPoolPeriod(period_id) {
 }
 
 // Mirror of the helper in distributeKillPool — see comment there.
-async function maybeMarkWeeklyPoolDistributed(db, period_id) {
+// staffSatisfied: pass true when the staff share computed to zero for every
+// wallet (e.g. staff pct set to 0 this week) — no staff PayoutLog will ever
+// exist, so requiring one would leave the pool "pending" forever.
+async function maybeMarkWeeklyPoolDistributed(db, period_id, staffSatisfied = false) {
     try {
         const pools = await db.entities.TokenPool.filter({ period_id, period_type: 'weekly' });
         const pool = pools[0];
@@ -38,9 +41,10 @@ async function maybeMarkWeeklyPoolDistributed(db, period_id) {
         ]);
 
         const isS7Plus = isNewPoolPeriod(period_id);
+        const staffDone = staffSatisfied || staffLogs.length > 0;
         const allDone = isS7Plus
-            ? (playerLogs.length > 0 && staffLogs.length > 0 && killLogs.length > 0)
-            : (playerLogs.length > 0 && staffLogs.length > 0);
+            ? (playerLogs.length > 0 && staffDone && killLogs.length > 0)
+            : (playerLogs.length > 0 && staffDone);
 
         if (!allDone) return false;
         await db.entities.TokenPool.update(pool.id, { distributed: true });
@@ -106,7 +110,11 @@ Deno.serve(async (req) => {
             .filter(p => p.amount >= 1);
 
         if (staffPayments.length === 0) {
-            return Response.json({ success: true, paid: 0, skipped: 'no staff wallets' });
+            // Nothing owed to staff this period (pct set to 0 / rounds below 1).
+            // Still close the pool if players (+ kills) are already paid —
+            // otherwise it shows "payout pending" forever.
+            const poolDistributed = await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, period_id, true);
+            return Response.json({ success: true, paid: 0, skipped: 'no staff payments owed', pool_marked_distributed: poolDistributed });
         }
 
         // Resume-safe
