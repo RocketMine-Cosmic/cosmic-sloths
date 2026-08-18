@@ -215,22 +215,24 @@ function App() {
     window.addEventListener('message', onParentMessage);
 
     // Browsers block autoplay until the user interacts with the page.
-    // Kick off menu BGM on the first click/tap/keypress, then remove the listeners.
+    // Try to start menu BGM on user interaction, and KEEP retrying on every
+    // interaction until playback actually starts. (Previously a single blocked
+    // attempt — e.g. a touchstart that fires before the browser grants the
+    // gesture on touchend — permanently removed the listeners, so music never
+    // autoplayed until the Jukebox play button was pressed.)
+    const bgmEvents = ['pointerdown', 'keydown', 'touchend', 'click'];
+    const removeBgmListeners = () => bgmEvents.forEach(ev => window.removeEventListener(ev, startBgmOnce));
     const startBgmOnce = () => {
-      SoundManager.playBGM();
-      window.removeEventListener('pointerdown', startBgmOnce);
-      window.removeEventListener('keydown', startBgmOnce);
-      window.removeEventListener('touchstart', startBgmOnce);
+      const result = SoundManager.playBGM();
+      if (result && typeof result.then === 'function') {
+        result.then(started => { if (started) removeBgmListeners(); });
+      }
     };
-    window.addEventListener('pointerdown', startBgmOnce);
-    window.addEventListener('keydown', startBgmOnce);
-    window.addEventListener('touchstart', startBgmOnce);
+    bgmEvents.forEach(ev => window.addEventListener(ev, startBgmOnce));
 
     return () => {
       window.removeEventListener('message', onParentMessage);
-      window.removeEventListener('pointerdown', startBgmOnce);
-      window.removeEventListener('keydown', startBgmOnce);
-      window.removeEventListener('touchstart', startBgmOnce);
+      removeBgmListeners();
     };
   }, []);
 

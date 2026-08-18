@@ -230,8 +230,14 @@ class SoundManagerClass {
     // --- Original API (unchanged behavior) ---
 
     playBGM() {
-        if (!this.enabled) return;
-        this.bgm.play().catch(e => console.log('Audio play failed (interaction required):', e));
+        // Returns a promise resolving true when playback actually started, so
+        // the app-level autoplay bootstrap can retry on the next interaction
+        // instead of giving up after one blocked attempt.
+        if (!this.enabled) return Promise.resolve(false);
+        return this.bgm.play().then(() => true).catch(e => {
+            console.log('Audio play failed (interaction required):', e);
+            return false;
+        });
     }
 
     stopBGM() {
