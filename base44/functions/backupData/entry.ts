@@ -2,6 +2,28 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Auth: automated bypass, OR Base44 session + 'manage_backups' permission, OR emergency master key.
 
+// Retry transient failures (DB query timeouts, rate limits, gateway blips) with
+// backoff — a single slow read was failing the entire 6-hourly backup run.
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+async function withRetry(fn, label = 'read') {
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try { return await fn(); }
+        catch (e) {
+            lastErr = e;
+            const msg = String(e?.message || '').toLowerCase();
+            const status = e?.status || e?.response?.status;
+            const isTransient = status === 429 || (status >= 500 && status <= 504)
+                || msg.includes('timed out') || msg.includes('timeout') || msg.includes('rate limit');
+            if (!isTransient || attempt === 2) throw e;
+            const delay = 1000 * Math.pow(2, attempt) + Math.random() * 500;
+            console.warn(`[backupData] ${label} transient error — retry ${attempt + 1}/2 in ${Math.round(delay)}ms`);
+            await sleep(delay);
+        }
+    }
+    throw lastErr;
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -30,20 +52,20 @@ Deno.serve(async (req) => {
             globalBosses, globalBossContributions, globalBossEvents,
             squadWars, squadChampionsPayoutLogs, squadSeasonRosters
         ] = await Promise.all([
-            base44.asServiceRole.entities.PlayerSave.list('', 10000),
-            base44.asServiceRole.entities.RunScore.list('', 10000),
-            base44.asServiceRole.entities.Squad.list('', 10000),
-            base44.asServiceRole.entities.SquadMember.list('', 10000),
-            base44.asServiceRole.entities.SquadMessage.list('', 10000),
-            base44.asServiceRole.entities.TokenPool.list('', 10000),
-            base44.asServiceRole.entities.TokenSpendLog.list('', 10000),
-            base44.asServiceRole.entities.PayoutLog.list('', 10000),
-            base44.asServiceRole.entities.GlobalBoss.list('', 10000),
-            base44.asServiceRole.entities.GlobalBossContribution.list('', 10000),
-            base44.asServiceRole.entities.GlobalBossEvent.list('', 10000),
-            base44.asServiceRole.entities.SquadWar.list('', 10000),
-            base44.asServiceRole.entities.SquadChampionsPayoutLog.list('', 10000),
-            base44.asServiceRole.entities.SquadSeasonRoster.list('', 10000),
+            withRetry(() => base44.asServiceRole.entities.PlayerSave.list('', 10000), 'PlayerSave'),
+            withRetry(() => base44.asServiceRole.entities.RunScore.list('', 10000), 'RunScore'),
+            withRetry(() => base44.asServiceRole.entities.Squad.list('', 10000), 'Squad'),
+            withRetry(() => base44.asServiceRole.entities.SquadMember.list('', 10000), 'SquadMember'),
+            withRetry(() => base44.asServiceRole.entities.SquadMessage.list('', 10000), 'SquadMessage'),
+            withRetry(() => base44.asServiceRole.entities.TokenPool.list('', 10000), 'TokenPool'),
+            withRetry(() => base44.asServiceRole.entities.TokenSpendLog.list('', 10000), 'TokenSpendLog'),
+            withRetry(() => base44.asServiceRole.entities.PayoutLog.list('', 10000), 'PayoutLog'),
+            withRetry(() => base44.asServiceRole.entities.GlobalBoss.list('', 10000), 'GlobalBoss'),
+            withRetry(() => base44.asServiceRole.entities.GlobalBossContribution.list('', 10000), 'GlobalBossContribution'),
+            withRetry(() => base44.asServiceRole.entities.GlobalBossEvent.list('', 10000), 'GlobalBossEvent'),
+            withRetry(() => base44.asServiceRole.entities.SquadWar.list('', 10000), 'SquadWar'),
+            withRetry(() => base44.asServiceRole.entities.SquadChampionsPayoutLog.list('', 10000), 'SquadChampionsPayoutLog'),
+            withRetry(() => base44.asServiceRole.entities.SquadSeasonRoster.list('', 10000), 'SquadSeasonRoster'),
         ]);
 
         const snapshot_data = {
