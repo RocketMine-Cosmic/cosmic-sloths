@@ -28,10 +28,14 @@ async function with429Retry(fn, label = 'sdk') {
             const msg = String(e?.message || '').toLowerCase();
             const status = e?.status || e?.response?.status;
             const is429 = status === 429 || msg.includes('rate limit') || msg.includes('429');
+            // Intermittent DB slowness surfaces as "timed out" 500s — retry those
+            // too instead of failing the whole tick on one slow read.
+            const isTransient = is429 || msg.includes('timed out') || msg.includes('timeout')
+                || (status >= 500 && status <= 504);
             lastErr = e;
-            if (!is429 || attempt === 3) throw e;
-            const delay = 600 * Math.pow(2, attempt) + Math.random() * 400;
-            console.warn(`[scheduledCleanupTopScores] ${label} 429 — retry ${attempt + 1}/3 in ${Math.round(delay)}ms`);
+            if (!isTransient || attempt === 3) throw e;
+            const delay = 1500 * Math.pow(2, attempt) + Math.random() * 500;
+            console.warn(`[scheduledCleanupTopScores] ${label} transient error — retry ${attempt + 1}/3 in ${Math.round(delay)}ms`);
             await sleep(delay);
         }
     }
