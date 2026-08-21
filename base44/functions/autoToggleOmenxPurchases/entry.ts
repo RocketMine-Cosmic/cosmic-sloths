@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
+import { createPurchase } from '../../shared/omenxPurchase.ts';
 
 // Scheduled probe of OmenX settlement. Auto-flips the omenx_purchases_disabled
 // kill-switch based on probe results.
@@ -38,14 +38,13 @@ async function runProbe() {
     const apiKey = Deno.env.get('OMENX_PAYMENT_API_KEY');
     if (!apiKey) throw new Error('No payment key configured');
 
-    const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
     // Owner wallet — has balance, so probe exercises real settlement path
     const wallet = '0xd2EBE0C69df70b97E3218fecFFA8295a00dd9B21';
     const idempotencyKey = `auto-probe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     const start = Date.now();
     try {
-        await sdk.createPurchase({
+        await createPurchase(apiKey, apiBaseUrl, {
             playerWallet: wallet,
             skuId: 'ingame-xp-buff',
             quantity: 1,

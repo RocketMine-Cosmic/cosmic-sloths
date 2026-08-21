@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.34';
+import { createPurchase } from '../../shared/omenxPurchase.ts';
 
 // Admin-only one-shot probe of OmenX's /v1/purchases endpoint, bypassing our
 // internal kill-switch and circuit breaker.
@@ -42,12 +42,11 @@ Deno.serve(async (req) => {
         const paymentAmount = Number(body.paymentAmount) || 1;
         const deepProbe = wallet !== '0x000000000000000000000000000000000000dEaD';
 
-        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
         const idempotencyKey = `probe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
         const start = Date.now();
         try {
-            const res = await sdk.createPurchase({
+            const res = await createPurchase(apiKey, apiBaseUrl, {
                 playerWallet: wallet,
                 skuId,
                 quantity: 1,

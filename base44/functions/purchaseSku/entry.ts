@@ -1,31 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createPurchase } from '../../shared/omenxPurchase.ts';
 
-// Direct REST call to OmenX instead of the npm game-sdk. The SDK relies on
-// runtime code generation (eval/new Function), which the Deno isolate now
-// disallows — importing it made the whole function fail to initialize, so
-// EVERY purchase died before any charge (2026-08-21 outage). The REST contract
-// is identical; we rebuild an error message shaped like the SDK's
-// ("<status> <CODE> <message>") so all the branch matching below still works.
-async function createPurchase(apiKey, apiBaseUrl, payload) {
-    const res = await fetch(`${apiBaseUrl}/v1/purchases`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'Idempotency-Key': payload.idempotencyKey,
-        },
-        body: JSON.stringify(payload),
-    });
-    const raw = await res.text();
-    let body = null;
-    try { body = raw ? JSON.parse(raw) : null; } catch {}
-    if (!res.ok) {
-        const code = body?.code || body?.error?.code || '';
-        const detail = body?.message || body?.error?.message || body?.error || raw || '';
-        throw new Error(`${res.status} ${code} ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`.trim());
-    }
-    return body;
-}
+// Direct REST call to OmenX instead of the npm game-sdk (see shared/omenxPurchase
+// for why the SDK can't be imported). Same module is used by the settlement
+// probes so there's exactly one copy of this contract.
 
 // Discord webhook fire-and-forget. Never throws — any failure is swallowed.
 async function postDiscord(envName, color, { title, description, fields }) {
