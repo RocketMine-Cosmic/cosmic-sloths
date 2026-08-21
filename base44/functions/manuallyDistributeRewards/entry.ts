@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
 
 const GAME_ID = 'cosmic-sloths';
@@ -69,7 +68,11 @@ Deno.serve(async (req) => {
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) return Response.json({ error: 'OMENX_API_KEY not configured' }, { status: 500 });
 
-        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
+        // NOTE: payouts go through direct grant-batch fetch calls below — the
+        // OmenX npm SDK is deliberately NOT imported here (it uses runtime code
+        // generation, which the Deno isolate blocks and which made functions
+        // fail to initialize). `sdk` args below are vestigial/unused.
+        const sdk = null;
 
         const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });
         if (pools.length === 0) return Response.json({ error: 'No pool found for this period' }, { status: 404 });

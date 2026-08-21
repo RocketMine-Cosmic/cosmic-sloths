@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { verifyOAuthUser } from '../../shared/omenxRest.ts';
 
 // Links the OmenX wallet to the currently-authenticated Base44 user.
 // Called once after OmenX + Base44 login both succeed.
@@ -21,11 +21,7 @@ Deno.serve(async (req) => {
         // Verify the OmenX token actually owns this wallet
         let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl,
-        });
-        const verify = await sdk.verifyOAuthUser(accessToken);
+        const verify = await verifyOAuthUser(accessToken, Deno.env.get('OMENX_AUTH_API_KEY'), apiBaseUrl);
         if (!verify.success) {
             return Response.json({ error: 'Invalid OmenX token' }, { status: 401 });
         }

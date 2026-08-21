@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
 import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
 
 // Service-role db client — set inside the request handler from
@@ -64,7 +63,10 @@ Deno.serve(async (req) => {
 
         const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        const sdk = new OmenXServerSDK({ apiKey, apiBaseUrl });
+        // Payouts use direct grant-batch fetch calls (grantBatchChunked) — the
+        // OmenX npm SDK is deliberately not imported (runtime code generation is
+        // blocked by the Deno isolate). `sdk` args below are vestigial/unused.
+        const sdk = null;
 
         const rewardsKeys = [
             Deno.env.get('OMENX_REWARDS_API_KEY'),

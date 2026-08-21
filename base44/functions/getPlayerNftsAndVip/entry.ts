@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { OmenXServerSDK } from 'npm:@omen.foundation/game-sdk@1.0.33';
+import { getPlayerGameBonusPointsLevel } from '../../shared/omenxRest.ts';
 
 // Admin-only: fetch a target wallet's NFT inventory + VIP level.
 // Used by the AdminPlayers panel for player operations.
@@ -62,11 +62,11 @@ Deno.serve(async (req) => {
         if (nfts === null && !nftError) nftError = `HTTP ${lastStatus || 'unknown'}`;
 
         // ---- VIP ----
-        const sdk = new OmenXServerSDK({
-            apiKey: Deno.env.get('OMENX_AUTH_API_KEY'),
-            apiBaseUrl: apiBaseUrlEnv,
-        });
-        const vipLevel = await sdk.getPlayerGameBonusPointsLevel(target).catch((e) => {
+        const vipLevel = await getPlayerGameBonusPointsLevel(
+            target,
+            Deno.env.get('OMENX_AUTH_API_KEY'),
+            apiBaseUrlEnv,
+        ).catch((e) => {
             console.error('[getPlayerNftsAndVip] vip failed:', e.message);
             return 0;
         });
