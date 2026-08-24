@@ -243,8 +243,15 @@ function rankTierLabel(rank) {
 //
 //   Caller passes alreadyPaidWallets (set of already-logged wallets from ANY
 //   status — 'pending-…' or real txId) so we skip them entirely.
+//   ONE TIER PER CALL (2026-08-24): OmenX's grant-batch now takes 45-60s+ to
+//   settle a single batch. Paying 5-6 tiers sequentially in one HTTP request
+//   always exceeded the function budget — the request died mid-run and surfaced
+//   as a 500 even though the tiers it HAD sent were paid correctly on-chain.
+//   So we now send exactly ONE tier per invocation and report `has_more`, and
+//   the caller (admin UI / cron) re-invokes until has_more is false. Each call
+//   stays well inside the budget and the resume logic above makes it safe.
 async function postTieredBatches(base44, period_id, period_type, payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets) {
-    if (payments.length === 0) return { txId: '', tiersPaid: 0, tiersSkipped: 0 };
+    if (payments.length === 0) return { txId: '', tiersPaid: 0, tiersSkipped: 0, hasMore: false, tiersRemaining: 0, tierLabel: '' };
     const tiers = new Map();
     for (const p of payments) {
         if (alreadyPaidWallets && alreadyPaidWallets.has(p.walletAddress.toLowerCase())) continue;
@@ -253,11 +260,14 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
         tiers.get(key).payments.push(p);
     }
     const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'r21-30', 'r31-40', 'r41-45', 'other'];
+    const pendingKeys = order.filter(k => (tiers.get(k)?.payments?.length || 0) > 0);
     const txIds = [];
     let tiersPaid = 0;
-    for (const key of order) {
+    let tierLabel = '';
+    // Only the first pending tier is sent this invocation — see note above.
+    for (const key of pendingKeys.slice(0, 1)) {
         const tier = tiers.get(key);
-        if (!tier || tier.payments.length === 0) continue;
+        tierLabel = tier.label;
         // 1) Write pending PayoutLog rows FIRST — if fetch never returns cleanly,
         //    these stay in place and resume-retry skips them (avoids double-pay).
         const pendingMarker = `pending-${period_id}-${Date.now()}-${key}`;
@@ -307,7 +317,14 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
         }
         tiersPaid++;
     }
-    return { txId: txIds.join(','), tiersPaid, tiersSkipped: 0 };
+    return {
+        txId: txIds.join(','),
+        tiersPaid,
+        tiersSkipped: 0,
+        tierLabel,
+        tiersRemaining: Math.max(0, pendingKeys.length - tiersPaid),
+        hasMore: pendingKeys.length > tiersPaid,
+    };
 }
 
 async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { includeStaff: true, includeKills: true }) {
@@ -421,7 +438,8 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { 
     // Log-first pattern (see postTieredBatches) — pending log written BEFORE the
     // fetch so ambiguous errors don't leave silently-paid wallets untracked.
     const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
-    const { txId: playerTxId } = await postTieredBatches(base44, pool.period_id, 'weekly', payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets);
+    const { txId: playerTxId, hasMore: playersHaveMore, tiersRemaining: playerTiersRemaining, tierLabel: playerTierLabel, tiersPaid: playerTiersPaid } =
+        await postTieredBatches(base44, pool.period_id, 'weekly', payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets);
 
     // Staff: single batch, log-first (same rationale). Gated by opts.includeStaff
     // — the green "Distribute (Players)" button skips this; use the "Staff Only"
@@ -483,12 +501,18 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { 
     // button, defer to the other two split fns — whichever runs last closes
     // the pool via maybeMarkWeeklyPoolDistributed. Otherwise clicking Players
     // Only would mark the pool distributed while staff+kills are still owed.
+    // Don't close the pool while player tiers are still outstanding — the caller
+    // is going to re-invoke us to finish them.
     if (opts.includeStaff && opts.includeKills) {
-        await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
-    } else {
+        if (!playersHaveMore) await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+    } else if (!playersHaveMore) {
         await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, pool.period_id);
     }
     return {
+        has_more: playersHaveMore,
+        tiers_remaining: playerTiersRemaining,
+        tier_paid: playerTierLabel,
+        tiers_paid: playerTiersPaid,
         paid: payments.length - alreadyPaidWallets.size,
         skipped_already_paid: alreadyPaidWallets.size,
         staff_paid: remainingStaff.length,
@@ -526,16 +550,20 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
 
     // Log-first pattern (see postTieredBatches) — pending log written BEFORE
     // the fetch so ambiguous errors don't leave silently-paid wallets untracked.
-    const { txId, tiersPaid } = await postTieredBatches(
+    const { txId, tiersPaid, hasMore, tiersRemaining, tierLabel } = await postTieredBatches(
         base44, pool.period_id, 'seasonal',
         payments, apiBaseUrl, apiKey,
         `Cosmic Sloths seasonal payout ${pool.period_id}`,
         alreadyPaidWallets
     );
 
-    await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
+    // Only close the pool once every tier has been sent.
+    if (!hasMore) await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
     const newlyPaid = payments.filter(p => !alreadyPaidWallets.has(p.walletAddress.toLowerCase()));
     return {
+        has_more: hasMore,
+        tiers_remaining: tiersRemaining,
+        tier_paid: tierLabel,
         paid: newlyPaid.length,
         skipped_already_paid: alreadyPaidWallets.size,
         tiersPaid,

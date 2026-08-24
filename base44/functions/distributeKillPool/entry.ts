@@ -230,15 +230,20 @@ Deno.serve(async (req) => {
             tiers.get(key).payments.push(p);
         }
         const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'other'];
+        // ONE TIER PER CALL (2026-08-24) — OmenX grant-batch now takes 45-60s+ per
+        // batch, so sending every tier in one request always ran past the function
+        // budget and surfaced as a 500 mid-way. Caller re-invokes while has_more.
+        const pendingKeys = order.filter(k => (tiers.get(k)?.payments?.length || 0) > 0);
         const baseNote = `Cosmic Sloths weekly KILL payout ${period_id}`;
         const txIds = [];
         let tiersPaid = 0;
         let walletsPaid = 0;
         let omenxPaid = 0;
+        let tierLabelPaid = '';
 
-        for (const key of order) {
+        for (const key of pendingKeys.slice(0, 1)) {
             const tier = tiers.get(key);
-            if (!tier || tier.payments.length === 0) continue;
+            tierLabelPaid = tier.label;
 
             // Log-first double-pay guard (2026-07-06). Write pending PayoutLog
             // rows BEFORE the fetch — if OmenX settles on-chain but the response
@@ -303,10 +308,17 @@ Deno.serve(async (req) => {
         // but when the three split fns are run separately, none of them flip
         // the flag — so the pool stays "pending" forever. Whichever of the
         // three runs last (typically this one) closes the loop.
-        const poolDistributed = await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, period_id);
+        // Don't close the pool while kill tiers remain — caller will re-invoke.
+        const hasMore = pendingKeys.length > tiersPaid;
+        const poolDistributed = hasMore
+            ? false
+            : await maybeMarkWeeklyPoolDistributed(base44.asServiceRole, period_id);
 
         return Response.json({
             pool_marked_distributed: poolDistributed,
+            has_more: hasMore,
+            tiers_remaining: Math.max(0, pendingKeys.length - tiersPaid),
+            tier_paid: tierLabelPaid,
             success: true,
             period_id,
             paid: walletsPaid,
