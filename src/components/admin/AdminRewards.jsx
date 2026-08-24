@@ -5,7 +5,6 @@ import { Gift, Eye, Send, Trophy } from 'lucide-react';
 import moment from 'moment';
 import { getCurrentWeekId, getCurrentSeasonId } from './useAvailablePeriods';
 import AdminKillSnapshotBackfill from './AdminKillSnapshotBackfill';
-import { runPayoutPasses } from './runPayoutPasses';
 
 // Canonical ISO 8601 (Mon-start, Sun 23:59 UTC end) — must match the rest of the app.
 // The previous local calc here used a Sun-start formula that returned the wrong week
@@ -75,16 +74,10 @@ export default function AdminRewards({ walletAddress }) {
         if (!distributePeriod) { setDistributeMsg('Select a period'); return; }
         setDistributing(true); setDistributeMsg('');
         try {
-            const data = await runPayoutPasses(
-                'manuallyDistributeRewards',
-                { period_id: distributePeriod, period_type: distributeType },
-                setDistributeMsg,
-            );
-            setDistributeMsg(data.incomplete
-                ? `⚠️ Stopped after ${data.passes} passes — some tiers may remain. Click again to continue.`
-                : `✓ Distributed to ${data.totalPaid} players — ${data.totalOmenx} OMENX total`);
+            const res = await base44.functions.invoke('manuallyDistributeRewards', { period_id: distributePeriod, period_type: distributeType });
+            setDistributeMsg(`✓ Distributed to ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX total`);
             setDistributePeriod('');
-            setTimeout(() => setDistributeMsg(''), 8000);
+            setTimeout(() => setDistributeMsg(''), 6000);
         } catch (err) { setDistributeMsg(`✗ ${err.message}`); }
         setDistributing(false);
     };
@@ -96,10 +89,8 @@ export default function AdminRewards({ walletAddress }) {
         if (distributeType !== 'weekly') { setDistributeMsg('Kill pool only applies to weekly periods'); return; }
         setDistributing(true); setDistributeMsg('');
         try {
-            const data = await runPayoutPasses('distributeKillPool', { period_id: distributePeriod }, setDistributeMsg);
-            setDistributeMsg(data.incomplete
-                ? `⚠️ Kill pool stopped after ${data.passes} passes — click again to continue.`
-                : `✓ Kill pool: paid ${data.totalPaid} players — ${data.totalOmenx} OMENX (skipped ${data.skipped_already_paid || 0} already paid)`);
+            const res = await base44.functions.invoke('distributeKillPool', { period_id: distributePeriod });
+            setDistributeMsg(`✓ Kill pool: paid ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
             setTimeout(() => setDistributeMsg(''), 8000);
         } catch (err) { setDistributeMsg(`✗ Kill pool: ${err.message}`); }
         setDistributing(false);
@@ -331,7 +322,7 @@ export default function AdminRewards({ walletAddress }) {
                     )}
                 </div>
                 <div className="text-[11px] text-slate-500 mt-2 leading-snug">
-                    Each button pays one rank tier per pass and keeps going automatically until every tier is sent (OmenX takes ~1 min per batch), so leave the page open until you see the ✓ summary. Run the three buttons separately for weekly periods — all three are resume-safe and idempotent.
+                    Run the three buttons separately for weekly periods to avoid gateway 504 timeouts — all three are resume-safe and idempotent.
                     On failure, the wallets in flight are logged as <span className="text-amber-400 font-mono">tx_id="pending-…"</span> and will be skipped on retry to prevent double-pays. If OmenX shows the on-chain payment succeeded for a "pending" row, you can safely leave it; if it didn't, delete that PayoutLog row and re-run.
                 </div>
                 {distributeMsg && <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{distributeMsg}</div>}

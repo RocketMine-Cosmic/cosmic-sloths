@@ -230,9 +230,6 @@ Deno.serve(async (req) => {
             tiers.get(key).payments.push(p);
         }
         const order = ['r1', 'r2', 'r3', 'r4-10', 'r11-20', 'other'];
-        // ONE TIER PER CALL (2026-08-24) — OmenX grant-batch now takes 45-60s+ per
-        // batch, so sending every tier in one request always ran past the function
-        // budget and surfaced as a 500 mid-way. Caller re-invokes while has_more.
         const pendingKeys = order.filter(k => (tiers.get(k)?.payments?.length || 0) > 0);
         const baseNote = `Cosmic Sloths weekly KILL payout ${period_id}`;
         const txIds = [];
@@ -241,7 +238,7 @@ Deno.serve(async (req) => {
         let omenxPaid = 0;
         let tierLabelPaid = '';
 
-        for (const key of pendingKeys.slice(0, 1)) {
+        for (const key of pendingKeys) {
             const tier = tiers.get(key);
             tierLabelPaid = tier.label;
 

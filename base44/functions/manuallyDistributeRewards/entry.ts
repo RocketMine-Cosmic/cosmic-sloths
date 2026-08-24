@@ -243,13 +243,8 @@ function rankTierLabel(rank) {
 //
 //   Caller passes alreadyPaidWallets (set of already-logged wallets from ANY
 //   status — 'pending-…' or real txId) so we skip them entirely.
-//   ONE TIER PER CALL (2026-08-24): OmenX's grant-batch now takes 45-60s+ to
-//   settle a single batch. Paying 5-6 tiers sequentially in one HTTP request
-//   always exceeded the function budget — the request died mid-run and surfaced
-//   as a 500 even though the tiers it HAD sent were paid correctly on-chain.
-//   So we now send exactly ONE tier per invocation and report `has_more`, and
-//   the caller (admin UI / cron) re-invokes until has_more is false. Each call
-//   stays well inside the budget and the resume logic above makes it safe.
+//   All pending tiers are sent in this one invocation — grant-batch exists to
+//   pay many wallets per call, so we keep every tier in the same request.
 async function postTieredBatches(base44, period_id, period_type, payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets) {
     if (payments.length === 0) return { txId: '', tiersPaid: 0, tiersSkipped: 0, hasMore: false, tiersRemaining: 0, tierLabel: '' };
     const tiers = new Map();
@@ -264,8 +259,7 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
     const txIds = [];
     let tiersPaid = 0;
     let tierLabel = '';
-    // Only the first pending tier is sent this invocation — see note above.
-    for (const key of pendingKeys.slice(0, 1)) {
+    for (const key of pendingKeys) {
         const tier = tiers.get(key);
         tierLabel = tier.label;
         // 1) Write pending PayoutLog rows FIRST — if fetch never returns cleanly,
