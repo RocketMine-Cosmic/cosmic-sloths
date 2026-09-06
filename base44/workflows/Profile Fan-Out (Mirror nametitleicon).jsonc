@@ -1,0 +1,37 @@
+{
+  "name": "Profile Fan-Out (Mirror name/title/icon)",
+  "description": "When PlayerSave.save_data.profile changes (player_name/title/icon), mirror the new values to RunScore + SquadMember + SquadMessage. Replaces the synchronous syncProfileName fan-out (Option A).",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"player_name\") != null) or (.trigger.changed_fields | index(\"player_title\") != null) or (.trigger.changed_fields | index(\"pilot_icon\") != null)) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "PlayerSave"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "profile_fan_out_mirror_name_title_icon",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "mirrorProfileFanOut",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "mirrorProfileFanOut"
+  }
+}

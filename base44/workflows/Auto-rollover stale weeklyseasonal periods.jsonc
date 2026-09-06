@@ -1,0 +1,44 @@
+{
+  "name": "Auto-rollover stale weekly/seasonal periods",
+  "description": "Hourly safety-net sweep that scans every PlayerSave and rolls stale weekly/seasonal upgrade containers forward to the current period. Belt-and-braces against the Texxy 2026-05-04 bug \u2014 even if loadSave/syncSave somehow miss a player, this catches them within an hour.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "30 0 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_rollover_stale_weekly_seasonal_periods",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "rolloverStalePeriods",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "rolloverStalePeriods"
+  }
+}

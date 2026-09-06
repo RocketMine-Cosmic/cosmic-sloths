@@ -1,0 +1,46 @@
+{
+  "name": "Squad Wars Champions Payout",
+  "description": "Distributes the Squad Wars Champions Pool (5% of seasonal OMENX) to the top 3 squads of the previous season. Idempotent. Runs every 4 weeks on Monday at 23:00 UTC, just before the regular seasonal distribution. Disabled by default \u2014 enable when ready or run manually from the admin panel.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 22 * * 1",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "squad_wars_champions_payout",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "distributeSquadChampions",
+            "args": {
+              "mode": "execute"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "distributeSquadChampions"
+  }
+}

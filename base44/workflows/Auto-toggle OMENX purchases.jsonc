@@ -1,0 +1,44 @@
+{
+  "name": "Auto-toggle OMENX purchases",
+  "description": "Probes OmenX settlement every 5 min. Disables purchases after 3 consecutive failures (~15 min), re-enables after 3 consecutive successes (~15 min). Respects 30-min manual override grace.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-05-13T03:20:29.155000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_toggle_omenx_purchases",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoToggleOmenxPurchases",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoToggleOmenxPurchases"
+  }
+}

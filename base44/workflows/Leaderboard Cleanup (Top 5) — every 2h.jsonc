@@ -1,0 +1,44 @@
+{
+  "name": "Leaderboard Cleanup (Top 5) \u2014 every 2h",
+  "description": "Every 2 hours, archives every player's runs past their top-5 per (week \u00d7 mode). Keeps the leaderboard table lean \u2014 only the top score actually drives payouts, but we keep 5 as a forensics buffer. Runs frequently enough that backlogs never grow past ~50\u2013100 rows.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 2,
+      "interval_unit": "hours",
+      "interval_anchor": "2026-05-06T23:00:00",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "leaderboard_cleanup_top_5_every_2h",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "scheduledCleanupTopScores",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "scheduledCleanupTopScores"
+  }
+}
