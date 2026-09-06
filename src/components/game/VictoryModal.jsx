@@ -24,8 +24,11 @@ export default function VictoryModal({ stats }) {
 
     return (
         <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4"
+            className="fixed top-0 left-0 right-0 h-screen bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4"
             style={{
+                // iOS Safari: 100vh/inset-0 includes the area behind the bottom toolbar,
+                // clipping the card. dvh tracks the visible viewport instead.
+                height: '100dvh',
                 paddingTop: 'max(env(safe-area-inset-top, 0px), 0.5rem)',
                 paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.5rem)',
             }}
