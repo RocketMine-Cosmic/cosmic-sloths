@@ -115,7 +115,7 @@ the browser. Our existing design doc (`design/VIP_POINTS_AND_QUESTS.md`) covers 
 | System | Endpoint | Scope | What it is | Pool? |
 |---|---|---|---|---|
 | **VIP points** | `POST /v1/vip/grant-points` `{ wallet, amount:int≥1, questId? }` → `{ wallet, amount, phaseIndex }` | `vip_points:write` | Raises the player's platform-wide **VIP tier** (which feeds *our* NFT/VIP perks via `getVipLevel`) | **Yes** — finite per-game allocation set in the dev portal; `GRANT_POINTS_FAILED` when exhausted. Max 300/grant |
-| **Activity points** | `POST /v1/activity/grant-points` `{ wallet, amount, questId? }` + **`Idempotency-Key` header or `questId` mandatory** → `{ wallet, baseAmount, credited, vipMultiplier }` | `activity_points:write` | Platform engagement score; **credited = base × the player's VIP multiplier** (VIPs earn more) | Not documented as pooled — confirm with Omen |
+| **Activity points** | `POST /v1/activity/grant-points` `{ wallet, amount, questId? }` + **`Idempotency-Key` header or `questId` mandatory** → `{ wallet, baseAmount, credited, vipMultiplier }` | `activity_points:write` | **Non-redeemable** engagement score; **credited = base × the player's VIP band multiplier**, but the pool is only charged the **base** amount | **Yes — a monthly pool** (per the 77-endpoint manifest). Refills monthly, so daily-loop spend must be budgeted against it |
 | **Quests** | `GET /v1/quests/players/:wallet?questType=` · `POST …/assign {questType,count 1–50}` · `POST /v1/quests/progress {wallet,questKey,value,stepKey?}` · `POST /v1/quests/complete` · `POST /v1/quests/claim` → `{ pointsGranted }` · `POST …/reset {action:wipe\|reset,questKey?}` | `quests:read` / `quests:write` | Omen-hosted quest definitions (templates configured in dev portal) that show in the player's OmenX profile. Claim pays **VIP points from our pool** | Draws from the VIP pool |
 
 Error codes: `GRANT_POINTS_FAILED`, `ASSIGN_FAILED`, `PROGRESS_FAILED`, `COMPLETE_FAILED`, `CLAIM_FAILED`.
@@ -125,11 +125,14 @@ Error codes: `GRANT_POINTS_FAILED`, `ASSIGN_FAILED`, `PROGRESS_FAILED`, `COMPLET
 **Activity points = the everyday grind reward. VIP points = rare, earned prestige. Quests = the
 visible wrapper once templates exist.**
 
-Reasoning: activity points have no documented pool and carry a VIP multiplier, so they're the
-right currency for high-frequency events (daily login, runs, kills) — the daily loop in the design
-doc should move here. VIP points are finite and directly move tier, so spend them only on
-verifiable, rare wins (leaderboards, wars, champions). This also gives VIP holders a reason to
-play daily (multiplier) without us burning the pool.
+Reasoning: activity points are non-redeemable, refill **monthly**, and carry a VIP multiplier the
+pool doesn't pay for — so they're the right currency for high-frequency events (daily login, runs,
+kills); the daily loop in the design doc should move here. VIP points are **OMENX-redeemable**
+(they're real value), finite, and directly move tier, so spend them only on verifiable, rare wins
+(leaderboards, wars, champions). This also gives VIP holders a reason to play daily (multiplier)
+without us burning the redeemable pool. Both pools are sized in the portal — the daily-loop
+numbers must be checked against the monthly activity allocation (e.g. 100 pts/day × active
+players × 30 days) before going live.
 
 **Activity points (daily loop — from design doc Tier 1, re-pointed):**
 
@@ -194,6 +197,24 @@ gets a Claim button → `claimQuestReward` → toast `pointsGranted`.
 - Points failures are **never** user-blocking — log + Discord alert, never fail the underlying save/claim.
 
 ---
+
+## Part C — New in the 77-endpoint manifest (2026-09-17)
+
+The full manifest adds whole subsystems that weren't in the 47-endpoint doc or the SDK. None
+require action today; listed so we know what's on the table.
+
+| Subsystem | Endpoints | Relevance to Cosmic Sloths |
+|---|---|---|
+| **Player data** (`player_data:read/write`) | `GET /players/:wallet/data`, `PUT/DELETE …/data/:key` — up to 10 named JSON values, 100 KB each, server-owned | Could hold a cross-game mirror of the pilot profile, but our PlayerSave already does this. **Skip.** |
+| **Non-NFT inventory** (`inventory:read/write`) | item definitions + idempotent per-player grants with typed properties | Would let Relics / Fragments / cosmetics show in the player's OmenX profile. Nice-to-have, **Phase 4 at earliest.** |
+| **Hosted leaderboards** (`leaderboards:read/write`) | create boards, post server-authoritative scores (idempotencyKey required), cohorts, reset | Mirror our weekly score + kill boards to Omen so they're visible platform-side. Cheap: one extra call in `saveScore`. **Worth doing alongside Quests Phase 3** — same "be visible on the Omen profile" goal. |
+| **Matches / matchmaking** (`matches:read/write`) | async head-to-head/group matches, tickets, official scores | Async 1v1 "beat my run" duels are a plausible S9+ feature. **Not now.** |
+| **Events** (`events:read/write`) | competition events with entry fees (escrow) and settlement at event end | This is essentially a hosted version of the **Ascended Protocol** prize-pool model. Evaluate whether Omen escrow could replace our TokenPool/PayoutLog machinery for Ascended — big potential simplification, big migration. **Design discussion, not a build item.** |
+| **OAuth JWKS + gamerTag** | `GET /oauth/.well-known/jwks.json`, `POST /oauth/game-user` | Verify access tokens locally (RS256) instead of hitting `/oauth/user` per request — would cut a network call from `exchangeOmenXCode` / `linkWalletToUser` and remove a 404-on-valid-wallet failure mode. **Small, good win when touching auth next.** |
+| **Purchase confirmation** | `428 CONFIRMATION_REQUIRED` + `confirmationId` / `confirmationCode` | Already in A2 — still unhandled on our side. |
+
+**Corrections to Part B from this manifest:** activity points **are pooled (monthly)**; VIP points
+are **OMENX-redeemable** (so they're money, budget accordingly). Both updated above.
 
 ## Suggested order
 
