@@ -114,40 +114,58 @@ the browser. Our existing design doc (`design/VIP_POINTS_AND_QUESTS.md`) covers 
 
 | System | Endpoint | Scope | What it is | Pool? |
 |---|---|---|---|---|
-| **VIP points** | `POST /v1/vip/grant-points` `{ wallet, amount:int≥1, questId? }` → `{ wallet, amount, phaseIndex }` | `vip_points:write` | Raises the player's platform-wide **VIP tier** (which feeds *our* NFT/VIP perks via `getVipLevel`) | **Yes** — finite per-game allocation set in the dev portal; `GRANT_POINTS_FAILED` when exhausted. Max 300/grant |
-| **Activity points** | `POST /v1/activity/grant-points` `{ wallet, amount, questId? }` + **`Idempotency-Key` header or `questId` mandatory** → `{ wallet, baseAmount, credited, vipMultiplier }` | `activity_points:write` | **Non-redeemable** engagement score; **credited = base × the player's VIP band multiplier**, but the pool is only charged the **base** amount | **Yes — a monthly pool** (per the 77-endpoint manifest). Refills monthly, so daily-loop spend must be budgeted against it |
+| **VIP points** | `POST /v1/vip/grant-points` `{ wallet, amount:int≥1, questId? }` → `{ wallet, amount, phaseIndex }` | `vip_points:write` | Raises the player's **VIP tier**, which decides their **share of the OMENX epoch pool** — i.e. real value | **100,000 / month** · max **300 per quest** · **no per-player limit** |
+| **Activity points** | `POST /v1/activity/grant-points` `{ wallet, amount, questId? }` + **`Idempotency-Key` header or `questId` mandatory** → `{ wallet, baseAmount, credited, vipMultiplier }` | `activity_points:write` | **Non-redeemable.** Drives the platform **leaderboard, which ranks by placement in each game, not raw points** — so the *amount* matters far less than who gets one | **10,000 / month** · max **100 per grant** · max **1,000 to any one player** · platform daily cap not enforced (ours must be) |
 | **Quests** | `GET /v1/quests/players/:wallet?questType=` · `POST …/assign {questType,count 1–50}` · `POST /v1/quests/progress {wallet,questKey,value,stepKey?}` · `POST /v1/quests/complete` · `POST /v1/quests/claim` → `{ pointsGranted }` · `POST …/reset {action:wipe\|reset,questKey?}` | `quests:read` / `quests:write` | Omen-hosted quest definitions (templates configured in dev portal) that show in the player's OmenX profile. Claim pays **VIP points from our pool** | Draws from the VIP pool |
 
 Error codes: `GRANT_POINTS_FAILED`, `ASSIGN_FAILED`, `PROGRESS_FAILED`, `COMPLETE_FAILED`, `CLAIM_FAILED`.
 
-### B2. Recommended split (revised)
+### B2. Recommended split (REVISED AGAIN — real portal numbers, 2026-09-17)
 
-**Activity points = the everyday grind reward. VIP points = rare, earned prestige. Quests = the
-visible wrapper once templates exist.**
+**VIP points = the daily loop. Activity points = weekly placement only.** This is the *opposite*
+of my earlier recommendation, and the portal figures are why.
 
-Reasoning: activity points are non-redeemable, refill **monthly**, and carry a VIP multiplier the
-pool doesn't pay for — so they're the right currency for high-frequency events (daily login, runs,
-kills); the daily loop in the design doc should move here. VIP points are **OMENX-redeemable**
-(they're real value), finite, and directly move tier, so spend them only on verifiable, rare wins
-(leaderboards, wars, champions). This also gives VIP holders a reason to play daily (multiplier)
-without us burning the redeemable pool. Both pools are sized in the portal — the daily-loop
-numbers must be checked against the monthly activity allocation (e.g. 100 pts/day × active
-players × 30 days) before going live.
+**The maths.** Current scale (measured from `DailyActivityLog`, last 30 days): **36 monthly active
+wallets, ~5 daily active.**
 
-**Activity points (daily loop — from design doc Tier 1, re-pointed):**
+- **Activity pool = 10,000/month.** Split across 36 actives that's **278 pts per player per month
+  ≈ 9/day** — and the per-player ceiling is only 1,000/month, so one heavy player can absorb 10%
+  of the entire game's pool. A 100/day daily loop (my earlier plan) would need 108,000/month:
+  **10× over budget, and it would exhaust the pool in ~3 player-days.** Activity points cannot
+  fund a daily loop at any realistic player count.
+- **VIP pool = 100,000/month** with **no per-player cap** → **2,778 per player per month ≈ 92/day**
+  at current scale. That comfortably funds the whole daily loop.
 
-| Event | Hook (already server-validated) | Base pts | Idempotency-Key |
+Two other facts from the portal flip the reasoning:
+- Activity points **rank by placement, not raw points** — so a big number buys nothing extra. The
+  right use is a *small* grant to the players who placed, which is exactly what the tiny pool suits.
+- VIP points decide the player's **share of the OMENX epoch pool** — so a generous daily loop is
+  genuinely valuable to players *and* is what the large pool is sized for.
+
+**VIP points — the daily loop** (amounts chosen so a maxed player costs ~1,425/month, i.e. 36
+actives ≈ 51k of the 100k, leaving headroom for competitive grants and ~3× player growth):
+
+| Event | Hook (already server-validated) | Pts | questId |
 |---|---|---|---|
-| Daily login | `claimDailyLogin` | 25 | `act-login-${date}-${wallet}` |
-| All daily tasks done | `claimDailyTask` (last claim) | 25 | `act-tasks-${date}-${wallet}` |
-| First sector clear of day | `saveScore` (DailyActivityLog upsert) | 20 | `act-firstrun-${date}-${wallet}` |
-| Daily kill target | `saveScore` vs server counter | 30 | `act-dkills-${date}-${wallet}` |
-| Login streak 3/7/14/30 | `claimDailyLogin` | 30/75/150/300 | `act-streak${n}-${wallet}-${cycle}` |
+| Daily login | `claimDailyLogin` | 10 | `vip-login-${date}-${wallet}` |
+| All daily tasks done | `claimDailyTask` (last claim) | 10 | `vip-tasks-${date}-${wallet}` |
+| First sector clear of day | `saveScore` (DailyActivityLog upsert) | 5 | `vip-firstrun-${date}-${wallet}` |
+| Daily kill target | `saveScore` vs server counter | 10 | `vip-dkills-${date}-${wallet}` |
+| Login streak 3/7/14/30 | `claimDailyLogin` | 25/50/100/200 | `vip-streak${n}-${wallet}-${cycle}` |
 
-**VIP points (competitive — design doc Tier 2, unchanged):** weekly kill/score top-10
-(100/60/40, 20 for 4–10), Squad War win (25/member), Global Boss bands (10–40), Squad Champions
-(300). Granted inside the same payout functions, after the OMENX grant succeeds, `questId` =
-deterministic key.
+Perfect day = **35 pts**; perfect month ≈ 1,050 + up to 375 in streaks. Still beats the Omen
+website's own 50/day login quest in *value* terms once tier share is counted, and login alone (10)
+deliberately pays less than playing.
+
+**VIP points — competitive** (~15k/month at current scale): weekly score + kill boards
+300/200/150 for 1st–3rd and 75 for 4th–10th (300 = the per-quest ceiling), Squad War win 25/member,
+Global Boss bands 10–40, Squad Champions 300. Granted inside the existing payout functions after
+the OMENX grant succeeds.
+
+**Activity points — weekly placement only** (~3–4k/month, well inside 10,000): top 10 of each
+weekly board gets **100/75/50 for 1st–3rd, 25 for 4th–10th** (100 = per-grant ceiling). Nothing
+daily, nothing per-run. Enforce our own **1,000/player/period** guard before every call since the
+platform's per-player cap will otherwise hard-fail the grant mid-payout.
 
 **Quests (Phase 3):** once templates exist in the portal — daily assign for players seen in
 `DailyActivityLog` last 7 days; `saveScore` reports progress (`stepKey: 'kills'` etc.); Dailys page
@@ -155,9 +173,11 @@ gets a Claim button → `claimQuestReward` → toast `pointsGranted`.
 
 ### B3. Build plan
 
-**Phase 0 — prerequisites (blocked on Omen / portal, do first)**
-1. Dev portal: confirm VIP pool allocation + max-per-quest; ask whether activity points are pooled;
-   ask whether granted points appear immediately in `/players/:wallet/vip`.
+**Phase 0 — prerequisites**
+1. ✅ **Portal figures confirmed (2026-09-17):** VIP 100,000/mo, 300/quest, no per-player cap.
+   Activity 10,000/mo, 100/grant, 1,000/player, granting enabled, period = calendar month
+   (`2026-09`, resets 1st). Still worth asking Omen: do granted points appear immediately in
+   `/players/:wallet/vip`, and can the activity allocation be raised if we outgrow it?
 2. New API key with `vip_points:write` + `activity_points:write` + `quests:read` + `quests:write`
    → secret `OMENX_POINTS_API_KEY` (don't overload rewards/payment keys — separate rate buckets).
 3. Sanity probe function (admin-only) that grants 1 activity point to an admin wallet and reads back
@@ -169,8 +189,15 @@ gets a Claim button → `claimQuestReward` → toast `pointsGranted`.
 - New entity `PointGrantLog` `{ wallet, kind: 'activity'|'vip', amount, credited, multiplier,
   reason, idempotency_key (unique), period_id }` — written **before** the call (log-first), patched
   with the response. Dedup on key = second fence against double grants.
-- `AppConfig` key `points_config` with all amounts + a per-wallet daily cap (default 130) +
-  `enabled` kill-switch. Blacklist check before every grant.
+- `AppConfig` key `points_config` with all amounts + `enabled` kill-switch + **three budget
+  guards**, all checked against `PointGrantLog` before each call:
+  1. **Monthly pool guard** — running total per `period_id` (`YYYY-MM`, resets on the 1st) per kind:
+     stop VIP grants at a configurable 90,000 (of 100,000) and activity at 9,000 (of 10,000) so we
+     never hit `GRANT_POINTS_FAILED` mid-payout.
+  2. **Per-player activity cap** — hard 1,000 per period (platform limit; exceeding it fails).
+  3. **Per-wallet daily cap** — VIP 60/day (perfect day + one streak) as an anti-abuse fence.
+  Blacklist check before every grant. Amounts live in config so they can be throttled as the
+  player base grows without a deploy.
 - Wire into `claimDailyLogin`, `claimDailyTask`, `saveScore` (fire-and-forget after the main write;
   never let a points failure fail the save).
 - Dailys page: "OmenX Points" strip — today's earned / available, streak track, VIP multiplier
@@ -213,8 +240,10 @@ require action today; listed so we know what's on the table.
 | **OAuth JWKS + gamerTag** | `GET /oauth/.well-known/jwks.json`, `POST /oauth/game-user` | Verify access tokens locally (RS256) instead of hitting `/oauth/user` per request — would cut a network call from `exchangeOmenXCode` / `linkWalletToUser` and remove a 404-on-valid-wallet failure mode. **Small, good win when touching auth next.** |
 | **Purchase confirmation** | `428 CONFIRMATION_REQUIRED` + `confirmationId` / `confirmationCode` | Already in A2 — still unhandled on our side. |
 
-**Corrections to Part B from this manifest:** activity points **are pooled (monthly)**; VIP points
-are **OMENX-redeemable** (so they're money, budget accordingly). Both updated above.
+**Corrections to Part B:** activity points **are pooled monthly and are tiny (10,000)** with a
+1,000/player ceiling; VIP points are the **large** pool (100,000/month, no per-player cap) and feed
+the player's share of the OMENX epoch pool. The daily loop therefore belongs on **VIP** points and
+activity points are reserved for weekly placement — see B2, which supersedes the earlier split.
 
 ## Suggested order
 
