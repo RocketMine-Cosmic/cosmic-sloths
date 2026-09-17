@@ -115,7 +115,7 @@ the browser. Our existing design doc (`design/VIP_POINTS_AND_QUESTS.md`) covers 
 | System | Endpoint | Scope | What it is | Pool? |
 |---|---|---|---|---|
 | **VIP points** | `POST /v1/vip/grant-points` `{ wallet, amount:int≥1, questId? }` → `{ wallet, amount, phaseIndex }` | `vip_points:write` | Raises the player's **VIP tier**, which decides their **share of the OMENX epoch pool** — i.e. real value | **100,000 / month** · max **300 per quest** · **no per-player limit** |
-| **Activity points** | `POST /v1/activity/grant-points` `{ wallet, amount, questId? }` + **`Idempotency-Key` header or `questId` mandatory** → `{ wallet, baseAmount, credited, vipMultiplier }` | `activity_points:write` | **Non-redeemable.** Drives the platform **leaderboard, which ranks by placement in each game, not raw points** — so the *amount* matters far less than who gets one | **10,000 / month** · max **100 per grant** · max **1,000 to any one player** · platform daily cap not enforced (ours must be) |
+| **Activity points** | `POST /v1/activity/grant-points` `{ wallet, amount, questId? }` + **`Idempotency-Key` header or `questId` mandatory** → `{ wallet, baseAmount, credited, vipMultiplier }` | `activity_points:write` | **Non-redeemable.** Drives the platform **leaderboard, which ranks by placement in each game, not raw points** — so the *amount* matters far less than who gets one | **10,000 / month is a TESTING allocation, negotiable** (Omen game-dev-chat, 2026-09-17: "open a ticket with roughly how many players you expect to reward and how often — we would rather size it with you than guess") · max **100 per grant** · max **1,000 per player per month** (this ceiling exists deliberately so a pool can't concentrate on a few accounts — **must handle the rejection**, which names the ceiling and the wallet's remaining balance) |
 | **Quests** | `GET /v1/quests/players/:wallet?questType=` · `POST …/assign {questType,count 1–50}` · `POST /v1/quests/progress {wallet,questKey,value,stepKey?}` · `POST /v1/quests/complete` · `POST /v1/quests/claim` → `{ pointsGranted }` · `POST …/reset {action:wipe\|reset,questKey?}` | `quests:read` / `quests:write` | Omen-hosted quest definitions (templates configured in dev portal) that show in the player's OmenX profile. Claim pays **VIP points from our pool** | Draws from the VIP pool |
 
 Error codes: `GRANT_POINTS_FAILED`, `ASSIGN_FAILED`, `PROGRESS_FAILED`, `COMPLETE_FAILED`, `CLAIM_FAILED`.
@@ -162,6 +162,34 @@ deliberately pays less than playing.
 Global Boss bands 10–40, Squad Champions 300. Granted inside the existing payout functions after
 the OMENX grant succeeds.
 
+**⚠️ The activity numbers above are the TESTING allocation, not our final budget.** Omen have asked
+us to open a ticket with expected player count + frequency and they'll size the real allocation with
+us. So B2's "activity = placement only" is the **conservative plan that works inside 10,000 today**;
+if the ticket lands a bigger allocation we can move part of the daily loop back onto activity points
+(they're non-redeemable, so Omen should be far more relaxed about them than the VIP pool). Either
+way the VIP daily loop below is what ships first — it needs no negotiation.
+
+**Ticket draft (send to Omen):**
+> Cosmic Sloths — activity points sizing. Current scale: **36 monthly active wallets, ~5 daily
+> active** (measured over the last 30 days). We're planning a **daily engagement loop** (login,
+> daily tasks, first run of the day, daily kill target) plus **weekly leaderboard placement** grants
+> on two boards (score + kills, top 10 each).
+> - Daily loop: ~35 pts/player/day → ~1,050/player/month.
+> - Weekly placement: ~400 pts/board/week → ~3,200/month total.
+> - Request: **~50,000 points/month** and a **per-player ceiling of ~2,000/month**, sized for growth
+>   to ~150 monthly actives (at 36 actives we'd use ~40k).
+> - If the per-player ceiling stays at 1,000 we'll keep the daily loop on VIP points and use
+>   activity points for placement only — happy either way, just want to know which to build.
+> We already log every grant locally with a deterministic idempotency key and enforce our own
+> monthly + per-player caps before calling, so we won't rely on your rejection as flow control.
+
+**The 1,000/player rejection must be handled, not assumed away.** Our `grantActivityPoints` helper
+returns a structured outcome (`granted` / `player_cap_reached` / `pool_exhausted`) instead of
+throwing, records the rejection reason in `PointGrantLog`, and the caller continues to the next
+wallet. A capped whale must never abort a leaderboard payout mid-loop. Worth deliberately testing
+both limits (a >100 grant and a wallet pushed past 1,000) before wiring anything real, as Omen
+suggest.
+
 **Activity points — weekly placement only** (~3–4k/month, well inside 10,000): top 10 of each
 weekly board gets **100/75/50 for 1st–3rd, 25 for 4th–10th** (100 = per-grant ceiling). Nothing
 daily, nothing per-run. Enforce our own **1,000/player/period** guard before every call since the
@@ -176,8 +204,12 @@ gets a Claim button → `claimQuestReward` → toast `pointsGranted`.
 **Phase 0 — prerequisites**
 1. ✅ **Portal figures confirmed (2026-09-17):** VIP 100,000/mo, 300/quest, no per-player cap.
    Activity 10,000/mo, 100/grant, 1,000/player, granting enabled, period = calendar month
-   (`2026-09`, resets 1st). Still worth asking Omen: do granted points appear immediately in
-   `/players/:wallet/vip`, and can the activity allocation be raised if we outgrow it?
+   (`2026-09`, resets 1st). Still worth asking Omen whether granted points appear immediately in
+   `/players/:wallet/vip`.
+1b. 🔴 **Open the activity-points sizing ticket** (draft in B2). The 10,000 is a testing allocation
+   and Omen have explicitly invited us to size the real one — do this early, it gates whether the
+   daily loop can live on activity points as well as VIP. Also deliberately trip both limits
+   (>100 in one grant, a wallet pushed past 1,000) on a test wallet to prove our rejection handling.
 2. New API key with `vip_points:write` + `activity_points:write` + `quests:read` + `quests:write`
    → secret `OMENX_POINTS_API_KEY` (don't overload rewards/payment keys — separate rate buckets).
 3. Sanity probe function (admin-only) that grants 1 activity point to an admin wallet and reads back
