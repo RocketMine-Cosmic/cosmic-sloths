@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { SaveManager } from '@/game/SaveManager';
 import { CHARACTERS } from '@/game/Constants';
 import { SoundManager } from '@/game/SoundManager';
@@ -93,6 +94,37 @@ export default function Wardrobe({ isCarousel }) {
         SaveManager.save(s);
         setSave(s);
         SaveManager.syncToBackendImmediate();
+    };
+
+    // Quest-reward skins: spend 100 Quest Points via the server, then auto-equip.
+    const [claimingSkinId, setClaimingSkinId] = useState(null);
+    const [claimError, setClaimError] = useState(null);
+    const handleClaimRewardSkin = async (item) => {
+        if (claimingSkinId) return;
+        SoundManager.playUIClick();
+        setClaimError(null);
+        setClaimingSkinId(item.id);
+        try {
+            let res;
+            try {
+                res = await base44.functions.invoke('claimSeasonalSkin', { skinId: item.id });
+            } catch (e) {
+                setClaimError(e?.response?.data?.error || 'Couldn\'t claim right now. Please try again.');
+                return;
+            }
+            const data = res.data;
+            if (!data?.success) { setClaimError(data?.error || 'Couldn\'t claim right now. Please try again.'); return; }
+            const s = SaveManager.load();
+            if (data.saveData.seasonalPoints !== undefined) s.seasonalPoints = data.saveData.seasonalPoints;
+            if (data.saveData.unlockedSkins !== undefined) s.unlockedSkins = data.saveData.unlockedSkins;
+            s.cosmetics = { ...(s.cosmetics || {}), skins: { ...((s.cosmetics || {}).skins || {}), [item.charId]: item.id } };
+            SaveManager.save(s);
+            setSave(s);
+            SaveManager.syncToBackendImmediate();
+            SoundManager.playLevelUp();
+        } finally {
+            setClaimingSkinId(null);
+        }
     };
 
     // Per-category counts for the source filter pills.
@@ -279,10 +311,16 @@ export default function Wardrobe({ isCarousel }) {
                                             }
                                         }}
                                         onEquip={() => handleEquip(item)}
+                                        questPoints={save.seasonalPoints || 0}
+                                        onClaim={item.source === 'reward' ? () => handleClaimRewardSkin(item) : undefined}
+                                        claiming={claimingSkinId === item.id}
                                     />
                                 );
                             })}
                         </div>
+                    )}
+                    {claimError && (
+                        <div className="mt-3 text-xs text-red-300 bg-red-950/50 border border-red-700/50 rounded-lg px-3 py-2">{claimError}</div>
                     )}
                 </div>
             </div>

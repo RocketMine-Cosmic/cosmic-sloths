@@ -16,7 +16,9 @@ const RARITY_STYLES = {
     reward:   { label: 'Reward',   ring: 'border-yellow-600/70',  text: 'text-yellow-300' },
 };
 
-export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip }) {
+export const QUEST_POINTS_PER_SKIN = 100;
+
+export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip, questPoints = 0, onClaim, claiming = false }) {
     const rarity = RARITY_STYLES[item.rarity] || RARITY_STYLES.standard;
 
     // Three primary action states:
@@ -43,9 +45,18 @@ export default function WardrobeCard({ item, owned, equipped, onPreview, onEquip
             </div>
         );
     } else if (item.source === 'reward') {
-        cta = (
+        const canClaim = questPoints >= QUEST_POINTS_PER_SKIN && !!onClaim;
+        cta = canClaim ? (
+            <button
+                onClick={onClaim}
+                disabled={claiming}
+                className="w-full py-1.5 rounded-md text-[11px] font-black uppercase tracking-widest bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 shadow-[0_0_10px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-60 disabled:animate-none"
+            >
+                {claiming ? '…' : `🏆 Claim (${QUEST_POINTS_PER_SKIN} pts)`}
+            </button>
+        ) : (
             <div className="w-full py-1.5 rounded-md text-center text-[10px] font-bold uppercase tracking-widest text-yellow-300/80 bg-yellow-950/40 border border-yellow-700/40">
-                Quest milestone reward
+                ⭐ {questPoints} / {QUEST_POINTS_PER_SKIN} quest pts
             </div>
         );
     } else {

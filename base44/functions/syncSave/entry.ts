@@ -517,6 +517,14 @@ Deno.serve(async (req) => {
             player_title: pickField(profileFromClient.player_title, profileFromCloud.player_title, existingData.player_title || ''),
             pilot_icon:   pickField(profileFromClient.pilot_icon,   profileFromCloud.pilot_icon,   existingData.pilot_icon || ''),
         };
+        // Chest cosmetic equip slots (Wardrobe writes these onto profile). They were
+        // being dropped by the rebuild above, so equipping a chest pilot icon / LB
+        // frame / title flair never reached the cloud and vanished on next load.
+        // Same per-field rule: client non-empty wins, else keep cloud.
+        for (const slot of ['equipped_animated_icon', 'equipped_lb_frame', 'equipped_title_style', 'equipped_meteor_fx']) {
+            const v = pickField(profileFromClient[slot], profileFromCloud[slot], '');
+            if (v) finalProfile[slot] = v;
+        }
         merged.profile = finalProfile;
         // Legacy aliases (used by older code paths still reading these fields).
         // The single source of truth is `profile` — these are mirrors only.
