@@ -169,19 +169,7 @@ if the ticket lands a bigger allocation we can move part of the daily loop back 
 (they're non-redeemable, so Omen should be far more relaxed about them than the VIP pool). Either
 way the VIP daily loop below is what ships first — it needs no negotiation.
 
-**Ticket draft (send to Omen):**
-> Cosmic Sloths — activity points sizing. Current scale: **36 monthly active wallets, ~5 daily
-> active** (measured over the last 30 days). We're planning a **daily engagement loop** (login,
-> daily tasks, first run of the day, daily kill target) plus **weekly leaderboard placement** grants
-> on two boards (score + kills, top 10 each).
-> - Daily loop: ~35 pts/player/day → ~1,050/player/month.
-> - Weekly placement: ~400 pts/board/week → ~3,200/month total.
-> - Request: **~50,000 points/month** and a **per-player ceiling of ~2,000/month**, sized for growth
->   to ~150 monthly actives (at 36 actives we'd use ~40k).
-> - If the per-player ceiling stays at 1,000 we'll keep the daily loop on VIP points and use
->   activity points for placement only — happy either way, just want to know which to build.
-> We already log every grant locally with a deterministic idempotency key and enforce our own
-> monthly + per-player caps before calling, so we won't rely on your rejection as flow control.
+**Ticket draft:** see `src/docs/OMEN_ACTIVITY_POINTS_TICKET.md` — copy-paste ready for Discord.
 
 **The 1,000/player rejection must be handled, not assumed away.** Our `grantActivityPoints` helper
 returns a structured outcome (`granted` / `player_cap_reached` / `pool_exhausted`) instead of
@@ -215,7 +203,9 @@ gets a Claim button → `claimQuestReward` → toast `pointsGranted`.
 3. Sanity probe function (admin-only) that grants 1 activity point to an admin wallet and reads back
    VIP status — proves scopes + response shapes before wiring anything.
 
-**Phase 1 — Activity points daily loop (~1 session)**
+**Phase 1 — VIP points daily loop (~1 session)**
+*(Was "activity points daily loop" in the first draft — the loop moved to VIP points once the real
+pool sizes came back. The shared helper still covers both kinds.)*
 - `base44/shared/omenxPoints.ts`: `grantActivityPoints(wallet, amount, key)`,
   `grantVipPoints(wallet, amount, questId)` — direct fetch, error envelope parsed to `code`.
 - New entity `PointGrantLog` `{ wallet, kind: 'activity'|'vip', amount, credited, multiplier,
