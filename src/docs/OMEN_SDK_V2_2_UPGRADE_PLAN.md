@@ -167,10 +167,27 @@ throwing, records the reason in `PointGrantLog`, and the caller continues. `not_
 one to watch on **daily login**: a brand-new wallet that logs in before its first run will be
 refused — log it and move on; the first-run grant later that day will succeed.
 
-**VIP points / Quests:** parked. VIP is pay-to-allocate from 22 Sept, and quest claims pay VIP
-points from that same pool — so hosted quests are now a cost item too. Revisit only if we decide
-to *buy* VIP points as a marketing spend. `grantVipPoints` stays in the shared helper (cheap) but
-nothing calls it.
+**VIP points:** not used, and we will **not** buy any (Omen, 21 Sept notice: free monthly VIP
+allocations end 21 Sept, unused balance does not carry over; from 22 Sept VIP points cost
+**$0.005 each / 200 per dollar**, bought on the Developer Portal Economy page from the dev wallet in
+BNB/USDT/USDC/ETH). `POST /v1/vip/grant-points` stays open but only spends points you bought, so
+granting VIP is a straight cash cost — decision: **don't**. One upside we get for free: if a player
+new to OmenX joins *through our game* and then buys VIP, we earn 10 VIP points per dollar they
+spend for six months from their first session. `grantVipPoints` stays in the shared helper
+(unused, cheap to keep).
+
+**Hosted quests:** **no longer a cost item** — from 22 Sept Omen quest claims pay **activity
+points** at the same amounts and stop drawing on the VIP pool. So Phase 3 becomes viable again
+whenever we want it; it just spends from our 50k activity allocation like everything else. Keep it
+after Phases 1–2 and budget its amounts inside the same pool guard.
+
+**Reward copy audit (before 22 Sept):** Omen asks every game to fix copy promising VIP points. We
+never shipped any VIP-point promise in-game — the only mentions are in these design docs — so
+nothing player-facing to change. Confirmed: no `grantVipPoints` call exists in the codebase.
+
+**Already in effect:** a wallet must have played our game or the grant is refused
+`404 PLAYER_NOT_FOUND` — same rule as activity points, already handled by the structured-outcome
+helper in B2 (`not_in_game`).
 
 ### B3. Build plan
 
