@@ -18,7 +18,9 @@
 // breaks an older client — the one behavioural change (the hitstop fix) is
 // behind a rollover gate, not a version gate, so old and new clients converge
 // on their own at the S9 boundary. See seasonGate.js isHitstopFrameFixEnabled().
-export const APP_VERSION = '1.0.9';
+// 1.1.0 (2026-09-22) — release bump. `min_client_version` left untouched (no
+// forced update).
+export const APP_VERSION = '1.1.0';
 
 // Lightweight numeric semver compare. Returns:
 //   -1 if a < b
