@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { omenx, getRedirectUri } from '@/lib/omenx';
+import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
 import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { stampAuthWeek } from '@/lib/omenxSessionWeek';
 import { base44 } from '@/api/base44Client';
@@ -83,7 +84,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         const beforeUnload = () => { navigated = true; };
         window.addEventListener('beforeunload', beforeUnload);
         try {
-            await omenx.authenticate({ redirectUri, enablePKCE: true });
+            await connectOmenWallet();
         } catch (err) {
             console.error('[OmenXAuthButton] authenticate threw:', err);
         }

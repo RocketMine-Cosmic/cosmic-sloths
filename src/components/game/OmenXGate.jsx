@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import SpaceBackground from './SpaceBackground';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { base44 } from '@/api/base44Client';
-import { omenx, getRedirectUri } from '@/lib/omenx';
+import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
 
 export default function OmenXGate({ children, isCarousel }) {
     // Read shared auth state — no per-gate `me` call (was 13× across the carousel).
@@ -55,7 +55,7 @@ export default function OmenXGate({ children, isCarousel }) {
             const beforeUnload = () => { navigated = true; };
             window.addEventListener('beforeunload', beforeUnload);
             try {
-                await omenx.authenticate({ redirectUri: getRedirectUri(), enablePKCE: true });
+                await connectOmenWallet();
             } catch (e) {
                 console.error('[OmenXGate] authenticate threw:', e);
             }
