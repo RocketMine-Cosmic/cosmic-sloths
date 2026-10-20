@@ -1,5 +1,6 @@
 import React from 'react';
 import { Coins, X } from 'lucide-react';
+import { formatTokens } from '@/lib/storePrices';
 
 function OmenXIcon({ className }) {
     return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
@@ -74,7 +75,7 @@ export default function TalentRespecModal({
                         }`}
                     >
                         <OmenXIcon className="w-5 h-5" />
-                        Pay {omenxCost.toLocaleString()} OMENX
+                        Pay {formatTokens(omenxCost)} OMENX
                         {!canAffordOmenx && <span className="text-[10px] opacity-80">(not enough)</span>}
                     </button>
 
