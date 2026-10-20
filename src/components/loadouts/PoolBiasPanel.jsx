@@ -6,7 +6,6 @@ import {
     BIAS_PER_POINT,
     POINTS_TIER_BREAKPOINT,
     LATE_LEVELS_PER_POINT,
-    RESPEC_COST_OMENX,
     getBiasTargets,
     getGoldRespecCost,
     getTotalBiasPoints,
@@ -19,6 +18,7 @@ import { POOL_BIAS_PRESETS, buildPresetAllocation } from '@/lib/poolBiasPresets'
 import { useCurrency } from '@/lib/CurrencyContext';
 import { base44 } from '@/api/base44Client';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
 import { getOmenXUserSync } from '@/lib/omenxUser';
 import { refreshBalance } from '@/lib/playerDataCache';
 import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
@@ -102,6 +102,10 @@ function TargetRow({ target, points, committedPoints, onAdd, onRemove, canAdd, a
 export default function PoolBiasPanel({ save, setSave }) {
     const { omenxBalance } = useCurrency();
     const { disabled: omenxBlocked, message: omenxBlockedMsg } = useOmenXPurchasesDisabled();
+    // Live portal price of the 'bias-respec' SKU (was the RESPEC_COST_OMENX constant).
+    const price = useStorePrices();
+    const RESPEC_COST_OMENX = price(IN_GAME_SKUS.biasRespec);
+    const respecCostText = formatTokens(RESPEC_COST_OMENX);
     const [respecBusy, setRespecBusy] = useState(false);
     const [respecError, setRespecError] = useState(null);
 
@@ -436,9 +440,9 @@ export default function PoolBiasPanel({ save, setSave }) {
                         onClick={respecWithOmenx}
                         disabled={!canRespecOmenx || respecBusy || omenxBlocked}
                         className="px-3 py-1.5 rounded bg-purple-700 hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                        title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : committedSpent === 0 ? 'Nothing to respec' : `Costs ${RESPEC_COST_OMENX} OMENX`}
+                        title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : committedSpent === 0 ? 'Nothing to respec' : `Costs ${respecCostText} OMENX`}
                     >
-                        {omenxBlocked ? `🔒 ${RESPEC_COST_OMENX} OMENX (Paused)` : respecBusy ? 'Processing…' : `Respec — ${RESPEC_COST_OMENX} OMENX`}
+                        {omenxBlocked ? `🔒 ${respecCostText} OMENX (Paused)` : respecBusy ? 'Processing…' : `Respec — ${respecCostText} OMENX`}
                     </button>
                 </div>
             </div>
