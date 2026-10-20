@@ -200,13 +200,29 @@ rotation has no grace period.
 
 Status checked in code on 21 Oct. ✅ done · 🟡 partly · 🔴 not started.
 
-### 1. 🔴 Payout safety: send an idempotency key on every payout
-**Why first:** since 1 Sept an unconfirmed payout returns `GRANT_PENDING`, and a retry without a
-key **pays everyone twice**. Today **none of the 9 grant paths sends a key**:
-`distributeRewards`, `manuallyDistributeRewards`, `distributeKillPool`, `distributeStaffPayout`,
-`distributeSquadChampions`, `topupWeeklyPayout`, `backfillStaffPayouts`, `refundSinglePlayer`,
-`refundAllOmenx`. The "leave a `pending-` row on any 5xx and check the chain by hand" pattern
-exists only because of this.
+*Correction 21 Oct 00:25:* the first version of this document said none of the payouts had
+double-pay protection. That was wrong: it only looked for Omen's key and missed our own
+log-first protection. Item 1 below is the corrected picture.
+
+### 1. 🟡 Payouts: add Omen's key on top of our own double-pay protection
+**Our own protection works and stays.** Payouts are run by hand from the admin panel
+(`manuallyDistributeRewards`, `distributeKillPool`, `distributeStaffPayout`,
+`distributeSquadChampions`). Each one:
+- writes a `pending-…` PayoutLog row for every wallet **before** calling Omen;
+- skips any wallet that already has a row for that period, so a re-run never pays anyone twice;
+- deletes the rows on a clear refusal (4xx), so the re-run tries again;
+- keeps the rows on an unclear answer (5xx/timeout), so the re-run skips them.
+
+The automatic "Weekly/Seasonal Reward Distribution" workflows (`distributeRewards`) are switched
+off and have never run. `distributeRewards` writes its logs *after* paying, so **don't switch those
+workflows on without bringing it up to the same log-first pattern.**
+
+**What Omen's key would add.** On an unclear answer, our pattern chooses "maybe under-paid"
+over "maybe paid twice" and leaves a `pending-` row to check on-chain by hand (the S10 Waeoo and
+W42 Iflookscouldkill rows). Since 1 Sept Omen answers those with `GRANT_PENDING`, and re-sending
+the same body with the same `idempotencyKey` returns the real result. So the key **turns hand
+checks into automatic answers**. It doesn't close a double-pay hole; there isn't one in the paths in
+use. No grant path sends a key today.
 
 How:
 - One shared `postGrantBatch()` in `base44/shared/` replaces the ~40 copy-pasted lines.
@@ -217,6 +233,8 @@ How:
 - `409 IDEMPOTENCY_KEY_REUSED` = the recipients changed between attempts. That's an alarm, not a retry.
 - `GAME_REWARDS_DISABLED` means try again later.
 - Add an admin "Resolve pending payouts" button that replays the key of every `pending-` row.
+- Keep the log-first rows and the already-paid skip exactly as they are. The key is a second
+  fence, not a replacement.
 
 ### 2. 🟡 Purchases: handle every code Omen can return
 Already handled: `GRANT_FAILED`, `BALANCE_CHECK_FAILED` and `ALLOWANCE_READ_FAILED` as final;
