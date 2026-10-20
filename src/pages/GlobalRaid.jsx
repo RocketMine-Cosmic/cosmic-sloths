@@ -238,7 +238,7 @@ export default function GlobalRaid({ isCarousel }) {
         SoundManager.playUIClick();
         const currentSave = SaveManager.load();
         if ((omenxBalance ?? 0) < RAID_RUNS_COST) {
-            toast({ title: 'Not enough OMENX', description: `You need ${formatTokens(RAID_RUNS_COST)} OMENX to buy more runs.`, variant: 'destructive' });
+            toast({ title: 'Not enough OMCADE', description: `You need ${formatTokens(RAID_RUNS_COST)} OMCADE to buy more runs.`, variant: 'destructive' });
             return;
         }
 

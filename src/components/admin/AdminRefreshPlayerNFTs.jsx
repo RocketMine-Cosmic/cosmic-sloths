@@ -47,7 +47,7 @@ export default function AdminRefreshPlayerNFTs() {
                 <Sparkles size={16} /> Force-Refresh Player NFTs
             </h2>
             <div className="text-xs text-slate-400 mb-4">
-                Pulls the player's current NFT inventory directly from OmenX (bypassing the 5-min client cache) and stamps their save so their client wipes its local NFT cache on next load. Use when a player reports their NFT bonuses haven't updated after buying/selling.
+                Pulls the player's current NFT inventory directly from Omen (bypassing the 5-min client cache) and stamps their save so their client wipes its local NFT cache on next load. Use when a player reports their NFT bonuses haven't updated after buying/selling.
             </div>
 
             <div className="mb-3">

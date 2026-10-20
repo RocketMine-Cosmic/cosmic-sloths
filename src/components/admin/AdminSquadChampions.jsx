@@ -80,7 +80,7 @@ export default function AdminSquadChampions({ walletAddress }) {
                 const paidCount = res.data.paid_this_run ?? res.data.member_count ?? 0;
                 const paidOmenx = res.data.paid_omenx_this_run ?? res.data.total_payout_omenx ?? 0;
                 const squadCount = (res.data.top_squads || []).length;
-                setExecuteMsg(`✓ Paid ${paidCount} members across ${squadCount} squads — ${Math.floor(paidOmenx).toLocaleString()} OMENX total.`);
+                setExecuteMsg(`✓ Paid ${paidCount} members across ${squadCount} squads — ${Math.floor(paidOmenx).toLocaleString()} OMCADE total.`);
                 setPreviewData(null); // force fresh preview after distribution
             } else {
                 setExecuteMsg(`✗ ${res.data?.error || 'Distribution failed.'}`);
@@ -143,10 +143,10 @@ export default function AdminSquadChampions({ walletAddress }) {
                         <div className="flex flex-wrap gap-3">
                             {[
                                 { label: 'Season', value: previewData.period_id, color: 'text-white' },
-                                { label: 'Pool Total', value: `${Math.floor(previewData.pool_total_spent || 0).toLocaleString()} OMENX`, color: 'text-white' },
-                                { label: 'Champions Pool', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMENX`, color: 'text-amber-300' },
+                                { label: 'Pool Total', value: `${Math.floor(previewData.pool_total_spent || 0).toLocaleString()} OMCADE`, color: 'text-white' },
+                                { label: 'Champions Pool', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMCADE`, color: 'text-amber-300' },
                                 { label: 'Eligible Squads', value: previewData.eligible_squads, color: 'text-emerald-400' },
-                                { label: 'Total Payout', value: `${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX`, color: 'text-emerald-400' },
+                                { label: 'Total Payout', value: `${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMCADE`, color: 'text-emerald-400' },
                                 { label: 'Recipients', value: previewData.total_member_payouts, color: 'text-white' },
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
@@ -265,7 +265,7 @@ export default function AdminSquadChampions({ walletAddress }) {
                 </h3>
                 <p className="text-xs text-slate-400 mb-3">
                     {previewData
-                        ? `Will pay ${previewData.total_member_payouts || 0} members ${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX total for ${previewData.period_id}.`
+                        ? `Will pay ${previewData.total_member_payouts || 0} members ${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMCADE total for ${previewData.period_id}.`
                         : 'Run a preview first.'}
                 </p>
                 <button

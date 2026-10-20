@@ -804,7 +804,7 @@ export default function Hub({ isCarousel }) {
                                             <button
                                                 onClick={buyBuff}
                                                 disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < XP_BUFF_COST || omenxBlocked}
-                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                 className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-2.5 border transition-all group ${
                                                     omenxBlocked
                                                         ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
@@ -822,14 +822,14 @@ export default function Hub({ isCarousel }) {
                                                             {omenxBlocked ? '+50% XP Buff — Paused' : hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
                                                         </span>
                                                         <span className="text-[9px] md:text-[11px] text-emerald-300/70 font-normal normal-case tracking-normal hidden sm:inline">
-                                                            {omenxBlocked ? 'OMENX purchases temporarily disabled' : 'Boost XP gain for your next session'}
+                                                            {omenxBlocked ? 'OMCADE purchases temporarily disabled' : 'Boost XP gain for your next session'}
                                                         </span>
                                                     </span>
                                                 </span>
                                                 {!omenxBlocked && !hasXpBuff && !buffPurchasing && (
                                                     <span className="flex items-center gap-1 bg-purple-950/60 border border-purple-500/50 px-2 md:px-2.5 py-1 md:py-1.5 rounded shrink-0">
                                                         <span className="text-purple-300 font-black text-xs md:text-sm">{formatTokens(XP_BUFF_COST)}</span>
-                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMENX</span>
+                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMCADE</span>
                                                     </span>
                                                 )}
                                                 {!omenxBlocked && buffPurchasing && (

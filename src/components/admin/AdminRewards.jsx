@@ -75,7 +75,7 @@ export default function AdminRewards({ walletAddress }) {
         setDistributing(true); setDistributeMsg('');
         try {
             const res = await base44.functions.invoke('manuallyDistributeRewards', { period_id: distributePeriod, period_type: distributeType });
-            setDistributeMsg(`✓ Distributed to ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX total`);
+            setDistributeMsg(`✓ Distributed to ${res.data?.paid} players — ${res.data?.totalOmenx} OMCADE total`);
             setDistributePeriod('');
             setTimeout(() => setDistributeMsg(''), 6000);
         } catch (err) { setDistributeMsg(`✗ ${err.message}`); }
@@ -90,7 +90,7 @@ export default function AdminRewards({ walletAddress }) {
         setDistributing(true); setDistributeMsg('');
         try {
             const res = await base44.functions.invoke('distributeKillPool', { period_id: distributePeriod });
-            setDistributeMsg(`✓ Kill pool: paid ${res.data?.paid} players — ${res.data?.totalOmenx} OMENX (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
+            setDistributeMsg(`✓ Kill pool: paid ${res.data?.paid} players — ${res.data?.totalOmenx} OMCADE (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
             setTimeout(() => setDistributeMsg(''), 8000);
         } catch (err) { setDistributeMsg(`✗ Kill pool: ${err.message}`); }
         setDistributing(false);
@@ -103,7 +103,7 @@ export default function AdminRewards({ walletAddress }) {
         setDistributing(true); setDistributeMsg('');
         try {
             const res = await base44.functions.invoke('distributeStaffPayout', { period_id: distributePeriod });
-            setDistributeMsg(`✓ Staff: paid ${res.data?.paid} wallets — ${res.data?.totalOmenx} OMENX (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
+            setDistributeMsg(`✓ Staff: paid ${res.data?.paid} wallets — ${res.data?.totalOmenx} OMCADE (skipped ${res.data?.skipped_already_paid || 0} already paid)`);
             setTimeout(() => setDistributeMsg(''), 8000);
         } catch (err) { setDistributeMsg(`✗ Staff: ${err.message}`); }
         setDistributing(false);
@@ -144,11 +144,11 @@ export default function AdminRewards({ walletAddress }) {
                     <>
                         <div className="flex flex-wrap gap-3 mb-3">
                             {[
-                                { label: 'Total Spent', value: `${previewData.total_spent?.toFixed(2)} OMENX`, color: 'text-white' },
-                                { label: 'Score Pool', value: `${previewData.reward_pool?.toFixed(2)} OMENX`, color: 'text-sky-400' },
-                                ...(previewData.kill_reward_pool > 0 ? [{ label: 'Kill Pool', value: `${previewData.kill_reward_pool?.toFixed(2)} OMENX`, color: 'text-orange-400' }] : []),
-                                { label: 'Player Payout', value: `${previewData.total_payout?.toFixed(2)} OMENX`, color: 'text-emerald-400' },
-                                ...(previewData.kill_payout > 0 ? [{ label: 'Kill Payout', value: `${previewData.kill_payout?.toFixed(2)} OMENX`, color: 'text-orange-400' }] : []),
+                                { label: 'Total Spent', value: `${previewData.total_spent?.toFixed(2)} OMCADE`, color: 'text-white' },
+                                { label: 'Score Pool', value: `${previewData.reward_pool?.toFixed(2)} OMCADE`, color: 'text-sky-400' },
+                                ...(previewData.kill_reward_pool > 0 ? [{ label: 'Kill Pool', value: `${previewData.kill_reward_pool?.toFixed(2)} OMCADE`, color: 'text-orange-400' }] : []),
+                                { label: 'Player Payout', value: `${previewData.total_payout?.toFixed(2)} OMCADE`, color: 'text-emerald-400' },
+                                ...(previewData.kill_payout > 0 ? [{ label: 'Kill Payout', value: `${previewData.kill_payout?.toFixed(2)} OMCADE`, color: 'text-orange-400' }] : []),
                                 { label: 'Recipients', value: `${previewData.player_count}${previewData.kill_count ? ` + ${previewData.kill_count} kills` : ''}`, color: 'text-white' },
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
@@ -177,7 +177,7 @@ export default function AdminRewards({ walletAddress }) {
                                     </div>
                                     <div className="bg-slate-900/60 border border-emerald-800/40 rounded px-3 py-2">
                                         <div className="text-[10px] text-slate-500 uppercase">Retry Will Send</div>
-                                        <div className="font-mono font-bold text-emerald-400">{previewData.pending_grand_total?.toFixed(2)} OMENX</div>
+                                        <div className="font-mono font-bold text-emerald-400">{previewData.pending_grand_total?.toFixed(2)} OMCADE</div>
                                     </div>
                                 </div>
                             </div>
@@ -206,7 +206,7 @@ export default function AdminRewards({ walletAddress }) {
                                             </td>
                                             <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
                                             <td className="p-2 text-right font-mono text-slate-300">{(p.score || 0).toLocaleString()}</td>
-                                            <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-sky-400'}`}>{p.amount.toFixed(2)} OMENX</td>
+                                            <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-sky-400'}`}>{p.amount.toFixed(2)} OMCADE</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -237,7 +237,7 @@ export default function AdminRewards({ walletAddress }) {
                                                     </td>
                                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
                                                     <td className="p-2 text-right font-mono text-slate-300">{(p.score || 0).toLocaleString()}</td>
-                                                    <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-orange-400'}`}>{p.amount.toFixed(2)} OMENX</td>
+                                                    <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-orange-400'}`}>{p.amount.toFixed(2)} OMCADE</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -268,7 +268,7 @@ export default function AdminRewards({ walletAddress }) {
                                                     </td>
                                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{p.wallet_address ? `${p.wallet_address.slice(0,6)}...${p.wallet_address.slice(-4)}` : '-'}</td>
                                                     <td className="p-2 text-right font-mono text-slate-400">{((p.pct || 0) * 100).toFixed(2)}%</td>
-                                                    <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-amber-400'}`}>{p.amount.toFixed(2)} OMENX</td>
+                                                    <td className={`p-2 text-right font-mono font-bold ${p.already_paid ? 'text-amber-400 line-through' : 'text-amber-400'}`}>{p.amount.toFixed(2)} OMCADE</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -323,7 +323,7 @@ export default function AdminRewards({ walletAddress }) {
                 </div>
                 <div className="text-[11px] text-slate-500 mt-2 leading-snug">
                     Run the three buttons separately for weekly periods to avoid gateway 504 timeouts — all three are resume-safe and idempotent.
-                    On failure, the wallets in flight are logged as <span className="text-amber-400 font-mono">tx_id="pending-…"</span> and will be skipped on retry to prevent double-pays. If OmenX shows the on-chain payment succeeded for a "pending" row, you can safely leave it; if it didn't, delete that PayoutLog row and re-run.
+                    On failure, the wallets in flight are logged as <span className="text-amber-400 font-mono">tx_id="pending-…"</span> and will be skipped on retry to prevent double-pays. If Omen shows the on-chain payment succeeded for a "pending" row, you can safely leave it; if it didn't, delete that PayoutLog row and re-run.
                 </div>
                 {distributeMsg && <div className={`mt-2 text-sm font-mono ${distributeMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>{distributeMsg}</div>}
             </div>
@@ -339,7 +339,7 @@ export default function AdminRewards({ walletAddress }) {
                                 <th className="p-2">Player</th>
                                 <th className="p-2">Wallet</th>
                                 <th className="p-2 text-center">Rank</th>
-                                <th className="p-2 text-right">OMENX</th>
+                                <th className="p-2 text-right">OMCADE</th>
                                 <th className="p-2">Period</th>
                                 <th className="p-2">Type</th>
                             </tr>

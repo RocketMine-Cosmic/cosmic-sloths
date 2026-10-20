@@ -7,14 +7,14 @@ import { Bell, AlertTriangle, Coins, Shield, Swords, Trophy, Megaphone, Code } f
 const ERROR_CODES = [
     {
         pattern: '❌ purchaseSku failed',
-        meaning: 'A player tried to buy something with OMENX and it crashed.',
+        meaning: 'A player tried to buy something with OMCADE and it crashed.',
         commonCauses: [
             'OmenX dev portal API down or rate-limited (all 8 payment keys exhausted)',
-            'Player\'s wallet has insufficient OMENX balance',
+            'Player\'s wallet has insufficient OMCADE balance',
             'Grant validation failed (out-of-sync save, prereq not met)',
             'PlayerSave write failed AFTER charge confirmed (rare — needs manual refund)',
         ],
-        action: 'If charge confirmed but grant failed → refund OMENX manually + retry sync. Otherwise check OmenX API status.',
+        action: 'If charge confirmed but grant failed → refund OMCADE manually + retry sync. Otherwise check Omen API status.',
     },
     {
         pattern: '❌ syncSave failed / sync blocked',
@@ -28,10 +28,10 @@ const ERROR_CODES = [
     },
     {
         pattern: '❌ refundAllOmenx / payout failures',
-        meaning: 'Bulk OMENX transfer to players failed mid-batch.',
+        meaning: 'Bulk OMCADE transfer to players failed mid-batch.',
         commonCauses: [
             'OmenX rewards API rate-limit (try fewer recipients per batch)',
-            'One or more wallets invalid/blacklisted on OmenX side',
+            'One or more wallets invalid/blacklisted on Omen side',
             'Treasury balance insufficient for total payout',
         ],
         action: 'Re-run with smaller batches. Check which wallets failed in the response payload.',
@@ -52,16 +52,16 @@ const ERROR_CODES = [
         commonCauses: [
             'OmenX API temporarily down',
             'All balance/auth API keys hit rate-limit at once',
-            'Player wallet not registered on OmenX (new sign-up race condition)',
+            'Player wallet not registered on Omen (new sign-up race condition)',
         ],
-        action: 'Usually transient — retries on next request. Persistent = check OmenX status page.',
+        action: 'Usually transient — retries on next request. Persistent = check Omen status page.',
     },
     {
         pattern: '❌ exchangeOmenXCode',
         meaning: 'OAuth login flow failed — player cannot sign in.',
         commonCauses: [
             'Code/verifier mismatch (PKCE)',
-            'Redirect URI not whitelisted on OmenX dev portal',
+            'Redirect URI not whitelisted on Omen dev portal',
             'OMENX_AUTH_API_KEY revoked or expired',
         ],
         action: 'Player should retry login. Persistent = check OAuth config + auth key validity.',
@@ -99,7 +99,7 @@ const CHANNELS = [
         icon: AlertTriangle,
         triggers: [
             'A backend function throws an unhandled exception (e.g. purchaseSku, refundAllOmenx)',
-            'External API failures (OmenX payment / balance / NFT lookups, Base44 SDK errors)',
+            'External API failures (Omen payment / balance / NFT lookups, Base44 SDK errors)',
             'Internal data corruption detected during writes',
         ],
         severity: 'High',
@@ -108,11 +108,11 @@ const CHANNELS = [
     {
         secret: 'DISCORD_ECONOMY_WEBHOOK',
         name: '#economy-alerts',
-        purpose: 'Large or suspicious OMENX/gold movements',
+        purpose: 'Large or suspicious OMCADE/gold movements',
         color: 'amber',
         icon: Coins,
         triggers: [
-            'Single OMENX purchase ≥ 1,000 (whale-tier spend signal)',
+            'Single OMCADE purchase ≥ 1,000 (whale-tier spend signal)',
             'Gold-loss audit triggered by player support ticket',
             'Bulk refunds and treasury payouts',
         ],
@@ -154,9 +154,9 @@ const CHANNELS = [
         color: 'cyan',
         icon: Trophy,
         triggers: [
-            'Weekly top 100 posted at end of cycle (with OMENX payouts)',
+            'Weekly top 100 posted at end of cycle (with OMCADE payouts)',
             'Seasonal recap every 4 weeks',
-            'Squad Champions OMENX prize pool distributions',
+            'Squad Champions OMCADE prize pool distributions',
         ],
         severity: 'Info',
         action: 'No action needed. Promotes ranked competition. Confirm payouts match the on-chain transfers.',

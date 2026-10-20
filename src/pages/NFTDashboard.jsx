@@ -190,7 +190,7 @@ export default function NFTDashboard({ isCarousel }) {
                         {/* Perks Info */}
                         <div className="mt-6 bg-slate-900/40 border border-slate-700 rounded-lg p-4 text-xs md:text-sm text-slate-400">
                             <p className="leading-relaxed">
-                                <strong className="text-slate-200">NFT Holder Benefits:</strong> All holders of OmenX NFTs receive permanent in-game bonuses that apply to every run, helping you progress faster and save on upgrades.
+                                <strong className="text-slate-200">NFT Holder Benefits:</strong> All holders of Omen Arcade NFTs receive permanent in-game bonuses that apply to every run, helping you progress faster and save on upgrades.
                             </p>
                         </div>
                     </>

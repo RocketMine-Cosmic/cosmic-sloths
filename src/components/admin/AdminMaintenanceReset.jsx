@@ -54,7 +54,7 @@ export default function AdminMaintenanceReset({ walletAddress }) {
                     <h3 className="text-xl font-bold text-green-400">✓ Reset Complete</h3>
                 </div>
                 <div className="space-y-2 text-sm text-slate-300 mb-6">
-                    <p>Refunded {result.refunded} wallets ({result.totalRefunded} OMENX total)</p>
+                    <p>Refunded {result.refunded} wallets ({result.totalRefunded} OMCADE total)</p>
                     <p>Deleted {result.wiped} player records</p>
                     <p className="text-green-400 font-bold mt-4">Game is ready to restart fresh.</p>
                 </div>
@@ -81,7 +81,7 @@ export default function AdminMaintenanceReset({ walletAddress }) {
                         This will:
                     </p>
                     <ul className="text-sm text-slate-400 space-y-1 ml-4">
-                        <li>✓ Refund all OMENX to all players</li>
+                        <li>✓ Refund all OMCADE to all players</li>
                         <li>✓ Delete ALL player saves, scores, squads, and data</li>
                         <li>✓ Clear the game to fresh state</li>
                     </ul>
@@ -104,9 +104,9 @@ export default function AdminMaintenanceReset({ walletAddress }) {
                 onConfirm={handleReset}
                 busy={loading}
                 title="🚨 FULL RESET — refund + wipe"
-                description="Refunds every OMENX spent across all wallets, then permanently deletes all PlayerSaves, RunScores, Squads, and game data. This cannot be undone."
+                description="Refunds every OMCADE spent across all wallets, then permanently deletes all PlayerSaves, RunScores, Squads, and game data. This cannot be undone."
                 items={[
-                    'All players will receive their lifetime OMENX spend back',
+                    'All players will receive their lifetime OMCADE spend back',
                     'Every player save & leaderboard score will be deleted',
                     'Squads, messages, raids, and bounties will be wiped',
                 ]}
@@ -117,7 +117,7 @@ export default function AdminMaintenanceReset({ walletAddress }) {
             {step === 1 && (
                 <div className="flex flex-col items-center gap-3 py-4">
                     <Loader2 className="w-6 h-6 text-yellow-500 animate-spin" />
-                    <p className="text-yellow-400 font-bold">Refunding all OMENX...</p>
+                    <p className="text-yellow-400 font-bold">Refunding all OMCADE...</p>
                 </div>
             )}
 

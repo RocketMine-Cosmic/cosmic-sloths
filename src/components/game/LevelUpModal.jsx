@@ -539,11 +539,11 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 });
                             }}
                             disabled={omenxPurchasesDisabled || rerollCd.locked}
-                            title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : rerollCd.locked ? 'Just a sec…' : undefined}
+                            title={omenxPurchasesDisabled ? 'OMCADE purchases are temporarily disabled' : rerollCd.locked ? 'Just a sec…' : undefined}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < rerollCost || omenxPurchasesDisabled || rerollCd.locked ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
                             <OmenXIcon className="w-5 h-5 md:w-6 md:h-6 mr-1" />
-                            {rerollCd.locked ? `Reroll (${(rerollCd.remainingMs / 1000).toFixed(1)}s)` : `Reroll (${formatTokens(rerollCost)} OMENX)`}
+                            {rerollCd.locked ? `Reroll (${(rerollCd.remainingMs / 1000).toFixed(1)}s)` : `Reroll (${formatTokens(rerollCost)} OMCADE)`}
                         </motion.button>
                     )}
                     
@@ -556,17 +556,17 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                                 banishCd.trigger(() => onBanish(choices[selectedIndex]));
                             }}
                             disabled={omenxPurchasesDisabled || banishCd.locked}
-                            title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : banishCd.locked ? 'Just a sec…' : undefined}
+                            title={omenxPurchasesDisabled ? 'OMCADE purchases are temporarily disabled' : banishCd.locked ? 'Just a sec…' : undefined}
                             className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex flex-col items-center justify-center gap-0.5 ${(cosmicTokens || 0) < banishCost || omenxPurchasesDisabled || banishCd.locked ? 'bg-red-600/50 border-red-400/50 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}
                         >
                             <span>
                                 {banishCd.locked
                                     ? `Banish (${(banishCd.remainingMs / 1000).toFixed(1)}s)`
-                                    : `Banish T${banishTier} (${formatTokens(banishCost)} OMENX)`}
+                                    : `Banish T${banishTier} (${formatTokens(banishCost)} OMCADE)`}
                             </span>
                             {!banishCd.locked && banishUsesInTier !== null && (
                                 <span className="text-[10px] md:text-xs font-normal opacity-80">
-                                    {banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left{showNextPrice ? ` · Next: ${formatTokens(nextBanishCost)} OMENX` : ''}
+                                    {banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left{showNextPrice ? ` · Next: ${formatTokens(nextBanishCost)} OMCADE` : ''}
                                 </span>
                             )}
                         </motion.button>
@@ -574,7 +574,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                 </div>
                 {omenxPurchasesDisabled && (
                     <div className="mt-3 text-[11px] md:text-xs text-red-300 bg-red-950/40 border border-red-700/50 rounded px-3 py-1.5">
-                        OMENX purchases temporarily disabled — Reroll & Banish unavailable.
+                        OMCADE purchases temporarily disabled — Reroll & Banish unavailable.
                     </div>
                 )}
             </motion.div>

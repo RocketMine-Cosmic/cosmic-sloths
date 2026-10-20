@@ -440,9 +440,9 @@ export default function PoolBiasPanel({ save, setSave }) {
                         onClick={respecWithOmenx}
                         disabled={!canRespecOmenx || respecBusy || omenxBlocked}
                         className="px-3 py-1.5 rounded bg-purple-700 hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                        title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : committedSpent === 0 ? 'Nothing to respec' : `Costs ${respecCostText} OMENX`}
+                        title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : committedSpent === 0 ? 'Nothing to respec' : `Costs ${respecCostText} OMCADE`}
                     >
-                        {omenxBlocked ? `🔒 ${respecCostText} OMENX (Paused)` : respecBusy ? 'Processing…' : `Respec — ${respecCostText} OMENX`}
+                        {omenxBlocked ? `🔒 ${respecCostText} OMCADE (Paused)` : respecBusy ? 'Processing…' : `Respec — ${respecCostText} OMCADE`}
                     </button>
                 </div>
             </div>

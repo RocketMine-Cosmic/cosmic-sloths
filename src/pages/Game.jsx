@@ -1131,7 +1131,7 @@ export default function Game() {
 
     const handleRevive = () => {
         if (omenxPurchasesDisabled) return;
-        if (isSandbox) return; // no OMENX charges in sandbox — buttons are hidden anyway
+        if (isSandbox) return; // no OMCADE charges in sandbox — buttons are hidden anyway
         const { skuId, cost } = reviveInfo;
         if ((omenxBalance ?? 0) < cost) return;
         confirmPurchase(cost, 'Emergency Revive', () => {
@@ -1427,7 +1427,7 @@ export default function Game() {
                         )}
                         {omenxPurchasesDisabled && (
                             <div className="mb-3 bg-red-950/40 border border-red-700/60 rounded-lg p-2 text-xs text-red-200">
-                                OMENX purchases temporarily disabled. Revive isn't available right now.
+                                OMCADE purchases temporarily disabled. Revive isn't available right now.
                             </div>
                         )}
                         <div className="flex flex-col gap-3">

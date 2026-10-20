@@ -64,8 +64,8 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
                 />
                 {canViewFinance ? (
                     <>
-                        <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMENX`} color="text-red-400" />
-                        <StatCard label="All-Time Spent" value={`${totalSpent.toFixed(1)} OMENX`} color="text-amber-400" />
+                        <StatCard label="This Week Spent" value={`${weeklySpent.toFixed(1)} OMCADE`} color="text-red-400" />
+                        <StatCard label="All-Time Spent" value={`${totalSpent.toFixed(1)} OMCADE`} color="text-amber-400" />
                     </>
                 ) : (
                     <>
@@ -96,7 +96,7 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
                                 <XAxis dataKey="period_id" stroke="#64748b" fontSize={10} />
                                 <YAxis stroke="#64748b" fontSize={10} />
                                 <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', fontSize: 12 }} />
-                                <Bar dataKey="total_spent" name="OMENX Spent" fill="#ef4444" radius={[3, 3, 0, 0]} />
+                                <Bar dataKey="total_spent" name="OMCADE Spent" fill="#ef4444" radius={[3, 3, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -110,7 +110,7 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
                                 <XAxis dataKey="period_id" stroke="#64748b" fontSize={10} />
                                 <YAxis stroke="#64748b" fontSize={10} />
                                 <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', fontSize: 12 }} />
-                                <Line type="monotone" dataKey="total_spent" name="OMENX Spent" stroke="#f97316" strokeWidth={2} dot={{ r: 4, fill: '#f97316' }} />
+                                <Line type="monotone" dataKey="total_spent" name="OMCADE Spent" stroke="#f97316" strokeWidth={2} dot={{ r: 4, fill: '#f97316' }} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -122,7 +122,7 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
             {/* Revenue per Week trend — last 12 weeks as a line */}
             {canViewFinance && weeklyData.length > 0 && (
                 <div className="bg-[#0b0416]/80 border border-emerald-900/50 rounded-xl p-4">
-                    <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1">Revenue Trend (Weekly OMENX Spend)</h3>
+                    <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1">Revenue Trend (Weekly OMCADE Spend)</h3>
                     <div className="text-[10px] text-slate-500 mb-3">Last {weeklyData.length} weeks — rising line = growing engagement</div>
                     <div className="h-52">
                         <ResponsiveContainer width="100%" height="100%">
@@ -130,7 +130,7 @@ export default function AdminOverview({ walletAddress, canViewFinance = false })
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} />
                                 <XAxis dataKey="period_id" stroke="#64748b" fontSize={10} />
                                 <YAxis stroke="#64748b" fontSize={10} />
-                                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', fontSize: 12 }} formatter={(v) => [`${v.toFixed(1)} OMENX`, 'Spent']} />
+                                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', fontSize: 12 }} formatter={(v) => [`${v.toFixed(1)} OMCADE`, 'Spent']} />
                                 <Line type="monotone" dataKey="total_spent" stroke="#34d399" strokeWidth={2.5} dot={{ r: 4, fill: '#34d399' }} activeDot={{ r: 6 }} />
                             </LineChart>
                         </ResponsiveContainer>

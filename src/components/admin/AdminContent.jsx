@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 const GAME_DESCRIPTION = `# 🦥 COSMIC SLOTHS
 
-> *The laziest roguelike with the realest payouts. Squad up. Slay. Stack OMENX.*
+> *The laziest roguelike with the realest payouts. Squad up. Slay. Stack OMCADE.*
 
 ---
 
@@ -17,13 +17,13 @@ Blast through **10 hand-crafted sectors** filled with cosmic chaos. Move with WA
 2. **Level Up** — Defeat enemies for XP. Pick 1 of 3 random upgrades (Common → Legendary).
 3. **Unlock Sectors** — Beat runs to unlock new arenas with unique enemies and environments.
 4. **Face Bosses** — Epic encounters drop Relic Fragments and massive gold bonuses.
-5. **Earn Real Rewards** — Top leaderboard performers get OMENX sent to their wallet every week.
+5. **Earn Real Rewards** — Top leaderboard performers get OMCADE sent to their wallet every week.
 
 ---
 
 ## 🛠️ FORGE YOUR POWER IN THE SLOTH LOUNGE
 
-Between runs, visit your cosmic base and spend **Gold** and **OMENX** to get stronger:
+Between runs, visit your cosmic base and spend **Gold** and **OMCADE** to get stronger:
 
 | Feature | What You Get |
 |---------|-------------|
@@ -39,29 +39,29 @@ Discover **Weapon Synergies**: combine two specific weapons mid-run to unlock ga
 
 ---
 
-## 🏆 COMPETE FOR OMENX
+## 🏆 COMPETE FOR OMCADE
 
 Three leaderboards. Real crypto rewards.
 
 ### 📅 **Weekly Leaderboard**
 - Resets every Monday 00:00 UTC
-- **20% of the weekly OMENX spend pool** is paid out to the **top 45 players** — higher rank = bigger share
+- **20% of the weekly OMCADE spend pool** is paid out to the **top 45 players** — higher rank = bigger share
 - #1 = 10% · #2 = 8% · #3 = 6% · #4–10 = 4% each · #11–20 = 3% each · #21–30 = 1.8% each · #31–45 = 1.2% each
-- Max **10,000 OMENX** per player per period
+- Max **10,000 OMCADE** per player per period
 - Weekly stat upgrades also reset
 
 ### 🗓️ **Seasonal Leaderboard**
 - 4-week cycles
-- **30% of the seasonal OMENX spend pool** is paid out to the **top 45 players** — higher rank = bigger share
+- **30% of the seasonal OMCADE spend pool** is paid out to the **top 45 players** — higher rank = bigger share
 - An additional **10%** is reserved for the Squad Wars Champions pool
 - #1 = 10% · #2 = 7.5% · #3 = 6% · #4–10 = 3.2% each · #11–20 = 2.2% each · #21–30 = 1.5% each · #31–40 = 0.9% each · #41–45 = 0.7% each
-- Max **10,000 OMENX** per player per period
+- Max **10,000 OMCADE** per player per period
 - Seasonal stat upgrades reset at season end
 
 ### ♾️ **Endless Void**
 - Infinitely scaling difficulty with boss fights every 3 minutes
 - Season-scoped leaderboard (resets each season alongside Weekly/Seasonal)
-- **Excluded from OMENX payouts** — but earns its own per-minute score bonus, so long endless runs stay competitive with sector victories at the very top
+- **Excluded from OMCADE payouts** — but earns its own per-minute score bonus, so long endless runs stay competitive with sector victories at the very top
 - **S6: all caps removed** — every Gold and kill is credited in full, no per-run ceiling
 
 ### 📊 **How Scores Work (Season 6)**
@@ -97,7 +97,7 @@ Both reset on schedule. Hit the kill targets and **every member** individually c
 Every Monday, your squad is auto-paired against a similar-level rival. Whoever scores more kills by Sunday 23:59 UTC wins. No opponent? Bye week (auto-win). Per-member rewards: **Win** 2,500 Gold + 3 Fragments | **Tie** 1,000 Gold + 1 Fragment | **Loss** 500 Gold (consolation).
 
 ### 👑 **Squad Champions Pool**
-A dedicated **OMENX prize pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members.
+A dedicated **OMCADE prize pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members.
 
 ### 💬 **Squad Chat**
 Real-time messaging to coordinate with your team.
@@ -172,7 +172,7 @@ A rotating banner at the top of the Raid page surfaces real-time damage mileston
 
 ## 👑 VIP STATUS
 
-Purchase **VIP Tiers** with real money. Your subscription pays you back in OMENX each week.
+Purchase **VIP Tiers** with real money. Your subscription pays you back in OMCADE each week.
 
 ### ⚡ **VIP Bonuses**
 Each tier = **+1% Damage** & **+1% Max HP** per run. Bonuses **stack** with all your upgrades.
@@ -211,15 +211,15 @@ Play a character repeatedly → Rank up through **7 tiers** (Cadet → Star Runn
 
 ---
 
-## 💰 OMENX — THE PREMIUM CURRENCY
+## 💰 OMCADE — THE PREMIUM CURRENCY
 
 Earn via **leaderboard rankings**. Spend in-game to:
-- 🔄 Reroll upgrade picks (2 OMENX, once per level-up)
-- 🚫 Banish unwanted upgrades — tiered: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** per banish
-- ⚡ Activate Squad Ultimates — **Lite (5 OMENX)** capped clone power, or **Full (10 OMENX)** scales with your full upgrades
-- 💀 Emergency Revive on death (4 OMENX — 50% HP + 3s invincibility)
-- ➕ Buy 5 extra Galactic Raid runs (10 OMENX)
-- ✨ Buy cosmetics, stat upgrades & a +50% XP session buff (10 OMENX / 60 min)
+- 🔄 Reroll upgrade picks (2 OMCADE, once per level-up)
+- 🚫 Banish unwanted upgrades — tiered: **2 OMCADE** for the first 3 banishes, **4 OMCADE** for the next 3, then **6 OMCADE** per banish
+- ⚡ Activate Squad Ultimates — **Lite (5 OMCADE)** capped clone power, or **Full (10 OMCADE)** scales with your full upgrades
+- 💀 Emergency Revive on death (4 OMCADE — 50% HP + 3s invincibility)
+- ➕ Buy 5 extra Galactic Raid runs (10 OMCADE)
+- ✨ Buy cosmetics, stat upgrades & a +50% XP session buff (10 OMCADE / 60 min)
 
 **Live balance always shown in the top bar of your screen.**
 
@@ -229,7 +229,7 @@ Earn via **leaderboard rankings**. Spend in-game to:
 
 ✅ **Free-to-play** — Pure skill determines earnings
 ✅ **Skill-first** — Leaderboard earnings are purely based on performance
-✅ **Real rewards** — OMENX tokens to your wallet
+✅ **Real rewards** — OMCADE tokens to your wallet
 ✅ **Squad multiplier** — Farm together, earn together
 ✅ **Infinite scaling** — Boss raids never stop
 

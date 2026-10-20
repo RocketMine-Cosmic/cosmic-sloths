@@ -121,7 +121,7 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
             <button
                 onClick={() => { SoundManager.playUIClick(); setShowPreview(true); }}
                 disabled={disabled}
-                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : (nothingToBuy ? 'This weapon is already maxed for this tier.' : undefined)}
+                title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : (nothingToBuy ? 'This weapon is already maxed for this tier.' : undefined)}
                 className={`w-full md:w-auto px-3 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${
                     disabled
                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
@@ -157,12 +157,12 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
                                     </span>
                                 </div>
                                 <div className="bg-slate-800/40 rounded-lg p-3 flex items-center justify-between text-xs">
-                                    <span className="text-slate-400">Your OMENX balance</span>
+                                    <span className="text-slate-400">Your OMCADE balance</span>
                                     <span className="font-bold text-slate-300">{(omenxBalance ?? 0).toLocaleString()}</span>
                                 </div>
                                 {plan.affordable.length < plan.totalRemaining && (
                                     <div className="text-[11px] text-amber-400 bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 leading-snug">
-                                        💡 Fully maxing this weapon costs <strong>{formatTokens(plan.totalRemainingCost)} OMENX</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
+                                        💡 Fully maxing this weapon costs <strong>{formatTokens(plan.totalRemainingCost)} OMCADE</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
                                     </div>
                                 )}
                                 <div className="text-[11px] text-cyan-300 bg-cyan-950/30 border border-cyan-800/40 rounded-lg p-2 leading-snug">

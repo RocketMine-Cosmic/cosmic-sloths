@@ -76,7 +76,7 @@ export default function TalentRespecModal({
                         }`}
                     >
                         <OmenXIcon className="w-5 h-5" />
-                        Pay {formatTokens(omenxCost)} OMENX
+                        Pay {formatTokens(omenxCost)} OMCADE
                         {!canAffordOmenx && <span className="text-[10px] opacity-80">(not enough)</span>}
                     </button>
 

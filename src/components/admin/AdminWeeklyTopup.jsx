@@ -75,7 +75,7 @@ export default function AdminWeeklyTopup() {
                 >
                     <Play size={12} /> Run Next Chunk (20)
                 </button>
-                {busy && <span className="text-xs text-amber-300 animate-pulse">Running… (up to 3 min — OmenX is slow)</span>}
+                {busy && <span className="text-xs text-amber-300 animate-pulse">Running… (up to 3 min — Omen is slow)</span>}
             </div>
 
             {error && (
@@ -98,7 +98,7 @@ export default function AdminWeeklyTopup() {
                                 <div className="text-white">{result.correct_top45_total?.toLocaleString()}</div>
                                 <div className="text-slate-400">Wallets to top up:</div>
                                 <div className="text-amber-300">{result.topup_count}</div>
-                                <div className="text-slate-400">Total OMENX to pay:</div>
+                                <div className="text-slate-400">Total OMCADE to pay:</div>
                                 <div className="text-amber-300 font-bold">{result.topup_total?.toLocaleString()}</div>
                             </div>
                             {result.topups?.length > 0 && (
@@ -133,7 +133,7 @@ export default function AdminWeeklyTopup() {
                                     {result.remaining_after_run}
                                 </div>
                                 <div className="text-slate-400">Total top-up amount:</div>
-                                <div className="text-white">{result.topup_total?.toLocaleString()} OMENX</div>
+                                <div className="text-white">{result.topup_total?.toLocaleString()} OMCADE</div>
                                 <div className="text-slate-400">Last tx id:</div>
                                 <div className="text-slate-300 truncate">{result.last_tx_id || '—'}</div>
                             </div>

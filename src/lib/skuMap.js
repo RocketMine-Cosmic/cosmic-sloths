@@ -7,13 +7,13 @@ import { skuPrice } from '@/lib/storePrices';
 
 // In-game consumable SKUs
 export const IN_GAME_SKUS = {
-    banish:        'ingame-banish',    // T1 — 2 OMENX
-    banishT2:      'ingame-banish-2',  // T2 — 4 OMENX
-    banishT3:      'ingame-banish-3',  // T3 — 6 OMENX
+    banish:        'ingame-banish',    // T1 — 2 OMCADE
+    banishT2:      'ingame-banish-2',  // T2 — 4 OMCADE
+    banishT3:      'ingame-banish-3',  // T3 — 6 OMCADE
     reroll:        'ingame-reroll',
     // Squad Ultimate has two tiers — lite (capped clone power) and full (scales with player upgrades).
-    squadUltimateLite: 'ingame-squad-ult-lite', // 5 OMENX — capped clone
-    squadUltimateFull: 'ingame-squad-ult-full', // 10 OMENX — full-power clone
+    squadUltimateLite: 'ingame-squad-ult-lite', // 5 OMCADE — capped clone
+    squadUltimateFull: 'ingame-squad-ult-full', // 10 OMCADE — full-power clone
     // Revive — flat 4 OMENX pre-S8. Escalation tiers (8/15/25) are selected
     // dynamically by lib/reviveTiers.js on S8+. Callers should use getReviveForRun
     // rather than picking a SKU manually.
@@ -21,10 +21,10 @@ export const IN_GAME_SKUS = {
     reviveT2:      'ingame-revive-8',    // S8+ mid-run (4–8 min)
     reviveT3:      'ingame-revive-15',   // S8+ deep sector (8–11 min)
     reviveT4:      'ingame-revive-25',   // S8+ podium / endless-any
-    starFragments:      'ingame-star-fragments',    // S8 Fragment Express — 15 frags / 10 OMENX
-    starFragmentsBulk:  'ingame-star-fragments-10', // S8 Fragment Express bulk — 150 frags / 100 OMENX
+    starFragments:      'ingame-star-fragments',    // S8 Fragment Express — 15 frags / 10 OMCADE
+    starFragmentsBulk:  'ingame-star-fragments-10', // S8 Fragment Express bulk — 150 frags / 100 OMCADE
     xpSession:     'ingame-xp-buff',
-    biasRespec:    'bias-respec', // ~10 OMENX — clears all allocated pool-bias points
+    biasRespec:    'bias-respec', // ~10 OMCADE — clears all allocated pool-bias points
 };
 
 // Stat upgrade SKUs — keyed by tier and level
@@ -73,9 +73,9 @@ const SKIN_SKUS = {
 // Talent respec SKUs — flat OMENX fee per tier to clear all talents for a single character.
 // Replace these with your real SKU IDs once registered in the OmenX portal.
 const TALENT_RESPEC_SKUS = {
-    permanent: 'talent-respec-permanent', // ~10 OMENX
-    weekly:    'talent-respec-weekly',    // ~4 OMENX
-    seasonal:  'talent-respec-seasonal',  // ~20 OMENX
+    permanent: 'talent-respec-permanent', // ~10 OMCADE
+    weekly:    'talent-respec-weekly',    // ~4 OMCADE
+    seasonal:  'talent-respec-seasonal',  // ~20 OMCADE
 };
 
 /**

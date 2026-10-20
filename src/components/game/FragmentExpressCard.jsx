@@ -100,26 +100,26 @@ export default function FragmentExpressCard({ save, setSave }) {
     };
 
     const singleLabel = omenxBlocked
-        ? 'OMENX Paused'
+        ? 'OMCADE Paused'
         : atCap
             ? 'Weekly Cap Reached'
             : !canAffordSingle
-                ? 'Not Enough OMENX'
+                ? 'Not Enough OMCADE'
                 : busy === 'single'
                     ? 'Processing…'
-                    : `Buy ${BATCH_SIZE} 🌟 · ${formatTokens(BATCH_COST)} OMENX`;
+                    : `Buy ${BATCH_SIZE} 🌟 · ${formatTokens(BATCH_COST)} OMCADE`;
 
     const bulkLabel = omenxBlocked
-        ? 'OMENX Paused'
+        ? 'OMCADE Paused'
         : atCap
             ? 'Weekly Cap Reached'
             : !bulkFitsInCap
                 ? `Only ${remaining} batches left`
                 : !canAffordBulk
-                    ? 'Not Enough OMENX'
+                    ? 'Not Enough OMCADE'
                     : busy === 'bulk'
                         ? 'Processing…'
-                        : `Buy ${BATCH_SIZE * BULK_BATCHES} 🌟 · ${formatTokens(BULK_COST)} OMENX`;
+                        : `Buy ${BATCH_SIZE * BULK_BATCHES} 🌟 · ${formatTokens(BULK_COST)} OMCADE`;
 
     const singleDisabled = !!busy || atCap || !canAffordSingle || omenxBlocked;
     const bulkDisabled = !!busy || atCap || !canAffordBulk || !bulkFitsInCap || omenxBlocked;
@@ -132,10 +132,10 @@ export default function FragmentExpressCard({ save, setSave }) {
                     <span className="text-[10px] font-black bg-purple-500 text-white px-1.5 py-0.5 rounded uppercase tracking-widest">S8</span>
                 </h3>
                 <p className="text-slate-400 text-sm mb-3">
-                    Skip the gold-convert grind. Instantly buy Star Fragments 🌟 with OMENX to speed up your relic prestige climb.
+                    Skip the gold-convert grind. Instantly buy Star Fragments 🌟 with OMCADE to speed up your relic prestige climb.
                     <br />
-                    <span className="text-purple-300 font-bold">Rate: {formatTokens(BATCH_COST)} OMENX = {BATCH_SIZE} 🌟 ({Number((BATCH_COST / BATCH_SIZE).toFixed(3))} OMENX per fragment)</span>
-                    <span className="ml-3 text-slate-500">Weekly cap: {WEEKLY_CAP} batches ({WEEKLY_CAP * BATCH_SIZE} frags / {formatTokens(WEEKLY_CAP * BATCH_COST)} OMENX)</span>
+                    <span className="text-purple-300 font-bold">Rate: {formatTokens(BATCH_COST)} OMCADE = {BATCH_SIZE} 🌟 ({Number((BATCH_COST / BATCH_SIZE).toFixed(3))} OMCADE per fragment)</span>
+                    <span className="ml-3 text-slate-500">Weekly cap: {WEEKLY_CAP} batches ({WEEKLY_CAP * BATCH_SIZE} frags / {formatTokens(WEEKLY_CAP * BATCH_COST)} OMCADE)</span>
                 </p>
 
                 <div className="flex flex-col gap-3">
@@ -151,7 +151,7 @@ export default function FragmentExpressCard({ save, setSave }) {
                         <button
                             onClick={() => runPurchase(1, false)}
                             disabled={singleDisabled}
-                            title={omenxBlocked ? (blockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                            title={omenxBlocked ? (blockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                             className={`px-4 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.2)] ${
                                 singleDisabled
                                     ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed'
@@ -164,7 +164,7 @@ export default function FragmentExpressCard({ save, setSave }) {
                             onClick={() => runPurchase(BULK_BATCHES, true)}
                             disabled={bulkDisabled}
                             title={omenxBlocked
-                                ? (blockedMsg || 'OMENX purchases are temporarily disabled.')
+                                ? (blockedMsg || 'OMCADE purchases are temporarily disabled.')
                                 : (!bulkFitsInCap && !atCap ? `Bulk bundle needs ${BULK_BATCHES} batches free — you only have ${remaining} left this week.` : undefined)}
                             className={`relative px-4 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,70,239,0.25)] ${
                                 bulkDisabled

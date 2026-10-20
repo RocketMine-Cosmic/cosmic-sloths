@@ -24,7 +24,7 @@ Difficulty doesn't directly multiply your score — but more XP & Gold per run *
 
 🪐 **Sectors** — 10 hand-crafted arenas: Azure Expanse → Mystic Cosmos → Ethereal Nebula → Crimson Void → Solar Storm → Emerald Galaxy → Shattered Core → Abyssal Vortex → Turquoise Drift → Rainbow Rift, plus the optional ♾️ Endless Void. Beat each sector with each pilot to unlock the next. Replay any unlocked sector freely — **dynamic difficulty** adapts spawns to your performance, no gold penalties.
 
-✅ **Just sign in with OmenX to start.** Your save, wallet, and progression sync automatically.`,
+✅ **Just sign in with Omen Arcade to start.** Your save, wallet, and progression sync automatically.`,
     },
     {
         title: 'Post 2 — Scoring & Leaderboards',
@@ -43,13 +43,13 @@ Score is calculated **server-side** at the end of every run. **Sector and Endles
 
 **No gold contribution. No difficulty multiplier.** Harder difficulties just grant more XP & Gold, which feed into kills/level naturally. Only your **highest score per period** counts on the leaderboard.
 
-📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Top **45 players** earn OMENX payouts based on rank. #1 = 10% · #2 = 8% · #3 = 6% · #4–10 = 4% each · #11–20 = 3% each · #21–30 = 1.8% each · #31–45 = 1.2% each. Max **10,000 OMENX** per player. **Endless runs excluded from payouts.** Weekly stat upgrades also reset.
+📅 **Weekly Leaderboard** (resets Monday 00:00 UTC) — Top **45 players** earn OMCADE payouts based on rank. #1 = 10% · #2 = 8% · #3 = 6% · #4–10 = 4% each · #11–20 = 3% each · #21–30 = 1.8% each · #31–45 = 1.2% each. Max **10,000 OMCADE** per player. **Endless runs excluded from payouts.** Weekly stat upgrades also reset.
 
-🗓️ **Seasonal Leaderboard** (4-week cycles) — Top **45 players** earn OMENX payouts. #1 = 10% · #2 = 7.5% · #3 = 6% · #4–10 = 3.2% each · #11–20 = 2.2% each · #21–30 = 1.5% each · #31–40 = 0.9% each · #41–45 = 0.7% each. A separate **10%** pool funds the Squad Wars Champions rewards. Max **10,000 OMENX** per player. **Endless runs excluded from payouts.** Seasonal stat upgrades reset at season end.
+🗓️ **Seasonal Leaderboard** (4-week cycles) — Top **45 players** earn OMCADE payouts. #1 = 10% · #2 = 7.5% · #3 = 6% · #4–10 = 3.2% each · #11–20 = 2.2% each · #21–30 = 1.5% each · #31–40 = 0.9% each · #41–45 = 0.7% each. A separate **10%** pool funds the Squad Wars Champions rewards. Max **10,000 OMCADE** per player. **Endless runs excluded from payouts.** Seasonal stat upgrades reset at season end.
 
-♾️ **Endless Void Leaderboard** — Season-scoped ranking. **NOT eligible for OMENX payouts.** Long, well-played endless runs (25+ min) can reach 600k–1M score, rivaling or exceeding sector victories thanks to per-minute scaling.
+♾️ **Endless Void Leaderboard** — Season-scoped ranking. **NOT eligible for OMCADE payouts.** Long, well-played endless runs (25+ min) can reach 600k–1M score, rivaling or exceeding sector victories thanks to per-minute scaling.
 
-💠 Real OMENX is paid directly to your wallet at the end of each cycle — no claiming, no clicking.`,
+💠 Real OMCADE is paid directly to your wallet at the end of each cycle — no claiming, no clicking.`,
     },
     {
         title: 'Post 3 — The 10 Pilots & NFT Unlocks',
@@ -71,7 +71,7 @@ Score is calculated **server-side** at the end of every run. **Sector and Endles
 💎 **HOW TO UNLOCK PILOTS**
 
 **Path 1 — NFT Ownership (Instant)**
-Own a pilot's OmenX NFT? Unlocks instantly on sign-in. Plus you earn rarity-based per-run bonuses every single run:
+Own a pilot's Omen Arcade NFT? Unlocks instantly on sign-in. Plus you earn rarity-based per-run bonuses every single run:
 ⬜ Common → +5% Gold / +5% Fragments
 🟢 Uncommon → +7% / +8%
 🔵 Rare → +10% / +10%
@@ -88,13 +88,13 @@ NeoByte is unlocked by default. Everyone else needs an NFT or a milestone.`,
         title: 'Post 4 — Weapons, Synergies & Evolutions',
         content: `🔫 **IN-RUN WEAPONS & UPGRADES**
 
-Every level-up offers 3 random upgrades (Common / Rare / Epic / Legendary — higher rarity = bigger numbers). Spend OMENX to swing the RNG:
+Every level-up offers 3 random upgrades (Common / Rare / Epic / Legendary — higher rarity = bigger numbers). Spend OMCADE to swing the RNG:
 
-• **Reroll** the 3 choices → **2 OMENX** (once per level-up)
-• **Banish** an upgrade for the rest of the run → tiered cost: **2 OMENX** for the first 3 banishes, **4 OMENX** for the next 3, then **6 OMENX** each
-• **Emergency Revive** on death → **4 OMENX** (50% HP + 3s invincibility)
+• **Reroll** the 3 choices → **2 OMCADE** (once per level-up)
+• **Banish** an upgrade for the rest of the run → tiered cost: **2 OMCADE** for the first 3 banishes, **4 OMCADE** for the next 3, then **6 OMCADE** each
+• **Emergency Revive** on death → **4 OMCADE** (50% HP + 3s invincibility)
 
-💡 **POOL BIAS** — Every permanent upgrade you buy in the Lounge (stats, weapons, talents) earns you bias points: **1 pt per level for the first 10 levels, then 1 pt per 2 levels** after. Spend points on the **Loadouts** page to bias the in-run upgrade pool toward **specific** weapons or stats (**+10% draw weight per point**). Respec anytime: 2k → 4k → 8k → 16k Gold (or 10 OMENX for an instant reset).
+💡 **POOL BIAS** — Every permanent upgrade you buy in the Lounge (stats, weapons, talents) earns you bias points: **1 pt per level for the first 10 levels, then 1 pt per 2 levels** after. Spend points on the **Loadouts** page to bias the in-run upgrade pool toward **specific** weapons or stats (**+10% draw weight per point**). Respec anytime: 2k → 4k → 8k → 16k Gold (or 10 OMCADE for an instant reset).
 
 **🪖 Base Weapons:** Blaster · Cosmic Nap Beam · Plasma Whip · Orbital Drones · Zero-G Napalm · Nova Pulse · Shield Bubble · Ricochet Blade · Toxic Emitter
 
@@ -141,7 +141,7 @@ Forge upgrades **never reset**.
 
 ✨ **Cosmetics** — Trails, kill effects, character skins. Preview before you buy.
 
-⚡ **+50% XP Session Buff** — 60-minute boost for 10 OMENX.
+⚡ **+50% XP Session Buff** — 60-minute boost for 10 OMCADE.
 
 👑 **Character Mastery** — 7 tiers per pilot, kills tracked individually:
 • 🥚 Cadet (0) — earn your wings
@@ -183,7 +183,7 @@ Per-member rewards (claim once after the war ends):
 • 🤝 Tie → 1,000 Gold + 1 Fragment
 • 💀 Loss → 500 Gold (consolation)
 
-👑 **CHAMPIONS POOL** — A dedicated **OMENX prize pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members. Live standings + your projected payout on the **Squad Wars** page.`,
+👑 **CHAMPIONS POOL** — A dedicated **OMCADE prize pool** is reserved for the top 3 squads of each season. Split 50% / 30% / 20% between 1st / 2nd / 3rd, then divided equally among all squad members. Eligibility: ≥2 wars fought + ≥2 active members. Live standings + your projected payout on the **Squad Wars** page.`,
     },
     {
         title: 'Post 7 — Raids, Trials, Ultimates & VIP',
@@ -191,7 +191,7 @@ Per-member rewards (claim once after the war ends):
 
 A massive boss with **shared global HP**. Every player's damage is permanently subtracted from its health pool worldwide.
 
-• **5 Raid Runs/day** free, +5 more for **10 OMENX**
+• **5 Raid Runs/day** free, +5 more for **10 OMCADE**
 • Damage cuts the boss HP for everyone
 • Boss defeated → respawns at next level with **+50% HP**
 • Claim **250 Gold × Boss Level** per defeat (must have contributed damage)
@@ -216,22 +216,22 @@ Stack as many as you want — bonuses combine.
 🎮 **SQUAD ULTIMATES** (mid-run panic button)
 
 Floating buttons (bottom-right) summon an AI clone from your unlocked roster:
-• **ULT LITE** — 5 OMENX (capped power, instant help)
-• **ULT FULL** — 10 OMENX (scales with your full upgrades)
+• **ULT LITE** — 5 OMCADE (capped power, instant help)
+• **ULT FULL** — 10 OMCADE (scales with your full upgrades)
 
 ---
 
 👑 **VIP** (14 tiers — Bronze 1 → Diamond 4)
 
-Earned via **real-money VIP subscription** on the OmenX platform. Each tier grants **+1% Damage & +1% Max HP per run**, stacking with all your other upgrades.
+Earned via **real-money VIP subscription** on the Omen Arcade platform. Each tier grants **+1% Damage & +1% Max HP per run**, stacking with all your other upgrades.
 
-Bonus: every VIP tier earns a **weekly OMENX allocation** paid directly to your wallet while Phase 2 + Phase 3 are active — your subscription literally pays you back in crypto. Future allocation TBD after Phase 3 ends.
+Bonus: every VIP tier earns a **weekly OMCADE allocation** paid directly to your wallet while Phase 2 + Phase 3 are active — your subscription literally pays you back in crypto. Future allocation TBD after Phase 3 ends.
 
 🔄 Your VIP tier is fetched **once on sign-in** and cached for the session. Upgraded your tier? Use the **Refresh VIP** button on your Profile page (24h cooldown) to pull the new value.
 
 ---
 
-🎉 **That's the full game.** Sign in with OmenX, hop in, and start climbing. Real crypto. Real competition. Real cute sloths in space. 🦥`,
+🎉 **That's the full game.** Sign in with Omen Arcade, hop in, and start climbing. Real crypto. Real competition. Real cute sloths in space. 🦥`,
     },
 ];
 

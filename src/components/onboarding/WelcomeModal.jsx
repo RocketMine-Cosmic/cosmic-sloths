@@ -18,7 +18,7 @@ const STEPS = [
         body: (
             <>
                 <p><span className="text-cyan-300 font-bold">Cosmic Sloths</span> is a fast roguelike survival game. Pick a sloth, drop into an arena, and stack weapon upgrades to last as long as you can.</p>
-                <p className="mt-2 text-slate-400">The top of the weekly leaderboard splits a real <span className="text-amber-300 font-bold">$OMENX</span> reward pool.</p>
+                <p className="mt-2 text-slate-400">The top of the weekly leaderboard splits a real <span className="text-amber-300 font-bold">$OMCADE</span> reward pool.</p>
             </>
         ),
     },
@@ -29,10 +29,10 @@ const STEPS = [
         title: 'Sign In & Connect Wallet',
         body: (
             <>
-                <p>On the <span className="text-white font-bold">Main Menu</span>, tap the button at the bottom to <span className="text-cyan-300 font-bold">Sign In</span>, then <span className="text-purple-300 font-bold">Connect Wallet</span> to link your OMENX wallet.</p>
+                <p>On the <span className="text-white font-bold">Main Menu</span>, tap the button at the bottom to <span className="text-cyan-300 font-bold">Sign In</span>, then <span className="text-purple-300 font-bold">Connect Wallet</span> to link your OMCADE wallet.</p>
                 <p className="mt-2 text-amber-200/90 bg-amber-950/40 border border-amber-700/40 rounded px-2 py-1.5 text-xs">🔒 Currently gated to <span className="font-bold">Early Adopters NFT</span> holders on Omen.</p>
                 <p className="mt-2 text-slate-400 text-xs">No Omen account yet? Sign up free at <a href="https://app.omen.foundation?ref=D2EBE0BE67BAAE" target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-bold underline hover:text-cyan-200">Omen Foundation</a>, then grab the Early Adopters NFT to unlock access.</p>
-                <p className="mt-2 text-slate-400">Connecting saves your progress to your wallet and makes you eligible for weekly OMENX rewards.</p>
+                <p className="mt-2 text-slate-400">Connecting saves your progress to your wallet and makes you eligible for weekly OMCADE rewards.</p>
             </>
         ),
     },
@@ -52,15 +52,15 @@ const STEPS = [
         icon: Zap,
         accent: 'text-purple-300',
         border: 'border-purple-500/40',
-        title: 'OMENX In-Run Power',
+        title: 'OMCADE In-Run Power',
         body: (
             <>
-                <p>Spend small amounts of <span className="text-purple-300 font-bold">$OMENX</span> mid-run to swing the odds in your favour:</p>
+                <p>Spend small amounts of <span className="text-purple-300 font-bold">$OMCADE</span> mid-run to swing the odds in your favour:</p>
                 <ul className="mt-2 text-left text-xs text-slate-400 space-y-1 mx-auto max-w-[260px]">
-                    <li>• <span className="text-white font-bold">Reroll</span> level-up choices — <Price sku="ingame-reroll" /> OMENX</li>
-                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — <Price sku="ingame-banish" /> / <Price sku="ingame-banish-2" /> / <Price sku="ingame-banish-3" /> OMENX (tiered)</li>
-                    <li>• <span className="text-white font-bold">Emergency Revive</span> on death — from <Price sku="ingame-revive" /> OMENX</li>
-                    <li>• <span className="text-white font-bold">Squad Ultimate</span> clone backup — <Price sku="ingame-squad-ult-lite" /> or <Price sku="ingame-squad-ult-full" /> OMENX</li>
+                    <li>• <span className="text-white font-bold">Reroll</span> level-up choices — <Price sku="ingame-reroll" /> OMCADE</li>
+                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — <Price sku="ingame-banish" /> / <Price sku="ingame-banish-2" /> / <Price sku="ingame-banish-3" /> OMCADE (tiered)</li>
+                    <li>• <span className="text-white font-bold">Emergency Revive</span> on death — from <Price sku="ingame-revive" /> OMCADE</li>
+                    <li>• <span className="text-white font-bold">Squad Ultimate</span> clone backup — <Price sku="ingame-squad-ult-lite" /> or <Price sku="ingame-squad-ult-full" /> OMCADE</li>
                 </ul>
             </>
         ),
@@ -72,7 +72,7 @@ const STEPS = [
         title: 'Hall of Fame & Weekly Payouts',
         body: (
             <>
-                <p>Every run earns gold you keep AND posts a score to the <span className="text-amber-300 font-bold">Hall of Fame</span>. Each week, the OMENX you and others spend in-game funds a <span className="text-amber-300 font-bold">community reward pool</span>.</p>
+                <p>Every run earns gold you keep AND posts a score to the <span className="text-amber-300 font-bold">Hall of Fame</span>. Each week, the OMCADE you and others spend in-game funds a <span className="text-amber-300 font-bold">community reward pool</span>.</p>
                 <p className="mt-2 text-slate-400">When the week ends, the top scorers automatically receive a share of that pool — paid straight to your linked wallet. Seasonal leaderboards (every 4 weeks) pay out a bigger pool.</p>
             </>
         ),

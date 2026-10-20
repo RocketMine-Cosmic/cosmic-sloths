@@ -100,15 +100,15 @@ export default function AdminStaffPayouts({ canViewFinance }) {
                 </div>
                 <div className="bg-slate-900/60 border border-slate-700 rounded p-2.5">
                     <div className="text-[10px] text-slate-500 uppercase">Spent So Far</div>
-                    <div className="text-sm font-mono font-bold text-cyan-400">{currentSpent.toFixed(1)} OMENX</div>
+                    <div className="text-sm font-mono font-bold text-cyan-400">{currentSpent.toFixed(1)} OMCADE</div>
                 </div>
                 <div className="bg-slate-900/60 border border-amber-700/40 rounded p-2.5">
                     <div className="text-[10px] text-slate-500 uppercase">Per Staff (Default)</div>
-                    <div className="text-sm font-mono font-bold text-amber-400">{Math.floor(currentSpent * STAFF_PCT_PER_WALLET).toLocaleString()} OMENX</div>
+                    <div className="text-sm font-mono font-bold text-amber-400">{Math.floor(currentSpent * STAFF_PCT_PER_WALLET).toLocaleString()} OMCADE</div>
                 </div>
                 <div className="bg-slate-900/60 border border-amber-700/40 rounded p-2.5">
                     <div className="text-[10px] text-slate-500 uppercase">Total Staff Cost</div>
-                    <div className="text-sm font-mono font-bold text-amber-400">{totalStaffWeekly.toLocaleString()} OMENX</div>
+                    <div className="text-sm font-mono font-bold text-amber-400">{totalStaffWeekly.toLocaleString()} OMCADE</div>
                 </div>
             </div>
 
@@ -131,7 +131,7 @@ export default function AdminStaffPayouts({ canViewFinance }) {
                                     {hasOverride && <span className="text-[9px] bg-amber-900/40 border border-amber-700/40 text-amber-300 px-1 py-0.5 rounded font-bold shrink-0">custom {(pct * 100).toFixed(2)}%</span>}
                                     <span className="text-[10px] text-slate-500 font-mono truncate">{a.wallet_address?.slice(0, 8)}…{a.wallet_address?.slice(-4)}</span>
                                 </div>
-                                <span className="text-sm font-mono font-bold text-amber-400 shrink-0">{perStaffByAdmin(a).toLocaleString()} OMENX</span>
+                                <span className="text-sm font-mono font-bold text-amber-400 shrink-0">{perStaffByAdmin(a).toLocaleString()} OMCADE</span>
                             </div>
                         );
                     })}
@@ -159,7 +159,7 @@ export default function AdminStaffPayouts({ canViewFinance }) {
                                         <td className="p-2 font-mono font-bold text-white">{w.period_id}</td>
                                         <td className="p-2 text-right font-mono text-slate-300">{w.count}</td>
                                         <td className="p-2 text-right font-mono text-slate-300">{w.count > 0 ? Math.floor(w.total / w.count).toLocaleString() : 0}</td>
-                                        <td className="p-2 text-right font-mono font-bold text-amber-400">{w.total.toLocaleString()} OMENX</td>
+                                        <td className="p-2 text-right font-mono font-bold text-amber-400">{w.total.toLocaleString()} OMCADE</td>
                                         <td className="p-2 text-slate-500 font-mono text-[10px]">{moment(w.recipients[0]?.date).format('MMM D, YYYY')}</td>
                                     </tr>
                                 ))}

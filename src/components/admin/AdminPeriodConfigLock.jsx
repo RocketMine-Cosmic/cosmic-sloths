@@ -77,7 +77,7 @@ export default function AdminPeriodConfigLock({ isOwner }) {
                                 className="flex items-center gap-3 bg-slate-900/50 border border-slate-800 rounded px-3 py-2 flex-wrap">
                                 <span className="font-mono text-sm text-white">{p.period_id}</span>
                                 <span className="text-[10px] uppercase tracking-wider text-slate-500">{p.period_type}</span>
-                                <span className="text-xs text-slate-400 font-mono">{Math.floor(p.total_spent || 0)} OMENX spend</span>
+                                <span className="text-xs text-slate-400 font-mono">{Math.floor(p.total_spent || 0)} OMCADE spend</span>
                                 {locked ? (
                                     <span className="text-[10px] font-bold text-emerald-400 uppercase flex items-center gap-1">
                                         <Lock size={10} /> Locked
