@@ -6,6 +6,8 @@ import { WEAPON_SLOT_CAP, EVOLUTION_MIN_BASE_LEVEL } from '@/game/UpgradeSystem'
 import { EVOLUTIONS, SYNERGIES, WEAPONS, UPGRADES } from '@/game/Constants';
 import { useAntiMashCooldown } from '@/hooks/useAntiMashCooldown';
 import PoolBiasBadge from './PoolBiasBadge';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
+import { IN_GAME_SKUS } from '@/lib/skuMap';
 
 // LocalStorage-backed UI prefs for the level-up modal — device-specific by design.
 // Added 2026-05-22 (Texxy/RocketMine ask) so experienced players can hide
@@ -177,6 +179,9 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
      const banishTier = banishCount < 3 ? 1 : banishCount < 6 ? 2 : 3;
      const banishUsesInTier = banishTier === 3 ? null : (3 - (banishCount % 3));
      const showNextPrice = nextBanishCost !== null && nextBanishCost !== banishCost;
+     // Live portal price of a reroll (was a fixed 2).
+     const price = useStorePrices();
+     const rerollCost = price(IN_GAME_SKUS.reroll);
      const [hasRerolled, setHasRerolled] = useState(false);
      const [selectedIndex, setSelectedIndex] = useState(null);
      const [showInventory, setShowInventory] = useState(false);
@@ -526,7 +531,7 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => {
-                                if ((cosmicTokens || 0) < 2 || omenxPurchasesDisabled || rerollCd.locked) return;
+                                if ((cosmicTokens || 0) < rerollCost || omenxPurchasesDisabled || rerollCd.locked) return;
                                 rerollCd.trigger(() => {
                                     setHasRerolled(true);
                                     onReroll();
@@ -534,10 +539,10 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             }}
                             disabled={omenxPurchasesDisabled || rerollCd.locked}
                             title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : rerollCd.locked ? 'Just a sec…' : undefined}
-                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < 2 || omenxPurchasesDisabled || rerollCd.locked ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
+                            className={`text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors border text-base md:text-lg flex items-center justify-center gap-2 ${(cosmicTokens || 0) < rerollCost || omenxPurchasesDisabled || rerollCd.locked ? 'bg-purple-600/50 border-purple-400/50 opacity-50 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]'}`}
                         >
                             <OmenXIcon className="w-5 h-5 md:w-6 md:h-6 mr-1" />
-                            {rerollCd.locked ? `Reroll (${(rerollCd.remainingMs / 1000).toFixed(1)}s)` : 'Reroll (2 OMENX)'}
+                            {rerollCd.locked ? `Reroll (${(rerollCd.remainingMs / 1000).toFixed(1)}s)` : `Reroll (${formatTokens(rerollCost)} OMENX)`}
                         </motion.button>
                     )}
                     
@@ -556,11 +561,11 @@ export default function LevelUpModal({ level, choices, onSelect, cosmicTokens, o
                             <span>
                                 {banishCd.locked
                                     ? `Banish (${(banishCd.remainingMs / 1000).toFixed(1)}s)`
-                                    : `Banish T${banishTier} (${banishCost} OMENX)`}
+                                    : `Banish T${banishTier} (${formatTokens(banishCost)} OMENX)`}
                             </span>
                             {!banishCd.locked && banishUsesInTier !== null && (
                                 <span className="text-[10px] md:text-xs font-normal opacity-80">
-                                    {banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left{showNextPrice ? ` · Next: ${nextBanishCost} OMENX` : ''}
+                                    {banishUsesInTier} use{banishUsesInTier === 1 ? '' : 's'} left{showNextPrice ? ` · Next: ${formatTokens(nextBanishCost)} OMENX` : ''}
                                 </span>
                             )}
                         </motion.button>
