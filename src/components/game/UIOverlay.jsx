@@ -230,7 +230,7 @@ function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, ome
                 </div>
                 {omenxPurchasesDisabled && (
                     <div className="bg-red-950/60 p-1.5 md:p-2 rounded-lg border border-red-500/50 w-full max-w-2xl flex items-center justify-center mx-auto">
-                        <span className="text-[10px] md:text-xs font-bold text-red-300 text-center">⚠️ Purchases disabled while OMCADE is down</span>
+                        <span className="text-[10px] md:text-xs font-bold text-red-300 text-center">⚠️ Purchases disabled while Omen Arcade is down</span>
                     </div>
                 )}
             </div>

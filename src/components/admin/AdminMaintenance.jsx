@@ -199,7 +199,7 @@ export default function AdminMaintenance() {
                     value={omenxPurchasesMsg}
                     onChange={e => setOmenxPurchasesMsg(e.target.value)}
                     maxLength={280}
-                    placeholder="Optional message shown on the purchase modal (e.g. 'OmenX settlement is offline. Back online soon.')"
+                    placeholder="Optional message shown on the purchase modal (e.g. 'Omen settlement is offline. Back online soon.')"
                     className="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500"
                 />
                 <button

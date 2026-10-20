@@ -277,7 +277,7 @@ export default function Profile({ isCarousel }) {
                             </div>
                             <RefreshOmenXDataButton
                                 label="Refresh VIP"
-                                title="Refresh VIP level from OmenX"
+                                title="Refresh VIP level from Omen Arcade"
                                 onRefresh={refreshVipLevel}
                                 getCooldownEnd={getVipCooldownEnd}
                             />

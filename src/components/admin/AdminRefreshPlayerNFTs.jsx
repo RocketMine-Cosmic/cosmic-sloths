@@ -62,7 +62,7 @@ export default function AdminRefreshPlayerNFTs() {
                         className="bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2"
                     >
                         <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
-                        {busy ? 'Refreshing…' : 'Pull Fresh NFTs from OmenX'}
+                        {busy ? 'Refreshing…' : 'Pull Fresh NFTs from Omen'}
                     </button>
 
                     {error && (

@@ -22,7 +22,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         else localStorage.removeItem(STORAGE_KEY);
         setLoading(false);
         if (data) {
-            setSuccessMsg(`Wallet connected: ${data.username || data.walletAddress?.slice(0, 8) || 'OmenX'}`);
+            setSuccessMsg(`Wallet connected: ${data.username || data.walletAddress?.slice(0, 8) || 'Omen Arcade'}`);
             setTimeout(() => setSuccessMsg(''), 5000);
         }
         // Trigger storage event so OmenXAuthContext picks up the change in this tab.

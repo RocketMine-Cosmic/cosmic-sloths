@@ -9,7 +9,7 @@ const ERROR_CODES = [
         pattern: '❌ purchaseSku failed',
         meaning: 'A player tried to buy something with OMCADE and it crashed.',
         commonCauses: [
-            'OmenX dev portal API down or rate-limited (all 8 payment keys exhausted)',
+            'Omen dev portal API down or rate-limited (all 8 payment keys exhausted)',
             'Player\'s wallet has insufficient OMCADE balance',
             'Grant validation failed (out-of-sync save, prereq not met)',
             'PlayerSave write failed AFTER charge confirmed (rare — needs manual refund)',
@@ -30,7 +30,7 @@ const ERROR_CODES = [
         pattern: '❌ refundAllOmenx / payout failures',
         meaning: 'Bulk OMCADE transfer to players failed mid-batch.',
         commonCauses: [
-            'OmenX rewards API rate-limit (try fewer recipients per batch)',
+            'Omen rewards API rate-limit (try fewer recipients per batch)',
             'One or more wallets invalid/blacklisted on Omen side',
             'Treasury balance insufficient for total payout',
         ],
@@ -48,9 +48,9 @@ const ERROR_CODES = [
     },
     {
         pattern: '❌ getPlayerBalance / getNFTs / getVipLevel',
-        meaning: 'OmenX dev portal lookup failed for a single player.',
+        meaning: 'Omen dev portal lookup failed for a single player.',
         commonCauses: [
-            'OmenX API temporarily down',
+            'Omen API temporarily down',
             'All balance/auth API keys hit rate-limit at once',
             'Player wallet not registered on Omen (new sign-up race condition)',
         ],
