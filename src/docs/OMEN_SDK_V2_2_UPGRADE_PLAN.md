@@ -1,7 +1,7 @@
 # Omen game-sdk v2.2.0 — Upgrade Plan + VIP Points / Quests / Activity Points
 
 **Date:** 2026-09-17 · **Source:** `@omen.foundation/game-sdk@2.2.0` (README, CHANGELOG, `ai/GAME_SDK_FOR_AI.md`, `API_ENDPOINTS.md`)
-**Status:** Plan only — nothing changed yet.
+**Status:** Plan only — nothing changed yet. **Updated for 2.3.0 — see Part F.**
 
 > We do **not** import the npm SDK (it uses runtime code-gen the Deno isolate blocks — see
 > `shared/omenxRest.ts`). We talk to the same HTTP endpoints directly, so "upgrading" means
@@ -303,6 +303,29 @@ Changes vs the 2026-09-17 manifest:
   fit for Squads / co-op later. No action.
 - **OMCADE withdrawals** coming, same daily limit for every VIP tier. No action.
 - **AI Agent Tools:** `@omen.foundation/developer-mcp` (docs MCP + skills). Reference only.
+
+## Part F — SDK 2.3.0 (2026-09-18) — latest; supersedes 2.2.0 as our target
+
+Still direct REST (no npm import). What 2.3.0 adds/changes for us:
+
+- **Purchase terminal codes — corrects A2.** Six codes look retriable but are final; never retry them:
+  `501 NFT_GRANT_NOT_IMPLEMENTED`, `429 PLAYER_SPEND_CAP_EXCEEDED`, `503 PLATFORM_FEE_MISCONFIGURED`,
+  **`502 GRANT_FAILED`** (player WAS charged, delivery failed — reconcile/refund, a retry replays as
+  `422 PAYMENT_FAILED` and falsely reads "never paid"), `503 BALANCE_CHECK_FAILED`,
+  `502 ALLOWANCE_READ_FAILED`. Everything else 5xx/408/429 → retry with the **same** key, honour
+  `Retry-After` (≤5 min). `PAYMENT_PENDING` polling can take minutes; SDK budget is 4 attempts / 240s.
+  Accept 2xx `confirmed` **or** `completed`; never grant on `pending`/`refunded`.
+- **VIP / quests:** matches B2 already — VIP grants need a played wallet and draw prepaid balance
+  (`data.fundedBy`); quest claims pay activity points. No change.
+- **Activity points:** still no SDK method — call `POST /v1/activity/grant-points` with an
+  `Idempotency-Key` header, exactly as Phase 1 plans.
+- **Session telemetry (new, client-side):** `/api/sdk/sessions*` + `/api/sdk/activity` let the game
+  report real session length and engagement events with the player's own token (moves no value).
+  Omen's dev portal then shows active/idle players. Cheap to add from the browser via REST
+  (start on menu load, heartbeat while visible, end on `pagehide`). **Worth doing** — it's how Omen
+  sees our engagement, which matters for allocation sizing. Embedded (iframe) players need the
+  game-scoped embed token, not the website token.
+- **Competitions / player data / inventory:** server SDK coverage of what Part C lists. No change.
 
 ## Suggested order
 
