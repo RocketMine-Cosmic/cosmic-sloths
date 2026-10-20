@@ -1,10 +1,11 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState } from 'react';
 import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import DynamicDifficultyPill from './DynamicDifficultyPill';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 // Endless-mode reward caps — must mirror functions/saveScore.js EXACTLY.

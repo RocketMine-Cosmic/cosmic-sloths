@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Sparkles, ChevronDown, Beaker, Zap, Lock, Eye, EyeOff } from 'lucide-react';
@@ -110,7 +111,7 @@ function getEvolutionProgress(upgrade, player) {
 }
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 // Returns the current level of the weapon/passive this upgrade targets, and

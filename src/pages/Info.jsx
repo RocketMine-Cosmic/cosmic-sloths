@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -920,7 +921,7 @@ TABS_CONTENT.combat = (
                 <div className="mt-4 space-y-2">
                     <div className="bg-slate-900/60 rounded-lg p-3 border border-emerald-700/40">
                         <div className="font-bold text-emerald-300 text-xs md:text-sm mb-1.5 flex items-center gap-1.5">
-                            <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className="w-3.5 h-3.5" alt="OMENX" /> In-Run OMENX Actions
+                            <img src={TOKEN_LOGO_URL} className="w-3.5 h-3.5" alt={TOKEN_NAME} /> In-Run OMENX Actions
                         </div>
                         <ul className="text-xs md:text-sm text-slate-400 space-y-1 leading-relaxed">
                             <li>• <strong className="text-white">Reroll</strong> the 3 upgrade choices — <strong className="text-emerald-300"><Price sku="ingame-reroll" /> OMENX</strong> (once per level-up).</li>

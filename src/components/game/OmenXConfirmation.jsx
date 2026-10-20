@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
@@ -5,7 +6,7 @@ import { AlertCircle, Lock } from 'lucide-react';
 import { getStatus as getMaintenanceStatus, refreshNow as refreshMaintenance } from '@/lib/maintenanceStatus';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId, forceConfirm = false }) {
