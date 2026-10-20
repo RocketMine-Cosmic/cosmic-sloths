@@ -1,3 +1,4 @@
+import { formatTokens } from '@/lib/storePrices';
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../../game/SaveManager';
@@ -46,7 +47,7 @@ export default function BuyAllStatsButton({ tier, tokenCosts, save, omenxBalance
         const affordable = [];
         let runningTotal = 0;
         for (const item of all) {
-            if (runningTotal + item.cost > balance) break;
+            if (runningTotal + item.cost > balance + 1e-9) break; // epsilon: prices can be fractional
             affordable.push(item);
             runningTotal += item.cost;
         }
@@ -163,7 +164,7 @@ export default function BuyAllStatsButton({ tier, tokenCosts, save, omenxBalance
                                 <div className="bg-slate-800/60 rounded-lg p-3 flex items-center justify-between">
                                     <span className="text-sm text-slate-300">Total cost</span>
                                     <span className="font-bold text-white text-lg flex items-center gap-1.5">
-                                        <OmenXIcon className="w-5 h-5" /> {plan.totalCost.toLocaleString()}
+                                        <OmenXIcon className="w-5 h-5" /> {formatTokens(plan.totalCost)}
                                     </span>
                                 </div>
                                 <div className="bg-slate-800/40 rounded-lg p-3 flex items-center justify-between text-xs">
@@ -172,7 +173,7 @@ export default function BuyAllStatsButton({ tier, tokenCosts, save, omenxBalance
                                 </div>
                                 {plan.affordable.length < plan.totalRemaining && (
                                     <div className="text-[11px] text-amber-400 bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 leading-snug">
-                                        💡 Maxing every stat would cost <strong>{plan.totalRemainingCost.toLocaleString()} OMENX</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
+                                        💡 Maxing every stat would cost <strong>{formatTokens(plan.totalRemainingCost)} OMENX</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
                                     </div>
                                 )}
                                 <div className="text-[11px] text-cyan-300 bg-cyan-950/30 border border-cyan-800/40 rounded-lg p-2 leading-snug">
