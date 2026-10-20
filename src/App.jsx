@@ -56,6 +56,7 @@ import S6WelcomeModal from './components/onboarding/S6WelcomeModal';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { OmenXAuthProvider } from '@/lib/OmenXAuthContext';
 import { fetchPlayerData } from '@/lib/playerDataCache';
+import { startStorePrices } from '@/lib/storePrices';
 
 
 const MainApp = () => {
@@ -179,6 +180,8 @@ function App() {
       enforceWeeklyOmenSession().catch(err => console.error('[omenSession]', err));
     }
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
+    // Live store prices from the Omen portal (every price screen reads these).
+    startStorePrices();
     // Retry any runs that failed to save in a previous session.
     flushPendingScores().catch(err => console.error('[flushPendingScores]', err));
     // Auto-retry the queue when auth (re)establishes or tab regains focus.
