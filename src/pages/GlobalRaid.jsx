@@ -12,6 +12,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import LiveActivityBanner from '../components/game/LiveActivityBanner';
 import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
@@ -47,6 +48,10 @@ export default function GlobalRaid({ isCarousel }) {
         return [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlocked])];
     }, [save.unlockedCharacters, nfts]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
+    // NOTE (2026-10-20): "Buy 5 Raid Runs" is charged via the XP-buff SKU (there is
+    // no raid-runs SKU on the portal), so its price is whatever ingame-xp-buff costs.
+    const price = useStorePrices();
+    const RAID_RUNS_COST = price(IN_GAME_SKUS.xpSession);
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -231,14 +236,14 @@ export default function GlobalRaid({ isCarousel }) {
     const handleBuyMoreRuns = async () => {
         SoundManager.playUIClick();
         const currentSave = SaveManager.load();
-        if ((omenxBalance ?? 0) < 10) {
-            toast({ title: 'Not enough OMENX', description: 'You need 10 OMENX to buy more runs.', variant: 'destructive' });
+        if ((omenxBalance ?? 0) < RAID_RUNS_COST) {
+            toast({ title: 'Not enough OMENX', description: `You need ${formatTokens(RAID_RUNS_COST)} OMENX to buy more runs.`, variant: 'destructive' });
             return;
         }
 
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
-        confirmPurchase(10, 'Buy 5 Raid Runs', async () => {
+        confirmPurchase(RAID_RUNS_COST, 'Buy 5 Raid Runs', async () => {
             try {
                 if (!authData?.walletAddress) throw new Error('No wallet address');
                 const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
@@ -413,7 +418,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
                                 </div>
                                 <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
-                                    Cost: 10 <OmenXIcon className="w-4 h-4" />
+                                    Cost: {formatTokens(RAID_RUNS_COST)} <OmenXIcon className="w-4 h-4" />
                                 </span>
                             </button>
                         ) : (
