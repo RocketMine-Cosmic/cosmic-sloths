@@ -56,7 +56,9 @@ Deno.serve(async (_req) => {
             const id = p.sku || p.skuId || p.id || p.productId;
             if (!id || p.active === false) continue;
             const price = parseFloat(p.pricesInCurrency?.OMENX ?? p.priceInOmenx ?? p.price ?? 0);
-            if (price > 0) prices[id] = Math.round(price * 100) / 100;
+            // Keep full precision (screen rounds for display) so "can you afford it" checks
+            // match what purchaseSku will actually charge.
+            if (price > 0) prices[id] = Math.round(price * 1e6) / 1e6;
         }
         _cache = { prices, fetchedAt: now };
         _expiresAt = now + CACHE_TTL_MS;
