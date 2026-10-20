@@ -540,7 +540,7 @@ export default function Upgrades({ isCarousel }) {
                 }).catch(err => {
                     console.error('[handleBuyCosmetic skin] spendGold failed:', err);
                 });
-            } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+            } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmeticTokenCost(cosmetic, 'skin')) {
                 setPurchasing(true);
                 const skuId = getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost);
                 // Pass goldCost so server can verify it matches the SKU's price tier
@@ -587,7 +587,7 @@ export default function Upgrades({ isCarousel }) {
             }).catch(err => {
                 console.error('[handleBuyCosmetic trail/kill] spendGold failed:', err);
             });
-        } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmeticTokenCost(cosmetic, slot)) {
             setPurchasing(true);
             const skuId = getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost);
             // Pass goldCost so server can verify it matches the SKU's price tier
@@ -1297,7 +1297,8 @@ export default function Upgrades({ isCarousel }) {
                                     const isOwned = skin.goldCost === 0 || unlockedSkins.includes(skin.id);
                                     const isEquipped = equippedSkinId === skin.id;
                                     const canAffordGold = save.gold >= skin.goldCost;
-                                    const canAffordToken = (omenxBalance ?? 0) >= skin.tokenCost;
+                                    const skinTokenCost = cosmeticTokenCost(skin, 'skin');
+                                    const canAffordToken = (omenxBalance ?? 0) >= skinTokenCost;
                                     return (
                                         <div key={skin.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
                                             <div className="flex items-center gap-2">
@@ -1347,11 +1348,11 @@ export default function Upgrades({ isCarousel }) {
                                                                 className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
                                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                                             </button>
-                                                            {skin.tokenCost > 0 && (
-                                                                <button onClick={() => !purchasing && !omenxBlocked && confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                            {skinTokenCost > 0 && (
+                                                                <button onClick={() => !purchasing && !omenxBlocked && confirmPurchase(skinTokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing || omenxBlocked}
                                                                         title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                                         className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' : canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                        {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX</>}
+                                                                        {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {formatTokens(skinTokenCost)} OMENX</>}
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1371,7 +1372,8 @@ export default function Upgrades({ isCarousel }) {
                         const isOwned = unlocked.includes(cosmetic.id);
                         const isEquipped = isTrail ? equippedTrail === cosmetic.id : equippedKill === cosmetic.id;
                         const canAffordGold = save.gold >= cosmetic.goldCost;
-                        const canAffordToken = (omenxBalance ?? 0) >= cosmetic.tokenCost;
+                        const cosTokenCost = cosmeticTokenCost(cosmetic, cosmeticTab);
+                        const canAffordToken = (omenxBalance ?? 0) >= cosTokenCost;
 
                         return (
                             <div key={cosmetic.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
@@ -1413,9 +1415,9 @@ export default function Upgrades({ isCarousel }) {
                                             >
                                                 <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                             </button>
-                                            {cosmetic.tokenCost > 0 && (
+                                            {cosTokenCost > 0 && (
                                                 <button
-                                                    onClick={() => !purchasing && !omenxBlocked && confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
+                                                    onClick={() => !purchasing && !omenxBlocked && confirmPurchase(cosTokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
                                                     disabled={!canAffordToken || purchasing || omenxBlocked}
                                                     title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
@@ -1423,7 +1425,7 @@ export default function Upgrades({ isCarousel }) {
                                                         canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX</>}
+                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {formatTokens(cosTokenCost)} OMENX</>}
                                                 </button>
                                             )}
                                         </div>
