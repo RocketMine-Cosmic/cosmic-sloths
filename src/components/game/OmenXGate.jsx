@@ -46,7 +46,7 @@ export default function OmenXGate({ children, isCarousel }) {
     } else {
         icon = '🔗';
         title = 'Wallet Required';
-        subtitle = 'Connect your OmenX wallet to access this area.';
+        subtitle = 'Connect your Omen Arcade wallet to access this area.';
         ctaLabel = ctaLoading ? 'Connecting…' : 'Connect Wallet';
         ctaAction = async () => {
             setCtaError('');

@@ -13,6 +13,8 @@ export const BIAS_PER_POINT = 0.10;             // +10% weight per point
 // Levels 11+    → 1 point per 2 levels (i.e. 0.5 pt each, floored).
 export const POINTS_TIER_BREAKPOINT = 10;
 export const LATE_LEVELS_PER_POINT = 2;
+// Built-in fallback only — the screen shows the live portal price of 'bias-respec'
+// via lib/storePrices.js (2026-10-20).
 export const RESPEC_COST_OMENX = 10;
 export const GOLD_RESPEC_TIERS = [2000, 4000, 8000, 16000];
 

@@ -178,7 +178,7 @@ export default function SkuEditor() {
         <div className="mb-8">
           <h1 className="text-3xl font-black uppercase tracking-widest text-white mb-2">SKU Editor</h1>
           <p className="text-slate-400 text-sm">
-            Reference for all OmenX SKU IDs used in the game. To change a SKU, edit <code className="text-cyan-400">lib/skuMap.js</code> directly.
+            Reference for all Omen SKU IDs used in the game. To change a SKU, edit <code className="text-cyan-400">lib/skuMap.js</code> directly.
           </p>
         </div>
 

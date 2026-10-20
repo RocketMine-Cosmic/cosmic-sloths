@@ -66,14 +66,14 @@ export default function AdminRefundOmenx({ walletAddress }) {
         <div className="bg-slate-900 border-2 border-orange-600 p-6 rounded-lg">
             <div className="flex items-center gap-3 mb-4">
                 <AlertCircle className="w-6 h-6 text-orange-500" />
-                <h3 className="text-lg font-bold text-orange-400">⚠️ Refund All OMENX</h3>
+                <h3 className="text-lg font-bold text-orange-400">⚠️ Refund All OMCADE</h3>
             </div>
 
             {result ? (
                 <div className="space-y-2 text-sm">
                     <p className="text-green-400 font-bold">✓ Refund Complete</p>
                     <p>Wallets refunded: {result.refunded}</p>
-                    <p>Total OMENX: {result.totalAmount}</p>
+                    <p>Total OMCADE: {result.totalAmount}</p>
                     {result.failedWallets && (
                         <div className="mt-3 p-3 bg-red-900/30 border border-red-700 rounded text-red-300 text-xs">
                             <p className="font-bold mb-2">Failed wallets ({result.failedCount}):</p>
@@ -93,13 +93,13 @@ export default function AdminRefundOmenx({ walletAddress }) {
                 <div className="space-y-4">
                     <div className="bg-slate-800/50 rounded-lg p-4 max-h-80 overflow-y-auto">
                         <p className="text-sm font-bold text-slate-300 mb-3">
-                            Wallets to refund: {preview.count} | Total: {preview.totalAmount} OMENX
+                            Wallets to refund: {preview.count} | Total: {preview.totalAmount} OMCADE
                         </p>
                         <div className="space-y-1 text-xs font-mono">
                             {preview.payments.slice(0, 50).map((p, i) => (
                                 <div key={i} className="flex justify-between text-slate-400 border-b border-slate-700 pb-1">
                                     <span>{p.player_name || p.walletAddress.slice(0, 8)}</span>
-                                    <span>{p.amount} OMENX</span>
+                                    <span>{p.amount} OMCADE</span>
                                 </div>
                             ))}
                             {preview.payments.length > 50 && (
@@ -124,7 +124,7 @@ export default function AdminRefundOmenx({ walletAddress }) {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    <p className="text-slate-300 text-sm">Calculates total OMENX spent by all players and issues refunds via OmenX API.</p>
+                    <p className="text-slate-300 text-sm">Calculates total OMCADE spent by all players and issues refunds via Omen API.</p>
                     {error && <p className="text-red-400 text-sm">{error}</p>}
                     <button
                         onClick={handlePreview}
@@ -142,11 +142,11 @@ export default function AdminRefundOmenx({ walletAddress }) {
                 onClose={() => !loading && setDialogOpen(false)}
                 onConfirm={handleRefund}
                 busy={loading}
-                title="Execute OMENX refund"
-                description={preview ? `Send ${preview.totalAmount.toLocaleString()} OMENX back to ${preview.count} wallets via the OmenX payment API. This cannot be undone.` : 'Refund all spent OMENX to all players.'}
+                title="Execute OMCADE refund"
+                description={preview ? `Send ${preview.totalAmount.toLocaleString()} OMCADE back to ${preview.count} wallets via the Omen payment API. This cannot be undone.` : 'Refund all spent OMCADE to all players.'}
                 items={preview ? [
                     `${preview.count} wallets will be paid`,
-                    `${preview.totalAmount.toLocaleString()} OMENX total`,
+                    `${preview.totalAmount.toLocaleString()} OMCADE total`,
                     'Failures will be reported per-wallet in the result',
                 ] : []}
                 confirmText="REFUND_ALL"

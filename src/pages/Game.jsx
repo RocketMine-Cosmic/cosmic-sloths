@@ -14,6 +14,8 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
 import { getReviveForRun } from '@/lib/reviveTiers';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
+import { TOKEN_NAME } from '@/lib/branding';
 import SandboxBanner from '../components/game/SandboxBanner';
 import SandboxDevPanel from '../components/game/SandboxDevPanel';
 import { SoundManager } from '../game/SoundManager';
@@ -93,15 +95,21 @@ export default function Game() {
     // opening the confirmation modal AND renders in a visibly-disabled state.
     const { disabled: omenxPurchasesDisabled } = useOmenXPurchasesDisabled();
 
-    // Banish tier: 3 uses at 2 OMENX, 3 uses at 4 OMENX, then 6 OMENX onwards.
-    // SKU is 2 OMENX consumable → fire `cost / 2` separate charges per banish.
-    const getBanishCost = (count) => {
-        if (count < 3) return 2;
-        if (count < 6) return 4;
-        return 6;
+    // Live store prices (Omen portal). Re-renders when they load/refresh.
+    const price = useStorePrices();
+
+    // Banish tier by use count: first 3 uses tier 1, next 3 tier 2, then tier 3.
+    // The TIER picks the SKU; the SKU's live portal price is the cost. (Before
+    // 2026-10-20 the typed cost 2/4/6 picked the SKU, which would charge the wrong
+    // tier as soon as a portal price changed.) One charge per banish.
+    const getBanishSku = (count) => {
+        if (count < 3) return IN_GAME_SKUS.banish;
+        if (count < 6) return IN_GAME_SKUS.banishT2;
+        return IN_GAME_SKUS.banishT3;
     };
-    const banishCost = getBanishCost(banishCount);
-    const nextBanishCost = getBanishCost(banishCount + 1);
+    const banishSku = getBanishSku(banishCount);
+    const banishCost = price(banishSku);
+    const nextBanishCost = price(getBanishSku(banishCount + 1));
 
     // Endless runs only: ping base44.auth.me() every 10 min to keep the Base44
     // session warm. Without this, runs over ~1hr expire and saveScore fails
@@ -843,7 +851,7 @@ export default function Game() {
     // expiry to the running engine so the multiplier flips back on immediately.
     // Server is the source of truth for the timestamp (clock skew safety).
     const handleXpBuff = () => {
-        const XP_COST = 10;
+        const XP_COST = price(IN_GAME_SKUS.xpSession);
         const engine = engineRef.current;
         if (!engine) return;
         const buffActive = engine.xpBuffExpiry > Date.now();
@@ -915,7 +923,7 @@ export default function Game() {
     };
 
     const handleReroll = () => {
-        const REROLL_COST = 2;
+        const REROLL_COST = price(IN_GAME_SKUS.reroll);
         if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= REROLL_COST) {
             confirmPurchase(REROLL_COST, 'Reroll Upgrades', () => {
@@ -929,20 +937,19 @@ export default function Game() {
 
     const handleBanish = (choice) => {
         const cost = banishCost;
+        const skuForThisBanish = banishSku;
         if (omenxPurchasesDisabled) return;
         if ((omenxBalance ?? 0) >= cost) {
-            const tierLabel = cost === 1 ? 'Tier 1' : cost === 2 ? 'Tier 2' : 'Tier 3';
+            const tierLabel = skuForThisBanish === IN_GAME_SKUS.banish ? 'Tier 1'
+                            : skuForThisBanish === IN_GAME_SKUS.banishT2 ? 'Tier 2' : 'Tier 3';
             confirmPurchase(cost, `Banish Upgrade (${tierLabel})`, () => {
                 // Grant immediately, pay in background (fire-and-forget)
                 if (engineRef.current) {
                     engineRef.current.banishUpgrade(choice.id);
                     engineRef.current.rerollChoices();
                 }
-                // Pick the right tiered SKU — T1 (2), T2 (4), or T3 (6 OMENX). Single charge per banish.
-                const banishSku = cost === 2 ? IN_GAME_SKUS.banish
-                                : cost === 4 ? IN_GAME_SKUS.banishT2
-                                : IN_GAME_SKUS.banishT3;
-                purchaseSku(banishSku);
+                // Charge the tier's SKU — single charge per banish.
+                purchaseSku(skuForThisBanish);
                 refreshBalance(); // no await
                 setBanishCount(c => c + 1);
             });
@@ -956,9 +963,9 @@ export default function Game() {
     };
 
     const handleSquadUltimate = (tier = 'full') => {
-        const cost = tier === 'lite' ? 5 : 10;
-        const itemName = tier === 'lite' ? 'Squad Lite (capped power)' : 'Squad Ultimate (full power)';
         const skuId = tier === 'lite' ? IN_GAME_SKUS.squadUltimateLite : IN_GAME_SKUS.squadUltimateFull;
+        const cost = price(skuId);
+        const itemName = tier === 'lite' ? 'Squad Lite (capped power)' : 'Squad Ultimate (full power)';
         if (omenxPurchasesDisabled) return;
         // NOTE: ULT buttons now live inside PauseModal — engine IS paused when
         // this fires. PauseModal no longer calls onResume() itself, so the game
@@ -1124,7 +1131,7 @@ export default function Game() {
 
     const handleRevive = () => {
         if (omenxPurchasesDisabled) return;
-        if (isSandbox) return; // no OMENX charges in sandbox — buttons are hidden anyway
+        if (isSandbox) return; // no OMCADE charges in sandbox — buttons are hidden anyway
         const { skuId, cost } = reviveInfo;
         if ((omenxBalance ?? 0) < cost) return;
         confirmPurchase(cost, 'Emergency Revive', () => {
@@ -1420,7 +1427,7 @@ export default function Game() {
                         )}
                         {omenxPurchasesDisabled && (
                             <div className="mb-3 bg-red-950/40 border border-red-700/60 rounded-lg p-2 text-xs text-red-200">
-                                OMENX purchases temporarily disabled. Revive isn't available right now.
+                                OMCADE purchases temporarily disabled. Revive isn't available right now.
                             </div>
                         )}
                         <div className="flex flex-col gap-3">
@@ -1429,7 +1436,7 @@ export default function Game() {
                                 disabled={(omenxBalance ?? 0) < reviveInfo.cost || omenxPurchasesDisabled}
                                 className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold flex flex-wrap items-center justify-center gap-2 transition-colors"
                             >
-                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: {reviveInfo.cost} OMENX</span>
+                                REVIVE (50% HP) <span className="bg-slate-900 px-2 py-1 rounded text-xs">COST: {formatTokens(reviveInfo.cost)} {TOKEN_NAME}</span>
                             </button>
                             <button
                                 onClick={handleDeclineRevive}

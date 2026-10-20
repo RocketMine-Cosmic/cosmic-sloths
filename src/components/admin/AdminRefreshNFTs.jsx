@@ -43,7 +43,7 @@ export default function AdminRefreshNFTs({ walletAddress }) {
                 <RefreshCw size={16} /> Refresh Player NFTs
             </h2>
             <div className="text-xs text-slate-400 mb-4">
-                Pulls the player's latest NFT inventory directly from OmenX (bypasses their 5-min cache) and stamps their save so the dashboard refreshes on next page load. Use when a player reports their NFTs / rarity not updating after a mint or rarity upgrade.
+                Pulls the player's latest NFT inventory directly from Omen (bypasses their 5-min cache) and stamps their save so the dashboard refreshes on next page load. Use when a player reports their NFTs / rarity not updating after a mint or rarity upgrade.
             </div>
 
             <div className="mb-3">

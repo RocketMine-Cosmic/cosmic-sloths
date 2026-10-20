@@ -55,7 +55,7 @@ export default function StaffPayoutAllocationPreview({
     return (
         <div className="bg-slate-900/60 border border-slate-700 rounded p-3 mb-3 space-y-3">
             <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                <div className="text-[10px] text-slate-500 uppercase font-bold">Weekly Spend — Where Each OMENX Goes</div>
+                <div className="text-[10px] text-slate-500 uppercase font-bold">Weekly Spend — Where Each OMCADE Goes</div>
                 <div className="text-xs font-mono font-bold text-emerald-400">
                     {(liveAvailablePct * 100).toFixed(2)}% dev wallet share
                 </div>
@@ -107,7 +107,7 @@ export default function StaffPayoutAllocationPreview({
             )}
 
             <p className="text-[10px] text-slate-500 italic leading-snug">
-                All five pools draw from the same weekly OMENX spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools are funded.
+                All five pools draw from the same weekly OMCADE spend window. Pool %s are live from <code className="text-slate-300">leaderboardPayoutConfig</code>; staff % is live from <code className="text-slate-300">setStaffPayoutPct</code>. The <span className="text-emerald-400 font-bold">Dev wallet share</span> is what stays in the dev wallet each week after all pools are funded.
             </p>
         </div>
     );

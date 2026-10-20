@@ -91,7 +91,7 @@ export default function AdminStaffPayoutBackfill() {
                 <div className="bg-slate-900/50 border border-slate-700 rounded-md p-3 mb-3">
                     <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-slate-400">
-                            {dryResult.count} pool{dryResult.count !== 1 ? 's' : ''} examined • Total to pay: <span className="font-mono font-bold text-amber-300">{totalOwed.toLocaleString()} OMENX</span>
+                            {dryResult.count} pool{dryResult.count !== 1 ? 's' : ''} examined • Total to pay: <span className="font-mono font-bold text-amber-300">{totalOwed.toLocaleString()} OMCADE</span>
                         </div>
                         {totalOwed > 0 && !confirming && (
                             <button
@@ -114,7 +114,7 @@ export default function AdminStaffPayoutBackfill() {
                                     className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5"
                                 >
                                     {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertTriangle className="w-3 h-3" />}
-                                    Confirm — Pay {totalOwed.toLocaleString()} OMENX
+                                    Confirm — Pay {totalOwed.toLocaleString()} OMCADE
                                 </button>
                             </div>
                         )}
@@ -130,7 +130,7 @@ export default function AdminStaffPayoutBackfill() {
                                         <span className="text-red-400">error: {r.error}</span>
                                     ) : (
                                         <span className="text-amber-300 font-mono">
-                                            {r.staff_count} staff • {(r.total_owed || 0).toLocaleString()} OMENX
+                                            {r.staff_count} staff • {(r.total_owed || 0).toLocaleString()} OMCADE
                                         </span>
                                     )}
                                 </div>
@@ -156,7 +156,7 @@ export default function AdminStaffPayoutBackfill() {
                         <CheckCircle2 className="w-4 h-4" /> Backfill complete
                     </div>
                     <div className="text-xs text-slate-300 mb-2">
-                        Paid <span className="font-mono font-bold text-emerald-300">{totalPaid.toLocaleString()} OMENX</span> across {runResult.count} pool{runResult.count !== 1 ? 's' : ''}.
+                        Paid <span className="font-mono font-bold text-emerald-300">{totalPaid.toLocaleString()} OMCADE</span> across {runResult.count} pool{runResult.count !== 1 ? 's' : ''}.
                     </div>
                     <div className="space-y-1 max-h-60 overflow-y-auto">
                         {(runResult.results || []).map((r, i) => (
@@ -165,7 +165,7 @@ export default function AdminStaffPayoutBackfill() {
                                 <span>
                                     {r.skipped ? <span className="text-slate-500">skip: {r.skipped}</span>
                                         : r.error ? <span className="text-red-400">err: {r.error}</span>
-                                        : <span className="text-emerald-300">{r.paid} paid • {(r.total_paid || 0).toLocaleString()} OMENX</span>}
+                                        : <span className="text-emerald-300">{r.paid} paid • {(r.total_paid || 0).toLocaleString()} OMCADE</span>}
                                 </span>
                             </div>
                         ))}

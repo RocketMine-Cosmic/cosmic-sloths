@@ -119,7 +119,7 @@ export default function AdminStaffPayoutConfig({ isOwner }) {
                 <h2 className="text-base font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
                     <Settings size={16} /> Staff Payout %
                 </h2>
-                <span className="text-[10px] text-slate-500 font-mono">Per-wallet share of the weekly OMENX pool</span>
+                <span className="text-[10px] text-slate-500 font-mono">Per-wallet share of the weekly OMCADE pool</span>
             </div>
 
             {loading ? (

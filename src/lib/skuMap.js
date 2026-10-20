@@ -1,3 +1,5 @@
+import { skuPrice } from '@/lib/storePrices';
+
 /**
  * SKU mapping helpers — maps in-game purchase actions to OmenX developer portal SKU IDs.
  * SKU IDs match exactly what was registered in the OmenX developer portal.
@@ -5,13 +7,13 @@
 
 // In-game consumable SKUs
 export const IN_GAME_SKUS = {
-    banish:        'ingame-banish',    // T1 — 2 OMENX
-    banishT2:      'ingame-banish-2',  // T2 — 4 OMENX
-    banishT3:      'ingame-banish-3',  // T3 — 6 OMENX
+    banish:        'ingame-banish',    // T1 — 2 OMCADE
+    banishT2:      'ingame-banish-2',  // T2 — 4 OMCADE
+    banishT3:      'ingame-banish-3',  // T3 — 6 OMCADE
     reroll:        'ingame-reroll',
     // Squad Ultimate has two tiers — lite (capped clone power) and full (scales with player upgrades).
-    squadUltimateLite: 'ingame-squad-ult-lite', // 5 OMENX — capped clone
-    squadUltimateFull: 'ingame-squad-ult-full', // 10 OMENX — full-power clone
+    squadUltimateLite: 'ingame-squad-ult-lite', // 5 OMCADE — capped clone
+    squadUltimateFull: 'ingame-squad-ult-full', // 10 OMCADE — full-power clone
     // Revive — flat 4 OMENX pre-S8. Escalation tiers (8/15/25) are selected
     // dynamically by lib/reviveTiers.js on S8+. Callers should use getReviveForRun
     // rather than picking a SKU manually.
@@ -19,10 +21,11 @@ export const IN_GAME_SKUS = {
     reviveT2:      'ingame-revive-8',    // S8+ mid-run (4–8 min)
     reviveT3:      'ingame-revive-15',   // S8+ deep sector (8–11 min)
     reviveT4:      'ingame-revive-25',   // S8+ podium / endless-any
-    starFragments:      'ingame-star-fragments',    // S8 Fragment Express — 15 frags / 10 OMENX
-    starFragmentsBulk:  'ingame-star-fragments-10', // S8 Fragment Express bulk — 150 frags / 100 OMENX
+    starFragments:      'ingame-star-fragments',    // S8 Fragment Express — 15 frags / 10 OMCADE
+    starFragmentsBulk:  'ingame-star-fragments-10', // S8 Fragment Express bulk — 150 frags / 100 OMCADE
     xpSession:     'ingame-xp-buff',
-    biasRespec:    'bias-respec', // ~10 OMENX — clears all allocated pool-bias points
+    raidRetries:   'globalraid-retries', // Global Raid "Buy 5 More Runs"
+    biasRespec:    'bias-respec', // ~10 OMCADE — clears all allocated pool-bias points
 };
 
 // Stat upgrade SKUs — keyed by tier and level
@@ -71,9 +74,9 @@ const SKIN_SKUS = {
 // Talent respec SKUs — flat OMENX fee per tier to clear all talents for a single character.
 // Replace these with your real SKU IDs once registered in the OmenX portal.
 const TALENT_RESPEC_SKUS = {
-    permanent: 'talent-respec-permanent', // ~10 OMENX
-    weekly:    'talent-respec-weekly',    // ~4 OMENX
-    seasonal:  'talent-respec-seasonal',  // ~20 OMENX
+    permanent: 'talent-respec-permanent', // ~10 OMCADE
+    weekly:    'talent-respec-weekly',    // ~4 OMCADE
+    seasonal:  'talent-respec-seasonal',  // ~20 OMCADE
 };
 
 /**
@@ -136,71 +139,33 @@ export function getCosmeticSku(type, name, goldCost) {
     return null;
 }
 
-/**
- * Returns the OMENX cost for an in-game consumable.
- * Mirror of OmenX dev portal prices — server is the source of truth, but UIs
- * use this for display.
- * @param {string} skuId - SKU ID (e.g., 'ingame-banish')
- */
+// ── Price helpers ────────────────────────────────────────────────────────────
+// 2026-10-20: these used to hold their own typed-in price tables (which had already
+// drifted from the real prices). They now return the live Omen portal price via
+// lib/storePrices.js, so there is only one source of truth: the portal.
+
+/** Live OMENX cost of an in-game consumable SKU (e.g. 'ingame-banish'). */
 export function getConsumableCost(skuId) {
-    const costs = {
-        'ingame-banish': 2,
-        'ingame-banish-2': 4,
-        'ingame-banish-3': 6,
-        'ingame-reroll': 2,
-        'ingame-revive': 4,
-        'ingame-revive-8': 8,
-        'ingame-revive-15': 15,
-        'ingame-revive-25': 25,
-        'ingame-star-fragments': 10,
-        'ingame-star-fragments-10': 100,
-        'ingame-squad-ult-lite': 5,
-        'ingame-squad-ult-full': 10,
-        'ingame-xp-buff': 10,
-    };
-    return costs[skuId] || 0;
+    return skuPrice(skuId);
 }
 
-/**
- * Returns the OMENX cost for a stat upgrade.
- * @param {number} level - 1-indexed level being purchased
- */
-export function getStatUpgradeCost(level) {
-    const costs = [5, 10, 20, 40, 80]; // OMENX costs per level
-    return costs[Math.min(level - 1, costs.length - 1)] || 0;
+/** Live OMENX cost of a stat upgrade level (1-indexed). */
+export function getStatUpgradeCost(level, tier = 'permanent') {
+    return skuPrice(getStatSku(tier, null, level));
 }
 
-/**
- * Returns the OMENX cost for a weapon upgrade.
- * @param {number} level - 1-indexed level being purchased
- */
-export function getWeaponUpgradeCost(level) {
-    const costs = [5, 10, 20, 40, 80];
-    return costs[Math.min(level - 1, costs.length - 1)] || 0;
+/** Live OMENX cost of a weapon upgrade level (1-indexed). */
+export function getWeaponUpgradeCost(level, tier = 'permanent') {
+    return skuPrice(getWeaponSku(tier, null, null, level));
 }
 
-/**
- * Returns the OMENX cost for a talent.
- * @param {number} tier - 1, 2, or 3
- */
-export function getTalentCost(tier) {
-    const costs = [10, 20, 40];
-    return costs[Math.min(tier - 1, costs.length - 1)] || 0;
+/** Live OMENX cost of a talent (tier 1, 2 or 3). */
+export function getTalentCost(talentTier, tier = 'permanent') {
+    return skuPrice(getTalentSku(tier, null, null, talentTier));
 }
 
-/**
- * Returns the OMENX cost for a cosmetic based on gold tier.
- * @param {number} goldCost - Gold cost (determines tier)
- */
-export function getCosmeticCost(goldCost) {
-    const costs = {
-        3000: 3,
-        5000: 5,
-        10000: 10,
-        12000: 12,
-        20000: 20,
-        25000: 25,
-        30000: 30,
-    };
-    return costs[goldCost] || 0;
+/** Live OMENX cost of a cosmetic, from its type and gold-cost tier. */
+export function getCosmeticCost(goldCost, type = 'trail') {
+    const sku = getCosmeticSku(type, null, goldCost);
+    return sku ? skuPrice(sku) : 0;
 }

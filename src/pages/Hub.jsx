@@ -29,6 +29,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrency } from '@/lib/CurrencyContext';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
 import moment from 'moment';
 import { SoundManager } from '../game/SoundManager';
 import { isS6OrLater } from '@/lib/seasonGate';
@@ -204,6 +205,9 @@ export default function Hub({ isCarousel }) {
     const [buffPurchasing, setBuffPurchasing] = useState(false);
     const { pending: buffPending, confirm: confirmBuffPurchase } = useOmenXConfirmation('hub-xp-buff');
     const { disabled: omenxBlocked, message: omenxBlockedMsg } = useOmenXPurchasesDisabled();
+    // Live portal price of the XP buff (was a fixed 10).
+    const price = useStorePrices();
+    const XP_BUFF_COST = price(IN_GAME_SKUS.xpSession);
 
     useEffect(() => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
@@ -721,10 +725,10 @@ export default function Hub({ isCarousel }) {
                                     
                                     const buyBuff = () => {
                                         if (omenxBlocked) return;
-                                        if ((omenxBalance ?? 0) < 10) return;
+                                        if ((omenxBalance ?? 0) < XP_BUFF_COST) return;
                                         if (hasXpBuff || buffPurchasing) return; // prevent double-buy while one is in flight or already active
                                         SoundManager.playUIClick();
-                                        confirmBuffPurchase(10, '+50% XP Buff (60 min)', async () => {
+                                        confirmBuffPurchase(XP_BUFF_COST, '+50% XP Buff (60 min)', async () => {
                                             // Re-check inside the async callback — guards against double-tap
                                             // on the confirm modal queuing two purchases (Texxy bug 2026-05-03).
                                             if (buffPurchasing) return;
@@ -799,14 +803,14 @@ export default function Hub({ isCarousel }) {
 
                                             <button
                                                 onClick={buyBuff}
-                                                disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < 10 || omenxBlocked}
-                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                disabled={hasXpBuff || buffPurchasing || (omenxBalance ?? 0) < XP_BUFF_COST || omenxBlocked}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                 className={`w-full flex items-center justify-between gap-2 md:gap-3 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-2.5 border transition-all group ${
                                                     omenxBlocked
                                                         ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
                                                         : hasXpBuff
                                                             ? 'bg-emerald-950/60 border-emerald-500/60 cursor-default'
-                                                            : (omenxBalance ?? 0) < 10 || buffPurchasing
+                                                            : (omenxBalance ?? 0) < XP_BUFF_COST || buffPurchasing
                                                                 ? 'bg-slate-900/60 border-slate-700 opacity-60 cursor-not-allowed'
                                                                 : 'bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-purple-950/40 hover:from-emerald-900/60 hover:via-cyan-900/40 hover:to-purple-900/60 border-emerald-500/40 hover:border-emerald-400'
                                                 }`}
@@ -818,14 +822,14 @@ export default function Hub({ isCarousel }) {
                                                             {omenxBlocked ? '+50% XP Buff — Paused' : hasXpBuff ? `+50% XP Active (${timeLeft})` : '+50% XP Buff · 60 min'}
                                                         </span>
                                                         <span className="text-[9px] md:text-[11px] text-emerald-300/70 font-normal normal-case tracking-normal hidden sm:inline">
-                                                            {omenxBlocked ? 'OMENX purchases temporarily disabled' : 'Boost XP gain for your next session'}
+                                                            {omenxBlocked ? 'OMCADE purchases temporarily disabled' : 'Boost XP gain for your next session'}
                                                         </span>
                                                     </span>
                                                 </span>
                                                 {!omenxBlocked && !hasXpBuff && !buffPurchasing && (
                                                     <span className="flex items-center gap-1 bg-purple-950/60 border border-purple-500/50 px-2 md:px-2.5 py-1 md:py-1.5 rounded shrink-0">
-                                                        <span className="text-purple-300 font-black text-xs md:text-sm">10</span>
-                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMENX</span>
+                                                        <span className="text-purple-300 font-black text-xs md:text-sm">{formatTokens(XP_BUFF_COST)}</span>
+                                                        <span className="text-purple-400 font-bold text-[9px] md:text-[10px] tracking-wider">OMCADE</span>
                                                     </span>
                                                 )}
                                                 {!omenxBlocked && buffPurchasing && (

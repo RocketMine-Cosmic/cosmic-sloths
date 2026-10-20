@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -14,7 +15,7 @@ import LBFrame from './LBFrame';
 import { ensureChestAssetsLoaded } from '@/lib/chestCosmeticAssets';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 // Built-in defaults — mirrors functions/leaderboardPayoutConfig DEFAULT_CONFIG.
@@ -636,8 +637,8 @@ export default function Leaderboard() {
                                                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                                             </div>
                                             {isEligibleForReward && (view !== 'all_time' || isS7OrLater) ? (
-                                                <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-3 py-1.5 rounded-md font-bold text-sm flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="OMENX paid directly to your wallet">
-                                                    <OmenXIcon className="w-4 h-4" /> {rewardAmount.toFixed(2)} <span className="text-[10px] text-emerald-600 font-bold tracking-wider">OMENX</span>
+                                                <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-3 py-1.5 rounded-md font-bold text-sm flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="OMCADE paid directly to your wallet">
+                                                    <OmenXIcon className="w-4 h-4" /> {rewardAmount.toFixed(2)} <span className="text-[10px] text-emerald-600 font-bold tracking-wider">OMCADE</span>
                                                 </div>
                                             ) : view === 'all_time' && !isS7OrLater ? (
                                                 <div className="text-slate-600 text-xs font-bold px-2 py-1 rounded bg-slate-900/50">Coming S7</div>

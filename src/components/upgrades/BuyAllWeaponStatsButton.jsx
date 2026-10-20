@@ -1,3 +1,5 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
+import { formatTokens } from '@/lib/storePrices';
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { SaveManager } from '../../game/SaveManager';
@@ -7,7 +9,7 @@ import { refreshBalance } from '@/lib/playerDataCache';
 import { invokePurchaseWithRetry, formatPurchaseError, delay, PURCHASE_THROTTLE_MS } from './buyAllHelpers';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 const WEAPON_STAT_IDS = ['damage', 'area', 'cooldown'];
@@ -41,7 +43,7 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
         const affordable = [];
         let runningTotal = 0;
         for (const item of all) {
-            if (runningTotal + item.cost > balance) break;
+            if (runningTotal + item.cost > balance + 1e-9) break; // epsilon: prices can be fractional
             affordable.push(item);
             runningTotal += item.cost;
         }
@@ -119,7 +121,7 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
             <button
                 onClick={() => { SoundManager.playUIClick(); setShowPreview(true); }}
                 disabled={disabled}
-                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : (nothingToBuy ? 'This weapon is already maxed for this tier.' : undefined)}
+                title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : (nothingToBuy ? 'This weapon is already maxed for this tier.' : undefined)}
                 className={`w-full md:w-auto px-3 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${
                     disabled
                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
@@ -151,16 +153,16 @@ export default function BuyAllWeaponStatsButton({ tier, weapon, tokenCosts, save
                                 <div className="bg-slate-800/60 rounded-lg p-3 flex items-center justify-between">
                                     <span className="text-sm text-slate-300">Total cost</span>
                                     <span className="font-bold text-white text-lg flex items-center gap-1.5">
-                                        <OmenXIcon className="w-5 h-5" /> {plan.totalCost.toLocaleString()}
+                                        <OmenXIcon className="w-5 h-5" /> {formatTokens(plan.totalCost)}
                                     </span>
                                 </div>
                                 <div className="bg-slate-800/40 rounded-lg p-3 flex items-center justify-between text-xs">
-                                    <span className="text-slate-400">Your OMENX balance</span>
+                                    <span className="text-slate-400">Your OMCADE balance</span>
                                     <span className="font-bold text-slate-300">{(omenxBalance ?? 0).toLocaleString()}</span>
                                 </div>
                                 {plan.affordable.length < plan.totalRemaining && (
                                     <div className="text-[11px] text-amber-400 bg-amber-950/30 border border-amber-800/40 rounded-lg p-2 leading-snug">
-                                        💡 Fully maxing this weapon costs <strong>{plan.totalRemainingCost.toLocaleString()} OMENX</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
+                                        💡 Fully maxing this weapon costs <strong>{formatTokens(plan.totalRemainingCost)} OMCADE</strong> — your balance covers {plan.affordable.length} of {plan.totalRemaining}.
                                     </div>
                                 )}
                                 <div className="text-[11px] text-cyan-300 bg-cyan-950/30 border border-cyan-800/40 rounded-lg p-2 leading-snug">

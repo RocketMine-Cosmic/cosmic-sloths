@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
@@ -6,7 +7,7 @@ import { Zap, Timer, Sparkles, ArrowLeft, ChevronLeft, ChevronRight, Coins, Puzz
 import { getCurrentPeriodIds } from '../lib/periodIds';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 import { useCurrency } from '@/lib/CurrencyContext';
 import { ensureNftsFetched } from '@/lib/playerDataCache';
@@ -18,6 +19,7 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { getAuthData } from '@/lib/getAuthData';
 import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku, getTalentRespecSku, TALENT_RESPEC_GOLD_COSTS } from '@/lib/skuMap';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
 import { refreshBalance } from '@/lib/playerDataCache';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
@@ -57,6 +59,24 @@ export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
     const { omenxBalance, nfts } = useCurrency();
+
+    // 2026-10-20: token prices come live from the Omen portal, per SKU. Stat and
+    // weapon upgrades are separate SKUs (they used to share one typed-in ladder),
+    // and talents have their own lvl1..3 SKUs. Gold costs are unchanged.
+    const price = useStorePrices();
+    const liveTypes = UPGRADE_TYPES.map(t => ({
+        ...t,
+        tokenCosts:       [1, 2, 3, 4, 5].map(l => price(getStatSku(t.id, null, l))),
+        weaponTokenCosts: [1, 2, 3, 4, 5].map(l => price(getWeaponSku(t.id, null, null, l))),
+        talentTokenCosts: [1, 2, 3].map(n => price(getTalentSku(t.id, null, null, n))),
+    }));
+    // Cosmetic token price: live price of its tier SKU. 0 / -1 (not for sale /
+    // seasonal reward) are kept as-is so those items still behave the same.
+    const cosmeticTokenCost = (cosmetic, type) => {
+        if (!(cosmetic?.tokenCost > 0)) return cosmetic?.tokenCost ?? 0;
+        const sku = getCosmeticSku(type, cosmetic.name, cosmetic.goldCost);
+        return sku ? price(sku) : cosmetic.tokenCost;
+    };
 
     // Make sure NFTs are loaded so NFT-unlocked characters appear in the talents tab
     React.useEffect(() => { ensureNftsFetched(); }, []);
@@ -156,7 +176,7 @@ export default function Upgrades({ isCarousel }) {
     const friendlyError = (errMsg) => {
         const m = (errMsg || '').toLowerCase();
         if (m.includes('429') || m.includes('rate')) return 'Server is busy. Please try again in a moment.';
-        if (m.includes('502') || m.includes('503') || m.includes('504') || m.includes('gateway') || m.includes('timeout') || m.includes('network')) return 'OMENX network is busy. Please try again in a moment.';
+        if (m.includes('502') || m.includes('503') || m.includes('504') || m.includes('gateway') || m.includes('timeout') || m.includes('network')) return 'OMCADE network is busy. Please try again in a moment.';
         if (m.includes('not enough gold')) return "You don't have enough Gold for this.";
         if (m.includes('not enough star fragments')) return "You don't have enough Star Fragments for this.";
         if (m.includes('not enough') || m.includes('insufficient')) return "You don't have enough to buy this.";
@@ -264,7 +284,7 @@ export default function Upgrades({ isCarousel }) {
 
     const handleBuyStat = (stat, currency) => {
         const currentSave = SaveManager.load();
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         const upgrades = currentSave[saveKey] || {};
         const currentLevel = upgrades[stat] || 0;
@@ -299,7 +319,7 @@ export default function Upgrades({ isCarousel }) {
 
     const handleBuyWeapon = (weaponId, stat, currency) => {
         const currentSave = SaveManager.load();
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
         
         const weaponData = currentSave[saveKey]?.[weaponId] || {};
@@ -308,7 +328,7 @@ export default function Upgrades({ isCarousel }) {
         if (currentLevel >= typeConfig.goldCosts.length) return;
         
         const goldCost = typeConfig.goldCosts[currentLevel];
-        const tokenCost = typeConfig.tokenCosts[currentLevel];
+        const tokenCost = typeConfig.weaponTokenCosts[currentLevel];
         
         if (currency === 'gold' && currentSave.gold >= goldCost) {
             const grantInfo = { type: 'weapon', tier: activeCategory, weaponId, stat, level: currentLevel + 1 };
@@ -336,7 +356,7 @@ export default function Upgrades({ isCarousel }) {
 
     const handleBuyTalent = (talent, currency) => {
         const currentSave = SaveManager.load();
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
         
         const unlocked = currentSave[saveKey]?.[selectedChar] || [];
@@ -344,7 +364,7 @@ export default function Upgrades({ isCarousel }) {
         
         const costTier = (talent.tier - 1) * 2;
         const goldCost = typeConfig.goldCosts[costTier];
-        const tokenCost = typeConfig.tokenCosts[costTier];
+        const tokenCost = typeConfig.talentTokenCosts[Math.min(talent.tier - 1, 2)];
 
         if (currency === 'gold' && currentSave.gold >= goldCost) {
             const grantInfo = { type: 'talent', tier: activeCategory, charId: selectedChar, talentId: talent.id, talentTier: talent.tier };
@@ -521,7 +541,7 @@ export default function Upgrades({ isCarousel }) {
                 }).catch(err => {
                     console.error('[handleBuyCosmetic skin] spendGold failed:', err);
                 });
-            } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+            } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmeticTokenCost(cosmetic, 'skin')) {
                 setPurchasing(true);
                 const skuId = getCosmeticSku('skin', cosmetic.name, cosmetic.goldCost);
                 // Pass goldCost so server can verify it matches the SKU's price tier
@@ -568,7 +588,7 @@ export default function Upgrades({ isCarousel }) {
             }).catch(err => {
                 console.error('[handleBuyCosmetic trail/kill] spendGold failed:', err);
             });
-        } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmetic.tokenCost) {
+        } else if (currency === 'token' && (omenxBalance ?? 0) >= cosmeticTokenCost(cosmetic, slot)) {
             setPurchasing(true);
             const skuId = getCosmeticSku(slot, cosmetic.name, cosmetic.goldCost);
             // Pass goldCost so server can verify it matches the SKU's price tier
@@ -586,7 +606,7 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const renderStats = () => {
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         if (!typeConfig || !typeConfig.goldCosts || !typeConfig.tokenCosts) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         const upgradesObj = save[saveKey] || {};
@@ -659,14 +679,14 @@ export default function Upgrades({ isCarousel }) {
                                                     <button
                                                        onClick={() => !purchasing && !omenxBlocked && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyStat(stat.id, 'token'))}
                                                        disabled={!canAffordToken || purchasing || omenxBlocked}
-                                                       title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                       title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                        className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg font-bold transition-colors text-sm md:text-base flex items-center justify-center gap-1.5 ${
                                                             omenxBlocked ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                             canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                                         }`}
                                                      >
-                                                        {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                        {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {formatTokens(tokenCost)} OMCADE</>}
                                                      </button>
                                                 )}
                                             </div>
@@ -680,7 +700,7 @@ export default function Upgrades({ isCarousel }) {
     const renderArmory = () => {
         const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
 
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
 
@@ -761,7 +781,7 @@ export default function Upgrades({ isCarousel }) {
                                         <BuyAllWeaponStatsButton
                                             tier={activeCategory}
                                             weapon={weapon}
-                                            tokenCosts={typeConfig.tokenCosts}
+                                            tokenCosts={typeConfig.weaponTokenCosts}
                                             save={save}
                                             omenxBalance={omenxBalance}
                                             omenxBlocked={omenxBlocked}
@@ -791,7 +811,7 @@ export default function Upgrades({ isCarousel }) {
                             const level = save[saveKey]?.[weapon.id]?.[stat.id] || 0;
                             const isMax = level >= typeConfig.goldCosts.length;
                             const cost = isMax ? 0 : (typeConfig.goldCosts[level] || 0);
-                            const tokenCost = isMax ? 0 : (typeConfig.tokenCosts[level] || 0);
+                            const tokenCost = isMax ? 0 : (typeConfig.weaponTokenCosts[level] || 0);
                             const canAffordGold = save.gold >= cost;
                             const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
                             const Icon = stat.icon;
@@ -824,14 +844,14 @@ export default function Upgrades({ isCarousel }) {
                                             <button
                                                 onClick={() => !purchasing && !omenxBlocked && confirmPurchase(tokenCost, `${stat.name} Upgrade`, () => handleBuyWeapon(weapon.id, stat.id, 'token'))}
                                                 disabled={!canAffordToken || purchasing || omenxBlocked}
-                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                 className={`flex-1 py-1.5 rounded font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                     omenxBlocked ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                     canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {formatTokens(tokenCost)} OMCADE</>}
                                             </button>
                                         )}
                                     </div>
@@ -845,7 +865,7 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const renderTalents = () => {
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
 
@@ -868,14 +888,14 @@ export default function Upgrades({ isCarousel }) {
             const unlocked = save[saveKey]?.[selectedChar] || [];
             if (unlocked.length === 0) return;
             const charData = CHARACTERS.find(c => c.id === selectedChar);
-            const omenxCosts = { permanent: 10, weekly: 4, seasonal: 20 };
+            const respecSku = getTalentRespecSku(activeCategory);
             setRespecModal({
                 tier: activeCategory,
                 charId: selectedChar,
                 charName: charData?.name || selectedChar,
                 count: unlocked.length,
                 goldCost: TALENT_RESPEC_GOLD_COSTS[activeCategory] || 5000,
-                omenxCost: omenxCosts[activeCategory] || 10,
+                omenxCost: respecSku ? price(respecSku) : 10,
             });
             SoundManager.playUIClick();
         };
@@ -966,7 +986,7 @@ export default function Upgrades({ isCarousel }) {
                             );
                             const costTier = Math.min((talent.tier - 1) * 2, typeConfig.goldCosts.length - 1);
                             const goldCost = typeConfig.goldCosts[costTier] || 0;
-                            const tokenCost = typeConfig.tokenCosts[costTier] || 0;
+                            const tokenCost = typeConfig.talentTokenCosts[Math.min(talent.tier - 1, 2)] || 0;
                             const canAffordGold = save.gold >= goldCost;
                             const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
                             const isBranchA = talent.id.endsWith('a');
@@ -1012,14 +1032,14 @@ export default function Upgrades({ isCarousel }) {
                                             <button
                                                 onClick={() => !purchasing && !omenxBlocked && confirmPurchase(tokenCost, `${talent.name} Talent`, () => handleBuyTalent(talent, 'token'))}
                                                 disabled={!canUnlock || !canAffordToken || purchasing || omenxBlocked}
-                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                 className={`w-full px-2 py-1 md:py-1.5 rounded md:rounded-md font-bold transition-colors text-[11px] md:text-xs flex items-center justify-center gap-1 ${
                                                     omenxBlocked ? 'bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed' :
                                                     canUnlock && canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' :
                                                     'bg-slate-800 text-slate-600 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {formatTokens(tokenCost)} OMCADE</>}
                                             </button>
                                         )}
                                     </div>
@@ -1278,7 +1298,8 @@ export default function Upgrades({ isCarousel }) {
                                     const isOwned = skin.goldCost === 0 || unlockedSkins.includes(skin.id);
                                     const isEquipped = equippedSkinId === skin.id;
                                     const canAffordGold = save.gold >= skin.goldCost;
-                                    const canAffordToken = (omenxBalance ?? 0) >= skin.tokenCost;
+                                    const skinTokenCost = cosmeticTokenCost(skin, 'skin');
+                                    const canAffordToken = (omenxBalance ?? 0) >= skinTokenCost;
                                     return (
                                         <div key={skin.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
                                             <div className="flex items-center gap-2">
@@ -1328,11 +1349,11 @@ export default function Upgrades({ isCarousel }) {
                                                                 className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${canAffordGold && !purchasing ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
                                                                 <Coins className="w-3 h-3 fill-current" /> {skin.goldCost.toLocaleString()} Gold
                                                             </button>
-                                                            {skin.tokenCost > 0 && (
-                                                                <button onClick={() => !purchasing && !omenxBlocked && confirmPurchase(skin.tokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing || omenxBlocked}
-                                                                        title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                            {skinTokenCost > 0 && (
+                                                                <button onClick={() => !purchasing && !omenxBlocked && confirmPurchase(skinTokenCost, `${skin.name} Skin`, () => handleBuyCosmetic(skin, 'skin', 'token'))} disabled={!canAffordToken || purchasing || omenxBlocked}
+                                                                        title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                                         className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' : canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'}`}>
-                                                                        {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {skin.tokenCost.toLocaleString()} OMENX</>}
+                                                                        {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-4 h-4" /> {formatTokens(skinTokenCost)} OMCADE</>}
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1352,7 +1373,8 @@ export default function Upgrades({ isCarousel }) {
                         const isOwned = unlocked.includes(cosmetic.id);
                         const isEquipped = isTrail ? equippedTrail === cosmetic.id : equippedKill === cosmetic.id;
                         const canAffordGold = save.gold >= cosmetic.goldCost;
-                        const canAffordToken = (omenxBalance ?? 0) >= cosmetic.tokenCost;
+                        const cosTokenCost = cosmeticTokenCost(cosmetic, cosmeticTab);
+                        const canAffordToken = (omenxBalance ?? 0) >= cosTokenCost;
 
                         return (
                             <div key={cosmetic.id} className={`bg-slate-800 p-3 rounded-xl border-2 flex flex-col gap-2 transition-all ${isEquipped ? 'border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'border-slate-700 hover:border-slate-600'}`}>
@@ -1394,17 +1416,17 @@ export default function Upgrades({ isCarousel }) {
                                             >
                                                 <Coins className="w-3 h-3 fill-current" /> {cosmetic.goldCost.toLocaleString()} Gold
                                             </button>
-                                            {cosmetic.tokenCost > 0 && (
+                                            {cosTokenCost > 0 && (
                                                 <button
-                                                    onClick={() => !purchasing && !omenxBlocked && confirmPurchase(cosmetic.tokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
+                                                    onClick={() => !purchasing && !omenxBlocked && confirmPurchase(cosTokenCost, `${cosmetic.name}`, () => handleBuyCosmetic(cosmetic, cosmeticTab, 'token'))}
                                                     disabled={!canAffordToken || purchasing || omenxBlocked}
-                                                    title={omenxBlocked ? (omenxBlockedMsg || 'OMENX purchases are temporarily disabled.') : undefined}
+                                                    title={omenxBlocked ? (omenxBlockedMsg || 'OMCADE purchases are temporarily disabled.') : undefined}
                                                     className={`flex-1 py-1.5 rounded-lg font-bold transition-colors text-xs flex items-center justify-center gap-1 ${
                                                         omenxBlocked ? 'bg-slate-900 text-slate-500 border border-slate-700 cursor-not-allowed' :
                                                         canAffordToken && !purchasing ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700'
                                                     }`}
                                                 >
-                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {cosmetic.tokenCost.toLocaleString()} OMENX</>}
+                                                    {omenxBlocked ? '🔒 PAUSED' : <><OmenXIcon className="w-3 h-3" /> {formatTokens(cosTokenCost)} OMCADE</>}
                                                 </button>
                                             )}
                                         </div>
@@ -1496,7 +1518,7 @@ export default function Upgrades({ isCarousel }) {
                     <div className="mb-3 md:mb-4 bg-red-950/40 border border-red-700/60 rounded-lg p-3 flex items-start gap-2">
                         <span className="text-red-300 text-lg leading-none mt-0.5">🔒</span>
                         <div className="text-xs md:text-sm text-red-200 leading-snug">
-                            <strong className="text-red-100">OMENX purchases are temporarily paused.</strong>
+                            <strong className="text-red-100">OMCADE purchases are temporarily paused.</strong>
                             <div className="mt-0.5 opacity-90">{omenxBlockedMsg || 'The settlement service is being restored. Gold upgrades are still available.'}</div>
                         </div>
                     </div>

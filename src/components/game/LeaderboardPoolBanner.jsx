@@ -1,8 +1,9 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React from 'react';
 import { Trophy } from 'lucide-react';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 // Live "Player Pool" banner shown on the Weekly + Seasonal + Weekly Kills leaderboards.
@@ -57,13 +58,13 @@ export default function LeaderboardPoolBanner({ view, periodId, totalSpent, time
             <div className="flex items-baseline gap-2 flex-wrap">
                 <OmenXIcon className="w-7 h-7" />
                 <span className={`text-3xl md:text-4xl font-black tabular-nums ${numColor}`}>{playerPool.toLocaleString()}</span>
-                <span className={`text-xs ${subColor} font-bold uppercase tracking-wider`}>OMENX</span>
+                <span className={`text-xs ${subColor} font-bold uppercase tracking-wider`}>OMCADE</span>
                 <span className={`text-[10px] ${chipBg} px-2 py-0.5 rounded font-bold uppercase tracking-wider ml-1`}>
                     {(resolvedPoolPct * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}% of all spend
                 </span>
             </div>
             <p className={`text-[10px] ${subColor}/70 mt-2 leading-snug`}>
-                Every OMENX spent increases the pool — {(resolvedPoolPct * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}% of all OMENX spend funds this pool.
+                Every OMCADE spent increases the pool — {(resolvedPoolPct * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}% of all OMCADE spend funds this pool.
             </p>
         </div>
     );

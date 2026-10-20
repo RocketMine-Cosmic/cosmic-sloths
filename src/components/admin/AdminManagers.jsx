@@ -6,7 +6,7 @@ import moment from 'moment';
 
 const ALL_PERMISSIONS = [
     { id: 'view_data',          label: '👁️ View Data',           desc: 'Read-only access to dashboards (no revenue/finance)' },
-    { id: 'view_finance',       label: '💵 View Finance',         desc: 'See OMENX revenue, token pools, spend logs' },
+    { id: 'view_finance',       label: '💵 View Finance',         desc: 'See OMCADE revenue, token pools, spend logs' },
     { id: 'edit_players',       label: '✏️ Edit Players',         desc: 'Edit player saves, grant currency' },
     { id: 'delete_scores',      label: '🗑️ Delete Scores',         desc: 'Remove leaderboard entries' },
     { id: 'moderate_chat',      label: '💬 Moderate Chat',         desc: 'Delete squad messages' },
@@ -16,9 +16,9 @@ const ALL_PERMISSIONS = [
     { id: 'manage_backups',     label: '💾 Manage Backups',       desc: 'Create / restore data backups' },
     { id: 'manage_admins',      label: '👥 Manage Admins',         desc: 'Add / remove staff (high trust)' },
     { id: 'manage_maintenance', label: '🔧 Maintenance Gate',     desc: 'Flip soft/hard maintenance gate during incidents/rollouts' },
-    { id: 'refund_single',      label: '💸 Refund Single Player', desc: 'Issue one-off OMENX refunds (cap 100k)' },
+    { id: 'refund_single',      label: '💸 Refund Single Player', desc: 'Issue one-off OMCADE refunds (cap 100k)' },
     { id: 'wipe_data',          label: '🗑️ Wipe Data',             desc: 'OWNER-LEVEL — destructive resets' },
-    { id: 'refund_omenx',       label: '💰 Refund OMENX (Bulk)',   desc: 'OWNER-LEVEL — bulk refunds' },
+    { id: 'refund_omenx',       label: '💰 Refund OMCADE (Bulk)',   desc: 'OWNER-LEVEL — bulk refunds' },
     { id: 'owner',              label: '👑 Owner',                 desc: 'Full access. Bypasses all checks. Only owners can grant.' },
 ];
 

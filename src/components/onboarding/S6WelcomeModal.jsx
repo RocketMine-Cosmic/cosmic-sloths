@@ -123,7 +123,7 @@ const STEPS = [
         body: (
             <>
                 <p>The leaderboard is wide open. Sector progression is the headline scorer — clear Sector 10 to claim the top spot.</p>
-                <p className="mt-2 text-slate-400">Weekly OMENX rewards continue. Squad Wars and the Champions Pool reset alongside the season.</p>
+                <p className="mt-2 text-slate-400">Weekly OMCADE rewards continue. Squad Wars and the Champions Pool reset alongside the season.</p>
                 <p className="mt-3 text-cyan-200 font-bold">May your weapons evolve and your synergies fuse. 🚀</p>
             </>
         ),

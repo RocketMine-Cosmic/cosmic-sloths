@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
@@ -5,7 +6,7 @@ import { AlertCircle, Lock } from 'lucide-react';
 import { getStatus as getMaintenanceStatus, refreshNow as refreshMaintenance } from '@/lib/maintenanceStatus';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 export default function OmenXConfirmation({ amount, itemName, onConfirm, onCancel, pageId, forceConfirm = false }) {
@@ -17,7 +18,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
     // Read kill-switch from SHARED maintenance cache — no per-modal poll.
     const initialMaint = getMaintenanceStatus();
     const [purchasesDisabled, setPurchasesDisabled] = useState(!!initialMaint.omenxPurchasesDisabled);
-    const [disabledMsg, setDisabledMsg] = useState(initialMaint.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
+    const [disabledMsg, setDisabledMsg] = useState(initialMaint.omenxPurchasesMessage || 'OMCADE purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
 
     const handleConfirm = async () => {
         if (purchasesDisabled) return;
@@ -28,7 +29,7 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
             const s = await refreshMaintenance();
             if (s?.omenxPurchasesDisabled) {
                 setPurchasesDisabled(true);
-                setDisabledMsg(s.omenxPurchasesMessage || 'OMENX purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
+                setDisabledMsg(s.omenxPurchasesMessage || 'OMCADE purchases are temporarily disabled while the settlement service is being restored. Please try again shortly.');
                 return;
             }
         } catch {
@@ -54,14 +55,14 @@ export default function OmenXConfirmation({ amount, itemName, onConfirm, onCance
                 </div>
                 
                 <h2 className="text-2xl font-bold text-white mb-2 font-mono">CONFIRM PURCHASE</h2>
-                <p className="text-slate-400 mb-6">You're about to spend real OMENX tokens.</p>
+                <p className="text-slate-400 mb-6">You're about to spend real OMCADE tokens.</p>
                 
                 <div className="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
                     <div className="text-sm text-slate-400 mb-2">ITEM</div>
                     <div className="font-bold text-white text-lg mb-4">{itemName}</div>
                     <div className="flex items-center justify-center gap-2 bg-orange-950/40 p-3 rounded-lg border border-orange-500/30">
                         <OmenXIcon className="w-5 h-5" />
-                        <span className="text-orange-400 font-bold text-lg">{amount.toFixed(2)} OMENX</span>
+                        <span className="text-orange-400 font-bold text-lg">{amount.toFixed(2)} OMCADE</span>
                     </div>
                 </div>
 

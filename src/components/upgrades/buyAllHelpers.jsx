@@ -69,7 +69,7 @@ export async function invokePurchaseWithRetry(payload) {
 export function formatPurchaseError(e) {
     const status = e?.response?.status;
     const serverMsg = e?.serverData?.error || e?.response?.data?.error || e?.message || '';
-    if (status === 402) return serverMsg || 'Not enough OMENX to continue.';
+    if (status === 402) return serverMsg || 'Not enough OMCADE to continue.';
     if (status === 422) return serverMsg || 'Server rejected the purchase.';
     if (e?.classification === 'exhausted') return 'Server is busy — couldn\'t complete the batch. Try again in a moment.';
     return serverMsg || 'Something went wrong — stopped batch.';

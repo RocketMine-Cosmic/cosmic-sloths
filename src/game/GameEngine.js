@@ -13,6 +13,7 @@ import { levelUp as levelUpLogic, generateChoices as generateChoicesLogic, apply
 import { updateCharacterMechanics } from './CharacterMechanics';
 import { isS6OrLater, isS7OrLater, isS8OrLater } from '@/lib/seasonGate';
 import { getCurrentPeriodIds } from '@/lib/periodIds';
+import { getReviveForRun } from '@/lib/reviveTiers';
 
 // S7 §4a: pushback weapons share a lifted CD floor (0.85× vs default 0.5×) so
 // stacked-CDR builds can't infinitely overlap shields. See docs/S7_PATCH_NOTES.md.
@@ -744,7 +745,10 @@ export class GameEngine {
 
         if (this.player.hp <= 0) {
             const currentOmenxBalance = this.save.omenxBalance ?? 0;
-            if (!this.player.hasRevivedWithTokens && this.callbacks.onDeathPrompt && currentOmenxBalance >= 4) {
+            // 2026-10-20: offer the revive only if the player can afford THIS run's
+            // revive tier at its live portal price (was a fixed `>= 4`).
+            const reviveCost = getReviveForRun(this.time || 0, this.arena?.id || '').cost;
+            if (!this.player.hasRevivedWithTokens && this.callbacks.onDeathPrompt && currentOmenxBalance >= reviveCost) {
                  this.isPaused = true;
                  this.callbacks.onDeathPrompt();
                  return;

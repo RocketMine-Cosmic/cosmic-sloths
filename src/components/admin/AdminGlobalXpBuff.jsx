@@ -134,7 +134,7 @@ export default function AdminGlobalXpBuff() {
                     value={msgInput}
                     onChange={e => setMsgInput(e.target.value)}
                     maxLength={280}
-                    placeholder="e.g. 'Sorry for the OmenX outage — enjoy 2× XP for the next 24h!'"
+                    placeholder="e.g. 'Sorry for the Omen outage — enjoy 2× XP for the next 24h!'"
                     className="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500"
                 />
             </div>

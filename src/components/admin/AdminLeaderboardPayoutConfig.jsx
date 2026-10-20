@@ -16,7 +16,7 @@ import AdminPeriodConfigLock from './AdminPeriodConfigLock';
 // (20% weekly / 30% seasonal / no kill pool). See docs/OMENX_POOL_RESPLIT_PLAN.md.
 
 const TOP_N_PRESETS = [5, 10, 15, 20, 25, 30, 40, 45, 50];
-const SAMPLE_POOL = 1000; // OMENX, used for live preview
+const SAMPLE_POOL = 1000; // OMCADE, used for live preview
 
 function TierRow({ tier, onChange, onRemove }) {
     return (
@@ -110,7 +110,7 @@ function TierEditor({ title, color, tiers, setTiers, poolMultiplier, topN }) {
 
             <div className="mt-3 bg-slate-950/60 rounded p-2 max-h-48 overflow-y-auto">
                 <div className="text-[10px] text-slate-500 uppercase mb-1 sticky top-0 bg-slate-950/90 py-0.5">
-                    Live preview (sample pool: {SAMPLE_POOL} OMENX × {(poolMultiplier * 100).toFixed(1)}% = {Math.floor(SAMPLE_POOL * poolMultiplier)} OMENX reward pool)
+                    Live preview (sample pool: {SAMPLE_POOL} OMCADE × {(poolMultiplier * 100).toFixed(1)}% = {Math.floor(SAMPLE_POOL * poolMultiplier)} OMCADE reward pool)
                 </div>
                 <table className="w-full text-[11px]">
                     <tbody>
@@ -118,12 +118,12 @@ function TierEditor({ title, color, tiers, setTiers, poolMultiplier, topN }) {
                             <tr key={p.rank} className="text-slate-300">
                                 <td className="py-0.5 w-12 text-slate-500 font-mono">#{p.rank}</td>
                                 <td className="py-0.5 w-16 text-slate-400 font-mono">{(p.pct * 100).toFixed(2)}%</td>
-                                <td className={`py-0.5 font-mono font-bold text-${color}-400`}>{p.amount.toFixed(2)} OMENX</td>
+                                <td className={`py-0.5 font-mono font-bold text-${color}-400`}>{p.amount.toFixed(2)} OMCADE</td>
                             </tr>
                         ))}
                         <tr className="border-t border-slate-700 text-slate-200 font-bold">
                             <td className="py-1" colSpan={2}>Total paid out</td>
-                            <td className="py-1 font-mono">{totalPaid.toFixed(2)} OMENX</td>
+                            <td className="py-1 font-mono">{totalPaid.toFixed(2)} OMCADE</td>
                         </tr>
                     </tbody>
                 </table>
@@ -274,7 +274,7 @@ export default function AdminLeaderboardPayoutConfig({ isOwner }) {
 
             <div className="bg-amber-950/30 border border-amber-700/40 rounded-lg p-3 mb-4 text-xs text-amber-200 leading-relaxed">
                 <div className="font-bold mb-1">How it works:</div>
-                Pool % fields control how much of the weekly/seasonal OMENX spend goes to each leaderboard.
+                Pool % fields control how much of the weekly/seasonal OMCADE spend goes to each leaderboard.
                 The backend re-scales the rank tier weights so each pool is always fully distributed.
                 <div className="mt-2 text-amber-300/80">
                     <span className="font-bold">⚠️ Pool % fields only apply from Season 7 onwards (~2026-06-14).</span> Pre-S7 distributions ignore them and use legacy values (20% weekly / 30% seasonal / no kill pool). Tier % weights apply to all periods.

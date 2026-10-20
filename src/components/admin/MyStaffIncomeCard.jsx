@@ -35,7 +35,7 @@ export default function MyStaffIncomeCard({ walletAddress, isEmergencyKey }) {
             <div className="flex flex-col leading-tight">
                 <span className="text-[9px] text-amber-300/70 uppercase tracking-wider font-bold">Your week ({weekId || '…'})</span>
                 <span className="text-sm font-mono font-black text-amber-300">
-                    {isLoading ? '…' : `${projected.toLocaleString()} OMENX`}
+                    {isLoading ? '…' : `${projected.toLocaleString()} OMCADE`}
                 </span>
             </div>
             <span className="text-[9px] text-slate-500 font-mono hidden md:inline">live</span>

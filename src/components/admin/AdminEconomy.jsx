@@ -94,7 +94,7 @@ export default function AdminEconomy({ walletAddress }) {
                                             {p.period_type}
                                         </span>
                                     </td>
-                                    <td className="p-2 text-right font-mono font-bold text-amber-400">{Number(p.total_spent).toFixed(2)} OMENX</td>
+                                    <td className="p-2 text-right font-mono font-bold text-amber-400">{Number(p.total_spent).toFixed(2)} OMCADE</td>
                                     <td className="p-2 text-center">
                                         <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${p.distributed ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
                                             {p.distributed ? 'Yes' : 'No'}
@@ -138,7 +138,7 @@ export default function AdminEconomy({ walletAddress }) {
                         )}
                     </div>
                     <div className="text-[10px] text-slate-500 font-mono ml-auto">
-                        {filteredLogs.length} {filteredLogs.length === 1 ? 'entry' : 'entries'} • <span className="text-amber-400">{filteredTotal.toFixed(2)} OMENX</span>
+                        {filteredLogs.length} {filteredLogs.length === 1 ? 'entry' : 'entries'} • <span className="text-amber-400">{filteredTotal.toFixed(2)} OMCADE</span>
                         {excludedAmount > 0 && <span className="text-slate-400 ml-2">({poolTotal.toFixed(2)} in pool + <span className="text-slate-500">{excludedAmount.toFixed(2)} excluded</span>)</span>}
                     </div>
                 </div>
@@ -162,7 +162,7 @@ export default function AdminEconomy({ walletAddress }) {
                                     <td className="p-2 font-bold text-white whitespace-nowrap">{log.player_name}</td>
                                     <td className="p-2 text-slate-500 font-mono text-[10px]" title={log.wallet_address}>{log.wallet_address ? `${log.wallet_address.slice(0,6)}...${log.wallet_address.slice(-4)}` : '-'}</td>
                                     <td className="p-2"><SpendLogDescription log={log} /></td>
-                                    <td className="p-2 text-right font-mono font-bold text-cyan-400">{log.amount} OMENX</td>
+                                    <td className="p-2 text-right font-mono font-bold text-cyan-400">{log.amount} OMCADE</td>
                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{log.week_id || '-'}</td>
                                     <td className="p-2 text-slate-500 font-mono text-[10px]">{log.season_id || '-'}</td>
                                 </tr>

@@ -277,7 +277,7 @@ export default function Profile({ isCarousel }) {
                             </div>
                             <RefreshOmenXDataButton
                                 label="Refresh VIP"
-                                title="Refresh VIP level from OmenX"
+                                title="Refresh VIP level from Omen Arcade"
                                 onRefresh={refreshVipLevel}
                                 getCooldownEnd={getVipCooldownEnd}
                             />
@@ -391,7 +391,7 @@ export default function Profile({ isCarousel }) {
                             </div>
                         ) : (
                             <div className="text-center py-4 text-slate-500 text-sm">
-                                No VIP level detected. Earn VIP status on OmenX to unlock in-game bonuses.
+                                No VIP level detected. Earn VIP status on Omen Arcade to unlock in-game bonuses.
                             </div>
                         )}
                     </div>
@@ -432,7 +432,7 @@ export default function Profile({ isCarousel }) {
                         
                         {rewardsHistory.length === 0 ? (
                             <div className="text-center text-sm md:text-base text-slate-500 py-6 md:py-8 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                                No rewards claimed yet. Compete on the leaderboards to earn OMENX rewards!
+                                No rewards claimed yet. Compete on the leaderboards to earn OMCADE rewards!
                             </div>
                         ) : (
                             <div className="grid gap-2 md:gap-3 max-h-[200px] md:max-h-[300px] overflow-y-auto pr-2">

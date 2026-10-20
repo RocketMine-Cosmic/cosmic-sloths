@@ -1,10 +1,11 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState } from 'react';
 import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import DynamicDifficultyPill from './DynamicDifficultyPill';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 // Endless-mode reward caps — must mirror functions/saveScore.js EXACTLY.
@@ -172,7 +173,7 @@ function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, ome
                 <div className="flex gap-1 md:gap-2 pointer-events-auto shrink-0 flex-col md:flex-row min-w-0">
                     <div className="flex gap-1 md:gap-2 flex-wrap justify-end min-w-0">
                         <div className="bg-[#0b0416]/90 p-1.5 md:p-3 rounded-lg border border-emerald-500/30 flex flex-col justify-center text-right">
-                            <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMENX</div>
+                            <div className="text-[8px] md:text-xs font-black tracking-widest text-purple-500/80 uppercase mb-0.5">OMCADE</div>
                             <div className="text-purple-400 font-bold text-xs md:text-lg flex items-center justify-end gap-0.5 md:gap-1 font-mono">
                                 <OmenXIcon className="w-4 h-4 md:w-5 md:h-5" />
                                 {typeof omenxBalance === 'number' ? omenxBalance.toFixed(2) : omenxBalance}
@@ -206,7 +207,7 @@ function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, ome
             </div>
 
             {/* Bottom: XP Bar — Squad ULTs were moved to the Pause menu (2026-06-15)
-                so accidental in-run taps can't burn OMENX. */}
+                so accidental in-run taps can't burn OMCADE. */}
             <div className="mt-auto pointer-events-auto w-full mb-2 md:mb-4 flex justify-center px-2 md:px-0 flex-col gap-1.5">
                 <div className={`bg-[#0b0416]/90 p-2 md:p-3 rounded-lg border w-full max-w-2xl transition-colors ${xpBuffActive ? 'border-emerald-400/60 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'border-cyan-500/30'}`}>
                     <div className="flex justify-between items-end mb-1 gap-2">
@@ -229,7 +230,7 @@ function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, ome
                 </div>
                 {omenxPurchasesDisabled && (
                     <div className="bg-red-950/60 p-1.5 md:p-2 rounded-lg border border-red-500/50 w-full max-w-2xl flex items-center justify-center mx-auto">
-                        <span className="text-[10px] md:text-xs font-bold text-red-300 text-center">⚠️ Purchases disabled while OMENX is down</span>
+                        <span className="text-[10px] md:text-xs font-bold text-red-300 text-center">⚠️ Purchases disabled while Omen Arcade is down</span>
                     </div>
                 )}
             </div>

@@ -14,7 +14,7 @@ const MESSAGES = {
     },
     unrecognized: {
         title: 'Balance temporarily unavailable',
-        body: "We can't read your OMENX balance right now, so it may look out of date. Your wallet is fine — purchases, rewards and saves all still work as normal.",
+        body: "We can't read your OMCADE balance right now, so it may look out of date. Your wallet is fine — purchases, rewards and saves all still work as normal.",
     },
 };
 

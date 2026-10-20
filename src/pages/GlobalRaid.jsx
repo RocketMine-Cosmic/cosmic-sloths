@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SaveManager } from '../game/SaveManager';
@@ -12,6 +13,7 @@ import CurrencyHeader from '../components/game/CurrencyHeader';
 import LiveActivityBanner from '../components/game/LiveActivityBanner';
 import { CHARACTERS } from '../game/Constants';
 import { IN_GAME_SKUS } from '@/lib/skuMap';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
@@ -29,7 +31,7 @@ function sanitizeEventMessage(evt) {
 }
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 export default function GlobalRaid({ isCarousel }) {
@@ -47,6 +49,12 @@ export default function GlobalRaid({ isCarousel }) {
         return [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlocked])];
     }, [save.unlockedCharacters, nfts]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
+    // 2026-10-20: "Buy 5 Raid Runs" now charges its own portal SKU (globalraid-retries).
+    // It used to charge the XP-buff SKU, so raid-run sales were logged as XP buffs and
+    // the two could never be priced separately. purchaseSku charges any priced SKU when
+    // no grantInfo is sent; the runs are granted client-side after a confirmed charge.
+    const price = useStorePrices();
+    const RAID_RUNS_COST = price(IN_GAME_SKUS.raidRetries);
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -231,17 +239,17 @@ export default function GlobalRaid({ isCarousel }) {
     const handleBuyMoreRuns = async () => {
         SoundManager.playUIClick();
         const currentSave = SaveManager.load();
-        if ((omenxBalance ?? 0) < 10) {
-            toast({ title: 'Not enough OMENX', description: 'You need 10 OMENX to buy more runs.', variant: 'destructive' });
+        if ((omenxBalance ?? 0) < RAID_RUNS_COST) {
+            toast({ title: 'Not enough OMCADE', description: `You need ${formatTokens(RAID_RUNS_COST)} OMCADE to buy more runs.`, variant: 'destructive' });
             return;
         }
 
         const authData = (() => { try { return JSON.parse(localStorage.getItem('omenx_auth_data')); } catch { return null; } })();
 
-        confirmPurchase(10, 'Buy 5 Raid Runs', async () => {
+        confirmPurchase(RAID_RUNS_COST, 'Buy 5 Raid Runs', async () => {
             try {
                 if (!authData?.walletAddress) throw new Error('No wallet address');
-                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
+                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.raidRetries, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
                 if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
                 // Only grant runs after confirmed charge
@@ -413,7 +421,7 @@ export default function GlobalRaid({ isCarousel }) {
                                     <Zap className="w-4 h-4 md:w-5 md:h-5" /> BUY 5 MORE RUNS
                                 </div>
                                 <span className="text-[10px] md:text-xs text-purple-200 flex items-center gap-1 font-normal tracking-normal normal-case">
-                                    Cost: 10 <OmenXIcon className="w-4 h-4" />
+                                    Cost: {formatTokens(RAID_RUNS_COST)} <OmenXIcon className="w-4 h-4" />
                                 </span>
                             </button>
                         ) : (

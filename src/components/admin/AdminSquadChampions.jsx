@@ -1,3 +1,4 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -6,7 +7,7 @@ import { getCurrentPeriodIds } from '@/lib/periodIds';
 import SquadChampionsPayoutLogs from './SquadChampionsPayoutLogs';
 
 function OmenXIcon({ className }) {
-    return <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className={className} alt="OMENX" />;
+    return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
 }
 
 // Admin panel: preview & distribute the Squad Wars Champions Pool for a given season.
@@ -79,7 +80,7 @@ export default function AdminSquadChampions({ walletAddress }) {
                 const paidCount = res.data.paid_this_run ?? res.data.member_count ?? 0;
                 const paidOmenx = res.data.paid_omenx_this_run ?? res.data.total_payout_omenx ?? 0;
                 const squadCount = (res.data.top_squads || []).length;
-                setExecuteMsg(`✓ Paid ${paidCount} members across ${squadCount} squads — ${Math.floor(paidOmenx).toLocaleString()} OMENX total.`);
+                setExecuteMsg(`✓ Paid ${paidCount} members across ${squadCount} squads — ${Math.floor(paidOmenx).toLocaleString()} OMCADE total.`);
                 setPreviewData(null); // force fresh preview after distribution
             } else {
                 setExecuteMsg(`✗ ${res.data?.error || 'Distribution failed.'}`);
@@ -142,10 +143,10 @@ export default function AdminSquadChampions({ walletAddress }) {
                         <div className="flex flex-wrap gap-3">
                             {[
                                 { label: 'Season', value: previewData.period_id, color: 'text-white' },
-                                { label: 'Pool Total', value: `${Math.floor(previewData.pool_total_spent || 0).toLocaleString()} OMENX`, color: 'text-white' },
-                                { label: 'Champions Pool', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMENX`, color: 'text-amber-300' },
+                                { label: 'Pool Total', value: `${Math.floor(previewData.pool_total_spent || 0).toLocaleString()} OMCADE`, color: 'text-white' },
+                                { label: 'Champions Pool', value: `${Math.floor(previewData.champions_pool_omenx || 0).toLocaleString()} OMCADE`, color: 'text-amber-300' },
                                 { label: 'Eligible Squads', value: previewData.eligible_squads, color: 'text-emerald-400' },
-                                { label: 'Total Payout', value: `${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX`, color: 'text-emerald-400' },
+                                { label: 'Total Payout', value: `${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMCADE`, color: 'text-emerald-400' },
                                 { label: 'Recipients', value: previewData.total_member_payouts, color: 'text-white' },
                             ].map(s => (
                                 <div key={s.label} className="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
@@ -264,7 +265,7 @@ export default function AdminSquadChampions({ walletAddress }) {
                 </h3>
                 <p className="text-xs text-slate-400 mb-3">
                     {previewData
-                        ? `Will pay ${previewData.total_member_payouts || 0} members ${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMENX total for ${previewData.period_id}.`
+                        ? `Will pay ${previewData.total_member_payouts || 0} members ${Math.floor(previewData.total_payout_omenx || 0).toLocaleString()} OMCADE total for ${previewData.period_id}.`
                         : 'Run a preview first.'}
                 </p>
                 <button

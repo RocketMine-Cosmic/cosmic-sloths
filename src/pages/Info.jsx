@@ -1,9 +1,11 @@
+import { TOKEN_LOGO_URL, TOKEN_NAME, TOKEN_SITE_URL } from '@/lib/branding';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Gem, Swords, Award } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import { Price } from '@/lib/storePrices';
 
 const TABS = [
     { id: 'basics',     label: 'Basics',       icon: Gamepad2 },
@@ -84,7 +86,7 @@ const TABS_CONTENT = {
                     <strong className="text-white">Full Gamepad Support:</strong> Connect an Xbox, PlayStation, or generic controller to play from the couch! Use the <strong className="text-fuchsia-400">Virtual Cursor</strong> to navigate the Hub and menus seamlessly, and the <strong className="text-cyan-400">Snap-to-Grid</strong> system for quick selections during gameplay.
                 </div>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-fuchsia-700/50 text-xs text-slate-400">
-                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, summon a clone from your unlocked roster via the floating buttons (bottom right): <strong className="text-purple-300">ULT LITE</strong> (5 OMENX, capped power) or <strong className="text-fuchsia-400">ULT FULL</strong> (10 OMENX, scales with your full upgrades).
+                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, summon a clone from your unlocked roster via the floating buttons (bottom right): <strong className="text-purple-300">ULT LITE</strong> (<Price sku="ingame-squad-ult-lite" /> OMCADE, capped power) or <strong className="text-fuchsia-400">ULT FULL</strong> (<Price sku="ingame-squad-ult-full" /> OMCADE, scales with your full upgrades).
                 </div>
             </SectionCard>
 
@@ -93,7 +95,7 @@ const TABS_CONTENT = {
                     Survive the full time limit of each sector to <strong className="text-green-400">win</strong>. As time progresses, enemies get stronger and more numerous. An optional <strong className="text-purple-400">Endless Void</strong> mode scales infinitely with boss fights every 3 minutes.
                 </p>
                 <div className="mt-3 bg-slate-900/40 rounded-lg p-3 border border-purple-700/50 text-xs text-slate-400">
-                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold. S6 removed all endless caps, so <strong className="text-white">every Gold and kill you earn is credited in full</strong> (no per-run ceiling). Endless runs are still <strong className="text-white">excluded from OMENX leaderboard payouts</strong> — play <strong className="text-white">Sectors</strong> for the weekly/seasonal boards.
+                    <strong className="text-purple-300">Endless Void rule:</strong> Endless is a score & mastery mode — regular enemies don't drop Gold. S6 removed all endless caps, so <strong className="text-white">every Gold and kill you earn is credited in full</strong> (no per-run ceiling). Endless runs are still <strong className="text-white">excluded from OMCADE leaderboard payouts</strong> — play <strong className="text-white">Sectors</strong> for the weekly/seasonal boards.
                 </div>
             </SectionCard>
 
@@ -126,7 +128,7 @@ const TABS_CONTENT = {
     progression: (
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏠 Sloth Lounge (Meta Progression)" color="cyan">
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and OMENX on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for 10 OMENX.</p>
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and OMCADE on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for <Price sku="ingame-xp-buff" /> OMCADE.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
@@ -275,12 +277,12 @@ const TABS_CONTENT = {
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏆 Leaderboards & Seasons" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Compete for <strong className="text-emerald-400">OMENX</strong> — real crypto earned exclusively through competitive play. Rewards are sent automatically to your wallet at the end of each cycle.
+                    Compete for <strong className="text-emerald-400">OMCADE</strong> — real crypto earned exclusively through competitive play. Rewards are sent automatically to your wallet at the end of each cycle.
                 </p>
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-800/40">
                         <div className="font-bold text-amber-300 text-sm md:text-base mb-1.5 flex items-center gap-2">📅 Weekly Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. The <strong className="text-emerald-400">top 30 players</strong> earn OMENX — higher rank = bigger share. Weekly stat upgrades also reset.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Resets every <strong className="text-white">Monday 00:00 UTC</strong>. The <strong className="text-emerald-400">top 30 players</strong> earn OMCADE — higher rank = bigger share. Weekly stat upgrades also reset.</p>
                         <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
                             <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
                             <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">8%</span></div>
@@ -289,11 +291,11 @@ const TABS_CONTENT = {
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">3% each</span></div>
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">1.8% each</span></div>
                         </div>
-                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts. Max payout per player is <strong className="text-slate-400">10,000 OMENX</strong> per period.</div>
+                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMCADE payouts. Max payout per player is <strong className="text-slate-400">10,000 OMCADE</strong> per period.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
                         <div className="font-bold text-purple-300 text-sm md:text-base mb-1.5 flex items-center gap-2">🗓️ Seasonal Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. The <strong className="text-emerald-400">top 30 players</strong> earn OMENX — higher rank = bigger share. Seasonal stat upgrades reset at season end.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-2">Runs for <strong className="text-white">4 weeks</strong>. The <strong className="text-emerald-400">top 30 players</strong> earn OMCADE — higher rank = bigger share. Seasonal stat upgrades reset at season end.</p>
                         <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono mt-2">
                             <div className="bg-amber-950/40 border border-amber-500/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(245,158,11,0.15)]"><span className="text-amber-300">🥇 #1</span><span className="text-white">10%</span></div>
                             <div className="bg-slate-700/40 border border-slate-400/50 rounded px-2 py-1 flex justify-between shadow-[0_0_8px_rgba(148,163,184,0.15)]"><span className="text-slate-100">🥈 #2</span><span className="text-white">7.5%</span></div>
@@ -302,11 +304,11 @@ const TABS_CONTENT = {
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#11–20</span><span className="text-white">2.2% each</span></div>
                             <div className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 col-span-2 flex justify-between"><span className="text-slate-300">#21–30</span><span className="text-white">3.21% each</span></div>
                         </div>
-                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMENX payouts. Max payout per player is <strong className="text-slate-400">10,000 OMENX</strong> per period.</div>
+                        <div className="text-[10px] text-slate-500 italic mt-2">Endless Void runs are excluded from OMCADE payouts. Max payout per player is <strong className="text-slate-400">10,000 OMCADE</strong> per period.</div>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-800/40">
                         <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5 flex items-center gap-2">♾️ Endless Void Leaderboard</div>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Season-scoped high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMENX payouts</strong> on the Weekly + Seasonal leaderboards — but they earn their own <strong className="text-purple-300">Endless Bonus</strong> in the score formula (10,000 per minute survived), so a long, well-played endless run can rival a Sector 10 victory at the very top of the boards. S6 removed all gold/kill caps — every Gold and kill is credited in full.</p>
+                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed">Season-scoped high scores in Endless Mode. Enemies scale infinitely. Boss fights every 3 minutes. <strong className="text-amber-300">Important:</strong> Endless runs are <strong className="text-white">excluded from OMCADE payouts</strong> on the Weekly + Seasonal leaderboards — but they earn their own <strong className="text-purple-300">Endless Bonus</strong> in the score formula (10,000 per minute survived), so a long, well-played endless run can rival a Sector 10 victory at the very top of the boards. S6 removed all gold/kill caps — every Gold and kill is credited in full.</p>
                     </div>
                 </div>
             </SectionCard>
@@ -344,20 +346,21 @@ const TABS_CONTENT = {
                 </div>
             </SectionCard>
 
-            <SectionCard title="💠 OMENX Currency" color="cyan">
+            <SectionCard title="💠 OMCADE Currency" color="cyan">
                 <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                    OMENX is the premium Web3 currency of the OmenX ecosystem. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, purchase cosmetics, stat boosts, and more.
+                    OMCADE is the premium Web3 currency of the Omen Arcade ecosystem. Use it in-game to reroll upgrades, banish unwanted choices, activate Squad Ultimates, purchase cosmetics, stat boosts, and more.
                 </p>
                 <div className="space-y-2">
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-emerald-900/40">
                         <strong className="text-emerald-400">Earn via Leaderboards:</strong> Place in the top rankings on weekly or seasonal boards. Rewards are automatically sent to your wallet — no claiming needed.
                     </div>
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-fuchsia-900/40">
-                        <strong className="text-fuchsia-400">NFT Holder Bonus:</strong> Own an OmenX NFT? Earn bonus Gold and Relic Fragments every run based on your NFT's rarity (no unlock needed — automatic per-run boost).
+                        <strong className="text-fuchsia-400">NFT Holder Bonus:</strong> Own an Omen Arcade NFT? Earn bonus Gold and Relic Fragments every run based on your NFT's rarity (no unlock needed — automatic per-run boost).
                     </div>
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-purple-900/40">
-                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMENX on the BNB Chain via{' '}
-                        <a href="https://thirdweb.com/binance/0x992a09877b619b4755Cabe9edaf5092A956F0317" target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">Thirdweb (BNB Chain)</a>. Your live wallet balance is always shown in the top bar.
+                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMCADE on the BNB Chain at{' '}
+                        <a href={TOKEN_SITE_URL} target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">app.omcade.com</a>{' '}or via{' '}
+                        <a href="https://thirdweb.com/binance/0x995586C1Ef10C3cBaF155A62f62d65310D0D4c1f" target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">Thirdweb (BNB Chain)</a>. Your live wallet balance is always shown in the top bar.
                     </div>
                 </div>
             </SectionCard>
@@ -527,7 +530,7 @@ const TABS_CONTENT = {
 
             <SectionCard title="👑 Squad Wars Champions Pool" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-3">
-                    Beyond the weekly war prizes, <strong className="text-amber-400">10% of the entire seasonal OMENX pool</strong> is reserved for the squads who dominate the season. At the end of every 4-week season, the top 3 squads on the Champions leaderboard split this pool in <strong className="text-emerald-400">real OMENX</strong>, paid directly to every member's wallet.
+                    Beyond the weekly war prizes, <strong className="text-amber-400">10% of the entire seasonal OMCADE pool</strong> is reserved for the squads who dominate the season. At the end of every 4-week season, the top 3 squads on the Champions leaderboard split this pool in <strong className="text-emerald-400">real OMCADE</strong>, paid directly to every member's wallet.
                 </p>
                 <div className="bg-amber-950/30 border border-amber-700/40 rounded-xl p-4 mb-3">
                     <div className="font-bold text-amber-300 text-sm mb-2 flex items-center gap-2"><Award className="w-4 h-4" /> How squads are ranked</div>
@@ -563,11 +566,11 @@ const TABS_CONTENT = {
                         <li>Squad must have <strong className="text-white">at least 2 active members</strong> at season end.</li>
                         <li>Each squad's share is split <strong className="text-white">equally</strong> among all its current members.</li>
                         <li>Blacklisted wallets are skipped automatically.</li>
-                        <li>The pool grows live as players spend OMENX during the season.</li>
+                        <li>The pool grows live as players spend OMCADE during the season.</li>
                     </ul>
                 </div>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-cyan-900/30 text-xs md:text-sm text-slate-400 leading-relaxed">
-                    📊 The <strong className="text-amber-300">Champions</strong> tab on the Squad Wars page shows the live leaderboard, the current pool size, and your squad's <strong className="text-white">projected OMENX share</strong> if the season ended right now. Climb the rankings to lock in your squad's payout!
+                    📊 The <strong className="text-amber-300">Champions</strong> tab on the Squad Wars page shows the live leaderboard, the current pool size, and your squad's <strong className="text-white">projected OMCADE share</strong> if the season ended right now. Climb the rankings to lock in your squad's payout!
                 </div>
             </SectionCard>
         </div>
@@ -581,7 +584,7 @@ const TABS_CONTENT = {
                 </p>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-red-900/40 mt-4">
                     <div className="font-bold text-white text-sm md:text-base mb-1.5">⚔️ How to Participate</div>
-                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300">10 OMENX</strong> directly on the Raid page.</p>
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300"><Price sku="globalraid-retries" /> OMCADE</strong> directly on the Raid page.</p>
                 </div>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 mt-3">
                     <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5">📡 Live Activity Feed</div>
@@ -622,7 +625,7 @@ const TABS_CONTENT = {
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="💎 NFT Character Unlocks" color="purple">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    Own an OmenX NFT? Instantly unlock the corresponding character and earn powerful per-run bonuses based on your NFT's rarity.
+                    Own an Omen Arcade NFT? Instantly unlock the corresponding character and earn powerful per-run bonuses based on your NFT's rarity.
                 </p>
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-800/40">
@@ -747,10 +750,10 @@ function VipTab() {
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="👑 VIP Status" color="amber">
                 <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">
-                    VIP status is earned through your activity and investment in the <strong className="text-amber-400">OmenX ecosystem</strong>. The higher your VIP level, the better your in-game bonuses every single run.
+                    VIP status is earned through your activity and investment in the <strong className="text-amber-400">Omen Arcade ecosystem</strong>. The higher your VIP level, the better your in-game bonuses every single run.
                 </p>
                 <div className="bg-slate-900/50 rounded-xl p-4 border border-amber-800/40 text-xs text-slate-400">
-                    Your VIP level is fetched <strong className="text-white">once</strong> from your OmenX wallet when you sign in, then cached for the session — your in-game bonuses apply instantly with zero background polling. Upgraded your tier? Use the <strong className="text-amber-300">Refresh VIP</strong> button on your Profile page (24h cooldown) to pull the new value.
+                    Your VIP level is fetched <strong className="text-white">once</strong> from your Omen Arcade wallet when you sign in, then cached for the session — your in-game bonuses apply instantly with zero background polling. Upgraded your tier? Use the <strong className="text-amber-300">Refresh VIP</strong> button on your Profile page (24h cooldown) to pull the new value.
                 </div>
             </SectionCard>
 
@@ -794,7 +797,7 @@ function VipTab() {
                 <div className="space-y-3">
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-cyan-900/40">
                         <div className="font-bold text-cyan-300 text-sm mb-1">Purchase a VIP Tier</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">VIP tiers are purchased with <strong className="text-white">real money</strong> directly through the OmenX platform. Each tier comes with a <strong className="text-purple-300">weekly OMENX token allocation</strong> sent to your wallet — so your subscription pays you back in crypto!</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">VIP tiers are purchased with <strong className="text-white">real money</strong> directly through the Omen Arcade platform. Each tier comes with a <strong className="text-purple-300">weekly OMCADE token allocation</strong> sent to your wallet — so your subscription pays you back in crypto!</p>
                         <div className="mt-2 bg-slate-800/60 rounded-lg p-2 border border-slate-700/50 text-[11px] text-slate-400 space-y-0.5">
                             <div className="flex items-center gap-2">
                                 <span className={`font-bold ${phase === 2 ? 'text-cyan-400' : 'text-purple-400'}`}>Phase {phase}</span>
@@ -808,7 +811,7 @@ function VipTab() {
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-purple-900/40">
                         <div className="font-bold text-purple-300 text-sm mb-1">Automatic Detection (Once Per Sign-In)</div>
-                        <p className="text-xs text-slate-400 leading-relaxed">Sign in with OmenX and your VIP tier is fetched <strong className="text-white">once</strong>, then cached — no codes, no background polling, no setup. Your in-game bonuses apply instantly every run. If you upgrade your VIP tier on OmenX, hit the <strong className="text-amber-300">Refresh VIP</strong> button on your Profile page to pull the new value (24h cooldown).</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">Sign in with Omen Arcade and your VIP tier is fetched <strong className="text-white">once</strong>, then cached — no codes, no background polling, no setup. Your in-game bonuses apply instantly every run. If you upgrade your VIP tier on Omen Arcade, hit the <strong className="text-amber-300">Refresh VIP</strong> button on your Profile page to pull the new value (24h cooldown).</p>
                     </div>
                     <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-900/40">
                         <div className="font-bold text-amber-300 text-sm mb-1">Stacks with Everything</div>
@@ -919,12 +922,12 @@ TABS_CONTENT.combat = (
                 <div className="mt-4 space-y-2">
                     <div className="bg-slate-900/60 rounded-lg p-3 border border-emerald-700/40">
                         <div className="font-bold text-emerald-300 text-xs md:text-sm mb-1.5 flex items-center gap-1.5">
-                            <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className="w-3.5 h-3.5" alt="OMENX" /> In-Run OMENX Actions
+                            <img src={TOKEN_LOGO_URL} className="w-3.5 h-3.5" alt={TOKEN_NAME} /> In-Run OMCADE Actions
                         </div>
                         <ul className="text-xs md:text-sm text-slate-400 space-y-1 leading-relaxed">
-                            <li>• <strong className="text-white">Reroll</strong> the 3 upgrade choices — <strong className="text-emerald-300">2 OMENX</strong> (once per level-up).</li>
-                            <li>• <strong className="text-white">Banish</strong> an upgrade from the pool for the rest of the run — tiered cost: <strong className="text-emerald-300">2 OMENX</strong> for the first 3 banishes, then <strong className="text-amber-300">4 OMENX</strong> for the next 3, then <strong className="text-rose-300">6 OMENX</strong> per banish.</li>
-                            <li>• <strong className="text-white">Emergency Revive</strong> on death — <strong className="text-emerald-300">4 OMENX</strong> for 50% HP and 3s of invincibility.</li>
+                            <li>• <strong className="text-white">Reroll</strong> the 3 upgrade choices — <strong className="text-emerald-300"><Price sku="ingame-reroll" /> OMCADE</strong> (once per level-up).</li>
+                            <li>• <strong className="text-white">Banish</strong> an upgrade from the pool for the rest of the run — tiered cost: <strong className="text-emerald-300"><Price sku="ingame-banish" /> OMCADE</strong> for the first 3 banishes, then <strong className="text-amber-300"><Price sku="ingame-banish-2" /> OMCADE</strong> for the next 3, then <strong className="text-rose-300"><Price sku="ingame-banish-3" /> OMCADE</strong> per banish.</li>
+                            <li>• <strong className="text-white">Emergency Revive</strong> on death — <strong className="text-emerald-300"><Price sku="ingame-revive" />–<Price sku="ingame-revive-25" /> OMCADE</strong> (the longer you have survived, the higher the price) for 50% HP and 3s of invincibility.</li>
                         </ul>
                     </div>
                     <p className="text-xs text-slate-600">💡 Banishing a weapon you don't want increases the odds of getting your preferred ones on future level-ups.</p>
