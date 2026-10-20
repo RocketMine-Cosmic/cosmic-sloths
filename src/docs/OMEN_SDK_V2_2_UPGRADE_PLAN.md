@@ -279,6 +279,31 @@ Changes vs the 2026-09-17 manifest:
 - Unchanged and still open: **428 CONFIRMATION_REQUIRED** on purchases (A2), grant-batch
   idempotency (A1). Error envelope is `{ error: { code, message, requestId } }` — branch on `code`.
 
+## Part E — Omen announcements (2026-10-20)
+
+**Nothing breaks today** — existing integrations, SDK versions and links keep working.
+
+- **OMENX → OMCADE rebrand.** Official BSC contract `0x995586c1ef10c3cbaf155a62f62d65310d0d4c1f`.
+  Token info moved to omcade.com. Player-facing copy says "OMENX" everywhere — rename pass when
+  convenient (UI copy only; SKU ids / entity fields keep their names).
+- **Token pages moved to app.omcade.com.** Old app.omen.foundation links forward. We link it in
+  `Credits.jsx` and `WelcomeModal.jsx` — update when convenient.
+- **Sign in with OMEN Foundation** button standard + `<omen-signin>` widget
+  (`https://developer.omen.foundation/brand/sign-in/omen-signin.js`) on the Developer Portal. Optional
+  per game: "sign in once with Omen Arcade session". Candidate to replace our popup/redirect flow
+  (would also solve the in-app-browser popup block for good). Evaluate.
+- **Web SDK 2.4.0 — `requestPurchase`** via Omen Arcade checkout. **Planned Fri 23 Oct:** purchases
+  switch on for games that integrated it; card payments, studio still paid in OMCADE. We use direct
+  REST `POST /purchases` — need to check whether `requestPurchase` is required or optional for us.
+- **USD pricing + fee change.** Items priced in USD; players pay OMCADE or dollars (converted via a
+  PancakeSwap pool). Platform fee **3% → 15%** from studio share (studios keep 85%). **60 days'
+  notice; studios already selling keep 3% for 6 months after the change.** Impact on the Ascended
+  80/20 split: our dev share is net of this fee — re-check once dates land.
+- **Crews (≤8) + Party up** live for all players; a game can take a party into one room. Possible
+  fit for Squads / co-op later. No action.
+- **OMCADE withdrawals** coming, same daily limit for every VIP tier. No action.
+- **AI Agent Tools:** `@omen.foundation/developer-mcp` (docs MCP + skills). Reference only.
+
 ## Suggested order
 
 1. **A1 payout idempotency** — biggest risk reduction, directly fixes the double-pay class of bugs.
