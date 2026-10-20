@@ -264,6 +264,21 @@ require action today; listed so we know what's on the table.
 default; Omen raised it to 50,000 / 2,000-per-player after our ticket, and VIP points become a
 purchased resource from 22 September. The daily loop lives on **activity** points — see B2.
 
+## Part D — Manifest refresh (2026-10-20, still 77 endpoints)
+
+Changes vs the 2026-09-17 manifest:
+- **`GET /players/:wallet/power`** (new, `balances:read`) — GMT asset-manager power (backed sum,
+  rarity weight, NFT count; zeros, not 404, for wallets with none). Possible NFT perk input. No action.
+- **`POST /vip/grant-points`** now reports `data.fundedBy` (free allocation vs prepaid). We don't
+  grant VIP — no action.
+- **`POST /quests/claim`** pays VIP while game quest VIP rewards are on, otherwise activity points;
+  response carries `rewardCurrency`. If Phase 3 ships, log `rewardCurrency` on PointGrantLog.
+- **`GET /players/:wallet?include=discord`** — Discord profile (needs `players:discord:read`). No action.
+- **`/oauth/authorize`** confirmed: GET bounce, PKCE S256 required — matches the new same-tab
+  redirect fallback (`src/lib/omenxRedirectAuth.js`) for in-app browsers that block the popup.
+- Unchanged and still open: **428 CONFIRMATION_REQUIRED** on purchases (A2), grant-batch
+  idempotency (A1). Error envelope is `{ error: { code, message, requestId } }` — branch on `code`.
+
 ## Suggested order
 
 1. **A1 payout idempotency** — biggest risk reduction, directly fixes the double-pay class of bugs.
