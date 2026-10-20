@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Gamepad2, Zap, Star, Target, Trophy, Flame, Users, Gift, Shield, Crown, MessageSquare, Skull, Coins, Puzzle, Gem, Swords, Award } from 'lucide-react';
 import { SoundManager } from '../game/SoundManager';
 import SpaceBackground from '../components/game/SpaceBackground';
+import { Price } from '@/lib/storePrices';
 
 const TABS = [
     { id: 'basics',     label: 'Basics',       icon: Gamepad2 },
@@ -84,7 +85,7 @@ const TABS_CONTENT = {
                     <strong className="text-white">Full Gamepad Support:</strong> Connect an Xbox, PlayStation, or generic controller to play from the couch! Use the <strong className="text-fuchsia-400">Virtual Cursor</strong> to navigate the Hub and menus seamlessly, and the <strong className="text-cyan-400">Snap-to-Grid</strong> system for quick selections during gameplay.
                 </div>
                 <div className="bg-slate-900/40 rounded-lg p-3 border border-fuchsia-700/50 text-xs text-slate-400">
-                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, summon a clone from your unlocked roster via the floating buttons (bottom right): <strong className="text-purple-300">ULT LITE</strong> (5 OMENX, capped power) or <strong className="text-fuchsia-400">ULT FULL</strong> (10 OMENX, scales with your full upgrades).
+                    <strong className="text-white">Squad Ultimates & Live Score:</strong> Track your <strong className="text-cyan-400">Live Score</strong> right under the survival timer. If things get too intense, summon a clone from your unlocked roster via the floating buttons (bottom right): <strong className="text-purple-300">ULT LITE</strong> (<Price sku="ingame-squad-ult-lite" /> OMENX, capped power) or <strong className="text-fuchsia-400">ULT FULL</strong> (<Price sku="ingame-squad-ult-full" /> OMENX, scales with your full upgrades).
                 </div>
             </SectionCard>
 
@@ -126,7 +127,7 @@ const TABS_CONTENT = {
     progression: (
         <div className="space-y-4 md:space-y-6">
             <SectionCard title="🏠 Sloth Lounge (Meta Progression)" color="cyan">
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and OMENX on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for 10 OMENX.</p>
+                <p className="text-sm md:text-base text-slate-300 leading-relaxed mb-4">Between runs, visit the Sloth Lounge to spend your Gold and OMENX on persistent upgrades, or purchase a 60-minute <strong className="text-emerald-400">+50% XP Session Buff</strong> for <Price sku="ingame-xp-buff" /> OMENX.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-5 border border-slate-700 flex flex-col justify-center">
                         <div className="font-bold text-white text-sm md:text-base mb-1.5 flex items-center gap-2">👤 Characters</div>
@@ -581,7 +582,7 @@ const TABS_CONTENT = {
                 </p>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-red-900/40 mt-4">
                     <div className="font-bold text-white text-sm md:text-base mb-1.5">⚔️ How to Participate</div>
-                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300">10 OMENX</strong> directly on the Raid page.</p>
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300"><Price sku="ingame-xp-buff" /> OMENX</strong> directly on the Raid page.</p>
                 </div>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 mt-3">
                     <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5">📡 Live Activity Feed</div>
@@ -922,9 +923,9 @@ TABS_CONTENT.combat = (
                             <img src="https://media.base44.com/images/public/69de258a7e072380b89d66e3/01838179d_omenx_logo.png" className="w-3.5 h-3.5" alt="OMENX" /> In-Run OMENX Actions
                         </div>
                         <ul className="text-xs md:text-sm text-slate-400 space-y-1 leading-relaxed">
-                            <li>• <strong className="text-white">Reroll</strong> the 3 upgrade choices — <strong className="text-emerald-300">2 OMENX</strong> (once per level-up).</li>
-                            <li>• <strong className="text-white">Banish</strong> an upgrade from the pool for the rest of the run — tiered cost: <strong className="text-emerald-300">2 OMENX</strong> for the first 3 banishes, then <strong className="text-amber-300">4 OMENX</strong> for the next 3, then <strong className="text-rose-300">6 OMENX</strong> per banish.</li>
-                            <li>• <strong className="text-white">Emergency Revive</strong> on death — <strong className="text-emerald-300">4 OMENX</strong> for 50% HP and 3s of invincibility.</li>
+                            <li>• <strong className="text-white">Reroll</strong> the 3 upgrade choices — <strong className="text-emerald-300"><Price sku="ingame-reroll" /> OMENX</strong> (once per level-up).</li>
+                            <li>• <strong className="text-white">Banish</strong> an upgrade from the pool for the rest of the run — tiered cost: <strong className="text-emerald-300"><Price sku="ingame-banish" /> OMENX</strong> for the first 3 banishes, then <strong className="text-amber-300"><Price sku="ingame-banish-2" /> OMENX</strong> for the next 3, then <strong className="text-rose-300"><Price sku="ingame-banish-3" /> OMENX</strong> per banish.</li>
+                            <li>• <strong className="text-white">Emergency Revive</strong> on death — <strong className="text-emerald-300"><Price sku="ingame-revive" />–<Price sku="ingame-revive-25" /> OMENX</strong> (the longer you have survived, the higher the price) for 50% HP and 3s of invincibility.</li>
                         </ul>
                     </div>
                     <p className="text-xs text-slate-600">💡 Banishing a weapon you don't want increases the odds of getting your preferred ones on future level-ups.</p>

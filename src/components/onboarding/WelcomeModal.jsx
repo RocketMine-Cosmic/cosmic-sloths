@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, X, Rocket, Wallet, Compass, Swords, Trophy, Zap, Crown, Shield } from 'lucide-react';
 import { SoundManager } from '../../game/SoundManager';
 import { SaveManager } from '../../game/SaveManager';
+import { Price } from '@/lib/storePrices';
 
 // Persist `welcomeSeen` on the cloud PlayerSave so the tour follows the wallet across
 // devices/browsers. SaveManager.load() reads the local cache of the cloud save, so
@@ -56,10 +57,10 @@ const STEPS = [
             <>
                 <p>Spend small amounts of <span className="text-purple-300 font-bold">$OMENX</span> mid-run to swing the odds in your favour:</p>
                 <ul className="mt-2 text-left text-xs text-slate-400 space-y-1 mx-auto max-w-[260px]">
-                    <li>• <span className="text-white font-bold">Reroll</span> level-up choices — 2 OMENX</li>
-                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — 2 / 4 / 6 OMENX (tiered)</li>
-                    <li>• <span className="text-white font-bold">Emergency Revive</span> on death — 4 OMENX</li>
-                    <li>• <span className="text-white font-bold">Squad Ultimate</span> clone backup — 5 or 10 OMENX</li>
+                    <li>• <span className="text-white font-bold">Reroll</span> level-up choices — <Price sku="ingame-reroll" /> OMENX</li>
+                    <li>• <span className="text-white font-bold">Banish</span> bad upgrades — <Price sku="ingame-banish" /> / <Price sku="ingame-banish-2" /> / <Price sku="ingame-banish-3" /> OMENX (tiered)</li>
+                    <li>• <span className="text-white font-bold">Emergency Revive</span> on death — from <Price sku="ingame-revive" /> OMENX</li>
+                    <li>• <span className="text-white font-bold">Squad Ultimate</span> clone backup — <Price sku="ingame-squad-ult-lite" /> or <Price sku="ingame-squad-ult-full" /> OMENX</li>
                 </ul>
             </>
         ),
