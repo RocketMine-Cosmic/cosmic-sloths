@@ -12,6 +12,9 @@
 // (pricesInCurrency.OMENX — Omen's API still names the currency OMENX) so the
 // screen and the charge come from the same field. No auth: prices aren't secret,
 // and the cache means Omen is called at most once per TTL per instance.
+//
+// Read-only: no writes, no charges. Added to main ahead of the OMCADE frontend
+// (branch omcade-live-prices) so the preview can be tested against real prices.
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 let _cache = null;
