@@ -283,7 +283,7 @@ export default function Upgrades({ isCarousel }) {
 
     const handleBuyStat = (stat, currency) => {
         const currentSave = SaveManager.load();
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         const upgrades = currentSave[saveKey] || {};
         const currentLevel = upgrades[stat] || 0;
@@ -605,7 +605,7 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const renderStats = () => {
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         if (!typeConfig || !typeConfig.goldCosts || !typeConfig.tokenCosts) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentUpgrades' : activeCategory === 'weekly' ? 'weeklyUpgrades' : 'seasonalUpgrades';
         const upgradesObj = save[saveKey] || {};
@@ -699,7 +699,7 @@ export default function Upgrades({ isCarousel }) {
     const renderArmory = () => {
         const baseWeapons = Object.values(WEAPONS).filter(w => !w.isSynergy);
 
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
 
@@ -864,7 +864,7 @@ export default function Upgrades({ isCarousel }) {
     };
 
     const renderTalents = () => {
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         if (!typeConfig) return null;
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
 
