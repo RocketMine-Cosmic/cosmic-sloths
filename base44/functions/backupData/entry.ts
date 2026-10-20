@@ -18,7 +18,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //   4. Only after a complete backup are automated backups older than 14 days
 //      pruned (manifest + its parts; old single-row backups too).
 //
-// Covers EVERY table (the old version covered 14 of 33). Records keep their
+// Covers every table except three history logs (listed above TABLES) — the old
+// version covered 14 of 33, each cut off at 5,000 rows. Records keep their
 // original ids/dates so a future restore can put them back as they were.
 //
 // Restore for this format is NOT built yet — manifests are written with
