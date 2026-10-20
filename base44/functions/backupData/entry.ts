@@ -28,10 +28,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 //
 // Auth: automated bypass, OR Base44 session + 'manage_backups' permission, OR emergency master key.
 
+// Deliberately LEFT OUT (Rob, 2026-10-20): DeletedRunScore, RunHistoryLog and
+// GoldSpendLog. They are history logs, not needed to put the game back as it was,
+// and they are the bulk of the data — including them blew the Builder plan's
+// "entity write traffic volume" limit. TokenSpendLog stays: payout pools derive from it.
 const TABLES = [
     // core player + economy
-    'PlayerSave', 'RunScore', 'DeletedRunScore', 'RunHistoryLog', 'TokenPool', 'TokenSpendLog',
-    'GoldSpendLog', 'PayoutLog', 'DailyActivityLog', 'WeeklyKillSnapshot', 'CosmeticAsset',
+    'PlayerSave', 'RunScore', 'TokenPool', 'TokenSpendLog',
+    'PayoutLog', 'DailyActivityLog', 'WeeklyKillSnapshot', 'CosmeticAsset',
     // squads
     'Squad', 'SquadMember', 'SquadMessage', 'SquadJoinRequest', 'SquadDailyGoal', 'SquadWar',
     'SquadWarMemberKill', 'SquadSeasonRoster', 'SquadChampionsPayoutLog', 'SquadMeteor', 'SquadMeteorAttack',
@@ -52,6 +56,9 @@ const PART_TARGET_BYTES = 700_000;  // keep each write small and quick
 const RETENTION_DAYS = 14;
 const FORMAT = 'parts-v2';
 
+// Pause between piece writes so the backup never bursts past the plan's write limit.
+const WRITE_GAP_MS = 400;
+
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 async function withRetry(fn, label, attempts = 4) {
     let lastErr;
@@ -61,10 +68,14 @@ async function withRetry(fn, label, attempts = 4) {
             lastErr = e;
             const msg = String(e?.message || '').toLowerCase();
             const status = e?.status || e?.response?.status;
-            const isTransient = status === 429 || (status >= 500 && status <= 504)
+            // "App entity write traffic volume limit exceeded" = the plan's burst cap: wait it out, longer.
+            const isVolumeLimit = msg.includes('volume limit') || msg.includes('traffic');
+            const isTransient = isVolumeLimit || status === 429 || (status >= 500 && status <= 504)
                 || msg.includes('timed out') || msg.includes('timeout') || msg.includes('rate limit');
             if (!isTransient || attempt === attempts - 1) throw e;
-            const delay = 1000 * Math.pow(2, attempt) + Math.random() * 500;
+            const delay = isVolumeLimit
+                ? 15000 * (attempt + 1)
+                : 1000 * Math.pow(2, attempt) + Math.random() * 500;
             console.warn(`[backupData] ${label} transient error — retry ${attempt + 1}/${attempts - 1} in ${Math.round(delay)}ms: ${e?.message}`);
             await sleep(delay);
         }
@@ -167,6 +178,7 @@ Deno.serve(async (req) => {
                     records: chunk,
                 }), `${table} part ${i}`);
                 partCount++;
+                await sleep(WRITE_GAP_MS);
             }
             rows.length = 0;
         }
