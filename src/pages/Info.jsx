@@ -1,4 +1,4 @@
-import { TOKEN_LOGO_URL, TOKEN_NAME } from '@/lib/branding';
+import { TOKEN_LOGO_URL, TOKEN_NAME, TOKEN_SITE_URL } from '@/lib/branding';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -358,8 +358,9 @@ const TABS_CONTENT = {
                         <strong className="text-fuchsia-400">NFT Holder Bonus:</strong> Own an Omen Arcade NFT? Earn bonus Gold and Relic Fragments every run based on your NFT's rarity (no unlock needed — automatic per-run boost).
                     </div>
                     <div className="text-xs text-slate-400 bg-slate-900/50 rounded-lg p-3 border border-purple-900/40">
-                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMCADE on the BNB Chain via{' '}
-                        <a href="https://thirdweb.com/binance/0x992a09877b619b4755Cabe9edaf5092A956F0317" target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">Thirdweb (BNB Chain)</a>. Your live wallet balance is always shown in the top bar.
+                        <strong className="text-purple-400">Purchase directly:</strong> Buy OMCADE on the BNB Chain at{' '}
+                        <a href={TOKEN_SITE_URL} target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">app.omcade.com</a>{' '}or via{' '}
+                        <a href="https://thirdweb.com/binance/0x995586C1Ef10C3cBaF155A62f62d65310D0D4c1f" target="_blank" rel="noopener noreferrer" className="text-purple-300 underline hover:text-purple-200 transition-colors">Thirdweb (BNB Chain)</a>. Your live wallet balance is always shown in the top bar.
                     </div>
                 </div>
             </SectionCard>
