@@ -685,7 +685,7 @@ export default function Upgrades({ isCarousel }) {
                                                             'bg-slate-700 text-slate-400 border border-slate-600'
                                                         }`}
                                                      >
-                                                        {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                        {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-5 h-5" /> {formatTokens(tokenCost)} OMENX</>}
                                                      </button>
                                                 )}
                                             </div>
@@ -850,7 +850,7 @@ export default function Upgrades({ isCarousel }) {
                                                     'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-4 h-4" /> {formatTokens(tokenCost)} OMENX</>}
                                             </button>
                                         )}
                                     </div>
@@ -1038,7 +1038,7 @@ export default function Upgrades({ isCarousel }) {
                                                     'bg-slate-800 text-slate-600 border border-slate-700'
                                                 }`}
                                             >
-                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {tokenCost.toLocaleString()} OMENX</>}
+                                                {omenxBlocked ? '🔒 PAUSED' : purchasing ? '…' : <><OmenXIcon className="w-3.5 h-3.5 md:w-5 md:h-5" /> {formatTokens(tokenCost)} OMENX</>}
                                             </button>
                                         )}
                                     </div>
