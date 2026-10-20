@@ -18,6 +18,7 @@ import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { getAuthData } from '@/lib/getAuthData';
 import { getStatSku, getWeaponSku, getTalentSku, getCosmeticSku, getTalentRespecSku, TALENT_RESPEC_GOLD_COSTS } from '@/lib/skuMap';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
 import { refreshBalance } from '@/lib/playerDataCache';
 import { SoundManager } from '../game/SoundManager';
 import CosmeticPreview from '../components/game/CosmeticPreview';
@@ -57,6 +58,24 @@ export default function Upgrades({ isCarousel }) {
     const navigate = useNavigate();
     const [save, setSave] = useState(SaveManager.load());
     const { omenxBalance, nfts } = useCurrency();
+
+    // 2026-10-20: token prices come live from the Omen portal, per SKU. Stat and
+    // weapon upgrades are separate SKUs (they used to share one typed-in ladder),
+    // and talents have their own lvl1..3 SKUs. Gold costs are unchanged.
+    const price = useStorePrices();
+    const liveTypes = UPGRADE_TYPES.map(t => ({
+        ...t,
+        tokenCosts:       [1, 2, 3, 4, 5].map(l => price(getStatSku(t.id, null, l))),
+        weaponTokenCosts: [1, 2, 3, 4, 5].map(l => price(getWeaponSku(t.id, null, null, l))),
+        talentTokenCosts: [1, 2, 3].map(n => price(getTalentSku(t.id, null, null, n))),
+    }));
+    // Cosmetic token price: live price of its tier SKU. 0 / -1 (not for sale /
+    // seasonal reward) are kept as-is so those items still behave the same.
+    const cosmeticTokenCost = (cosmetic, type) => {
+        if (!(cosmetic?.tokenCost > 0)) return cosmetic?.tokenCost ?? 0;
+        const sku = getCosmeticSku(type, cosmetic.name, cosmetic.goldCost);
+        return sku ? price(sku) : cosmetic.tokenCost;
+    };
 
     // Make sure NFTs are loaded so NFT-unlocked characters appear in the talents tab
     React.useEffect(() => { ensureNftsFetched(); }, []);
@@ -299,7 +318,7 @@ export default function Upgrades({ isCarousel }) {
 
     const handleBuyWeapon = (weaponId, stat, currency) => {
         const currentSave = SaveManager.load();
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentWeaponUpgrades' : activeCategory === 'weekly' ? 'weeklyWeaponUpgrades' : 'seasonalWeaponUpgrades';
         
         const weaponData = currentSave[saveKey]?.[weaponId] || {};
@@ -308,7 +327,7 @@ export default function Upgrades({ isCarousel }) {
         if (currentLevel >= typeConfig.goldCosts.length) return;
         
         const goldCost = typeConfig.goldCosts[currentLevel];
-        const tokenCost = typeConfig.tokenCosts[currentLevel];
+        const tokenCost = typeConfig.weaponTokenCosts[currentLevel];
         
         if (currency === 'gold' && currentSave.gold >= goldCost) {
             const grantInfo = { type: 'weapon', tier: activeCategory, weaponId, stat, level: currentLevel + 1 };
@@ -336,7 +355,7 @@ export default function Upgrades({ isCarousel }) {
 
     const handleBuyTalent = (talent, currency) => {
         const currentSave = SaveManager.load();
-        const typeConfig = UPGRADE_TYPES.find(t => t.id === activeCategory);
+        const typeConfig = liveTypes.find(t => t.id === activeCategory);
         const saveKey = activeCategory === 'permanent' ? 'permanentTalents' : activeCategory === 'weekly' ? 'weeklyTalents' : 'seasonalTalents';
         
         const unlocked = currentSave[saveKey]?.[selectedChar] || [];
@@ -344,7 +363,7 @@ export default function Upgrades({ isCarousel }) {
         
         const costTier = (talent.tier - 1) * 2;
         const goldCost = typeConfig.goldCosts[costTier];
-        const tokenCost = typeConfig.tokenCosts[costTier];
+        const tokenCost = typeConfig.talentTokenCosts[Math.min(talent.tier - 1, 2)];
 
         if (currency === 'gold' && currentSave.gold >= goldCost) {
             const grantInfo = { type: 'talent', tier: activeCategory, charId: selectedChar, talentId: talent.id, talentTier: talent.tier };
@@ -761,7 +780,7 @@ export default function Upgrades({ isCarousel }) {
                                         <BuyAllWeaponStatsButton
                                             tier={activeCategory}
                                             weapon={weapon}
-                                            tokenCosts={typeConfig.tokenCosts}
+                                            tokenCosts={typeConfig.weaponTokenCosts}
                                             save={save}
                                             omenxBalance={omenxBalance}
                                             omenxBlocked={omenxBlocked}
@@ -791,7 +810,7 @@ export default function Upgrades({ isCarousel }) {
                             const level = save[saveKey]?.[weapon.id]?.[stat.id] || 0;
                             const isMax = level >= typeConfig.goldCosts.length;
                             const cost = isMax ? 0 : (typeConfig.goldCosts[level] || 0);
-                            const tokenCost = isMax ? 0 : (typeConfig.tokenCosts[level] || 0);
+                            const tokenCost = isMax ? 0 : (typeConfig.weaponTokenCosts[level] || 0);
                             const canAffordGold = save.gold >= cost;
                             const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
                             const Icon = stat.icon;
@@ -868,14 +887,14 @@ export default function Upgrades({ isCarousel }) {
             const unlocked = save[saveKey]?.[selectedChar] || [];
             if (unlocked.length === 0) return;
             const charData = CHARACTERS.find(c => c.id === selectedChar);
-            const omenxCosts = { permanent: 10, weekly: 4, seasonal: 20 };
+            const respecSku = getTalentRespecSku(activeCategory);
             setRespecModal({
                 tier: activeCategory,
                 charId: selectedChar,
                 charName: charData?.name || selectedChar,
                 count: unlocked.length,
                 goldCost: TALENT_RESPEC_GOLD_COSTS[activeCategory] || 5000,
-                omenxCost: omenxCosts[activeCategory] || 10,
+                omenxCost: respecSku ? price(respecSku) : 10,
             });
             SoundManager.playUIClick();
         };
@@ -966,7 +985,7 @@ export default function Upgrades({ isCarousel }) {
                             );
                             const costTier = Math.min((talent.tier - 1) * 2, typeConfig.goldCosts.length - 1);
                             const goldCost = typeConfig.goldCosts[costTier] || 0;
-                            const tokenCost = typeConfig.tokenCosts[costTier] || 0;
+                            const tokenCost = typeConfig.talentTokenCosts[Math.min(talent.tier - 1, 2)] || 0;
                             const canAffordGold = save.gold >= goldCost;
                             const canAffordToken = (omenxBalance ?? 0) >= tokenCost;
                             const isBranchA = talent.id.endsWith('a');
