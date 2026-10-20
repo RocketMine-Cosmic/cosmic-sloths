@@ -1,13 +1,58 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Data backup — "parts" format (v2), remade 2026-10-20.
+//
+// WHY: the old version wrote EVERY table into ONE DataBackup row. From 28 Sept
+// 2026 that single giant write started hitting the database's 20s timeout on
+// every run (reads were fine; the write died), so the workflow auto-disabled
+// after 5 failures and nothing was backed up for 3 weeks. The data had not
+// grown between the last success and the first failure — the timing lines up
+// with the Base44 plan change on 26 Sept, so assume tight limits from now on.
+//
+// HOW IT WORKS NOW:
+//   1. A small DataBackup "manifest" row is created first (status in_progress).
+//   2. Each table is read, then written as DataBackupPart rows of ~700 KB each,
+//      one small write at a time, each retried on a timeout.
+//   3. The manifest is updated to status "complete" with counts as the LAST
+//      step. A manifest that is not "complete" is not a backup — never trust one.
+//   4. Only after a complete backup are automated backups older than 14 days
+//      pruned (manifest + its parts; old single-row backups too).
+//
+// Covers EVERY table (the old version covered 14 of 33). Records keep their
+// original ids/dates so a future restore can put them back as they were.
+//
+// Restore for this format is NOT built yet — manifests are written with
+// restore_available:false so the admin panel's Restore button stays disabled,
+// and restoreDataBackup refuses this format. The OLD restore re-created
+// records with new ids, which breaks every cross-table link; do not use it.
+//
 // Auth: automated bypass, OR Base44 session + 'manage_backups' permission, OR emergency master key.
 
-// Retry transient failures (DB query timeouts, rate limits, gateway blips) with
-// backoff — a single slow read was failing the entire 6-hourly backup run.
+const TABLES = [
+    // core player + economy
+    'PlayerSave', 'RunScore', 'DeletedRunScore', 'RunHistoryLog', 'TokenPool', 'TokenSpendLog',
+    'GoldSpendLog', 'PayoutLog', 'DailyActivityLog', 'WeeklyKillSnapshot', 'CosmeticAsset',
+    // squads
+    'Squad', 'SquadMember', 'SquadMessage', 'SquadJoinRequest', 'SquadDailyGoal', 'SquadWar',
+    'SquadWarMemberKill', 'SquadSeasonRoster', 'SquadChampionsPayoutLog', 'SquadMeteor', 'SquadMeteorAttack',
+    // raid / boss
+    'GlobalBoss', 'GlobalBossContribution', 'GlobalBossEvent',
+    // admin / config / moderation
+    'AppConfig', 'AdminWallet', 'AdminChangesLog', 'BlacklistedWallet', 'MutedWallet',
+    'OmenAuthEvent', 'SyncBlockLog',
+    // accounts (wallet links)
+    'User',
+];
+
+const READ_LIMIT = 10000;           // per table; a table at this size is flagged as possibly truncated
+const PART_TARGET_BYTES = 700_000;  // keep each write small and quick
+const RETENTION_DAYS = 14;
+const FORMAT = 'parts-v2';
+
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-async function withRetry(fn, label = 'read') {
+async function withRetry(fn, label, attempts = 4) {
     let lastErr;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < attempts; attempt++) {
         try { return await fn(); }
         catch (e) {
             lastErr = e;
@@ -15,19 +60,46 @@ async function withRetry(fn, label = 'read') {
             const status = e?.status || e?.response?.status;
             const isTransient = status === 429 || (status >= 500 && status <= 504)
                 || msg.includes('timed out') || msg.includes('timeout') || msg.includes('rate limit');
-            if (!isTransient || attempt === 2) throw e;
+            if (!isTransient || attempt === attempts - 1) throw e;
             const delay = 1000 * Math.pow(2, attempt) + Math.random() * 500;
-            console.warn(`[backupData] ${label} transient error — retry ${attempt + 1}/2 in ${Math.round(delay)}ms`);
+            console.warn(`[backupData] ${label} transient error — retry ${attempt + 1}/${attempts - 1} in ${Math.round(delay)}ms: ${e?.message}`);
             await sleep(delay);
         }
     }
     throw lastErr;
 }
 
+function chunkBySize(rows) {
+    const chunks = [];
+    let cur = [], curBytes = 0;
+    for (const r of rows) {
+        const b = JSON.stringify(r).length;
+        if (cur.length > 0 && curBytes + b > PART_TARGET_BYTES) { chunks.push(cur); cur = []; curBytes = 0; }
+        cur.push(r); curBytes += b;
+    }
+    if (cur.length > 0) chunks.push(cur);
+    return chunks;
+}
+
+async function deleteBackupWithParts(db, backupId) {
+    // Delete this backup's parts a page at a time, then the manifest.
+    for (let i = 0; i < 200; i++) {
+        const parts = await withRetry(() => db.entities.DataBackupPart.filter({ backup_id: backupId }, 'chunk_index', 20), 'prune parts read');
+        if (!parts.length) break;
+        for (const p of parts) { try { await withRetry(() => db.entities.DataBackupPart.delete(p.id), 'prune part delete'); } catch {} }
+        parts.length = 0;
+    }
+    await withRetry(() => db.entities.DataBackup.delete(backupId), 'prune manifest delete');
+}
+
 Deno.serve(async (req) => {
+    const started = Date.now();
+    let manifestId = null;
+    let db = null;
     try {
         const base44 = createClientFromRequest(req);
-        const body = await req.json();
+        db = base44.asServiceRole;
+        const body = await req.json().catch(() => ({}));
         const { adminKey, backup_notes, is_automated } = body;
 
         let callerWallet = is_automated ? 'AUTOMATION' : 'EMERGENCY_KEY';
@@ -36,7 +108,7 @@ Deno.serve(async (req) => {
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
             callerWallet = me.wallet_address?.toLowerCase();
             if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
-            const records = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            const records = await db.entities.AdminWallet.filter({ wallet_address: callerWallet });
             if (records.length === 0) return Response.json({ error: 'Forbidden — not an admin' }, { status: 403 });
             const perms = records[0].permissions || [];
             if (!perms.includes('manage_backups') && !perms.includes('owner')) {
@@ -44,135 +116,106 @@ Deno.serve(async (req) => {
             }
         }
 
-        console.log('[backupData] Starting backup...');
+        const backup_name = `backup-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substring(2, 8)}`;
+        console.log(`[backupData] Starting ${FORMAT} backup ${backup_name}`);
 
-        const [
-            playerSaves, runScores, squads, squadMembers, squadMessages,
-            tokenPools, tokenSpendLogs, payoutLogs,
-            globalBosses, globalBossContributions, globalBossEvents,
-            squadWars, squadChampionsPayoutLogs, squadSeasonRosters
-        ] = await Promise.all([
-            withRetry(() => base44.asServiceRole.entities.PlayerSave.list('', 10000), 'PlayerSave'),
-            withRetry(() => base44.asServiceRole.entities.RunScore.list('', 10000), 'RunScore'),
-            withRetry(() => base44.asServiceRole.entities.Squad.list('', 10000), 'Squad'),
-            withRetry(() => base44.asServiceRole.entities.SquadMember.list('', 10000), 'SquadMember'),
-            withRetry(() => base44.asServiceRole.entities.SquadMessage.list('', 10000), 'SquadMessage'),
-            withRetry(() => base44.asServiceRole.entities.TokenPool.list('', 10000), 'TokenPool'),
-            withRetry(() => base44.asServiceRole.entities.TokenSpendLog.list('', 10000), 'TokenSpendLog'),
-            withRetry(() => base44.asServiceRole.entities.PayoutLog.list('', 10000), 'PayoutLog'),
-            withRetry(() => base44.asServiceRole.entities.GlobalBoss.list('', 10000), 'GlobalBoss'),
-            withRetry(() => base44.asServiceRole.entities.GlobalBossContribution.list('', 10000), 'GlobalBossContribution'),
-            withRetry(() => base44.asServiceRole.entities.GlobalBossEvent.list('', 10000), 'GlobalBossEvent'),
-            withRetry(() => base44.asServiceRole.entities.SquadWar.list('', 10000), 'SquadWar'),
-            withRetry(() => base44.asServiceRole.entities.SquadChampionsPayoutLog.list('', 10000), 'SquadChampionsPayoutLog'),
-            withRetry(() => base44.asServiceRole.entities.SquadSeasonRoster.list('', 10000), 'SquadSeasonRoster'),
-        ]);
-
-        const snapshot_data = {
-            playerSaves,
-            runScores,
-            squads,
-            squadMembers,
-            squadMessages,
-            tokenPools,
-            tokenSpendLogs,
-            payoutLogs,
-            globalBosses,
-            globalBossContributions,
-            globalBossEvents,
-            squadWars,
-            squadChampionsPayoutLogs,
-            squadSeasonRosters,
-            backup_timestamp: new Date().toISOString(),
-        };
-
-        const entity_counts = {
-            PlayerSave: playerSaves.length,
-            RunScore: runScores.length,
-            Squad: squads.length,
-            SquadMember: squadMembers.length,
-            SquadMessage: squadMessages.length,
-            TokenPool: tokenPools.length,
-            TokenSpendLog: tokenSpendLogs.length,
-            PayoutLog: payoutLogs.length,
-            GlobalBoss: globalBosses.length,
-            GlobalBossContribution: globalBossContributions.length,
-            GlobalBossEvent: globalBossEvents.length,
-            SquadWar: squadWars.length,
-            SquadChampionsPayoutLog: squadChampionsPayoutLogs.length,
-            SquadSeasonRoster: squadSeasonRosters.length,
-        };
-
-        const backup_name = `backup-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substring(7)}`;
-
-        const backup = await base44.asServiceRole.entities.DataBackup.create({
+        // 1. Manifest first — small write.
+        const manifest = await withRetry(() => db.entities.DataBackup.create({
             backup_name,
             backup_type: is_automated ? 'automated' : 'manual',
-            snapshot_data,
-            entity_counts,
-            restore_available: true,
+            snapshot_data: { format: FORMAT, status: 'in_progress', started_at: new Date().toISOString() },
+            entity_counts: {},
+            restore_available: false,
             notes: backup_notes || '',
-        });
+        }), 'manifest create');
+        manifestId = manifest.id;
 
+        // 2. Each table → parts.
+        const entity_counts = {};
+        const warnings = [];
+        let partCount = 0, totalBytes = 0;
+        for (const table of TABLES) {
+            let rows;
+            try {
+                rows = await withRetry(() => db.entities[table].list('created_date', READ_LIMIT), `${table} read`);
+            } catch (e) {
+                // A missing/unreadable table must not lose the rest of the backup — record it loudly.
+                warnings.push(`${table}: read failed — ${e?.message}`);
+                console.error(`[backupData] ${table} read failed:`, e?.message);
+                continue;
+            }
+            entity_counts[table] = rows.length;
+            if (rows.length >= READ_LIMIT) warnings.push(`${table}: hit the ${READ_LIMIT} read limit — may be incomplete`);
+            const chunks = chunkBySize(rows);
+            for (let i = 0; i < chunks.length; i++) {
+                const chunk = chunks[i];
+                totalBytes += JSON.stringify(chunk).length;
+                await withRetry(() => db.entities.DataBackupPart.create({
+                    backup_id: manifestId,
+                    entity_name: table,
+                    chunk_index: i,
+                    record_count: chunk.length,
+                    records: chunk,
+                }), `${table} part ${i}`);
+                partCount++;
+            }
+            rows.length = 0;
+        }
+
+        // 3. Completion stamp — LAST. Only a "complete" manifest is a backup.
+        const secs = Math.round((Date.now() - started) / 1000);
+        await withRetry(() => db.entities.DataBackup.update(manifestId, {
+            entity_counts,
+            snapshot_data: {
+                format: FORMAT, status: 'complete',
+                completed_at: new Date().toISOString(),
+                tables: Object.keys(entity_counts).length, parts: partCount, bytes: totalBytes,
+                seconds: secs, warnings,
+            },
+        }), 'manifest complete');
         const totalRecords = Object.values(entity_counts).reduce((a, b) => a + b, 0);
-        console.log(`[backupData] Backup complete: ${backup_name} with ${totalRecords} total records`);
+        console.log(`[backupData] Backup complete: ${backup_name} — ${totalRecords} records, ${Object.keys(entity_counts).length} tables, ${partCount} parts, ${Math.round(totalBytes / 1024)} KB, ${secs}s, ${warnings.length} warning(s)`);
+        if (warnings.length) console.warn('[backupData] warnings:', JSON.stringify(warnings));
 
-        // Capture id before nulling the response, then drop EVERY large object we
-        // accumulated during the backup phase. Without this, the isolate is still
-        // holding ~13k PlayerSaves + ~13k RunScores in `playerSaves`/`runScores`
-        // closure vars AND the freshly-created `backup` (which echoes back the
-        // entire snapshot_data blob it just wrote). The prune step then loads
-        // more rows on top — instant OOM.
-        const newBackupId = backup.id;
-        playerSaves.length = 0; runScores.length = 0; squads.length = 0;
-        squadMembers.length = 0; squadMessages.length = 0; tokenPools.length = 0;
-        tokenSpendLogs.length = 0; payoutLogs.length = 0; globalBosses.length = 0;
-        globalBossContributions.length = 0; globalBossEvents.length = 0;
-        squadWars.length = 0; squadChampionsPayoutLogs.length = 0;
-        squadSeasonRosters.length = 0;
-        for (const k of Object.keys(snapshot_data)) delete snapshot_data[k];
-        for (const k of Object.keys(backup)) delete backup[k];
-
-        // Retention: prune AUTOMATED backups older than 14 days. Manual backups are kept indefinitely.
-        // CRITICAL: DataBackup.filter returns the full snapshot_data blob (~50-100MB
-        // per row). Loading 20 of those at once = 1-2GB which OOMs even on a fresh
-        // isolate. We page ONE row at a time (skip-based oldest-first), check the
-        // date, delete or stop, then drop the reference. Memory stays bounded.
+        // 4. Retention — only automated backups, only after this one completed.
         let pruned = 0;
         if (is_automated) {
             try {
-                const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
-                const MAX_ITERS = 500; // hard safety stop
-                for (let i = 0; i < MAX_ITERS; i++) {
-                    const batch = await base44.asServiceRole.entities.DataBackup.filter(
-                        { backup_type: 'automated' }, 'created_date', 1
-                    );
+                const cutoffMs = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+                for (let i = 0; i < 500; i++) {
+                    // Oldest first, ONE row at a time — old single-row backups carry a huge blob.
+                    const batch = await withRetry(() => db.entities.DataBackup.filter({ backup_type: 'automated' }, 'created_date', 1), 'prune read');
                     if (!batch.length) break;
                     const old = batch[0];
-                    const oldId = old.id;
-                    const oldDate = old.created_date;
-                    // Free the snapshot_data blob immediately — we only needed id + date.
+                    const oldId = old.id, oldDate = old.created_date;
+                    const oldFormat = old.snapshot_data?.format;
                     for (const k of Object.keys(old)) delete old[k];
                     batch.length = 0;
+                    if (oldId === manifestId) break;
                     if (new Date(oldDate).getTime() >= cutoffMs) break;
-                    if (oldId === newBackupId) break; // never prune the one we just made
-                    try { await base44.asServiceRole.entities.DataBackup.delete(oldId); pruned++; } catch {}
+                    try {
+                        if (oldFormat === FORMAT) await deleteBackupWithParts(db, oldId);
+                        else await withRetry(() => db.entities.DataBackup.delete(oldId), 'prune old-format delete');
+                        pruned++;
+                    } catch (e) { console.error('[backupData] prune of', oldId, 'failed:', e?.message); break; }
                 }
-                if (pruned > 0) console.log(`[backupData] Pruned ${pruned} automated backup(s) older than 14 days`);
+                if (pruned > 0) console.log(`[backupData] Pruned ${pruned} automated backup(s) older than ${RETENTION_DAYS} days`);
             } catch (e) {
-                console.error('[backupData] Retention prune failed:', e.message);
+                console.error('[backupData] Retention prune failed:', e?.message);
             }
         }
 
-        return Response.json({
-            success: true,
-            backup_id: backup.id,
-            backup_name,
-            entity_counts,
-            pruned,
-        });
+        return Response.json({ success: true, backup_id: manifestId, backup_name, format: FORMAT, entity_counts, parts: partCount, warnings, pruned });
     } catch (error) {
-        console.error('[backupData] Error:', error.message);
-        return Response.json({ error: error.message }, { status: 500 });
+        console.error('[backupData] Error:', error?.message);
+        // Mark the manifest failed so nobody mistakes it for a backup.
+        if (manifestId && db) {
+            try {
+                await db.entities.DataBackup.update(manifestId, {
+                    snapshot_data: { format: FORMAT, status: 'failed', error: String(error?.message || error), failed_at: new Date().toISOString() },
+                });
+            } catch {}
+        }
+        return Response.json({ error: error?.message }, { status: 500 });
     }
 });

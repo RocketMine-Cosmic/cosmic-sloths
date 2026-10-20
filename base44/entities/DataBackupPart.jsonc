@@ -1,0 +1,58 @@
+{
+  "name": "DataBackupPart",
+  "properties": {
+    "backup_id": {
+      "description": "Id of the DataBackup manifest row this piece belongs to",
+      "type": "string"
+    },
+    "chunk_index": {
+      "description": "0-based piece number within this table",
+      "type": "number"
+    },
+    "entity_name": {
+      "description": "Which table these records came from",
+      "type": "string"
+    },
+    "record_count": {
+      "description": "Number of records in this piece",
+      "type": "number"
+    },
+    "records": {
+      "description": "The records, exactly as read (ids and dates included)",
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "backup_id",
+    "entity_name",
+    "chunk_index",
+    "records"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "type": "object"
+}
