@@ -47,6 +47,14 @@ Deno.serve(async (req) => {
 
         const { snapshot_data } = backup;
 
+        // 2026-10-20: backups are now saved in pieces (format 'parts-v2', see backupData).
+        // There is no safe restore for that format yet — refuse rather than wipe data.
+        // NOTE: this old restore re-creates records with NEW ids, which breaks every
+        // cross-table link (squad members -> squads, wars -> squads...). Do not rely on it.
+        if (snapshot_data?.format === 'parts-v2') {
+            return Response.json({ error: 'Restore is not available for this backup format yet.' }, { status: 409 });
+        }
+
         console.log('[restoreDataBackup] Clearing existing data and restoring...');
 
         const [
