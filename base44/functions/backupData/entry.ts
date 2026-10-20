@@ -1,4 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+// 0.8.54: filter(query, sort, limit, skip, fields) — the prune relies on `fields`
+// so it never downloads an old backup's contents just to read its date.
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 // Data backup — "parts" format (v2), remade 2026-10-20.
 //
@@ -99,7 +101,7 @@ function chunkBySize(rows) {
 async function deleteBackupWithParts(db, backupId) {
     // Delete this backup's parts a page at a time, then the manifest.
     for (let i = 0; i < 200; i++) {
-        const parts = await withRetry(() => db.entities.DataBackupPart.filter({ backup_id: backupId }, 'chunk_index', 20), 'prune parts read');
+        const parts = await withRetry(() => db.entities.DataBackupPart.filter({ backup_id: backupId }, 'chunk_index', 50, 0, ['id']), 'prune parts read');
         if (!parts.length) break;
         for (const p of parts) { try { await withRetry(() => db.entities.DataBackupPart.delete(p.id), 'prune part delete'); } catch {} }
         parts.length = 0;
@@ -200,26 +202,28 @@ Deno.serve(async (req) => {
         if (warnings.length) console.warn('[backupData] warnings:', JSON.stringify(warnings));
 
         // 4. Retention — only automated backups, only after this one completed.
+        // Reads ONLY id + date: an old single-row backup is 50–100 MB, and reading
+        // one in full to check its date took minutes and made every run time out
+        // (found 2026-10-20). Time-capped so a slow prune can never fail a backup
+        // that has already saved — whatever is left is picked up next run.
         let pruned = 0;
         if (is_automated) {
+            const PRUNE_BUDGET_MS = 60_000;
+            const pruneStart = Date.now();
             try {
                 const cutoffMs = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
-                for (let i = 0; i < 500; i++) {
-                    // Oldest first, ONE row at a time — old single-row backups carry a huge blob.
-                    const batch = await withRetry(() => db.entities.DataBackup.filter({ backup_type: 'automated' }, 'created_date', 1), 'prune read');
-                    if (!batch.length) break;
-                    const old = batch[0];
-                    const oldId = old.id, oldDate = old.created_date;
-                    const oldFormat = old.snapshot_data?.format;
-                    for (const k of Object.keys(old)) delete old[k];
-                    batch.length = 0;
-                    if (oldId === manifestId) break;
-                    if (new Date(oldDate).getTime() >= cutoffMs) break;
+                const candidates = await withRetry(
+                    () => db.entities.DataBackup.filter({ backup_type: 'automated' }, 'created_date', 100, 0, ['id', 'created_date']),
+                    'prune read');
+                for (const c of candidates) {
+                    if (Date.now() - pruneStart > PRUNE_BUDGET_MS) { console.warn('[backupData] prune time budget used — rest next run'); break; }
+                    if (c.id === manifestId) continue;
+                    if (new Date(c.created_date).getTime() >= cutoffMs) break; // oldest-first: everything after is newer
                     try {
-                        if (oldFormat === FORMAT) await deleteBackupWithParts(db, oldId);
-                        else await withRetry(() => db.entities.DataBackup.delete(oldId), 'prune old-format delete');
+                        // New-format backups have parts; old single-row ones have none.
+                        await deleteBackupWithParts(db, c.id);
                         pruned++;
-                    } catch (e) { console.error('[backupData] prune of', oldId, 'failed:', e?.message); break; }
+                    } catch (e) { console.error('[backupData] prune of', c.id, 'failed:', e?.message); break; }
                 }
                 if (pruned > 0) console.log(`[backupData] Pruned ${pruned} automated backup(s) older than ${RETENTION_DAYS} days`);
             } catch (e) {
