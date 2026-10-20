@@ -4,12 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PlayerStatsPanel from './PlayerStatsPanel';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
+import { IN_GAME_SKUS } from '@/lib/skuMap';
 
-const XP_BUFF_COST = 10;
-const ULT_LITE_COST = 5;
-const ULT_FULL_COST = 10;
+// Prices come live from the Omen portal (useStorePrices) — see lib/storePrices.js.
 
 export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, engineRef, onBuyXpBuff, onSquadUltimate, omenxBalance = 0, xpBuffExpiry = 0, omenxPurchasesDisabled = false }) {
+    const price = useStorePrices();
+    const XP_BUFF_COST = price(IN_GAME_SKUS.xpSession);
+    const ULT_LITE_COST = price(IN_GAME_SKUS.squadUltimateLite);
+    const ULT_FULL_COST = price(IN_GAME_SKUS.squadUltimateFull);
     const [showSettings, setShowSettings] = useState(false);
     const [confirmRestart, setConfirmRestart] = useState(false);
     const [confirmQuit, setConfirmQuit] = useState(false);
@@ -106,7 +110,7 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                                 title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Spawn a capped-power squad clone'}
                             >
                                 <span className="text-xs md:text-sm tracking-wider uppercase">Squad ULT Lite</span>
-                                <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{ULT_LITE_COST} OMENX</span>
+                                <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{formatTokens(ULT_LITE_COST)} OMENX</span>
                             </button>
                             <button
                                 onClick={() => onSquadUltimate('full')}
@@ -115,7 +119,7 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                                 title={omenxPurchasesDisabled ? 'OMENX purchases temporarily disabled' : 'Spawn a full-power squad clone scaled to your upgrades'}
                             >
                                 <span className="text-xs md:text-sm tracking-wider uppercase">Squad ULT Full</span>
-                                <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{ULT_FULL_COST} OMENX</span>
+                                <span className="bg-black/30 px-2 py-0.5 rounded text-[10px] font-mono">{formatTokens(ULT_FULL_COST)} OMENX</span>
                             </button>
                         </div>
                     )}
@@ -130,11 +134,11 @@ export default function PauseModal({ onResume, onQuit, onRestart, onHideHud, eng
                                 onClick={onBuyXpBuff}
                                 disabled={!canAfford || omenxPurchasesDisabled}
                                 className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-bold text-base md:text-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
-                                title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : (canAfford ? 'Apply +50% XP for 1 hour' : `Need ${XP_BUFF_COST} OMENX`)}
+                                title={omenxPurchasesDisabled ? 'OMENX purchases are temporarily disabled' : (canAfford ? 'Apply +50% XP for 1 hour' : `Need ${formatTokens(XP_BUFF_COST)} OMENX`)}
                             >
                                 <Sparkles className="w-4 h-4" />
                                 +50% XP (1h)
-                                <span className="bg-black/30 px-2 py-0.5 rounded text-xs font-mono">{XP_BUFF_COST} OMENX</span>
+                                <span className="bg-black/30 px-2 py-0.5 rounded text-xs font-mono">{formatTokens(XP_BUFF_COST)} OMENX</span>
                             </button>
                         )
                     )}
