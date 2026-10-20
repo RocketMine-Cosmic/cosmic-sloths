@@ -158,7 +158,7 @@ movement between spend and payday; the studio doesn't.
 That leaves **5 of every 100** after payouts. Decide whether to lower a pool before the fee
 changes; there will be 60 days' notice.
 
-`topupWeeklyPayout` is **not** an ongoing cost. It's a one-off repair tool from S? W19 (when the
+`topupWeeklyPayout` is **not** an ongoing cost. It's a one-off repair tool from week 2026-W19 (when the
 payout went to too many players) and only runs when pressed.
 
 ### VIP chest webhook
