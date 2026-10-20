@@ -44,7 +44,10 @@ const TABLES = [
     'User',
 ];
 
-const READ_LIMIT = 10000;           // per table; a table at this size is flagged as possibly truncated
+// Base44 silently stops a single list() at 5,000 rows (found 2026-10-20: four tables
+// came back at exactly 5,000 while holding more). So every table is read in pages.
+const PAGE_SIZE = 2000;
+const MAX_ROWS_PER_TABLE = 200_000; // safety stop; hitting it is flagged as a warning
 const PART_TARGET_BYTES = 700_000;  // keep each write small and quick
 const RETENTION_DAYS = 14;
 const FORMAT = 'parts-v2';
@@ -135,9 +138,13 @@ Deno.serve(async (req) => {
         const warnings = [];
         let partCount = 0, totalBytes = 0;
         for (const table of TABLES) {
-            let rows;
+            const rows = [];
             try {
-                rows = await withRetry(() => db.entities[table].list('created_date', READ_LIMIT), `${table} read`);
+                for (let skip = 0; skip < MAX_ROWS_PER_TABLE; skip += PAGE_SIZE) {
+                    const page = await withRetry(() => db.entities[table].list('created_date', PAGE_SIZE, skip), `${table} read @${skip}`);
+                    rows.push(...page);
+                    if (page.length < PAGE_SIZE) break;
+                }
             } catch (e) {
                 // A missing/unreadable table must not lose the rest of the backup — record it loudly.
                 warnings.push(`${table}: read failed — ${e?.message}`);
@@ -145,7 +152,9 @@ Deno.serve(async (req) => {
                 continue;
             }
             entity_counts[table] = rows.length;
-            if (rows.length >= READ_LIMIT) warnings.push(`${table}: hit the ${READ_LIMIT} read limit — may be incomplete`);
+            if (rows.length >= MAX_ROWS_PER_TABLE) warnings.push(`${table}: hit the ${MAX_ROWS_PER_TABLE} safety stop — may be incomplete`);
+            // Same id twice would mean the pages shifted under us (rows written mid-read).
+            if (new Set(rows.map(r => r.id)).size !== rows.length) warnings.push(`${table}: duplicate ids across pages — rows changed during the read`);
             const chunks = chunkBySize(rows);
             for (let i = 0; i < chunks.length; i++) {
                 const chunk = chunks[i];
