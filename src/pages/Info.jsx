@@ -584,7 +584,7 @@ const TABS_CONTENT = {
                 </p>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-red-900/40 mt-4">
                     <div className="font-bold text-white text-sm md:text-base mb-1.5">⚔️ How to Participate</div>
-                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300"><Price sku="ingame-xp-buff" /> OMCADE</strong> directly on the Raid page.</p>
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">You can launch up to <strong className="text-cyan-400">5 Raid Runs</strong> per day. The damage you deal to the boss in these runs is permanently subtracted from its global health pool. Need more attempts? You can <strong className="text-purple-300">Buy 5 More Runs</strong> for <strong className="text-purple-300"><Price sku="globalraid-retries" /> OMCADE</strong> directly on the Raid page.</p>
                 </div>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 mt-3">
                     <div className="font-bold text-cyan-300 text-sm md:text-base mb-1.5">📡 Live Activity Feed</div>

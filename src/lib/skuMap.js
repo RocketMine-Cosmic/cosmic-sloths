@@ -24,6 +24,7 @@ export const IN_GAME_SKUS = {
     starFragments:      'ingame-star-fragments',    // S8 Fragment Express — 15 frags / 10 OMCADE
     starFragmentsBulk:  'ingame-star-fragments-10', // S8 Fragment Express bulk — 150 frags / 100 OMCADE
     xpSession:     'ingame-xp-buff',
+    raidRetries:   'globalraid-retries', // Global Raid "Buy 5 More Runs"
     biasRespec:    'bias-respec', // ~10 OMCADE — clears all allocated pool-bias points
 };
 

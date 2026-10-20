@@ -49,10 +49,12 @@ export default function GlobalRaid({ isCarousel }) {
         return [...new Set(['neobyte', ...(save.unlockedCharacters || []), ...nftUnlocked])];
     }, [save.unlockedCharacters, nfts]);
     const { pending, setPending, confirm: confirmPurchase } = useOmenXConfirmation('global-raid');
-    // NOTE (2026-10-20): "Buy 5 Raid Runs" is charged via the XP-buff SKU (there is
-    // no raid-runs SKU on the portal), so its price is whatever ingame-xp-buff costs.
+    // 2026-10-20: "Buy 5 Raid Runs" now charges its own portal SKU (globalraid-retries).
+    // It used to charge the XP-buff SKU, so raid-run sales were logged as XP buffs and
+    // the two could never be priced separately. purchaseSku charges any priced SKU when
+    // no grantInfo is sent; the runs are granted client-side after a confirmed charge.
     const price = useStorePrices();
-    const RAID_RUNS_COST = price(IN_GAME_SKUS.xpSession);
+    const RAID_RUNS_COST = price(IN_GAME_SKUS.raidRetries);
 
     React.useEffect(() => {
         const handleSaveUpdated = (e) => setSave(e.detail);
@@ -247,7 +249,7 @@ export default function GlobalRaid({ isCarousel }) {
         confirmPurchase(RAID_RUNS_COST, 'Buy 5 Raid Runs', async () => {
             try {
                 if (!authData?.walletAddress) throw new Error('No wallet address');
-                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.xpSession, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
+                const res = await base44.functions.invoke('purchaseSku', { skuId: IN_GAME_SKUS.raidRetries, quantity: 1, walletAddress: authData.walletAddress, userId: authData.walletAddress, playerName: authData.username || authData.walletAddress });
                 if (!res.data?.success) throw new Error(res.data?.error || 'Purchase failed');
 
                 // Only grant runs after confirmed charge

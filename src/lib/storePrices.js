@@ -18,6 +18,7 @@ export const FALLBACK_PRICES = {
     'ingame-revive': 4, 'ingame-revive-8': 8, 'ingame-revive-15': 15, 'ingame-revive-25': 25,
     'ingame-squad-ult-lite': 5, 'ingame-squad-ult-full': 10,
     'ingame-xp-buff': 10,
+    'globalraid-retries': 10,
     'ingame-star-fragments': 10, 'ingame-star-fragments-10': 100,
     'bias-respec': 10,
     // Talent respecs
