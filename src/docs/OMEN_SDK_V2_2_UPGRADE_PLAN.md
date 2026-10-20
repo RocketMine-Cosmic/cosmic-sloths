@@ -194,6 +194,8 @@ helper in B2 (`not_in_game`).
 **Phase 0 — prerequisites**
 1. ✅ **Sizing ticket answered (2026-09-19):** activity 50,000/mo, 2,000/player, 100/grant,
    period = calendar month (`2026-09`, resets 1st, no carry-over). Re-size before 150 actives.
+1a. ✅ **Live on Developer Portal (2026-10-20):** 0 / 50,000 granted, max 100/grant, 2,000/player,
+   granting enabled, platform daily cap 2,500/player across all games (our 135/day guard sits well under).
 1b. 🔴 **Send Omen the event list + amounts** (`OMEN_ACTIVITY_POINTS_EVENT_LIST.md`).
 2. New API key with `activity_points:write` → secret `OMENX_POINTS_API_KEY` (don't overload
    rewards/payment keys — separate rate buckets). Skip the VIP/quest scopes for now.
