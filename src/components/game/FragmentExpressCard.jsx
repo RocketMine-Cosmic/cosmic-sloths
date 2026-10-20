@@ -11,6 +11,8 @@ import { isS8OrLater } from '@/lib/seasonGate';
 import { refreshBalance } from '@/lib/playerDataCache';
 import OmenXConfirmation from './OmenXConfirmation';
 import { useToast } from '@/components/ui/use-toast';
+import { useStorePrices, formatTokens } from '@/lib/storePrices';
+import { IN_GAME_SKUS } from '@/lib/skuMap';
 
 // S8 Fragment Express Lane — buy 15 relic fragments for 10 OMENX (or a 10× bulk
 // bundle for 150 frags / 100 OMENX), capped at 40 batches per player per ISO
@@ -26,15 +28,19 @@ export default function FragmentExpressCard({ save, setSave }) {
     // "don't show for 24h" toggle when this is true (see OmenXConfirmation).
     const [forceConfirm, setForceConfirm] = useState(false);
     const { toast } = useToast();
+    // Live portal prices (hook must run before the S8 early-return below).
+    const price = useStorePrices();
 
     // Feature gate — S8+ only. Held back until W29 rollover so we don't ship
     // an in-season pricing change to the current S7 economy.
     if (!isS8OrLater()) return null;
 
     const BATCH_SIZE = 15;
-    const BATCH_COST = 10;
+    // Single batch and the 10× bundle are separate portal SKUs, each with its own price.
+    const BATCH_COST = price(IN_GAME_SKUS.starFragments);
+    const BULK_COST = price(IN_GAME_SKUS.starFragmentsBulk);
     const WEEKLY_CAP = 40;
-    const BULK_BATCHES = 10; // 10× bundle → 150 frags / 100 OMENX
+    const BULK_BATCHES = 10; // 10× bundle → 150 frags
 
     const { week_id } = getCurrentPeriodIds();
     const currentBatches = save.weekly_fragment_batches_week_id === week_id
@@ -43,7 +49,7 @@ export default function FragmentExpressCard({ save, setSave }) {
     const remaining = Math.max(0, WEEKLY_CAP - currentBatches);
     const atCap = remaining <= 0;
     const canAffordSingle = (omenxBalance ?? 0) >= BATCH_COST;
-    const canAffordBulk = (omenxBalance ?? 0) >= BATCH_COST * BULK_BATCHES;
+    const canAffordBulk = (omenxBalance ?? 0) >= BULK_COST;
     // Bulk requires enough room in the weekly cap for a full 10-batch bundle —
     // partial grants are rejected server-side so we gate the button here too.
     const bulkFitsInCap = remaining >= BULK_BATCHES;
@@ -53,7 +59,7 @@ export default function FragmentExpressCard({ save, setSave }) {
         if (atCap) return;
         SoundManager.playUIClick();
         const label = `+${BATCH_SIZE * batches} Star Fragments`;
-        const cost = BATCH_COST * batches;
+        const cost = isBulk ? BULK_COST : BATCH_COST * batches;
         // Set forceConfirm BEFORE opening the modal so the initial render hides
         // the 24h-skip toggle. Cleared in onCancel/onConfirm below.
         setForceConfirm(isBulk);
@@ -101,7 +107,7 @@ export default function FragmentExpressCard({ save, setSave }) {
                 ? 'Not Enough OMENX'
                 : busy === 'single'
                     ? 'Processing…'
-                    : `Buy ${BATCH_SIZE} 🌟 · ${BATCH_COST} OMENX`;
+                    : `Buy ${BATCH_SIZE} 🌟 · ${formatTokens(BATCH_COST)} OMENX`;
 
     const bulkLabel = omenxBlocked
         ? 'OMENX Paused'
@@ -113,7 +119,7 @@ export default function FragmentExpressCard({ save, setSave }) {
                     ? 'Not Enough OMENX'
                     : busy === 'bulk'
                         ? 'Processing…'
-                        : `Buy ${BATCH_SIZE * BULK_BATCHES} 🌟 · ${BATCH_COST * BULK_BATCHES} OMENX`;
+                        : `Buy ${BATCH_SIZE * BULK_BATCHES} 🌟 · ${formatTokens(BULK_COST)} OMENX`;
 
     const singleDisabled = !!busy || atCap || !canAffordSingle || omenxBlocked;
     const bulkDisabled = !!busy || atCap || !canAffordBulk || !bulkFitsInCap || omenxBlocked;
@@ -128,8 +134,8 @@ export default function FragmentExpressCard({ save, setSave }) {
                 <p className="text-slate-400 text-sm mb-3">
                     Skip the gold-convert grind. Instantly buy Star Fragments 🌟 with OMENX to speed up your relic prestige climb.
                     <br />
-                    <span className="text-purple-300 font-bold">Rate: {BATCH_COST} OMENX = {BATCH_SIZE} 🌟 ({(BATCH_COST / BATCH_SIZE).toFixed(2)} OMENX per fragment)</span>
-                    <span className="ml-3 text-slate-500">Weekly cap: {WEEKLY_CAP} batches ({WEEKLY_CAP * BATCH_SIZE} frags / {WEEKLY_CAP * BATCH_COST} OMENX)</span>
+                    <span className="text-purple-300 font-bold">Rate: {formatTokens(BATCH_COST)} OMENX = {BATCH_SIZE} 🌟 ({Number((BATCH_COST / BATCH_SIZE).toFixed(3))} OMENX per fragment)</span>
+                    <span className="ml-3 text-slate-500">Weekly cap: {WEEKLY_CAP} batches ({WEEKLY_CAP * BATCH_SIZE} frags / {formatTokens(WEEKLY_CAP * BATCH_COST)} OMENX)</span>
                 </p>
 
                 <div className="flex flex-col gap-3">
