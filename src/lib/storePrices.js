@@ -92,6 +92,13 @@ export function formatTokens(n) {
     return x.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+// <Price sku="ingame-reroll" /> — live price as text, for help/guide copy that is
+// written as static JSX (Info page, Welcome modal). Updates when prices load.
+export function Price({ sku }) {
+    useStorePrices();
+    return formatTokens(skuPrice(sku));
+}
+
 // React: re-render when live prices arrive. Returns skuPrice for convenience.
 export function useStorePrices() {
     const [, setTick] = React.useState(0);
