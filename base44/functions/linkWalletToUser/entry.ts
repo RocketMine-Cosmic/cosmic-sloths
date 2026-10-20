@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { verifyOAuthUser } from '../../shared/omenxRest.ts';
+import { forgetVerifiedWallet } from '../../shared/verifiedMe.ts';
 
 // Links the OmenX wallet to the currently-authenticated Base44 user.
 // Called once after OmenX + Base44 login both succeed.
@@ -31,7 +32,30 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Wallet mismatch' }, { status: 401 });
         }
 
-        // Write wallet to the Base44 user record (only if not already set or different)
+        // 2026-10-21: record the VERIFIED wallet in the server-only WalletLink table. This,
+        // not User.wallet_address, is what every function trusts (see shared/verifiedMe.ts).
+        // Upsert one row per user, by the service role — players can't write this table.
+        const db = base44.asServiceRole;
+        const existing = await db.entities.WalletLink.filter({ user_id: me.id }, '-updated_date', 5);
+        if (existing.length > 0) {
+            if (existing[0].wallet_address !== verifiedWallet) {
+                await db.entities.WalletLink.update(existing[0].id, {
+                    wallet_address: verifiedWallet, source: 'omen_verified', verified_at_ms: Date.now(),
+                });
+            }
+            // Tidy any accidental duplicates for this user.
+            for (const extra of existing.slice(1)) {
+                try { await db.entities.WalletLink.delete(extra.id); } catch {}
+            }
+        } else {
+            await db.entities.WalletLink.create({
+                user_id: me.id, wallet_address: verifiedWallet, source: 'omen_verified', verified_at_ms: Date.now(),
+            });
+        }
+        forgetVerifiedWallet(me.id);
+
+        // Still mirror it onto the User record — the browser reads it for display and to
+        // decide whether to re-link. It is NOT trusted by the server any more.
         if (me.wallet_address !== verifiedWallet) {
             await base44.auth.updateMe({ wallet_address: verifiedWallet });
         }
