@@ -32,6 +32,7 @@ All times are **UTC**. UK clocks go back on Sun 25 Oct, so from then on UTC = UK
 | Profile Fan-Out | on every name, title or icon change | Copies it onto leaderboard, squad and chat rows | Self-heals on the next change |
 | Squad Wars Weekly Pairing | **Mon 00:05** | Settles last week's wars, then pairs this week | **Re-run the same day** (see 3.1) |
 | Refresh store prices (every 5 min) | every 5 min | Fetches the Omen catalogue once and saves it (AppConfig `omen_store_prices`); every player's game reads that copy via `getSkuPrices`. Added 21 Oct to replace per-player polling of Omen | Harmless: after 20 min stale, `getSkuPrices` fetches from Omen itself. Re-run to refresh now |
+| Activity points — weekly placement + retries | hourly (:17) | Grants Omen activity points for the last two finished weeks' board placements (read from `PayoutLog`, so they land once the Monday payouts are done), Squad War wins and Squad Champions, and retries any grant left `pending`/`error`. Added 21 Oct. Does nothing while `points_config.enabled` is false | Harmless: every grant has a fixed key, the next run picks up where this one stopped |
 | Weekly Purge Old Spend Logs | Wed 09:00 | Deletes spend logs older than 6 weeks (only 50 per run, see K-E3) | Harmless |
 
 **Switched off on purpose (never turn on without reading the note):**
@@ -73,6 +74,10 @@ Omen dates: liquidity pool test **21 Oct**, full **22 Oct**, card checkout for o
 5. **Pools:** this week's and this season's `TokenPool` rows exist, and no duplicate rows for one period.
 6. **Payout leftovers:** any `PayoutLog` with `tx_id` starting `pending-` needs checking on Omen (§5.2).
 7. **Raid:** exactly one `GlobalBoss` for this week, once anyone has visited the raid page.
+8. **Activity points** (`PointGrantLog`): no rows stuck in `pending`/`error` for more than a few hours
+   (the hourly job retries them), and this month's `granted` total is well under 45,000. Refusals and
+   `guard` rows are normal; a burst of `refused` with "paused" or "no allocation" in the reason means
+   Omen switched something off, so tell Rob. See §7.
 
 Report to Rob only when something needs him. Otherwise a one-line "all fine" in the log.
 
