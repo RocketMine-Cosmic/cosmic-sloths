@@ -275,25 +275,36 @@ or card buyers won't feed the prize pools. Design that before opting in.
 item and need no change. Check what the purchase response returns as the charged amount, so
 TokenSpendLog and the pools record real tokens.
 
-### 7. 🔴 Activity points (the daily loop and weekly placement)
-Agreed with Omen on 19 Sept: 50,000 points a month, 2,000 per player, 100 per grant. That's live on the
-portal, but **nothing is built**, so each month's allocation goes unused (it doesn't carry
-over). Plan, unchanged:
-- **Phase 0:** send `OMEN_ACTIVITY_POINTS_EVENT_LIST.md`; create a key with
-  `activity_points:write` (`OMENX_POINTS_API_KEY`); write a probe that grants 1 point and
-  deliberately trips the three refusals.
-- **Phase 1:** `shared/omenxPoints.ts` and a `PointGrantLog` entity (log first, unique key).
-  `AppConfig.points_config` holds the amounts, an on/off switch and three guards (45k of 50k a month,
-  1,900 per player, 135 a day). Hook into `claimDailyLogin`, `claimDailyTask` and `saveScore`
-  without ever blocking them, and add a points strip on Dailys.
-  - Daily: login 10, all tasks 10, first clear 5, kill target 10.
-  - Streaks: 25, 50, 100, 100.
-  - Key: `ap-<event>-<date>-<wallet>`.
-- **Phase 2:** weekly placement (top 10 of each board 100/75/50/25, Squad War win 10, Champions
-  100) inside the payout functions, after the token payout succeeds.
-- Refusals (`over_grant_max`, `player_cap_reached`, `pool_exhausted`, `not_in_game`) are
-  expected outcomes, logged, never errors.
-- Go back to Omen before 150 monthly actives.
+### 7. ✅ Activity points (the daily loop and weekly placement) — live since 21 Oct 2026
+Agreed with Omen on 19 Sept: 50,000 points a month, 2,000 per player, 100 per grant; the portal also
+shows a platform-wide cap of 2,500 per player per day across all games. Unused allocation is lost at
+month end. Built and switched on 21 Oct (design and reasons: project doc
+`claude/handoffs/ACTIVITY_POINTS.md`; day-to-day handling: GAME_OPERATIONS §5.6).
+- **What earns:** the Star Ops cards (login 10, all 3 Daily Bounties 10, all Daily Tasks 10, Daily
+  Mission 5, login streak 3/7/14/30 = 25/50/100/100) and weekly placement (top 10 of the weekly score and
+  weekly kills boards 100/75/50/25, Squad War win 10 per member, Squad Champions 1st 100 per member).
+  The two daily labels differ from the list sent to Edward ("kill target" → all 3 bounties, "first
+  sector clear" → daily mission; same amounts), because the game has no fixed daily kill target.
+- **How:** `shared/omenxPoints.ts` calls `POST /v1/activity/grant-points` directly with an
+  `Idempotency-Key` of `ap-<event>-<day|week|war|season>-<wallet>`, after writing a `PointGrantLog` row
+  (unique on the key). Our caps are checked first (`AppConfig.points_config.guards`: 45,000 a month,
+  1,900 per player a month, 135 per player a day). Hooks in `claimDailyLogin`, `claimBounty`,
+  `claimDailyTask` never fail the claim. Weekly placement is a separate hourly job
+  (`grantWeeklyPlacementPoints`) that reads `PayoutLog` after the payouts, so it never touches a payout.
+  Four keys (`OMENX_POINTS_API_KEY`, `_2`, `_3`, `_4`); on 429/503 it waits, then tries the next key with
+  the same idempotency key.
+- **Omen's answers (live docs + probe, 21 Oct):** 200 with `credited` (a replay is `duplicate: true`,
+  credits nothing; no VIP multiplier since 1 Sept). Refusals are `400 GRANT_POINTS_FAILED` with the reason
+  in the **message** (over max, wallet ceiling, pool exhausted, `daily_cap_reached`, paused), and
+  `404 PLAYER_NOT_FOUND`. `503 GUARD_UNVERIFIABLE` / 429: retry with the same key. The named codes in the
+  September plan (`over_grant_max` etc.) never existed.
+- **Probe (21 Oct, Rob's wallet):** grant, replay, over-100 and the 2,000 ceiling all behaved as
+  documented. **A never-played wallet was credited**, although Omen's docs and Edward say it should be
+  refused — report to Omen (Part 5). No risk to us: we only grant for signed-in players' claims.
+- **Unresolved:** whether the rate limit is per key (the portal card shows 100/min on each) or per game
+  (the Authentication docs say every key shares one bucket). Rob's experience is that more keys helped.
+  The code works either way.
+- Go back to Omen before 150 monthly actives (26 in the 30 days to 20 Oct).
 
 ### 8. 🔴 Telemetry (browser SDK 2.3+)
 The browser SDK is still 1.0.x, so Omen sees logins only: no session length and no engagement. 2.3 adds
@@ -353,6 +364,11 @@ upgrade gives a **realtime wallet subscription**, which could replace balance po
 5. **nonce-too-low:** is the fresh-key workaround still needed?
 6. **428 confirmation:** what threshold, and is it on for MainNet?
 7. **Iframe origin:** which domain embeds games now?
+8. **Activity points "has not played" check:** on 21 Oct a grant to `0x…dead` (never played) was
+   credited. Docs and Edward (19 Sept) say it should be `404 PLAYER_NOT_FOUND`. Report it, together with
+   the relabel of two daily events (item 7).
+9. **Rate limits per key or per game?** The portal shows 100/min on each key; the Authentication docs say
+   one shared bucket per game.
 
 ---
 
