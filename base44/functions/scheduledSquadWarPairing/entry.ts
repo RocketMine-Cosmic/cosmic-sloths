@@ -191,13 +191,21 @@ async function resolveWarsForWeek(base44, weekId) {
     return resolved;
 }
 
+// Admin / scheduler / AdminDash only (K-A2 part 2, T-001, 21 Oct 2026). The old check only
+// blocked a signed-in non-admin, so an anonymous caller (no user) could settle and pair wars
+// at any time. The scheduled workflow passes this as an admin (same check proven on
+// refreshSkuPrices). No dashboard button calls this function.
+async function isAdminCaller(base44, body) {
+    const key = body?.adminKey || body?.args?.adminKey;
+    if (key && key === Deno.env.get('AdminDash')) return true;
+    try { const me = await base44.auth.me(); return me?.role === 'admin' || me?.role === 'owner'; } catch { return false; }
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        // Scheduled automation may invoke without a user. If a user is set,
-        // require admin to call manually.
-        const me = await base44.auth.me().catch(() => null);
-        if (me && me.role !== 'admin' && me.role !== 'owner') {
+        const body = await req.json().catch(() => ({}));
+        if (!(await isAdminCaller(base44, body))) {
             return Response.json({ error: 'Forbidden.' }, { status: 403 });
         }
 
