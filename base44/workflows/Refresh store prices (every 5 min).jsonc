@@ -1,0 +1,41 @@
+{
+  "name": "Refresh store prices (every 5 min)",
+  "description": "Fetches the Omen product catalogue once every 5 minutes and saves it (AppConfig 'omen_store_prices') for every player's game to read via getSkuPrices. Replaces per-player polling of Omen (21 Oct 2026). If this stops, getSkuPrices falls back to fetching Omen itself after 20 minutes.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-10-21T08:00:00Z",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "then": "end",
+          "with": {
+            "args": {},
+            "function_name": "refreshSkuPrices"
+          }
+        }
+      }
+    ],
+    "document": {
+      "dsl": "1.0.0",
+      "name": "refresh_store_prices",
+      "namespace": "base44",
+      "version": "1.0"
+    }
+  }
+}
