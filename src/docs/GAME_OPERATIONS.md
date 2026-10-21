@@ -254,7 +254,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 
 ### F. Small
 - K-F1: The legendary trail is $30, over Omen's $25 limit, so it can't be bought (halving prices fixes it).
-- K-F2: The treasury buff costs players gold but does nothing in game.
+- K-F2: The treasury buff costs players gold but does nothing in game. Confirmed 21 Oct on live code: only the treasury screens and admin tools read `active_buff_tier`. ~69M gold spent by 10 squads since June (donated minus balance). **Rob, 21 Oct: make it work as the screen says** (meant as a gold sink with a real effect). Plan: server-side only — squad XP bonus at the weekly rollover in `squadActions` (read the ending week's buff before it is cleared; war/Champions kills untouched), gold bonus on `run.gold` in `saveScore` after scoring, boss damage bonus in `submitBossDamage` after the clamp; squad looked up from real membership, never the browser's squad id (K-D2). Ships at a rollover behind the season gate.
 - K-F3: Squad core editor Save drops Lv8–15 squads to Lv7.
 - K-F4: The Champions share is 10% in code but 5% in the comments and workflow text.
 - K-F5: The cron pairs 1-member squads; the manual path needs 2.
@@ -323,5 +323,4 @@ Supabase build (today a Discord alert arrives and Rob rewards the chest by hand)
 Note: function fixes reach scheduled jobs at once, but the live site keeps the old version until the
 app is **published**. After a function fix, publish and then test on cosmic-sloths.com.
 
-1. Is the treasury buff meant to do something?
-2. Who else holds admin permissions or the `AdminDash` key, and rotate it?
+1. Who else holds admin permissions or the `AdminDash` key, and rotate it?
