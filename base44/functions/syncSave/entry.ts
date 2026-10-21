@@ -80,6 +80,10 @@ const SERVER_OWNED_UNLOCK_ARRAYS = [
     // verifyOwned() check on the leaderboard mirror in saveScore, since that
     // verifies against this same array.
     'owned_chest_cosmetics',
+    // VIP chest grant stamps (base44/shared/vipChests.ts). A grant and its stamp are written in one
+    // atomic step; a missing stamp is how a wiped grant is detected and put back. If the browser's
+    // stale copy could overwrite this list, a stamp could vanish while the grant stayed -> paid twice.
+    'vipChestReceiptsApplied',
 ];
 
 // Upgrade levels: cloud is the truth (granted via purchaseSku / spendGold in 3b).
