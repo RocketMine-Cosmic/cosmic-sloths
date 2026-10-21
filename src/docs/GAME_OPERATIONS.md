@@ -225,7 +225,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 ### C. Dated bugs
 | ID | Issue | When | Status |
 |---|---|---|---|
-| K-C1 | **2026 has 53 weeks.** W53 wars are never settled (code assumes 52), W53 becomes a one-week season S14, Champions "auto" skips it, and the treasury skips W53. | Fix before **28 Dec** | 🔴 Needs Rob (what should S14 be?) |
+| K-C1 | **2026 has 53 weeks.** W53 wars are never settled (code assumes 52), W53 becomes a one-week season S14, Champions "auto" skips it, and the treasury skips W53. | Fix before **28 Dec** | 🟡 **Decided (Rob, 21 Oct): W53 joins S13** — a 5-week "bumper Christmas" season S13 (W49–W53, 30 Nov – 3 Jan), paid Mon 4 Jan. There is no S14. To build: season formula caps at 13, W53 wars settle, Champions/treasury handle W53. |
 | K-C2 | Squad profile uses an old week formula: shows 0 weekly kills and raid damage every Sunday. In 2027 it's a full week out. | Now | 🔴 Easy |
 | K-C3 | Raid "ends in" timer counts to Sunday 00:00 (the week ends Sunday 23:59) and shows 7 days on Sundays. | Now | 🔴 Easy |
 
@@ -321,7 +321,6 @@ Supabase build (today a Discord alert arrives and Rob rewards the chest by hand)
 Note: function fixes reach scheduled jobs at once, but the live site keeps the old version until the
 app is **published**. After a function fix, publish and then test on cosmic-sloths.com.
 
-1. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
-2. Compensate the ~1 day of W43 war kills lost to the pairing failure?
-3. Is the treasury buff meant to do something?
-4. Who else holds admin permissions or the `AdminDash` key, and rotate it?
+1. Compensate the ~1 day of W43 war kills lost to the pairing failure?
+2. Is the treasury buff meant to do something?
+3. Who else holds admin permissions or the `AdminDash` key, and rotate it?
