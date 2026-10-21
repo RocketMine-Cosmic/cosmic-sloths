@@ -34,6 +34,7 @@ import AdminMaintenanceReset from '../components/admin/AdminMaintenanceReset';
 import AdminTokenSpendLogBackfill from '../components/admin/AdminTokenSpendLogBackfill';
 import AdminGoldAudit from '../components/admin/AdminGoldAudit';
 import AdminGrantPanel from '../components/admin/AdminGrantPanel';
+import AdminVipChests from '../components/admin/AdminVipChests';
 import AdminRefreshPlayerNFTs from '../components/admin/AdminRefreshPlayerNFTs';
 import AdminSuspiciousRuns from '../components/admin/AdminSuspiciousRuns';
 import AdminSquadChatModeration from '../components/admin/AdminSquadChatModeration';
@@ -77,6 +78,7 @@ const TAB_GROUPS = [
         tabs: [
             { id: 'players',   label: 'Players',      icon: Users,         perm: 'edit_players' },
             { id: 'grant',     label: '🎁 Grant',      icon: Gift,          perm: 'edit_players' },
+            { id: 'vip_chests', label: '🎁 VIP Chests', icon: Gift,         perm: 'edit_players' },
             { id: 'nft_refresh', label: '✨ NFT Refresh', icon: Gift,        perm: 'edit_players' },
             { id: 'goldaudit', label: '🪙 Gold Audit', icon: Coins,         perm: 'edit_players' },
             { id: 'blacklist', label: '🚫 Blacklist', icon: AlertTriangle, perm: 'manage_blacklist' },
@@ -330,6 +332,7 @@ export default function AdminDashboard() {
                 </div>
             );
             case 'grant':       return <AdminGrantPanel walletAddress={adminWallet} />;
+            case 'vip_chests':  return <AdminVipChests />;
             case 'nft_refresh': return <AdminRefreshPlayerNFTs />;
             case 'squads':      return <AdminSquadManager walletAddress={adminWallet} />;
             case 'raid':        return <AdminRaid walletAddress={adminWallet} />;
