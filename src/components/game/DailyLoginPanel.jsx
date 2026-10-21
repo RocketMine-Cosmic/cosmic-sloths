@@ -5,6 +5,7 @@ import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
 import moment from 'moment';
+import { ApBadge, notifyActivityPoints } from './ActivityPoints';
 
 const DAILY_REWARDS = [
     { day: 1, reward: 400,   currency: 'gold',  icon: <Coins className="w-6 h-6 md:w-8 md:h-8 fill-yellow-500 text-yellow-500 mx-auto" /> },
@@ -72,6 +73,7 @@ export default function DailyLoginPanel({ save, setSave }) {
                 title: `Day ${data.streak} Reward Claimed!`,
                 description: `+${data.reward.reward} ${data.reward.currency === 'gold' ? 'Gold' : data.reward.currency === 'token' ? 'Cosmic Tokens' : 'Relic Fragments'}`,
             });
+            notifyActivityPoints(toast, data.activityPoints);
         } catch (e) {
             toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
         } finally {
@@ -85,6 +87,7 @@ export default function DailyLoginPanel({ save, setSave }) {
                 <h3 className="text-xl font-bold text-amber-400 flex items-center gap-2">
                     <Flame className="w-5 h-5 text-orange-400" />
                     Daily Login
+                    <ApBadge event="login" />
                     {streak > 0 && (
                         <span className="text-sm font-bold text-orange-400 bg-orange-900/40 border border-orange-700/50 px-2 py-0.5 rounded-full">
                             🔥 {streak} day streak
