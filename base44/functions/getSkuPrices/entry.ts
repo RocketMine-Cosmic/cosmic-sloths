@@ -1,75 +1,65 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { fetchOmenPrices, readSavedPrices, savePrices, STALE_AFTER_MS } from '../../shared/storePrices.ts';
+
 // Live store prices for the game client, in OMCADE (the token formerly OMENX).
 //
-// WHY (2026-10-20): every price players saw was typed into the client by hand,
-// while purchaseSku charges whatever the Omen portal says. Portal prices are set
-// in USD and Omen converts them to tokens at the token's USD price — a fixed
-// $0.10 peg until the OMCADE liquidity pool opens (21–22 Oct 2026), then a
-// market price. From then on the token amount per item moves, so screens must
-// show the portal's number, not a typed one.
-//
 // Returns { prices: { [skuId]: tokenAmount }, fetchedAt } for every active
-// fixed-price product. Mirrors purchaseSku's own read of the catalogue
-// (pricesInCurrency.OMENX — Omen's API still names the currency OMENX) so the
-// screen and the charge come from the same field. No auth: prices aren't secret,
-// and the cache means Omen is called at most once per TTL per instance.
+// fixed-price product on the Omen portal.
 //
-// Read-only: no writes, no charges. Added to main ahead of the OMCADE frontend
-// (branch omcade-live-prices) so the preview can be tested against real prices.
+// 2026-10-21: this NO LONGER calls Omen on every request. The scheduled job
+// refreshSkuPrices fetches the catalogue every 5 minutes and saves it in
+// AppConfig ('omen_store_prices'); this function just reads that saved copy.
+// Before, every open game window caused an Omen call every 5 minutes (see
+// shared/storePrices.ts). Only if the saved copy is older than 20 minutes (the
+// schedule has stopped) does this fetch from Omen itself and re-save, at most
+// once per 5 minutes per server instance, so players never get stuck on old prices.
+//
+// No auth: prices aren't secret. Read-only for the player; no charges.
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
-let _cache = null;
-let _expiresAt = 0;
+const MEMO_MS = 60 * 1000;          // per-instance memo of the saved row (saves DB reads)
+const FALLBACK_GAP_MS = 5 * 60 * 1000;
+let _memo = null;
+let _memoAt = 0;
+let _lastFallbackAt = 0;
 
-function getPaymentKeys() {
-    const keys = [];
-    const first = Deno.env.get('OMENX_PAYMENT_API_KEY');
-    if (first) keys.push(first);
-    for (let i = 2; i <= 8; i++) {
-        const k = Deno.env.get(`OMENX_PAYMENT_API_KEY_${i}`);
-        if (k) keys.push(k);
-    }
-    return keys;
-}
-
-Deno.serve(async (_req) => {
+Deno.serve(async (req) => {
     try {
         const now = Date.now();
-        if (_cache && now < _expiresAt) return Response.json({ ..._cache, cached: true });
+        if (_memo && now - _memoAt < MEMO_MS) return Response.json({ ..._memo, cached: true });
 
-        let base = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!base.startsWith('http')) base = `https://${base}`;
+        const base44 = createClientFromRequest(req);
+        const db = base44.asServiceRole;
+        const { value } = await readSavedPrices(db);
+        const fresh = value?.fetchedAt && now - value.fetchedAt < STALE_AFTER_MS && value.count > 0;
 
-        let res = null;
-        for (const key of getPaymentKeys()) {
-            res = await fetch(`${base}/v1/products`, { headers: { Authorization: `Bearer ${key}` } });
-            if (res.ok) break;
-            if (res.status !== 429 && res.status < 500) break;
-        }
-        if (!res || !res.ok) {
-            console.error('[getSkuPrices] catalogue HTTP', res?.status);
-            // Serve the last good list rather than nothing; the client falls back to built-in numbers if empty.
-            if (_cache) return Response.json({ ..._cache, cached: true, stale: true });
-            return Response.json({ prices: {}, fetchedAt: null, error: 'catalogue_unavailable' }, { status: 502 });
+        if (fresh) {
+            _memo = { prices: value.prices, fetchedAt: value.fetchedAt };
+            _memoAt = now;
+            return Response.json(_memo);
         }
 
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data?.products || data?.skus || data?.items || []);
-        const prices = {};
-        for (const p of list) {
-            const id = p.sku || p.skuId || p.id || p.productId;
-            if (!id || p.active === false) continue;
-            const price = parseFloat(p.pricesInCurrency?.OMENX ?? p.priceInOmenx ?? p.price ?? 0);
-            // Keep full precision (screen rounds for display) so "can you afford it" checks
-            // match what purchaseSku will actually charge.
-            if (price > 0) prices[id] = Math.round(price * 1e6) / 1e6;
+        // Saved copy missing or stale: the scheduled refresh isn't running.
+        if (now - _lastFallbackAt > FALLBACK_GAP_MS) {
+            _lastFallbackAt = now;
+            const result = await fetchOmenPrices();
+            const saved = await savePrices(db, result, 'getSkuPrices-fallback');
+            if (result.ok) {
+                console.warn('[getSkuPrices] saved prices were stale/missing — fetched from Omen directly. Is the "Refresh store prices" schedule running?');
+                _memo = { prices: saved.prices, fetchedAt: saved.fetchedAt };
+                _memoAt = now;
+                return Response.json(_memo);
+            }
+            console.error('[getSkuPrices] fallback fetch failed:', result.error);
         }
-        _cache = { prices, fetchedAt: now };
-        _expiresAt = now + CACHE_TTL_MS;
-        console.log(`[getSkuPrices] refreshed ${Object.keys(prices).length} prices`);
-        return Response.json(_cache);
+
+        // Serve the last good list rather than nothing; the client falls back to built-in numbers if empty.
+        if (value?.prices && Object.keys(value.prices).length) {
+            return Response.json({ prices: value.prices, fetchedAt: value.fetchedAt, cached: true, stale: true });
+        }
+        return Response.json({ prices: {}, fetchedAt: null, error: 'catalogue_unavailable' }, { status: 502 });
     } catch (error) {
         console.error('[getSkuPrices]', error?.message || error);
-        if (_cache) return Response.json({ ..._cache, cached: true, stale: true });
+        if (_memo) return Response.json({ ..._memo, cached: true, stale: true });
         return Response.json({ prices: {}, fetchedAt: null, error: 'exception' }, { status: 500 });
     }
 });
