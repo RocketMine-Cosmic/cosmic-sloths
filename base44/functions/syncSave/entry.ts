@@ -436,6 +436,17 @@ Deno.serve(async (req) => {
         // --- 11. NG+ unlock: server-owned (granted by saveScore on final-arena victory) ---
         merged.newGamePlusUnlocked = !!existingData.newGamePlusUnlocked;
 
+        // --- 11b. Daily login marker: SERVER-OWNED. Only claimDailyLogin writes it (21 Oct 2026). ---
+        // The browser only ever copies the server's value back, so ignoring it changes nothing for real
+        // players — but while the client's copy won the merge, a tampered browser could reset "claimed today"
+        // or invent a streak, then claim again: unlimited gold, and the 3/7/14/30-day streak activity points
+        // (keyed by the streak's start day). Cloud wins; a save with no marker keeps none.
+        if (existingData.dailyLogin && typeof existingData.dailyLogin === 'object') {
+            merged.dailyLogin = { ...existingData.dailyLogin };
+        } else {
+            delete merged.dailyLogin;
+        }
+
         // --- 12. SERVER-OWNED Forge augments + daily convert ledger (Phase 3e) ---
         merged.forgeWeaponAugments = existingData.forgeWeaponAugments
             ? JSON.parse(JSON.stringify(existingData.forgeWeaponAugments)) : {};
