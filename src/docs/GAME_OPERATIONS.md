@@ -208,7 +208,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 | K-A3 | Login popup posts tokens to `'*'`. `state` isn't checked, and any saved verifier is accepted. Raw tokens are written to function logs. | Medium | Easy | 🔴 |
 | K-A4 | `manage_admins` holders can give themselves wipe or refund rights. Squad surgery (`adminSquadOps`, including delete) and several backfills accept **any** staff wallet. | Medium | Easy | 🔴 |
 | K-A5 | Squad actions: any player can remove any squad member; officers can kick from other squads; anyone can post in any squad chat. | High (griefing) | Easy | 🔴 |
-| K-A6 | The emergency key `AdminDash` unlocks ~27 functions, sits in the browser's sessionStorage, and has never been rotated (as far as we know). | Medium | Rotate it | 🔴 Needs Rob |
+| K-A6 | The emergency key `AdminDash` unlocks ~27 functions, sits in the browser's sessionStorage, and has never been rotated (as far as we know). | Medium | Rotate it | ✅ Rotated by Rob 21 Oct (only Rob knew it; never used). Rob is the only Base44 admin. |
 
 ### B. Money paths
 | ID | Issue | Impact | Effort | Status |
@@ -324,4 +324,4 @@ Supabase build (today a Discord alert arrives and Rob rewards the chest by hand)
 Note: function fixes reach scheduled jobs at once, but the live site keeps the old version until the
 app is **published**. After a function fix, publish and then test on cosmic-sloths.com.
 
-1. Rotate the `AdminDash` key (never changed as far as we know)?
+_None open (21 Oct)._
