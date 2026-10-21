@@ -646,6 +646,9 @@ export default function Leaderboard() {
                                             ) : (
                                                 <div className="hidden sm:block w-[80px]"></div>
                                             )}
+                                            {(view === 'weekly' || view === 'all_time') && (
+                                                <LeaderboardApPill board={view === 'weekly' ? 'wscore' : 'wkills'} rank={index + 1} />
+                                            )}
                                         </div>
 
                                         {/* Player Info — chest cosmetics (animated icon + title flair) "follow"
