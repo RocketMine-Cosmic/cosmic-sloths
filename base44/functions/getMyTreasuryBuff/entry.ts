@@ -6,7 +6,7 @@ import { getTreasuryBuffForWallet } from '../../shared/treasuryBuff.ts';
 // the server, not from anything cached in the browser. Gold and boss-damage
 // bonuses are applied server-side elsewhere; they're returned here only so the
 // game can show them.
-// Body: none. Response: { tier, squad_id, week_id, xp_pct, gold_pct, boss_pct }
+// Body: none (ignored). Response: { tier, squad_id, week_id, xp_pct, gold_pct, boss_pct }
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
