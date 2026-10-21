@@ -197,7 +197,7 @@ Status: 🔴 open · 🟡 in progress · ✅ fixed. "Easy" = small, contained ch
 ### A. Security
 | ID | Issue | Impact | Effort | Status |
 |---|---|---|---|---|
-| K-A1 | **Who a player is rests on `User.wallet_address`,** written by `linkWalletToUser` with the player's own token. If a player can write it directly (`updateMe`), they can act as any wallet: load or overwrite its save, **spend its OMCADE**, or be admin (Rob's wallet is in the code). | Critical **if** writable | Test first (harmless self-write). Fix = keep the verified link somewhere players can't write and read it everywhere (~40 functions). | 🔴 **untested. Needs Rob** |
+| K-A1 | **Who a player is rests on `User.wallet_address`.** See §9 for how it works, why it's built this way, and the evidence. In short: the field is written with the player's own login, so the player can also write it directly, and the server never re-checks Omen. **No sign of abuse** (checked 21 Oct). | Critical **if** used | Options in §9. **Don't change the login flow or `User.wallet_address` itself**: the table rules and the two-login setup depend on it. | 🔴 **Needs Rob** |
 | K-A2 | **Functions with no caller check, callable by anyone on the internet:** `scheduledMaintenanceFlip` (lock the game), `autoToggleOmenxPurchases` (purchase from Rob's wallet), `mirrorProfileFanOut` (rename anyone), `alertLeaderboardTakeover`/`postDiscordLeaderboard` (Discord spam), `backupData {is_automated}` (burns write quota), pairing and cleanups. Anonymous calls do reach functions (confirmed 20 Oct with `getSkuPrices`). | High | Easy: a shared secret for scheduled callers, an admin check for people | 🔴 Needs Rob (security) |
 | K-A3 | Login popup posts tokens to `'*'`. `state` isn't checked, and any saved verifier is accepted. Raw tokens are written to function logs. | Medium | Easy | 🔴 |
 | K-A4 | `manage_admins` holders can give themselves wipe or refund rights. Squad surgery (`adminSquadOps`, including delete) and several backfills accept **any** staff wallet. | Medium | Easy | 🔴 |
@@ -258,9 +258,53 @@ Status: 🔴 open · 🟡 in progress · ✅ fixed. "Easy" = small, contained ch
 
 ---
 
+## 9. Identity: how a player is recognised (looked into 21 Oct)
+
+**How it works.** A player has **two logins**:
+- **Base44:** the session the game's database and functions run under.
+- **Omen:** OAuth, which proves they own a wallet.
+
+The game joins them in `linkWalletToUser`. It checks the Omen token with Omen, then writes the
+wallet onto the player's **own Base44 profile** (`User.wallet_address`) using the player's own login.
+From then on every function asks "whose wallet is this?" by reading that profile field.
+
+**Why it's on the profile.** Base44's table rules (RLS) can only look at fields on the signed-in user
+(`{{user.data.wallet_address}}`). That is how "a player can only read their own save" works on
+`PlayerSave`, and the browser reads saves directly in places (e.g. the meteor pool-bias picker). The
+two logins also fought each other when this was set up (Rob, 21 Oct), and the weekly re-login exists
+to keep Omen's session alive. **So the profile field and the flow around it stay as they are.**
+Earlier security work closed a different hole: someone signing into another player's Base44 account
+on a new device and being auto-linked. That's the "localStorage only, never rebuild Omen auth from
+the profile" comments in `OmenXAuthContext.jsx`.
+
+**The gap.** Base44 lets a signed-in user change their own custom profile fields (`auth.updateMe`).
+That's proven by how linking works: 4 of the 5 most recently updated accounts are ordinary
+`role: user` accounts with a wallet written by their own login. So a player could write a different
+wallet from the browser console. Every function would then treat them as that wallet: its save, its
+OMCADE purchases (the payment key charges whatever wallet is linked), and admin rights if it's an
+admin wallet. The weekly re-login doesn't stop it, because it writes the real wallet only when the
+player chooses to log in.
+
+**Evidence of abuse (21 Oct): none found.**
+- Each of the 3 admin wallets is linked to exactly one account. Rob's wallet is linked only to Rob.
+- 164 accounts: 3 wallets are each linked to two accounts. All 3 have real Omen logins on record
+  (`OmenAuthEvent`), so they look like the same person with two Base44 accounts.
+
+**Options (Rob to choose):**
+1. **Detect only (zero risk to login).** The daily check flags:
+   - any admin wallet linked to more than one account;
+   - any account whose wallet has no matching real Omen login (`OmenAuthEvent`);
+   - any new wallet shared by two accounts.
+2. **Server-only copy.** Keep the profile field and the whole login flow exactly as they are. Add a copy
+   of the verified wallet that only the server can write, and make the server functions trust
+   that instead. The browser and table rules don't change. This touches ~80 functions, and on Base44
+   backend changes go live the moment they're saved: there's no branch test for functions.
+3. **Leave it for the Supabase rebuild**, where identity is being designed fresh, and use option 1
+   until then.
+
 ## 8. Questions for Rob (ask one at a time; remove when answered)
 
-1. Run the harmless wallet-field test (K-A1)? *(asked 21 Oct)*
+1. Identity (K-A1): option 1, 2 or 3 in §9? *(asked 21 Oct)*
 2. Fix the no-check functions (K-A2) and the Squad Champions payout (K-B2) before 2 Nov?
 3. Should banned wallets be left out of all payouts (K-B4)?
 4. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
