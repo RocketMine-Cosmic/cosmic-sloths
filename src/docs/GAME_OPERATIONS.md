@@ -32,6 +32,7 @@ All times are **UTC**. UK clocks go back on Sun 25 Oct, so from then on UTC = UK
 | Profile Fan-Out | on every name, title or icon change | Copies it onto leaderboard, squad and chat rows | Self-heals on the next change |
 | Squad Wars Weekly Pairing | **Mon 00:05** | Settles last week's wars, then pairs this week | **Re-run the same day** (see 3.1) |
 | Refresh store prices (every 5 min) | every 5 min | Fetches the Omen catalogue once and saves it (AppConfig `omen_store_prices`); every player's game reads that copy via `getSkuPrices`. Added 21 Oct to replace per-player polling of Omen | Harmless: after 20 min stale, `getSkuPrices` fetches from Omen itself. Re-run to refresh now |
+| Auto payout — 1 … 5 | **Mon 10:40, 11:00, 11:20, 11:40, 12:00** | The automatic payouts, one step each (§3.4) | A stopped step waits for Rob; see §3.4 |
 | Activity points — weekly placement + retries | hourly (:17) | Grants Omen activity points for the last two finished weeks' board placements (read from `PayoutLog`, so they land once the Monday payouts are done), Squad War wins and Squad Champions, and retries any grant left `pending`/`error`. Added 21 Oct. Does nothing while `points_config.enabled` is false | Harmless: every grant has a fixed key, the next run picks up where this one stopped |
 | Weekly Purge Old Spend Logs | Wed 09:00 | Deletes spend logs older than 6 weeks (only 50 per run, see K-E3) | Harmless |
 
@@ -39,8 +40,8 @@ All times are **UTC**. UK clocks go back on Sun 25 Oct, so from then on UTC = UK
 
 | Job | Why it's off |
 |---|---|
-| Weekly / Seasonal Reward Distribution (`distributeRewards`) | It would **pay every week again** that was paid by hand. See K-B1. Payouts are done by hand. |
-| Squad Wars Champions Payout | Log-first since 21 Oct (K-B2 fixed): an unclear answer leaves `pending` rows and stops. |
+| Weekly / Seasonal Reward Distribution (`distributeRewards`) | Retired: it would **pay every week again** (K-B1). The automatic payouts are the "Auto payout — 1…5" workflows (§3.4). Never turn these two on. |
+| Squad Wars Champions Payout | Retired: Champions is paid by "Auto payout — 5 champions" (§3.4), which names the season itself. |
 | Auto-toggle OMENX purchases | Makes a real 1-token purchase from Rob's wallet every 5 minutes. Off since June. |
 | Leaderboard Takeover Alert, Weekly Discord Leaderboard Post | Discord posts. No auth checks, and the leaderboard post counts endless runs. |
 
@@ -96,9 +97,10 @@ Report to Rob only when something needs him. Otherwise a one-line "all fine" in 
   On 19–20 Oct this gap was about a day (W43). **Never** run "Resync war kills" live: it rebuilds from
   trimmed leaderboard rows and would *lower* totals.
 
-### 3.2 Weekly payout (by hand, any time Monday after 00:05; Rob presses, or Claude with Rob's OK)
+### 3.2 Weekly payout by hand (fallback only — the payouts are automatic, §3.4)
 
-Admin → Live Ops → **Rewards**.
+Use this only when an automatic step has stopped and §3.4 says to finish by hand. The automatic job
+presses exactly these buttons, so a step finished by hand counts the same. Admin → Live Ops → **Rewards**.
 
 0. *(Recommended)* **Period Config Lock** → lock the closed week (freezes today's payout config).
 1. **Preview Payouts** → Weekly → pick the **closed** week. **Never pick the entry marked "(current)"**:
@@ -116,7 +118,7 @@ Admin → Live Ops → **Rewards**.
    the automatic job on (K-B1).
 5. Check there are no `pending-` PayoutLog rows for the week (§5.2).
 
-### 3.3 Season end (next: Mon 2 Nov), in this order
+### 3.3 Season end by hand (fallback only; next season end: Mon 2 Nov), in this order
 
 1. The weekly payout for the season's last week (W44).
 2. **Seasonal:** Preview → Seasonal → `2026-S11` → Distribute (Players). 10% of season spend to the top 20.
@@ -127,6 +129,61 @@ Admin → Live Ops → **Rewards**.
    - If it stops part-way, read the message. "Refused" = nothing paid for that part, a re-run is safe.
      "UNCLEAR" = its wallets are logged `pending` and a re-run skips them; check Omen for that tx
      before marking them paid or deleting them (same as weekly pending- rows, 5.2).
+
+### 3.4 Automatic payouts (every Monday since 26 Oct 2026; nobody presses anything)
+
+Rob asked for fully hands-off payouts on 21 Oct. The function `autoPayoutStep` runs one step at a time,
+20 minutes apart, from the workflows "Auto payout — 1 … 5" (all times UTC):
+
+| Time | Step | Button it presses | When |
+|---|---|---|---|
+| 10:40 | `weekly_score` | Distribute (Players), Weekly | every Monday |
+| 11:00 | `weekly_kills` | Kill Pool Only | every Monday |
+| 11:20 | `close_week` | Staff Only (staff is 0%, so this only marks the week paid) | every Monday |
+| 11:40 | `seasonal` | Distribute (Players), Seasonal | Monday after a season's last week; skips itself otherwise |
+| 12:00 | `champions` | Squad Champions, Execute, with the season named | same |
+
+It does no payout maths of its own: the amounts, the log-first `PayoutLog` rows and the per-wallet
+"already paid" skip are the ones the buttons have always used. Every payout batch now carries Omen's
+`idempotencyKey` (K-B8), so an unclear answer followed by a retry is answered by Omen with the first
+result instead of paying twice; this protects the buttons too. Around each press the job adds:
+
+- **Only closed periods.** It pays the week that closed last Sunday and, on a season-end Monday, that
+  season. It refuses the open week/season even if asked.
+- **In order.** A step runs only if the step before it, for the same period, finished `ok` or `skipped`.
+- **Once.** A `PayoutRun` row keyed `<period>:<step>` (unique) is written before anything is paid; a
+  second run of the same step finds it and does nothing.
+- **Stops on anything odd, before paying:** any `pending-` payout anywhere (or a champions row in
+  `pending`); 0 or 2+ pool rows for the period; the period already partly paid; an amount over 10,000
+  or under 1; the total over the pool; more than 20 wallets (100 for champions); a staff share above 0.
+- **Checks afterwards against the books, not the answer:** it re-runs the preview, and the step is `ok`
+  only if every owed wallet now has a payout row with a real transaction, and no row is "maybe paid".
+- Already paid by hand → `skipped`. Week 53 (28 Dec 2026 – 3 Jan 2027): week 52's Monday skips the
+  season (S13 runs on into W53, as decided); week 53's Monday stops the season steps until the 5-week
+  season is built (K-C1).
+
+**Where to see it:** the **Reports** tab of the Plan & Roadmap page. A Claude scheduled task writes the
+Monday report at about 12:30 UK (12:27 UTC) from `PayoutRun` and `PayoutLog`, and messages Rob only
+if something stopped. The evening daily check also reports any stopped or stuck step.
+
+**Switches** (AppConfig `auto_payout`): `enabled` false stops every step; `live` false makes them dry
+runs (status `dry`, nothing sent). Both on since 21 Oct.
+
+**When a step has stopped** (`PayoutRun.status` `stopped`, or `running` for more than an hour, which
+means it crashed mid-way): later steps refuse to run until it is dealt with. Nothing was paid wrongly;
+at worst some wallets are waiting. Read its `reason`, then:
+1. "maybe paid" → check those rows on Omen (§5.2) and resolve them.
+2. "partly paid", or the step paid some and not others → finish that step by hand with the same button
+   (§3.2/§3.3); the button skips everyone already paid.
+3. Anything else (pool rows, totals, staff share) → fix the cause, or pay by hand if it was fine.
+4. Then delete that step's `PayoutRun` row and run `autoPayoutStep` with `{ "step": "<step>",
+   "period": "<period>" }` (or finish the remaining steps by hand). Deleting the row is the only way to let
+   a step run again for that period.
+
+**Testing:** `testAutoPayout` (admin, body `{}`) dry-runs seven cases — an already-paid week and season
+for every step, the open week, and a planted "maybe paid" row — and returns a pass/fail scorecard;
+nothing is paid and its rows are tidied away. 7/7 passed on 21 Oct. Run it after any change to the
+payout functions.
 
 ---
 
