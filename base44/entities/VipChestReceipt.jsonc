@@ -1,0 +1,109 @@
+{
+  "name": "VipChestReceipt",
+  "type": "object",
+  "properties": {
+    "open_receipt_id": {
+      "type": "string",
+      "unique": true,
+      "description": "Omen's open.openReceiptId \u2014 THE idempotency key (never the delivery id). One row per chest opened; a retried delivery finds this row and grants nothing."
+    },
+    "wallet_address": {
+      "type": "string",
+      "description": "Lowercase winner wallet, from the payload's walletAddress."
+    },
+    "chest_key": {
+      "type": "string",
+      "description": "open.chestKey \u2014 bronze | silver | gold | platinum | diamond | legend | elite."
+    },
+    "chest_name": {
+      "type": "string",
+      "description": "open.chestDisplayName, e.g. Gold Chest."
+    },
+    "is_testnet": {
+      "type": "boolean",
+      "description": "open.isTestnet. Test chests are logged and NEVER granted."
+    },
+    "reward_label": {
+      "type": "string",
+      "description": "reward.displayLabel as Omen shows it to the player."
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "description": "The items Omen sent ({sku, quantity}), normalised: a single product becomes a one-item list."
+    },
+    "granted": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Exactly what went onto the save: { gold, star_fragments, cosmetic, cosmetic_won, swap: 'none'|'swapped'|'fragments' }. Re-applied as-is if the save write is ever lost."
+    },
+    "status": {
+      "type": "string",
+      "description": "received (written, not yet decided) | granted | held (no save yet \u2014 given on first login) | test (testnet, never granted) | needs_rob (unknown item \u2014 nothing granted) | failed (error after the receipt was written \u2014 retry from the admin list)"
+    },
+    "banned": {
+      "type": "boolean",
+      "description": "Wallet was on BlacklistedWallet when the chest arrived. Granted anyway (Omen's rule); flagged for Rob."
+    },
+    "seen_by_player": {
+      "type": "boolean",
+      "default": false,
+      "description": "The player has been shown the one-time \ud83c\udf81 Chest reward popup for this win."
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "granted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reapplied_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Times the grant was put back because its stamp was missing from the save (a concurrent save write undid it)."
+    },
+    "error": {
+      "type": "string",
+      "description": "Why it is needs_rob or failed."
+    },
+    "delivery_id": {
+      "type": "string",
+      "description": "x-omenx-delivery-id header. Audit only."
+    },
+    "raw_body": {
+      "type": "string",
+      "description": "The exact body Omen sent, for audit and replay."
+    }
+  },
+  "required": [
+    "open_receipt_id",
+    "wallet_address",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
