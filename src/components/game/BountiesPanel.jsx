@@ -4,6 +4,7 @@ import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
+import { ApBadge, notifyActivityPoints } from './ActivityPoints';
 
 export default function BountiesPanel({ save, setSave }) {
     const { toast } = useToast();
@@ -42,6 +43,7 @@ export default function BountiesPanel({ save, setSave }) {
                 title: "Bounty Claimed!",
                 description: `You received ${data.reward.amount} ${currencyLabel}`,
             });
+            notifyActivityPoints(toast, data.activityPoints);
         } catch (e) {
             toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
         } finally {
@@ -65,6 +67,7 @@ export default function BountiesPanel({ save, setSave }) {
                 title: "Daily Mission Complete!",
                 description: `You earned ${data.reward.amount} Seasonal Points!`,
             });
+            notifyActivityPoints(toast, data.activityPoints);
         } catch (e) {
             toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
         } finally {
@@ -81,6 +84,7 @@ export default function BountiesPanel({ save, setSave }) {
         <div className="flex-1 bg-[#0b0416]/80 backdrop-blur-xl border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] rounded-xl p-3 md:p-4">
             <h3 className="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
                 🎯 Daily Bounties
+                <ApBadge event="bounties" suffix="all 3" />
             </h3>
             <div className="space-y-2 md:space-y-3">
                 {save.bounties.active.map((bounty, index) => {
@@ -155,6 +159,7 @@ export default function BountiesPanel({ save, setSave }) {
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-transparent pointer-events-none" />
                 <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2 relative z-10">
                     <ShieldAlert className="w-5 h-5" /> Daily Mission
+                    <ApBadge event="mission" />
                 </h3>
                 
                 {save.bounties.dailyMission && (() => {
