@@ -939,7 +939,9 @@ Deno.serve(async (req) => {
         // Members donate gold to a shared squad pool. Once the pool reaches a tier
         // threshold, the leader can ACTIVATE a buff for the upcoming war week.
         // Active buffs apply during the week tracked by `active_buff_week_id` and
-        // are read by the engine + war scoring (additive bonuses, no stacking).
+        // are applied (from 2026-W44) by shared/treasuryBuff.ts: levelling XP in the
+        // engine, gold in saveScore, boss damage in submitBossDamage/submitSquadMeteorDamage.
+        // (Before 21 Oct 2026 this comment claimed it was applied; nothing read it.)
         // Hard-gated to S6+ via period check — pre-rollover both actions return 403.
         if (action === 'donateTreasury' || action === 'activateBuff' || action === 'getTreasury') {
             const isS6 = (() => {

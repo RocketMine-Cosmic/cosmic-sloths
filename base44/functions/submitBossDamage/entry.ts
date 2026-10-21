@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getTreasuryBuffForWallet, bonusOf } from '../../shared/treasuryBuff.ts';
 
 // 429-aware retry wrapper — protects raid contributions from being silently lost
 // when Base44's per-app rate limit fires during peak (e.g. when many raiders
@@ -121,6 +122,12 @@ Deno.serve(async (req) => {
             console.log('[submitBossDamage] Could not fetch squad membership:', e.message);
         }
 
+        // Squad treasury buff (2026-10-21, live from 2026-W44): Gold +3%, Platinum +8%
+        // boss damage. Added AFTER the per-call clamp, on the server, for the squad
+        // the player is really in (looked up above, never sent by the browser).
+        const treasuryBuff = await getTreasuryBuffForWallet(base44.asServiceRole, walletAddress, { weekId: week_id, squadId: squadInfo.squad_id });
+        const appliedDamage = clampedDamage + bonusOf(clampedDamage, treasuryBuff.boss_pct);
+
         // Create GlobalBossEvent (live activity feed)
         try {
             await with429Retry(
@@ -128,8 +135,8 @@ Deno.serve(async (req) => {
                     week_id,
                     player_name: displayName,
                     event_type: 'damage',
-                    damage: clampedDamage,
-                    message: `${displayName} dealt ${Math.floor(clampedDamage).toLocaleString()} damage!`
+                    damage: appliedDamage,
+                    message: `${displayName} dealt ${Math.floor(appliedDamage).toLocaleString()} damage!`
                 }),
                 'GlobalBossEvent.create'
             );
@@ -144,7 +151,7 @@ Deno.serve(async (req) => {
                     week_id,
                     user_id: walletAddress,
                     player_name: displayName,
-                    damage: clampedDamage,
+                    damage: appliedDamage,
                     claimed: false,
                     ...squadInfo,
                 }),
@@ -164,7 +171,7 @@ Deno.serve(async (req) => {
             );
             if (bossRecords.length > 0) {
                 const boss = bossRecords[0];
-                let newHp = (boss.current_hp || 0) - clampedDamage;
+                let newHp = (boss.current_hp || 0) - appliedDamage;
                 let newLevel = boss.level || 1;
                 let newMaxHp = boss.max_hp || BOSS_BASE_HP;
                 let leveledUp = false;
@@ -182,7 +189,7 @@ Deno.serve(async (req) => {
                             week_id,
                             player_name: displayName,
                             event_type: 'kill',
-                            damage: clampedDamage,
+                            damage: appliedDamage,
                             level: newLevel - 1,
                             message: `${displayName} dealt the killing blow! Boss reached Lv.${newLevel}!`
                         });
@@ -208,8 +215,8 @@ Deno.serve(async (req) => {
             console.error('[submitBossDamage] Boss HP update failed:', e.message);
         }
 
-        console.log('[submitBossDamage] Recorded damage:', clampedDamage, 'for wallet:', walletAddress);
-        return Response.json({ success: true, damage: clampedDamage, boss: bossUpdate });
+        console.log('[submitBossDamage] Recorded damage:', appliedDamage, 'for wallet:', walletAddress);
+        return Response.json({ success: true, damage: appliedDamage, treasury_buff_pct: treasuryBuff.boss_pct, boss: bossUpdate });
     } catch (error) {
         console.error('[submitBossDamage]', error.message);
         return Response.json({ error: 'Couldn\'t record your raid damage. Please try again.' }, { status: 500 });

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getTreasuryBuffForWallet, bonusOf } from '../../shared/treasuryBuff.ts';
 
 // Records a player's Squad Meteor attack and applies the damage to the squad's
 // shared meteor. Levels up the meteor (with overflow carry-over) when the
@@ -114,7 +115,7 @@ Deno.serve(async (req) => {
             return Response.json({ success: false, sandbox: true });
         }
         // Floor + sanity-cap
-        const damage = Math.min(Math.floor(rawDamage), SANITY_DAMAGE_CAP);
+        let damage = Math.min(Math.floor(rawDamage), SANITY_DAMAGE_CAP);
 
         const db = base44.asServiceRole;
 
@@ -250,6 +251,13 @@ Deno.serve(async (req) => {
             }
         }
 
+        // Squad treasury buff (2026-10-21, live from 2026-W44): Gold +3%, Platinum +8%
+        // boss damage — Rob: applies to Squad Meteor as well as the Global Raid.
+        // Added after the sanity cap, for the squad from the player's own membership row.
+        const treasuryBuff = await getTreasuryBuffForWallet(db, wallet, { squadId });
+        const treasuryBonus = bonusOf(damage, treasuryBuff.boss_pct);
+        damage += treasuryBonus;
+
         // Load (or create) the meteor row.
         // NEW MODEL: current_hp = damage BANKED toward next level (starts at 0,
         // grows toward max_hp). When it crosses max_hp, level++.
@@ -355,6 +363,8 @@ Deno.serve(async (req) => {
             mode: 'finish',
             damage_submitted: damage,
             damage_clamped: rawDamage > SANITY_DAMAGE_CAP,
+            treasury_buff_pct: treasuryBuff.boss_pct,
+            treasury_buff_bonus: treasuryBonus,
             attempts_used: finalCount.length,
             attempts_remaining: Math.max(0, DAILY_ATTEMPT_LIMIT - finalCount.length),
             meteor: {

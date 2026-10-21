@@ -132,6 +132,7 @@ export default function RunStatsBox({ stats, accentClass = 'border-slate-700', h
                                 <span className="text-sm md:text-base text-slate-400">
                                     Gold Credited
                                     {serverConfirmed && stats.endlessGoldCapped && <span className="text-[9px] text-amber-400 ml-1">(capped)</span>}
+                                    {serverConfirmed && stats.treasuryGoldBonus > 0 && <span className="text-[9px] text-emerald-400 ml-1">(incl. +{stats.treasuryGoldBonus.toLocaleString()} squad buff)</span>}
                                 </span>
                                 {serverConfirmed ? (
                                     <span className="text-yellow-400 font-mono text-lg md:text-xl">+{stats.gold}</span>

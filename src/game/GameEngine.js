@@ -370,6 +370,10 @@ export class GameEngine {
         const meteorGoldMult = meteorBuffs ? (meteorBuffs.gold_pct   || 0) / 100 : 0;
         const meteorCdrMult  = meteorBuffs ? (meteorBuffs.cdr_pct    || 0) / 100 : 0;
 
+        // Squad Treasury buff (2026-10-21, live from 2026-W44) — levelling XP only.
+        // Server-supplied at run start by Game.jsx (getMyTreasuryBuff). 5 = +5%.
+        const treasuryXpMult = save.squadTreasuryBuff ? (save.squadTreasuryBuff.xp_pct || 0) / 100 : 0;
+
         this.player = {
             name: baseChar.name,
             image: playerImage,
@@ -394,7 +398,7 @@ export class GameEngine {
             // 1.1 for +10% — convert to additive 0.1 when present.) PickupSystem
             // skips the multiplicative pickup-time bonus on S6+ to match.
             goldMult: ((baseChar.goldMult || 1) + (talentBonus.goldMult || 0) + (relicBonus.goldMult || 0) + augBonus.goldMult + (titleBuff.goldMult || 0) + adminMult + meteorGoldMult + (this._isS6 ? Math.max(0, (save.nftGoldMultiplier || 1) - 1) : 0)) * this.difficulty.goldMult * sectorPenalty,
-            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult) * this.difficulty.xpMult,
+            xpMult: ((baseChar.xpMult || 1) + (talentBonus.xpMult || 0) + (relicBonus.xpMult || 0) + augBonus.xpMult + (titleBuff.xpMult || 0) + adminMult + treasuryXpMult) * this.difficulty.xpMult,
             luck: (baseChar.luck || 0) + getStatBonus('luck') + (talentBonus.luck || 0) + (relicBonus.luck || 0) + (titleBuff.luck || 0) + adminMult,
             critBonus: augBonus.critBonus + (titleBuff.critBonus || 0),
             charAugments: charAugments,

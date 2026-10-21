@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getTreasuryBuffForWallet, bonusOf } from '../../shared/treasuryBuff.ts';
 
 // Auth: Base44 session. Wallet: from linked User.wallet_address.
 // Server-authoritative: validates run stats with sanity caps, recomputes score,
@@ -729,11 +730,19 @@ Deno.serve(async (req) => {
             });
         }
 
+        // Squad treasury buff gold (2026-10-21, live from 2026-W44): Silver +5%,
+        // Gold +10%, Platinum +15% on the gold this run is credited, AFTER the
+        // endless caps. Squad comes from the player's own SquadMember row, never the
+        // squad id the browser sends. Fails closed (no bonus) on any lookup error.
+        const treasuryBuff = await getTreasuryBuffForWallet(base44.asServiceRole, walletLower);
+        const treasuryGoldBonus = bonusOf(validation.goldForLedger, treasuryBuff.gold_pct);
+        const goldCreditedTotal = validation.goldForLedger + treasuryGoldBonus;
+
         const { saveData: updatedSave, unlockedArena, grantedCharacter } = applyRunToSave(saveData, {
             kills: validation.killsForLedger,
             time: validation.time,
             level: validation.level,
-            gold: validation.goldForLedger,
+            gold: goldCreditedTotal,
             fragments: validation.fragmentsForLedger,
             arena_id: scoreData.arena_id,
             encountered: Array.isArray(scoreData.encountered) ? scoreData.encountered : [],
@@ -887,7 +896,7 @@ Deno.serve(async (req) => {
             // is what we actually applied to PlayerSave (may be lower for endless caps).
             // Lets the Gold Audit admin tool show per-run gold history.
             gold_earned: validation.gold,
-            gold_credited: validation.goldForLedger,
+            gold_credited: goldCreditedTotal,
             character_id: charId,
             arena_id: scoreData.arena_id,
             // run_type — written so future reads can filter by category without
@@ -1066,7 +1075,11 @@ Deno.serve(async (req) => {
             grantedCharacter,
             unlockedArena,
             // Tell client what was actually credited (may be < raw values for endless mode).
-            goldCredited: validation.goldForLedger,
+            goldCredited: goldCreditedTotal,
+            // Squad treasury buff share of goldCredited (0 when no buff), for the results screen.
+            treasuryGoldBonus,
+            treasuryBuffTier: treasuryBuff.tier,
+            treasuryBuffGoldPct: treasuryBuff.gold_pct,
             killsCredited: validation.killsForLedger,
             fragmentsCredited: validation.fragmentsForLedger,
             // Server-validated time (may be clamped to arena duration on S5 sectors —

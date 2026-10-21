@@ -376,6 +376,23 @@ export default function Game() {
             // Cache read failed — skip buff (fail-open).
         }
 
+        // Squad Treasury buff (2026-10-21, live from 2026-W44) — the run's
+        // levelling-XP bonus. Asked from the SERVER at run start (never a browser
+        // cache), so it can't be faked by editing localStorage. Gold and boss-damage
+        // bonuses are added server-side when the run/damage is saved. A slow or
+        // failed answer just means no XP bonus this run — it never blocks the run.
+        try {
+            const buffRes = await Promise.race([
+                base44.functions.invoke('getMyTreasuryBuff', {}),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
+            ]);
+            if (buffRes?.data?.tier && buffRes.data.xp_pct > 0) {
+                save.squadTreasuryBuff = buffRes.data;
+            }
+        } catch (e) {
+            // No buff this run.
+        }
+
         // Inject NFT multipliers from playerDataCache so GameEngine can apply them
         try {
             const { fetchPlayerData } = await import('@/lib/playerDataCache');
@@ -511,6 +528,7 @@ export default function Game() {
                             // Adopt the server's validated time so the modal matches the
                             // leaderboard exactly (server may clamp to arena duration on S5).
                             time: res.timeSurvived ?? s.time,
+                            treasuryGoldBonus: res.treasuryGoldBonus || 0,
                             endlessGoldCapped: res.endlessGoldCapped,
                             endlessKillsCapped: res.endlessKillsCapped,
                             fragmentsCapped: res.fragmentsCapped,
@@ -616,6 +634,7 @@ export default function Game() {
                             // Adopt the server's validated time so the modal matches the
                             // leaderboard exactly (server may clamp to arena duration on S5).
                             time: res.timeSurvived ?? s.time,
+                            treasuryGoldBonus: res.treasuryGoldBonus || 0,
                             endlessGoldCapped: res.endlessGoldCapped,
                             endlessKillsCapped: res.endlessKillsCapped,
                             fragmentsCapped: res.fragmentsCapped,

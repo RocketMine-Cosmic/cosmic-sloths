@@ -10,8 +10,8 @@ import { isS6OrLater } from '@/lib/seasonGate';
 // Leader/officers spend the pool to activate weekly buffs. Hard-gated to S6+
 // via seasonGate. Buffs apply to NEXT ISO week.
 const TREASURY_TIERS = [
-    { key: 'bronze',   cost: 25_000,    label: 'Bronze',   color: 'from-orange-700 to-amber-800', border: 'border-orange-600/60', text: 'text-orange-300', desc: '+5% squad XP from kills' },
-    { key: 'silver',   cost: 100_000,   label: 'Silver',   color: 'from-slate-500 to-slate-400', border: 'border-slate-400/60', text: 'text-slate-200', desc: '+10% XP, +5% gold drops' },
+    { key: 'bronze',   cost: 25_000,    label: 'Bronze',   color: 'from-orange-700 to-amber-800', border: 'border-orange-600/60', text: 'text-orange-300', desc: '+5% XP' },
+    { key: 'silver',   cost: 100_000,   label: 'Silver',   color: 'from-slate-500 to-slate-400', border: 'border-slate-400/60', text: 'text-slate-200', desc: '+10% XP, +5% gold' },
     { key: 'gold',     cost: 500_000,   label: 'Gold',     color: 'from-yellow-600 to-amber-500', border: 'border-yellow-500/60', text: 'text-yellow-300', desc: '+20% XP, +10% gold, +3% boss dmg' },
     { key: 'platinum', cost: 2_000_000, label: 'Platinum', color: 'from-cyan-400 to-fuchsia-400', border: 'border-cyan-400/60', text: 'text-cyan-200', desc: '+30% XP, +15% gold, +8% boss dmg' },
 ];
@@ -152,7 +152,7 @@ export default function SquadTreasuryPanel({ squad, myMemberRecord, onUpdate }) 
                     <h3 className="text-amber-300 font-black text-lg uppercase tracking-widest mb-1">Squad Treasury</h3>
                     <p className="text-slate-400 text-sm mb-3">Unlocks <span className="text-amber-300 font-bold">Mon May 18 · 00:00 UTC</span></p>
                     <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                        Squad members donate gold to a shared pool. Spend it for weekly squad-wide buffs — XP, gold drops, and boss damage.
+                        Squad members donate gold to a shared pool. Spend it for weekly squad-wide buffs — levelling XP, gold, and boss damage (Raid &amp; Squad Meteor).
                     </p>
                 </div>
             </div>
