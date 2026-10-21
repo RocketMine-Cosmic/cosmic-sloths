@@ -95,6 +95,12 @@ Deno.serve(async (req) => {
     out.k3_not_reached = (await claimBossRewardFor(db, W, 5, WEEK)).status;               // 400
     const kf = await Promise.all(Array.from({ length: 5 }, () => claimBossRewardFor(db, W, 3, WEEK)));
     out.k4_five_taps = { statuses: kf.map((r) => r.status), gold: Number((await snap()).gold) }; // one 200, 1500 + 750 = 2250
+    const rows = (await db.entities.GlobalBossContribution.filter({ week_id: WEEK })).sort((a: any, b: any) => String(a.created_date).localeCompare(String(b.created_date)));
+    out.k5_marker_on_oldest_row = { oldest: rows[0]?.claimed_milestones, newer: rows[1]?.claimed_milestones }; // [2,3] and []
+    await db.entities.GlobalBossContribution.create({ week_id: WEEK, user_id: W, damage: 30, claimed_milestones: [] }); // a raid lands mid-week
+    const k6 = await claimBossRewardFor(db, W, 4, WEEK);
+    const rows2 = (await db.entities.GlobalBossContribution.filter({ week_id: WEEK })).sort((a: any, b: any) => String(a.created_date).localeCompare(String(b.created_date)));
+    out.k6_after_new_row = { status: k6.status, oldest: rows2[0]?.claimed_milestones, newest: rows2[2]?.claimed_milestones }; // 200, [2,3,4], []
   } catch (e: any) {
     out.error = String(e?.stack || e?.message || e);
   } finally {
