@@ -288,7 +288,8 @@ player chooses to log in.
 **Evidence of abuse (21 Oct): none found.**
 - Each of the 3 admin wallets is linked to exactly one account. Rob's wallet is linked only to Rob.
 - 164 accounts: 3 wallets are each linked to two accounts. All 3 have real Omen logins on record
-  (`OmenAuthEvent`), so they look like the same person with two Base44 accounts.
+  (`OmenAuthEvent`). Omen allows one wallet per Omen user (Rob, 21 Oct), so these are the same
+  person with two Base44 accounts, not two people.
 
 **Options (Rob to choose):**
 1. **Detect only (zero risk to login).** The daily check flags:
@@ -299,8 +300,9 @@ player chooses to log in.
    of the verified wallet that only the server can write, and make the server functions trust
    that instead. The browser and table rules don't change. This touches ~80 functions, and on Base44
    backend changes go live the moment they're saved: there's no branch test for functions.
-3. **Leave it for the Supabase rebuild**, where identity is being designed fresh, and use option 1
-   until then.
+
+**The Supabase switch-over is stopped (Rob, 21 Oct).** Omen changes too often to keep two copies
+in step, so Base44 stays the live home of the game. Any fix happens here.
 
 ## 8. Questions for Rob (ask one at a time; remove when answered)
 
