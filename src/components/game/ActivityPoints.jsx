@@ -80,6 +80,24 @@ export function ApBadge({ event, suffix }) {
     );
 }
 
+// Leaderboard pill: AP a weekly-board rank earns. board = 'wscore' | 'wkills'; rank is 1-based.
+export function LeaderboardApPill({ board, rank }) {
+    const ap = useActivityPoints();
+    if (!visible(ap)) return null;
+    const t = ap.amounts?.[board];
+    if (!Array.isArray(t) || rank < 1 || rank > 10) return null;
+    const amount = rank === 1 ? t[0] : rank === 2 ? t[1] : rank === 3 ? t[2] : t[3];
+    if (!amount) return null;
+    return (
+        <div
+            className="bg-violet-900/40 border border-violet-400/50 text-violet-200 px-2 py-1.5 rounded-md font-black text-xs whitespace-nowrap shadow-[0_0_10px_rgba(139,92,246,0.2)]"
+            title="Omen activity points for finishing the week at this rank — counts towards your Omen leaderboard rank"
+        >
+            +{amount} AP
+        </div>
+    );
+}
+
 export function ActivityPointsStrip() {
     const ap = useActivityPoints();
     if (!visible(ap)) return null;
