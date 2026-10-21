@@ -164,7 +164,7 @@ export function parseSave(record: any): any {
 }
 
 export async function findSave(db: any, wallet: string): Promise<any | null> {
-  const rows = await with429Retry(() => db.entities.PlayerSave.filter({ wallet_address: wallet }), 'PlayerSave.filter');
+  const rows: any[] = await with429Retry<any[]>(() => db.entities.PlayerSave.filter({ wallet_address: wallet }), 'PlayerSave.filter');
   return rows?.[0] || null;
 }
 
