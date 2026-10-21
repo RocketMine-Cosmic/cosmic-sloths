@@ -2,12 +2,18 @@
 // Used by: onVipChestRewardGranted (Omen's webhook), getMyChestRewards (held prizes + re-check on
 // load), adminVipChests (retry). Design + Rob's decisions: claude/handoffs/VIP_CHESTS.md (21 Oct 2026).
 //
-// THE STAMP. Every grant writes its open_receipt_id into save_data.vipChestReceiptsApplied IN THE SAME
-// WRITE as the gold, fragments and cosmetic. Every server writer in this game reads the whole save,
-// changes it and writes it all back, so two overlapping writes can silently undo one another. Because
-// the stamp travels with the grant, they are only ever lost TOGETHER: a missing stamp on a `granted`
-// receipt means the grant was undone, and putting it back cannot double-pay. syncSave treats the stamp
-// as server-owned so a player's browser can never drop it.
+// THE GRANT IS ONE ATOMIC DATABASE STEP (updateMany with $inc / $addToSet, proven 21 Oct by
+// saveWriteProbe: 20 parallel atomic adds -> exactly 20; 20 parallel read-change-writes -> 1).
+// "Add the gold, add the fragments, add the cosmetics, add the stamp — only if the stamp isn't there"
+// happens inside the database, so it can never pay twice and never overwrites anything else on the
+// save (it cannot undo a run).
+//
+// THE STAMP. The open_receipt_id goes into save_data.vipChestReceiptsApplied in that same step. Until
+// every whole-save writer uses the version-checked write (stage 3 of the plan), an OLD-style writer
+// that read the save before our grant and writes after it can still wipe the grant — and the stamp with
+// it, because they live in the same save. So a `granted` receipt whose stamp is missing was undone;
+// putting it back cannot double-pay. The receiver re-checks for a few seconds, and getMyChestRewards
+// re-checks on every game load. syncSave treats the stamp as server-owned so a browser can't drop it.
 
 export const STAMP_KEY = 'vipChestReceiptsApplied';
 
@@ -114,19 +120,28 @@ export function planGrant(items: ChestItem[], saveData: any, chestKey: string): 
   return g;
 }
 
-// Put a decided grant on the save, with its stamp, in ONE write. A save already carrying the stamp is
-// left alone (returns false). Returns true when it wrote.
-export function applyGrantToSaveData(saveData: any, receiptId: string, granted: Granted): boolean {
-  const stamps: string[] = Array.isArray(saveData[STAMP_KEY]) ? saveData[STAMP_KEY] : [];
-  if (stamps.includes(receiptId)) return false;
-  saveData.gold = Number(saveData.gold || 0) + Number(granted.gold || 0);
-  saveData.starFragments = Number(saveData.starFragments || 0) + Number(granted.star_fragments || 0);
-  const owned: string[] = Array.isArray(saveData.owned_chest_cosmetics) ? [...saveData.owned_chest_cosmetics] : [];
-  for (const c of granted.cosmetics || []) if (c.given && !owned.includes(c.given)) owned.push(c.given);
-  saveData.owned_chest_cosmetics = owned;
-  saveData[STAMP_KEY] = [...stamps, receiptId];
-  saveData.updated_at = Date.now();
-  return true;
+// Put a decided grant on the save, with its stamp, in ONE atomic step. Returns true if it wrote,
+// false if the stamp was already there (nothing changed). Bumping save_data.updated_at makes the
+// player's next sync adopt the cloud copy, the same as claimDailyLogin.
+export async function atomicGrant(db: any, saveId: string, receiptId: string, granted: Granted): Promise<boolean> {
+  const now = Date.now();
+  const inc: Record<string, number> = {};
+  if (granted.gold) inc['save_data.gold'] = Number(granted.gold);
+  if (granted.star_fragments) inc['save_data.starFragments'] = Number(granted.star_fragments);
+  const given = (granted.cosmetics || []).map((c) => c.given).filter((x): x is string => !!x);
+  const addToSet: Record<string, unknown> = { [`save_data.${STAMP_KEY}`]: receiptId };
+  if (given.length) addToSet['save_data.owned_chest_cosmetics'] = { $each: given };
+  const op: Record<string, Record<string, unknown>> = { $addToSet: addToSet, $set: { 'save_data.updated_at': now, updated_at: now } };
+  if (Object.keys(inc).length) op.$inc = inc;
+  const res: any = await with429Retry(
+    () => db.entities.PlayerSave.updateMany({ id: saveId, [`save_data.${STAMP_KEY}`]: { $ne: receiptId } }, op),
+    'PlayerSave.updateMany',
+  );
+  return Number(res?.updated || 0) > 0;
+}
+
+export function hasStamp(saveData: any, receiptId: string): boolean {
+  return Array.isArray(saveData?.[STAMP_KEY]) && saveData[STAMP_KEY].includes(receiptId);
 }
 
 export async function with429Retry<T>(fn: () => Promise<T>, label = 'op'): Promise<T> {
@@ -167,20 +182,15 @@ export async function grantReceipt(db: any, receipt: any): Promise<'granted' | '
     granted = planGrant(receipt.items || [], saveData, receipt.chest_key || '');
     await db.entities.VipChestReceipt.update(receipt.id, { granted });
   }
-  const wrote = applyGrantToSaveData(saveData, receipt.open_receipt_id, granted);
-  if (wrote) {
-    await with429Retry(() => db.entities.PlayerSave.update(save.id, { save_data: saveData, updated_at: Date.now() }), 'PlayerSave.update');
-  }
-  // Re-check: a write that overlapped ours drops our stamp and grant together. Put them back.
+  const wrote = await atomicGrant(db, save.id, receipt.open_receipt_id, granted);
+  // Re-check: an old-style whole-save write that overlapped ours drops our stamp and grant together.
+  // Put them back (the stamp condition makes this safe to repeat).
   let reapplied = 0;
   for (let i = 0; i < 3; i++) {
     await new Promise((r) => setTimeout(r, 2000));
     const again = await findSave(db, receipt.wallet_address);
-    const data = parseSave(again);
-    if (Array.isArray(data[STAMP_KEY]) && data[STAMP_KEY].includes(receipt.open_receipt_id)) break;
-    applyGrantToSaveData(data, receipt.open_receipt_id, granted);
-    await with429Retry(() => db.entities.PlayerSave.update(again.id, { save_data: data, updated_at: Date.now() }), 'PlayerSave.update');
-    reapplied++;
+    if (hasStamp(parseSave(again), receipt.open_receipt_id)) break;
+    if (await atomicGrant(db, again.id, receipt.open_receipt_id, granted)) reapplied++;
   }
   await db.entities.VipChestReceipt.update(receipt.id, {
     status: 'granted',
