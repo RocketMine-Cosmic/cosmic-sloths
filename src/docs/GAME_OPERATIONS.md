@@ -191,13 +191,18 @@ meanwhile is lost (K-E5). Ask the player to stay offline, open, edit and save qu
 
 ## 7. Known issues register
 
-Status: 🔴 open · 🟡 in progress · ✅ fixed. "Easy" = small, contained change.
+Status: 🔴 open · 🟡 in progress or watched · ✅ fixed. "Easy" = small, contained change.
 **Needs Rob** = touches money, security or game design.
+
+**How fixes ship.** Gameplay and rules changes go live at a **rollover** (start of a week or
+season) behind a season gate (`src/lib/seasonGate.js`, mirrored server-side). That's how every
+patch since S6 has landed, so players get changes at a clean boundary, never mid-week. Backend fixes
+that don't change rules (e.g. a payout safety fix) can go in any time, but not in the middle of a payout.
 
 ### A. Security
 | ID | Issue | Impact | Effort | Status |
 |---|---|---|---|---|
-| K-A1 | **Who a player is rests on `User.wallet_address`.** See §9 for how it works, why it's built this way, and the evidence. In short: the field is written with the player's own login, so the player can also write it directly, and the server never re-checks Omen. **No sign of abuse** (checked 21 Oct). | Critical **if** used | Options in §9. **Don't change the login flow or `User.wallet_address` itself**: the table rules and the two-login setup depend on it. | 🔴 **Needs Rob** |
+| K-A1 | **Who a player is rests on `User.wallet_address`.** See §9 for how it works, why it's built this way, and the evidence. In short: the field is written with the player's own login, so the player can also write it directly, and the server never re-checks Omen. **No sign of abuse** (checked 21 Oct). | Critical **if** used | **Decided 21 Oct: watch only.** It's in the daily check (§9). Nine months live without a problem. **Don't change the login flow or `User.wallet_address`**: the table rules and the two-login setup depend on it. | 🟡 watched |
 | K-A2 | **Functions with no caller check, callable by anyone on the internet:** `scheduledMaintenanceFlip` (lock the game), `autoToggleOmenxPurchases` (purchase from Rob's wallet), `mirrorProfileFanOut` (rename anyone), `alertLeaderboardTakeover`/`postDiscordLeaderboard` (Discord spam), `backupData {is_automated}` (burns write quota), pairing and cleanups. Anonymous calls do reach functions (confirmed 20 Oct with `getSkuPrices`). | High | Easy: a shared secret for scheduled callers, an admin check for people | 🔴 Needs Rob (security) |
 | K-A3 | Login popup posts tokens to `'*'`. `state` isn't checked, and any saved verifier is accepted. Raw tokens are written to function logs. | Medium | Easy | 🔴 |
 | K-A4 | `manage_admins` holders can give themselves wipe or refund rights. Squad surgery (`adminSquadOps`, including delete) and several backfills accept **any** staff wallet. | Medium | Easy | 🔴 |
@@ -301,12 +306,14 @@ player chooses to log in.
    that instead. The browser and table rules don't change. This touches ~80 functions, and on Base44
    backend changes go live the moment they're saved: there's no branch test for functions.
 
+**Decision (Rob, 21 Oct): option 1, watch.** The game has run nine months without a problem here.
+The daily check does the watching.
+
 **The Supabase switch-over is stopped (Rob, 21 Oct).** Omen changes too often to keep two copies
 in step, so Base44 stays the live home of the game. Any fix happens here.
 
 ## 8. Questions for Rob (ask one at a time; remove when answered)
 
-1. Identity (K-A1): option 1, 2 or 3 in §9? *(asked 21 Oct)*
 2. Fix the no-check functions (K-A2) and the Squad Champions payout (K-B2) before 2 Nov?
 3. Should banned wallets be left out of all payouts (K-B4)?
 4. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
