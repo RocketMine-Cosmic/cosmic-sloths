@@ -108,15 +108,20 @@ function buildRankedPayments(scores, rewardPool, getPercentageFn, maxRank) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const me = await base44.auth.me();
-        if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        const callerWallet = me.wallet_address?.toLowerCase();
-        if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+        const reqBody = await req.json().catch(() => ({}));
+        // Read-only, so the automatic payout job (autoPayoutStep) may call it with the AdminDash
+        // key, the same way it calls the payout functions. Everyone else must be an admin wallet.
+        if (!(reqBody.adminKey && reqBody.adminKey === Deno.env.get('AdminDash'))) {
+            let me = null;
+            try { me = await base44.auth.me(); } catch {}
+            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            const callerWallet = me.wallet_address?.toLowerCase();
+            if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
+            const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
+            if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
 
-        const adminWallets = await base44.asServiceRole.entities.AdminWallet.filter({ wallet_address: callerWallet });
-        if (adminWallets.length === 0) return Response.json({ error: 'Forbidden' }, { status: 403 });
-
-        const { period_id, period_type } = await req.json();
+        const { period_id, period_type } = reqBody;
         if (!period_id || !period_type) return Response.json({ error: 'period_id and period_type required' }, { status: 400 });
 
         const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type });
