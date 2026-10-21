@@ -296,14 +296,14 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 ### B. Money paths
 | ID | Issue | Impact | Effort | Status |
 |---|---|---|---|---|
-| K-B1 | The automatic payout job (`distributeRewards`) re-pays any week not marked finished, never checks PayoutLog, and pays seasonal and weekly at the same minute. | Critical if enabled | Keep off. Mark all paid weeks finished. Rewrite before ever enabling. | 🔴 (off) |
+| K-B1 | The automatic payout job (`distributeRewards`) re-pays any week not marked finished, never checks PayoutLog, and pays seasonal and weekly at the same minute. | Critical if enabled | Keep off for ever. | ✅ **Replaced 21 Oct** by the automatic payouts (§3.4), which press the existing buttons with guards. The old job stays off. |
 | K-B2 | **Squad Champions payout:** records only after success, and retries unclear answers with another key, so it can **pay twice**. Next run **2 Nov**. | High, dated | Easy: same log-first pattern as the weekly buttons | ✅ **Fixed 21 Oct** (live, before the 2 Nov run). Only a 429 now switches key. |
 | K-B3 | Refunds (single and bulk) keep no record and retry, so they can refund twice. Manual refund can send up to 100,000 to any wallet. | Medium | Easy: log-first and a record | 🔴 |
 | K-B4 | The blacklist isn't checked by the weekly, seasonal or kill payouts. | Low | Easy | ✅ Not needed (Rob, 21 Oct): nobody is banned; `BlacklistedWallet` is empty. Revisit only if someone is ever banned. |
 | K-B5 | Payout buttons: no confirm, nothing stops two at once, and the open week can be paid. | Medium | Easy: confirm, closed-period check, lock | 🔴 |
 | K-B6 | Purchases that Omen leaves "pending", or whose grant fails to save, are charged with no item, log or alert. Buy All can charge twice on a retry (new idempotency key per call). | Medium (support load) | Moderate | 🔴 |
 | K-B7 | Server price checks: a level-1 upgrade item can grant any level; talent tier and cosmetic id come from the client; `spendGold` takes the client's gold cost. | High if exploited | Moderate | 🔴 |
-| K-B8 | Omen's idempotency key isn't sent on payouts. It would answer the `pending-` cases automatically (OMEN_INTEGRATION item 1). | Low | Moderate | 🔴 |
+| K-B8 | Omen's idempotency key isn't sent on payouts. It would answer the `pending-` cases automatically (OMEN_INTEGRATION item 1). | Low | Moderate | ✅ **Fixed 21 Oct:** every grant-batch (weekly, kills, staff, seasonal, champions) sends a key made from the period, tier and a hash of its wallets and amounts, so the same batch always has the same key. |
 
 ### C. Dated bugs
 | ID | Issue | When | Status |
