@@ -79,7 +79,8 @@ Deno.serve(async (req) => {
         })),
       }));
 
-    return Response.json({ rewards, saveChanged });
+    const stillHeld = (await db.entities.VipChestReceipt.filter({ wallet_address: wallet, status: 'held' }).catch(() => [])).length;
+    return Response.json({ rewards, saveChanged, stillHeld });
   } catch (e: any) {
     console.error('[getMyChestRewards]', e?.message);
     return Response.json({ rewards: [], error: 'unavailable' }, { status: 200 });
