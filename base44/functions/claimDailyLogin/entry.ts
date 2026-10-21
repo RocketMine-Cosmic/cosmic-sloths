@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { grantSafely, pointsSummary, loadPointsConfig, dailyKey, daysBefore, STREAK_MILESTONES } from '../../shared/omenxPoints.ts';
 
 // Server-authoritative daily login claim. Uses cloud PlayerSave as source of truth
 // so users can't claim multiple times by tampering with localStorage or switching devices.
@@ -100,10 +101,31 @@ Deno.serve(async (req) => {
             'PlayerSave.update'
         );
 
+        // Omen activity points (a bonus; never fails the claim). Login 10, plus a streak milestone
+        // once per unbroken streak (keyed by the day the streak started).
+        let activityPoints = null;
+        try {
+            const db = base44.asServiceRole;
+            const cfg = await loadPointsConfig(db);
+            if (cfg.enabled) {
+                const grants = [{ wallet: walletLower, event: 'login', amount: cfg.amounts.login, idempotencyKey: dailyKey('login', today, walletLower), dayKey: today }];
+                if (STREAK_MILESTONES.includes(newStreak)) {
+                    const ev = `streak${newStreak}`;
+                    const start = daysBefore(today, newStreak - 1);
+                    grants.push({ wallet: walletLower, event: ev, amount: cfg.amounts[ev], idempotencyKey: `ap-${ev}-${start}-${walletLower}`, dayKey: today });
+                }
+                const results = await grantSafely(db, grants);
+                activityPoints = { earned: results.filter(r => r.outcome === 'granted' && !r.already).map(r => ({ event: r.event, amount: r.credited })), ...(await pointsSummary(db, walletLower)) };
+            }
+        } catch (e) {
+            console.warn('[claimDailyLogin] activity points skipped:', e?.message);
+        }
+
         return Response.json({
             success: true,
             reward: rewardDay,
             streak: newStreak,
+            activityPoints,
             saveData: {
                 gold: saveData.gold,
                 cosmicTokens: saveData.cosmicTokens,
