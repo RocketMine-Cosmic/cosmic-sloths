@@ -175,8 +175,15 @@ export async function grantActivityPoints(db: any, opts: {
                 sumCredited(mine, r => r.day_key === dayKey && DAILY_EVENTS.includes(r.event)) + amount > g.per_player_day) {
                 stop = `our per-player daily cap (${g.per_player_day})`;
             } else {
-                const all = await db.entities.PointGrantLog.filter({ month_key: monthKey }, '-created_date', 10000);
-                if (sumCredited(all) + amount > g.monthly_pool) stop = `our monthly pool cap (${g.monthly_pool})`;
+                // The month's pool total is counted once per run and kept on the config object, so a
+                // batch (the hourly weekly job) doesn't re-read the whole month for every grant.
+                const cache = (config.__poolUsed ||= {});
+                if (cache[monthKey] === undefined) {
+                    const all = await db.entities.PointGrantLog.filter({ month_key: monthKey }, '-created_date', 10000);
+                    cache[monthKey] = sumCredited(all);
+                }
+                if (cache[monthKey] + amount > g.monthly_pool) stop = `our monthly pool cap (${g.monthly_pool})`;
+                else cache[monthKey] += amount;
             }
             if (stop) {
                 try {
