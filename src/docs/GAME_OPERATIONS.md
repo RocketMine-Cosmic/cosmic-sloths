@@ -31,6 +31,7 @@ All times are **UTC**. UK clocks go back on Sun 25 Oct, so from then on UTC = UK
 | Auto-rollover stale periods | daily 00:30 | Resets expired weekly and seasonal upgrades for every player | Re-run. Safe. (It does run: about 15–35 s each day.) |
 | Profile Fan-Out | on every name, title or icon change | Copies it onto leaderboard, squad and chat rows | Self-heals on the next change |
 | Squad Wars Weekly Pairing | **Mon 00:05** | Settles last week's wars, then pairs this week | **Re-run the same day** (see 3.1) |
+| Refresh store prices (every 5 min) | every 5 min | Fetches the Omen catalogue once and saves it (AppConfig `omen_store_prices`); every player's game reads that copy via `getSkuPrices`. Added 21 Oct to replace per-player polling of Omen | Harmless: after 20 min stale, `getSkuPrices` fetches from Omen itself. Re-run to refresh now |
 | Weekly Purge Old Spend Logs | Wed 09:00 | Deletes spend logs older than 6 weeks (only 50 per run, see K-E3) | Harmless |
 
 **Switched off on purpose (never turn on without reading the note):**
