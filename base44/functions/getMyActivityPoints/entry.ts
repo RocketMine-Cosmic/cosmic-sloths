@@ -17,10 +17,13 @@ Deno.serve(async (req) => {
             login: a.login, bounties: a.bounties, tasks: a.tasks, mission: a.mission,
             streak: { 3: a.streak3, 7: a.streak7, 14: a.streak14, 30: a.streak30 },
         };
-        if (!cfg.enabled) return Response.json({ enabled: false, amounts });
-        if (!me?.wallet_address) return Response.json({ enabled: true, amounts, today: 0, month: 0, earnedToday: [] });
+        // Admins see the strip and badges even while points are off, so the screen can be checked
+        // before switching on (labelled as a preview in the UI).
+        const preview = !cfg.enabled && me?.role === 'admin';
+        if (!cfg.enabled && !preview) return Response.json({ enabled: false, amounts });
+        if (!me?.wallet_address) return Response.json({ enabled: cfg.enabled, preview, amounts, today: 0, month: 0, earnedToday: [] });
         const s = await pointsSummary(db, me.wallet_address);
-        return Response.json({ enabled: true, amounts, ...s });
+        return Response.json({ enabled: cfg.enabled, preview, amounts, ...s });
     } catch (e) {
         console.warn('[getMyActivityPoints]', (e as any)?.message || e);
         return Response.json({ enabled: false });
