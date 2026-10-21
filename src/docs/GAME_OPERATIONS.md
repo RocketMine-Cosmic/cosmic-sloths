@@ -175,6 +175,12 @@ There is **no restore for the new format yet**, and the old Restore button must 
 The save editor writes the **whole** save as it was when the editor opened. Anything the player earned
 meanwhile is lost (K-E5). Ask the player to stay offline, open, edit and save quickly.
 
+### 5.5 Someone can't log in
+1. `OmenAuthEvent` for the wallet: no row this week means they never finished Omen's login.
+2. `User.wallet_address`: is it linked?
+3. A "PLAYER_NOT_FOUND" on balance means Omen doesn't see a recent session. Re-login fixes it.
+4. On a new domain, check the redirect URI is registered on the Omen portal **with `/auth/callback`**.
+
 ### 5.6 Omen activity points
 Players earn Omen activity points for finishing Star Ops cards (login 10, all 3 bounties 10, all daily
 tasks 10, daily mission 5, login streak 3/7/14/30 days 25/50/100/100) and for weekly placement (top 10
@@ -193,12 +199,6 @@ max 2,000 per player, max 100 per grant; **unused points are lost at month end**
   payout buttons are pressed.
 - **Never** grant by hand outside the log, and never change a key format: the key is what stops a
   double grant.
-
-### 5.5 Someone can't log in
-1. `OmenAuthEvent` for the wallet: no row this week means they never finished Omen's login.
-2. `User.wallet_address`: is it linked?
-3. A "PLAYER_NOT_FOUND" on balance means Omen doesn't see a recent session. Re-login fixes it.
-4. On a new domain, check the redirect URI is registered on the Omen portal **with `/auth/callback`**.
 
 ---
 
