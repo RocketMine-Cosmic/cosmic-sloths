@@ -74,7 +74,24 @@ Deno.serve(async (req) => {
                 console.warn('[mirrorProfileFanOut] no data in event payload (payload_too_large?)');
                 return Response.json({ skipped: true, reason: 'no_data' });
             }
-            walletAddress = data.wallet_address;
+            // 2026-10-21: don't trust the event body — this function is reachable by URL, so a
+            // forged "event" could rename any player. Re-read the PlayerSave row and mirror ITS
+            // values (the database is the truth); a made-up id finds nothing and is skipped.
+            // Look the row up by id, falling back to its wallet. Either way the VALUES come from
+            // the database, so a forged body can at most re-copy a player's real name.
+            const rowId = data.id || body?.event?.entity_id;
+            let row = rowId ? await base44.asServiceRole.entities.PlayerSave.get(rowId).catch(() => null) : null;
+            if (!row && data.wallet_address) {
+                const rows = await base44.asServiceRole.entities.PlayerSave
+                    .filter({ wallet_address: String(data.wallet_address).toLowerCase() }, '-updated_date', 1)
+                    .catch(() => []);
+                row = rows[0] || null;
+            }
+            if (!row) return Response.json({ skipped: true, reason: 'row_not_found' });
+            data.player_name = row.player_name;
+            data.player_title = row.player_title;
+            data.pilot_icon = row.pilot_icon;
+            walletAddress = row.wallet_address;
 
             // Compare against old_data — only mirror fields that actually changed
             // to a non-empty value. Empty → empty transitions are no-ops.
@@ -94,7 +111,12 @@ Deno.serve(async (req) => {
                 return Response.json({ skipped: true, reason: 'no_profile_change' });
             }
         } else {
-            // Direct/admin call
+            // Direct/admin call — 2026-10-21: admins only (was open to anyone).
+            let isAdmin = false;
+            const key = body?.adminKey;
+            if (key && key === Deno.env.get('AdminDash')) isAdmin = true;
+            else { try { const me = await base44.auth.me(); isAdmin = me?.role === 'admin'; } catch {} }
+            if (!isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
             walletAddress = body.wallet_address;
             newName = body.player_name;
             newTitle = body.player_title;

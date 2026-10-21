@@ -46,9 +46,14 @@ Deno.serve(async (req) => {
         if (!webhookUrl) return Response.json({ error: 'DISCORD_ALERT_WEBHOOK not configured' }, { status: 500 });
 
         const body = await req.json();
-        const newScore = body.data;
+        const payload = body.data;
+        if (!payload || !payload.id) return Response.json({ skipped: 'no score data' });
 
-        if (!newScore || !newScore.score) return Response.json({ skipped: 'no score data' });
+        // 2026-10-21: don't trust the request body — anyone can call this function by URL and
+        // post a forged "#1 takeover" to Discord. Re-read the score from the database by id and
+        // use that; a made-up id finds nothing and is skipped.
+        const newScore = await base44.asServiceRole.entities.RunScore.get(payload.id).catch(() => null);
+        if (!newScore || !newScore.score) return Response.json({ skipped: 'score not found' });
 
         const { week_id, season_id } = getCurrentPeriodIds();
         const isCurrentWeek = newScore.week_id === week_id;

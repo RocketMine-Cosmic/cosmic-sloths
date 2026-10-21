@@ -184,31 +184,45 @@ async function fetchSquadMemberWallets(squadId) {
     return [...new Set(wallets)];
 }
 
-// Sends ONE chunk to OMENX (with per-key fallback on 429/5xx). Returns the txId on success.
-// Throws on failure so the caller can stop and preserve any logs already written for prior chunks.
+// Sends ONE chunk to Omen. Returns one of:
+//   { ok: true, txId }                      — paid.
+//   { ok: false, notPaid: true,  error }    — Omen clearly refused (4xx). Nothing was paid.
+//   { ok: false, notPaid: false, error }    — UNCLEAR (5xx incl. 502 GRANT_PENDING, timeout,
+//                                             network). It may have paid. Do NOT resend.
+// 2026-10-21: this used to cycle to another API key on any 5xx and resend the same payments.
+// With no idempotency key, a 5xx that had actually paid (e.g. 502 GRANT_PENDING) would pay the
+// chunk twice. Now only a 429 (rate limited — not processed) moves to the next key.
 async function callOmenxOneChunk(chunk, apiBaseUrl, rewardsKeys, note, ci, totalChunks) {
     const startIdx = ci % rewardsKeys.length;
     let lastErr = null;
     for (let attempt = 0; attempt < rewardsKeys.length; attempt++) {
         const key = rewardsKeys[(startIdx + attempt) % rewardsKeys.length];
-        const response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-            body: JSON.stringify({
-                payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
-                gameId: GAME_ID, gameName: GAME_NAME,
-                note: `${note} chunk ${ci + 1}/${totalChunks}`,
-            }),
-        });
+        let response;
+        try {
+            response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                body: JSON.stringify({
+                    payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
+                    gameId: GAME_ID, gameName: GAME_NAME,
+                    note: `${note} chunk ${ci + 1}/${totalChunks}`,
+                }),
+            });
+        } catch (netErr) {
+            // The request may or may not have reached Omen.
+            return { ok: false, notPaid: false, error: `network error: ${netErr?.message || netErr}` };
+        }
         const result = await response.json().catch(() => ({}));
         if (response.ok) {
-            return result?.transactionId || result?.txHash || '';
+            return { ok: true, txId: result?.transactionId || result?.txHash || '' };
         }
         lastErr = `HTTP ${response.status}: ${JSON.stringify(result)}`;
         console.warn(`[distributeSquadChampions] chunk ${ci + 1} key ${attempt + 1} failed:`, lastErr);
-        if (response.status !== 429 && response.status < 500) break;
+        if (response.status === 429) continue;             // rate limited — not processed, try next key
+        if (response.status >= 500) return { ok: false, notPaid: false, error: lastErr }; // unclear
+        return { ok: false, notPaid: true, error: lastErr }; // clear refusal
     }
-    throw new Error(`Chunk ${ci + 1}/${totalChunks} failed: ${lastErr}`);
+    return { ok: false, notPaid: true, error: lastErr || 'all keys rate limited' };
 }
 
 Deno.serve(async (req) => {
@@ -504,23 +518,22 @@ Deno.serve(async (req) => {
         let paidThisRun = 0;
         let partialError = null;
 
+        // 2026-10-21: LOG-FIRST, the same protection the weekly payout buttons use.
+        // For each chunk: write a 'pending' log row per wallet BEFORE calling Omen; patch them
+        // to 'success' on a clear yes; delete them on a clear no (so a re-run pays them); and
+        // KEEP them on an unclear answer, so a re-run skips those wallets instead of paying them
+        // a second time. Pending rows are then checked by hand on Omen (run-book 5.2).
+        let unclearChunk = false;
         for (let ci = 0; ci < chunks.length; ci++) {
             const chunk = chunks[ci];
-            let chunkTxId;
-            try {
-                chunkTxId = await callOmenxOneChunk(chunk, apiBaseUrl, rewardsKeys, `Squad Champions ${period_id}`, ci, chunks.length);
-            } catch (e) {
-                // Stop here — partial success preserved by per-chunk log writes already done.
-                partialError = e?.message || String(e);
-                console.error(`[distributeSquadChampions] STOPPED at chunk ${ci + 1}/${chunks.length}: ${partialError}`);
-                break;
-            }
-            txIds.push(chunkTxId);
-            // Write logs IMMEDIATELY for this chunk before sending the next one,
-            // so a 502 on chunk N+1 leaves chunk N safely recorded.
+            const marker = `pending-${period_id}-${Date.now()}-c${ci + 1}`;
+
+            // 1) Pending rows first.
+            const rowIds = [];
+            let logFail = null;
             for (const p of chunk) {
                 try {
-                    await db.entities.SquadChampionsPayoutLog.create({
+                    const row = await db.entities.SquadChampionsPayoutLog.create({
                         period_id,
                         wallet_address: p.walletAddress,
                         squad_id: p.squad_id,
@@ -528,17 +541,45 @@ Deno.serve(async (req) => {
                         squad_tag: p.squad_tag,
                         squad_rank: p.squad_rank,
                         amount: p.amount,
-                        tx_id: chunkTxId,
-                        status: 'success',
+                        tx_id: marker,
+                        status: 'pending',
                     });
-                    paidThisRun++;
+                    rowIds.push(row.id);
                 } catch (logErr) {
-                    // A failed log write would let a retry double-pay this wallet — alert loudly.
-                    console.error('[distributeSquadChampions] CRITICAL: paid OMENX but log write failed', {
-                        wallet: p.walletAddress, amount: p.amount, tx: chunkTxId, err: logErr?.message
-                    });
+                    logFail = logErr?.message || String(logErr);
+                    break;
                 }
             }
+            if (logFail) {
+                // Nothing has been sent for this chunk — remove its rows so a re-run pays it.
+                for (const id of rowIds) { try { await db.entities.SquadChampionsPayoutLog.delete(id); } catch {} }
+                partialError = `could not write payout records before paying chunk ${ci + 1} (nothing sent for it): ${logFail}`;
+                console.error(`[distributeSquadChampions] ${partialError}`);
+                break;
+            }
+
+            // 2) Pay.
+            const res = await callOmenxOneChunk(chunk, apiBaseUrl, rewardsKeys, `Squad Champions ${period_id}`, ci, chunks.length);
+
+            if (res.ok) {
+                txIds.push(res.txId);
+                for (const id of rowIds) {
+                    try { await db.entities.SquadChampionsPayoutLog.update(id, { tx_id: res.txId || marker.replace('pending-', 'paid-'), status: 'success' }); }
+                    catch (e) { console.error('[distributeSquadChampions] paid but could not mark row success (row stays pending, still skipped on re-run)', id, e?.message); }
+                }
+                paidThisRun += chunk.length;
+                continue;
+            }
+
+            if (res.notPaid) {
+                for (const id of rowIds) { try { await db.entities.SquadChampionsPayoutLog.delete(id); } catch {} }
+                partialError = `Omen refused chunk ${ci + 1}/${chunks.length} — nothing paid for it, safe to retry: ${res.error}`;
+            } else {
+                unclearChunk = true;
+                partialError = `UNCLEAR answer from Omen on chunk ${ci + 1}/${chunks.length} — it MAY have paid. Its ${chunk.length} wallets are logged as 'pending' (tx ${marker}) and will be skipped on a re-run. Check the Omen portal before doing anything else. ${res.error}`;
+            }
+            console.error(`[distributeSquadChampions] STOPPED: ${partialError}`);
+            break;
         }
 
         const txId = txIds.join(',');
@@ -577,6 +618,7 @@ Deno.serve(async (req) => {
                 paid_this_run: paidThisRun,
                 paid_omenx_this_run: paidPayoutThisRun,
                 remaining_pending: pendingPayments.length - paidThisRun,
+                unclear_chunk: unclearChunk,
                 error: partialError,
                 tx_id: txId,
             }, { status: 207 }); // 207 Multi-Status — partial success

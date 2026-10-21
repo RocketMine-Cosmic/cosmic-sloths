@@ -1,4 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+// 2026-10-21: this function used to run for ANY caller, including anonymous ones from the
+// internet (Base44 functions are reachable by URL). Now only a Base44 admin, or a call carrying
+// the AdminDash key, may run it. Scheduled workflows run with an admin context (the nightly
+// rollover job passes the same check), so re-enabling the schedule still works.
+async function isAdminCaller(base44, body) {
+    const key = body?.adminKey || body?.args?.adminKey;
+    if (key && key === Deno.env.get('AdminDash')) return true;
+    try {
+        const me = await base44.auth.me();
+        return me?.role === 'admin';
+    } catch {
+        return false;
+    }
+}
 import { createPurchase } from '../../shared/omenxPurchase.ts';
 
 // Scheduled probe of OmenX settlement. Auto-flips the omenx_purchases_disabled
@@ -93,6 +108,10 @@ async function runProbe() {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
+        const body = await req.json().catch(() => ({}));
+        if (!(await isAdminCaller(base44, body))) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
 
         // Probe (service-role context — this function is called by a scheduled automation)
         const probe = await runProbe();
