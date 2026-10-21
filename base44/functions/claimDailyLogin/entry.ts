@@ -41,12 +41,12 @@ Deno.serve(async (req) => {
                 activityPoints = { earned: results.filter(r => r.outcome === 'granted' && !r.already).map(r => ({ event: r.event, amount: r.credited })), ...(await pointsSummary(db, walletLower)) };
             }
         } catch (e) {
-            console.warn('[claimDailyLogin] activity points skipped:', e?.message);
+            console.warn('[claimDailyLogin] activity points skipped:', (e as any)?.message);
         }
 
         return Response.json({ ...result.body, activityPoints });
     } catch (error) {
-        console.error('[claimDailyLogin]', error.message);
+        console.error('[claimDailyLogin]', (error as any)?.message);
         return Response.json({ error: 'Couldn\'t claim your daily reward right now. Please try again.' }, { status: 500 });
     }
 });
