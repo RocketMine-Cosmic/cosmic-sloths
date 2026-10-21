@@ -170,7 +170,9 @@ export async function findSave(db: any, wallet: string): Promise<any | null> {
 
 // Grant a receipt onto the wallet's save (decides the grant first if the receipt has none yet), then
 // re-read after a pause and put it back if a concurrent write undid it. Returns the outcome.
-export async function grantReceipt(db: any, receipt: any): Promise<'granted' | 'held' | 'already'> {
+// recheck: the webhook waits and re-checks for a few seconds; the on-load path doesn't need to (it runs
+// again next load).
+export async function grantReceipt(db: any, receipt: any, opts: { recheck?: boolean } = { recheck: true }): Promise<'granted' | 'held' | 'already'> {
   const save = await findSave(db, receipt.wallet_address);
   if (!save) {
     if (receipt.status !== 'held') await db.entities.VipChestReceipt.update(receipt.id, { status: 'held' });
@@ -186,7 +188,7 @@ export async function grantReceipt(db: any, receipt: any): Promise<'granted' | '
   // Re-check: an old-style whole-save write that overlapped ours drops our stamp and grant together.
   // Put them back (the stamp condition makes this safe to repeat).
   let reapplied = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; opts.recheck !== false && i < 3; i++) {
     await new Promise((r) => setTimeout(r, 2000));
     const again = await findSave(db, receipt.wallet_address);
     if (hasStamp(parseSave(again), receipt.open_receipt_id)) break;
