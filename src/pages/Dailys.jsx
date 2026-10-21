@@ -6,6 +6,7 @@ import { SoundManager } from '../game/SoundManager';
 import BountiesPanel from '../components/game/BountiesPanel';
 import DailyTasksPanel from '../components/game/DailyTasksPanel';
 import DailyLoginPanel from '../components/game/DailyLoginPanel';
+import { ActivityPointsStrip } from '../components/game/ActivityPoints';
 import SpaceBackground from '../components/game/SpaceBackground';
 import CurrencyHeader from '../components/game/CurrencyHeader';
 import OmenXGate from '../components/game/OmenXGate';
@@ -47,6 +48,7 @@ export default function Dailys({ isCarousel }) {
                 </header>
                 
                 <div className="flex-1 overflow-y-auto">
+                    <ActivityPointsStrip />
                     <DailyLoginPanel save={save} setSave={setSave} />
                     <BountiesPanel save={save} setSave={setSave} />
                     <DailyTasksPanel save={save} setSave={setSave} />
