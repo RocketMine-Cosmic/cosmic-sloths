@@ -271,7 +271,17 @@ do the rest. Afterwards, update the price text in the admin Discord guides (`Adm
 
 ### 4. Rob: decide the margin before the 15% fee (Part 2)
 
-### 5. 🔴 Card checkout (`requestPurchase`, Web SDK 2.4.0): only if we opt in
+### 5. ⛔ Card checkout (`requestPurchase`, Web SDK 2.4.0): dropped by Rob, 21 Oct 2026
+
+**Not doing it.** Planned 21 Oct (project doc `claude/handoffs/CARD_CHECKOUT.md` holds the decisions,
+the facts and when to reopen). Rob's design narrowed the sheet to single store buys inside the Arcade
+(nothing in-run, buy-all stays OMCADE), and the spend log for W39–W43 had one OMCADE store buy in a month,
+the owner's own: players buy store items with gold. Selling flat OMCADE for card was rejected too: a sheet
+sale reaches the studio as OMCADE minus Omen's fee, so each top-up would cost the float, and buying OMCADE
+belongs in Omen's own purchase flow, at source. Reopen only if store buys with OMCADE start happening, the
+sheet works outside the Arcade frame, or the cosmetics shop comes back wanting a card option. The notes
+below are kept as the record.
+
 
 **Checked 21 Oct against the real 2.4.0 package on npm (CHANGELOG):** nothing we use changes.
 `createPurchase` / `POST /v1/purchases` (our `purchaseSku`) is untouched, and selling through the
