@@ -24,6 +24,16 @@ let db = null;
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
+
+// Omen's "never pay twice" key for grant-batch (K-B8, added 21 Oct 2026). Same batch (same wallets,
+// same amounts) -> same key, so a retry after an unclear answer is answered by Omen with the original
+// result instead of paying again. A different batch gets a different key. Max 128 chars.
+async function batchIdempotencyKey(prefix, payments) {
+    const s = payments.map(p => `${String(p.walletAddress).toLowerCase()}:${p.amount}`).sort().join(',');
+    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    const h = [...new Uint8Array(d)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${prefix}-${h}`.replace(/[^A-Za-z0-9:_-]/g, '-').slice(0, 128);
+}
 const CHAMPIONS_POOL_PCT = 0.10; // 10% of seasonal pool
 const TOP_3_SHARES = [0.5, 0.3, 0.2]; // 1st, 2nd, 3rd
 const MIN_WARS_FOUGHT = 2;
@@ -206,6 +216,7 @@ async function callOmenxOneChunk(chunk, apiBaseUrl, rewardsKeys, note, ci, total
                     payments: chunk.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                     gameId: GAME_ID, gameName: GAME_NAME,
                     note: `${note} chunk ${ci + 1}/${totalChunks}`,
+                    idempotencyKey: await batchIdempotencyKey(`cs-champions-${note.replace(/\s+/g, '-')}-c${ci + 1}`, chunk),
                 }),
             });
         } catch (netErr) {

@@ -12,6 +12,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 
+// Omen's "never pay twice" key for grant-batch (K-B8, added 21 Oct 2026). Same batch (same wallets,
+// same amounts) -> same key, so a retry after an unclear answer is answered by Omen with the original
+// result instead of paying again. A different batch gets a different key. Max 128 chars.
+async function batchIdempotencyKey(prefix, payments) {
+    const s = payments.map(p => `${String(p.walletAddress).toLowerCase()}:${p.amount}`).sort().join(',');
+    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    const h = [...new Uint8Array(d)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${prefix}-${h}`.replace(/[^A-Za-z0-9:_-]/g, '-').slice(0, 128);
+}
+
 // S7+ gate — must match the version in distributeKillPool / distributeRewards.
 function isNewPoolPeriod(period_id) {
     const m = String(period_id || '').match(/^(\d{4})-W(\d{1,2})$/);
@@ -152,6 +162,7 @@ Deno.serve(async (req) => {
                     payments: remaining.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
                     gameId: GAME_ID, gameName: GAME_NAME,
                     note: `Cosmic Sloths weekly payout ${period_id} — Staff share`,
+                    idempotencyKey: await batchIdempotencyKey(`cs-staff_weekly-${period_id}`, remaining),
                 }),
             });
         } catch (netErr) {
