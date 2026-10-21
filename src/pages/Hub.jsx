@@ -44,6 +44,7 @@ import OmenXAuthButton from '../components/game/OmenXAuthButton';
 import OmenXGate from '../components/game/OmenXGate';
 import OmenXConfirmation from '../components/game/OmenXConfirmation';
 import SandboxHubCard from '../components/game/SandboxHubCard';
+import ChestRewardPopup from '../components/game/ChestRewardPopup';
 import { useOmenXUser } from '@/hooks/useOmenXUser';
 import { useOmenXVip } from '@/hooks/useOmenXVip';
 import { useOmenXConfirmation } from '@/hooks/useOmenXConfirmation';
@@ -338,6 +339,8 @@ export default function Hub({ isCarousel }) {
       <OmenXGate isCarousel={isCarousel}>
         <div className={`${isCarousel ? 'min-h-full' : 'min-h-screen'} relative text-slate-200 p-1.5 pb-16 md:p-6 font-sans`}>
             {!isCarousel && <SpaceBackground />}
+            {/* VIP chest wins: hands over held prizes, re-checks grants, shows each win once. */}
+            <ChestRewardPopup enabled={syncReady && !!omenxAuth?.walletAddress} onSaveRefreshed={setSave} />
             <div className="max-w-6xl mx-auto relative z-10">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-1 md:gap-4 mb-1 md:mb-4 border-b border-fuchsia-900/40 pb-1 md:pb-4">
                     <div>
