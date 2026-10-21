@@ -1,0 +1,43 @@
+{
+  "name": "SaveWriteProbe",
+  "type": "object",
+  "properties": {
+    "wallet_address": {
+      "type": "string",
+      "description": "THROWAWAY probe table (21 Oct 2026) \u2014 same shape as PlayerSave. Delete with saveWriteProbe."
+    },
+    "save_data": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "updated_at": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "wallet_address",
+    "save_data"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
