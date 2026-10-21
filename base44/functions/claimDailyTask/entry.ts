@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { grantSafely, pointsSummary, loadPointsConfig, dailyKey } from '../../shared/omenxPoints.ts';
 
 // Server-authoritative Daily Task claim. Mirrors claimBounty's pattern.
 // Tasks live on PlayerSave.dailyTasks = { date: 'YYYY-MM-DD', tasks: [{id, progress, claimed}, ...] }
@@ -82,8 +83,27 @@ Deno.serve(async (req) => {
             'PlayerSave.update'
         );
 
+        // Omen activity points (a bonus; never fails the claim): the claim that completes ALL of
+        // today's Daily Tasks = 10, once per UTC day.
+        let activityPoints = null;
+        try {
+            const db = base44.asServiceRole;
+            const cfg = await loadPointsConfig(db);
+            if (cfg.enabled) {
+                const tasks = saveData.dailyTasks.tasks || [];
+                const grants = (tasks.length > 0 && tasks.every(t => t && t.claimed))
+                    ? [{ wallet: walletLower, event: 'tasks', amount: cfg.amounts.tasks, idempotencyKey: dailyKey('tasks', todayUTC, walletLower), dayKey: todayUTC }]
+                    : [];
+                const results = await grantSafely(db, grants);
+                activityPoints = { earned: results.filter(r => r.outcome === 'granted' && !r.already).map(r => ({ event: r.event, amount: r.credited })), ...(await pointsSummary(db, walletLower)) };
+            }
+        } catch (e) {
+            console.warn('[claimDailyTask] activity points skipped:', e?.message);
+        }
+
         return Response.json({
             success: true,
+            activityPoints,
             reward: { gold: goldReward, fragments: fragReward },
             saveData: {
                 gold: saveData.gold,
