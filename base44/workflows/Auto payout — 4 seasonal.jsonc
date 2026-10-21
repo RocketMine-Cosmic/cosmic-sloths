@@ -1,0 +1,43 @@
+{
+  "name": "Auto payout — 4 seasonal",
+  "description": "Seasonal payout, only on the Monday after a season's last week (skips itself otherwise). Runs autoPayoutStep(step='seasonal'), which presses the same payout function as the admin button, only for a closed period, only after step 3 finished cleanly, and stops (paying nothing) on anything odd. Does nothing while AppConfig 'auto_payout'.enabled is false; dry runs only while 'live' is false. Added 21 Oct 2026; replaces 'Weekly/Seasonal Reward Distribution' (distributeRewards), which must stay off. Run-book §3.4.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "40 11 * * 1",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "then": "end",
+          "with": {
+            "args": {
+              "step": "seasonal"
+            },
+            "function_name": "autoPayoutStep"
+          }
+        }
+      }
+    ],
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_payout_4_seasonal",
+      "namespace": "base44",
+      "version": "1.0"
+    }
+  }
+}
