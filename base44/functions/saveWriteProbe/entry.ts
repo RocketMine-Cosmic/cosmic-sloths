@@ -53,6 +53,17 @@ Deno.serve(async (req) => {
     out.cas_wrong_version = await T.updateMany({ id: rowId, 'save_data.ver': 5 }, { $set: { 'save_data.keep': 'changed' } });
     out.cas_right_version = await T.updateMany({ id: rowId, 'save_data.ver': 4 }, { $set: { 'save_data.keep': 'changed' }, $inc: { 'save_data.ver': 1 } });
     out.final = await read();
+
+    // 7. The exact chest grant shape: stamp list MISSING, $each for several cosmetics, $inc on a
+    //    field that doesn't exist yet, all in one conditional step; then the same again (must be a no-op).
+    const grant = () => T.updateMany(
+      { id: rowId, 'save_data.stamps': { $ne: 'rcpt-1' } },
+      { $inc: { 'save_data.gold': 50000, 'save_data.starFragments': 150 },
+        $addToSet: { 'save_data.owned': { $each: ['moon', 'skull', 'core'] }, 'save_data.stamps': 'rcpt-1' },
+        $set: { 'save_data.updated_at': 123 } });
+    out.chest_first = await grant();
+    out.chest_second = await grant();
+    out.chest_final = await read();
   } catch (e: any) {
     out.error = String(e?.message || e);
   } finally {
