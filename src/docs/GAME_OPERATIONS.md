@@ -334,7 +334,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 | K-D1 | The server takes the run's gold, kills, level, victory, sector and HEAT from the browser (gold cap removed in S6 on purpose). Sector unlocks can be faked with a 1-second "win". | 🔴 Design decision. Check the data for abuse first |
 | K-D2 | Kill credit goes to **whatever squad the browser names**: wars, bounties and Champions money. | 🔴 Easy: use the player's real squad |
 | K-D3 | Raid and meteor damage come from the browser (up to 5M and 100M a call). The 5/day raid limit and bought runs are browser-only. | 🔴 |
-| K-D4 | Daily tasks, bounties and some progress fields can be rewritten by the browser, then claimed for any reward. A new wallet's first save is stored exactly as sent. | 🔴 |
+| K-D4 | Daily tasks, bounties and some progress fields can be rewritten by the browser, then claimed for any reward. A new wallet's first save is stored exactly as sent. | 🔴 (daily login part ✅ closed 21 Oct: `syncSave` now keeps the server's `dailyLogin`, so it can't be reset to farm gold or streak activity points. Tasks and bounties still open.) |
 | K-D5 | War bonuses can be claimed by joining a squad later (no week limit). The rejoin cooldown is browser-only. | 🔴 Easy |
 | K-D6 | In-run reroll, banish, ult and revive are granted before payment, and a failed charge is ignored. | 🔴 |
 
