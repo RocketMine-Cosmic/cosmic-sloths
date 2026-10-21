@@ -29,7 +29,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 // and restoreDataBackup refuses this format. The OLD restore re-created
 // records with new ids, which breaks every cross-table link; do not use it.
 //
-// Auth: automated bypass, OR Base44 session + 'manage_backups' permission, OR emergency master key.
+// Auth (K-A2 part 2, T-001, 21 Oct 2026): emergency master key (AdminDash), OR an admin-role
+// caller — which is how the scheduled workflow arrives (same check proven on refreshSkuPrices) —
+// OR a signed-in wallet with 'manage_backups'/'owner' in AdminWallet (the dashboard buttons).
+// `is_automated` is ONLY a label now (backup_type + whether old automated backups are pruned);
+// it used to skip all auth, so anyone could start full backups and burn the write quota.
 
 // Deliberately LEFT OUT (Rob, 2026-10-20): DeletedRunScore, RunHistoryLog and
 // GoldSpendLog. They are history logs, not needed to put the game back as it was,
@@ -119,9 +123,12 @@ Deno.serve(async (req) => {
         const body = await req.json().catch(() => ({}));
         const { adminKey, backup_notes, is_automated } = body;
 
-        let callerWallet = is_automated ? 'AUTOMATION' : 'EMERGENCY_KEY';
-        if (!is_automated && !(adminKey && adminKey === Deno.env.get('AdminDash'))) {
-            const me = await base44.auth.me();
+        const keyOk = !!adminKey && adminKey === Deno.env.get('AdminDash');
+        // auth.me() throws when there is no signed-in user — treat that as anonymous.
+        let me = null;
+        if (!keyOk) { try { me = await base44.auth.me(); } catch { me = null; } }
+        let callerWallet = keyOk ? 'EMERGENCY_KEY' : (is_automated ? 'AUTOMATION' : 'ADMIN');
+        if (!keyOk && me?.role !== 'admin') {
             if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
             callerWallet = me.wallet_address?.toLowerCase();
             if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
