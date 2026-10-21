@@ -257,6 +257,22 @@ max 2,000 per player, max 100 per grant; **unused points are lost at month end**
 - **Never** grant by hand outside the log, and never change a key format: the key is what stops a
   double grant.
 
+### 5.7 VIP chests (automatic since 21 Oct 2026)
+Omen sends each chest win to `onVipChestRewardGranted`; the prize (gold + star fragments + a cosmetic) goes on the
+save by itself, the chest Discord channel gets a line saying what was given, and the player sees a 🎁 popup next
+time they open the game. Nothing to press. Full record: `claude/handoffs/VIP_CHESTS.md`.
+- **Where to look:** Admin → Player Operations → 🎁 VIP Chests. "Needs attention" should say *Nothing needs you*.
+- **Held** = the wallet has never played. It is given automatically the first time they open the game. Nothing to do.
+- **Failed** = press *Retry grant* (safe: a receipt can never pay twice).
+- **Needs you** = Omen sent an item the game doesn't know (a new product on the portal?). Nothing was given.
+  Grant it by hand with the 🎁 Grant tool, then press *Mark handled by hand* — and add the product to
+  `base44/shared/vipChests.ts` so the next one is automatic.
+- **Duplicates** are swapped for another cosmetic of the same rarity; if the player owns them all, 150 (epic) or
+  450 (mythic) star fragments instead. Eclipse Crown is only ever given by an Elite chest.
+- **"Bad signature" errors from Omen** after someone pressed *Regenerate secret* on the portal: copy the new secret
+  into the Base44 secret `OMENX_VIP_CHEST_WEBHOOK_SECRET` straight away (there is no grace period).
+- **Never** edit `vipChestReceiptsApplied` on a save by hand: it is what stops a chest paying twice.
+
 ---
 
 ## 6. Never press (without Rob, and a reason)
