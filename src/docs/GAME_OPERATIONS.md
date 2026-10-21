@@ -77,7 +77,7 @@ Omen dates: liquidity pool test **21 Oct**, full **22 Oct**, card checkout for o
 8. **Activity points** (`PointGrantLog`): no rows stuck in `pending`/`error` for more than a few hours
    (the hourly job retries them), and this month's `granted` total is well under 45,000. Refusals and
    `guard` rows are normal; a burst of `refused` with "paused" or "no allocation" in the reason means
-   Omen switched something off, so tell Rob. See §7.
+   Omen switched something off, so tell Rob. See §5.6.
 
 Report to Rob only when something needs him. Otherwise a one-line "all fine" in the log.
 
@@ -143,6 +143,7 @@ All of these live in `AppConfig`. Players pick up changes within **about 6 minut
 | Global XP buff | Admin → Maintenance | 1–3×, 72 h max |
 | Blacklist | Admin → Blacklist | **Only affects Squad Champions** (K-B4). Banned players can still play and get paid. |
 | Mute | Admin → Squad Chat | Blocks squad chat only |
+| Omen activity points on/off, amounts, caps | `AppConfig` key `points_config` (no admin screen yet) | `enabled` is the master switch (on since 21 Oct). `amounts` = points per Star Ops card and weekly placement; `guards` = our own caps (45,000 a month, 1,900 per player a month, 135 per player a day for the daily cards). Read on every claim, so a change applies at once. Switching off stops all grants; nothing else in the game changes. |
 
 ---
 
@@ -173,6 +174,25 @@ There is **no restore for the new format yet**, and the old Restore button must 
 ### 5.4 Saving a player's save by hand
 The save editor writes the **whole** save as it was when the editor opened. Anything the player earned
 meanwhile is lost (K-E5). Ask the player to stay offline, open, edit and save quickly.
+
+### 5.6 Omen activity points
+Players earn Omen activity points for finishing Star Ops cards (login 10, all 3 bounties 10, all daily
+tasks 10, daily mission 5, login streak 3/7/14/30 days 25/50/100/100) and for weekly placement (top 10
+of each weekly board 100/75/50/25, Squad War win 10, Squad Champions 100). Omen gives us 50,000 a month,
+max 2,000 per player, max 100 per grant; **unused points are lost at month end**. Every grant is one
+`PointGrantLog` row, written before Omen is called and keyed by a fixed idempotency key
+(`ap-<event>-<day or week>-<wallet>`), so nothing can be paid twice. Design and Omen facts: project doc
+`claude/handoffs/ACTIVITY_POINTS.md`; Omen side: `OMEN_INTEGRATION.md` Part 4 item 7.
+- **"I didn't get my points":** find the wallet's rows for the day. `granted` = Omen has them (they show
+  on the player's Omen profile, not as a game currency). `refused` / `not_in_game` = Omen's final answer;
+  the reason says why (most often the player's 2,000 monthly ceiling). `guard` = our own cap stopped it.
+  No row = the claim didn't qualify (e.g. not all 3 bounties claimed) or points were off.
+- **Rows stuck `pending` / `error`:** the hourly job retries them with the same key. After about three
+  tries it stops; check Omen's status and the key secrets (`OMENX_POINTS_API_KEY`, `_2`, `_3`, `_4`).
+- **Weekly placement missing on a Monday:** it reads `PayoutLog`, so it lands at the first :17 after the
+  payout buttons are pressed.
+- **Never** grant by hand outside the log, and never change a key format: the key is what stops a
+  double grant.
 
 ### 5.5 Someone can't log in
 1. `OmenAuthEvent` for the wallet: no row this week means they never finished Omen's login.
