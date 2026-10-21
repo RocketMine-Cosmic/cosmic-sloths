@@ -4,6 +4,7 @@ import { SaveManager } from '../../game/SaveManager';
 import { SoundManager } from '../../game/SoundManager';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
+import { ApBadge, notifyActivityPoints } from './ActivityPoints';
 
 export default function DailyTasksPanel({ save, setSave }) {
     const { toast } = useToast();
@@ -22,6 +23,7 @@ export default function DailyTasksPanel({ save, setSave }) {
             <div className="bg-[#0b0416]/80 backdrop-blur-xl border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] rounded-xl p-3 md:p-4 mt-2 md:mt-4">
                 <h3 className="text-xl font-bold text-emerald-400 mb-2 flex items-center gap-2">
                     <Zap className="w-5 h-5" /> Daily Tasks
+                    <ApBadge event="tasks" suffix="all" />
                 </h3>
                 <p className="text-xs text-slate-500 italic">
                     {isStale
@@ -57,6 +59,7 @@ export default function DailyTasksPanel({ save, setSave }) {
             if (data.reward.gold) parts.push(`${data.reward.gold} Gold`);
             if (data.reward.fragments) parts.push(`${data.reward.fragments} Fragments`);
             toast({ title: 'Task Complete!', description: `You received ${parts.join(' + ')}` });
+            notifyActivityPoints(toast, data.activityPoints);
         } catch (e) {
             toast({ title: 'Claim Failed', description: e.message || 'Network error.' });
         } finally {
@@ -72,6 +75,7 @@ export default function DailyTasksPanel({ save, setSave }) {
             <div className="flex items-center justify-between mb-3 md:mb-4">
                 <h3 className="text-xl font-bold text-emerald-400 flex items-center gap-2">
                     <Zap className="w-5 h-5" /> Daily Tasks
+                    <ApBadge event="tasks" suffix="all" />
                 </h3>
                 <span className={`text-xs font-bold px-2 py-1 rounded border ${
                     allDone
