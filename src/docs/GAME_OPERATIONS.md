@@ -216,7 +216,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 | K-B1 | The automatic payout job (`distributeRewards`) re-pays any week not marked finished, never checks PayoutLog, and pays seasonal and weekly at the same minute. | Critical if enabled | Keep off. Mark all paid weeks finished. Rewrite before ever enabling. | 🔴 (off) |
 | K-B2 | **Squad Champions payout:** records only after success, and retries unclear answers with another key, so it can **pay twice**. Next run **2 Nov**. | High, dated | Easy: same log-first pattern as the weekly buttons | ✅ **Fixed 21 Oct** (live, before the 2 Nov run). Only a 429 now switches key. |
 | K-B3 | Refunds (single and bulk) keep no record and retry, so they can refund twice. Manual refund can send up to 100,000 to any wallet. | Medium | Easy: log-first and a record | 🔴 |
-| K-B4 | The blacklist isn't checked by the weekly, seasonal or kill payouts. | Medium | Easy | 🔴 Needs Rob (policy) |
+| K-B4 | The blacklist isn't checked by the weekly, seasonal or kill payouts. | Low | Easy | ✅ Not needed (Rob, 21 Oct): nobody is banned; `BlacklistedWallet` is empty. Revisit only if someone is ever banned. |
 | K-B5 | Payout buttons: no confirm, nothing stops two at once, and the open week can be paid. | Medium | Easy: confirm, closed-period check, lock | 🔴 |
 | K-B6 | Purchases that Omen leaves "pending", or whose grant fails to save, are charged with no item, log or alert. Buy All can charge twice on a retry (new idempotency key per call). | Medium (support load) | Moderate | 🔴 |
 | K-B7 | Server price checks: a level-1 upgrade item can grant any level; talent tier and cosmetic id come from the client; `spendGold` takes the client's gold cost. | High if exploited | Moderate | 🔴 |
@@ -321,8 +321,7 @@ Supabase build (today a Discord alert arrives and Rob rewards the chest by hand)
 Note: function fixes reach scheduled jobs at once, but the live site keeps the old version until the
 app is **published**. After a function fix, publish and then test on cosmic-sloths.com.
 
-1. Should banned wallets be left out of all payouts (K-B4)?
-2. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
-3. Compensate the ~1 day of W43 war kills lost to the pairing failure?
-4. Is the treasury buff meant to do something?
-5. Who else holds admin permissions or the `AdminDash` key, and rotate it?
+1. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
+2. Compensate the ~1 day of W43 war kills lost to the pairing failure?
+3. Is the treasury buff meant to do something?
+4. Who else holds admin permissions or the `AdminDash` key, and rotate it?
