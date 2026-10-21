@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
         const amounts = {
             login: a.login, bounties: a.bounties, tasks: a.tasks, mission: a.mission,
             streak: { 3: a.streak3, 7: a.streak7, 14: a.streak14, 30: a.streak30 },
+            wscore: a.wscore, wkills: a.wkills, // [1st, 2nd, 3rd, 4th-10th] for the leaderboard pills
         };
         // Admins see the strip and badges even while points are off, so the screen can be checked
         // before switching on (labelled as a preview in the UI).
