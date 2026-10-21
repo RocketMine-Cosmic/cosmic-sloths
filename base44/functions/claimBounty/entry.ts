@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { grantSafely, pointsSummary, loadPointsConfig, dailyKey, utcDay } from '../../shared/omenxPoints.ts';
 
 // Server-authoritative bounty/daily-mission claim.
 // Reads cloud PlayerSave to verify progress >= target and not yet claimed,
@@ -104,8 +105,33 @@ Deno.serve(async (req) => {
             'PlayerSave.update'
         );
 
+        // Omen activity points (a bonus; never fails the claim): Daily Mission claimed = 5;
+        // the claim that completes all 3 Daily Bounties = 10. One of each per UTC day.
+        let activityPoints = null;
+        try {
+            const db = base44.asServiceRole;
+            const cfg = await loadPointsConfig(db);
+            if (cfg.enabled) {
+                const day = utcDay();
+                const grants = [];
+                if (type === 'dailyMission') {
+                    grants.push({ wallet: walletLower, event: 'mission', amount: cfg.amounts.mission, idempotencyKey: dailyKey('mission', day, walletLower), dayKey: day });
+                } else {
+                    const list = saveData.bounties.active || [];
+                    if (list.length >= 3 && list.every(b => b && b.claimed)) {
+                        grants.push({ wallet: walletLower, event: 'bounties', amount: cfg.amounts.bounties, idempotencyKey: dailyKey('bounties', day, walletLower), dayKey: day });
+                    }
+                }
+                const results = await grantSafely(db, grants);
+                activityPoints = { earned: results.filter(r => r.outcome === 'granted' && !r.already).map(r => ({ event: r.event, amount: r.credited })), ...(await pointsSummary(db, walletLower)) };
+            }
+        } catch (e) {
+            console.warn('[claimBounty] activity points skipped:', e?.message);
+        }
+
         return Response.json({
             success: true,
+            activityPoints,
             reward: { amount: bounty.reward, currency: bounty.currency || 'seasonalPoints' },
             saveData: {
                 gold: saveData.gold,
