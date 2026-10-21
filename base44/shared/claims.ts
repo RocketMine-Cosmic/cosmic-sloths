@@ -134,7 +134,11 @@ export async function claimBossRewardFor(db: any, walletAsLinked: string, levelN
   if (levelNum >= (bosses[0].level || 1)) return R(400, { error: 'This level hasn\'t been defeated yet.' });
 
   // submitBossDamage writes one row per run; contributions are keyed by the wallet as linked (original casing).
-  const contribs: any[] = await db.entities.GlobalBossContribution.filter({ week_id: weekId, user_id: walletAsLinked }, 'created_date');
+  const contribs: any[] = await db.entities.GlobalBossContribution.filter({ week_id: weekId, user_id: walletAsLinked });
+  // Pick the oldest row OURSELVES: the database ignored a sort argument on 21 Oct (the first live claim marked the
+  // newer row). A row made by a raid finishing mid-claim must never become "the" marker row, or two claims could
+  // mark different rows and both pay.
+  contribs?.sort((a, b) => String(a.created_date).localeCompare(String(b.created_date)) || String(a.id).localeCompare(String(b.id)));
   if (!contribs || contribs.length === 0) return R(404, { error: 'You haven\'t contributed to the raid this week yet.' });
   if (contribs.some((c) => Array.isArray(c.claimed_milestones) && c.claimed_milestones.includes(levelNum))) {
     return R(409, { status: 'error', error: 'You\'ve already claimed this reward.' });
