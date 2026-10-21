@@ -194,6 +194,11 @@ export async function grantReceipt(db: any, receipt: any, opts: { recheck?: bool
     if (hasStamp(parseSave(again), receipt.open_receipt_id)) break;
     if (await atomicGrant(db, again.id, receipt.open_receipt_id, granted)) reapplied++;
   }
+  // Never mark a receipt granted on faith: the stamp must be on the save NOW. (An update that silently
+  // matched nothing — e.g. a save stored as text — would otherwise read as "already granted".)
+  if (!hasStamp(parseSave(await findSave(db, receipt.wallet_address)), receipt.open_receipt_id)) {
+    throw new Error('grant did not land on the save (stamp missing after write)');
+  }
   await db.entities.VipChestReceipt.update(receipt.id, {
     status: 'granted',
     granted_at: receipt.granted_at || new Date().toISOString(),
