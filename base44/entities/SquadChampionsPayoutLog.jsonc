@@ -1,14 +1,13 @@
 {
   "name": "SquadChampionsPayoutLog",
-  "type": "object",
   "properties": {
-    "period_id": {
-      "type": "string",
-      "description": "Season id, e.g. 2026-S5"
+    "amount": {
+      "description": "OMENX amount paid to this member",
+      "type": "number"
     },
-    "wallet_address": {
-      "type": "string",
-      "description": "Recipient wallet (lowercase)"
+    "period_id": {
+      "description": "Season id, e.g. 2026-S5",
+      "type": "string"
     },
     "squad_id": {
       "type": "string"
@@ -16,28 +15,31 @@
     "squad_name": {
       "type": "string"
     },
+    "squad_rank": {
+      "description": "1, 2, or 3",
+      "type": "number"
+    },
     "squad_tag": {
       "type": "string"
     },
-    "squad_rank": {
-      "type": "number",
-      "description": "1, 2, or 3"
-    },
-    "amount": {
-      "type": "number",
-      "description": "OMENX amount paid to this member"
-    },
-    "tx_id": {
-      "type": "string"
-    },
     "status": {
-      "type": "string",
+      "default": "success",
+      "description": "'pending' (added 2026-10-21) = log-first row written before the grant; becomes 'success' on a clear yes, deleted on a clear no, left pending on an unclear answer.",
       "enum": [
         "success",
         "failed",
-        "rolled_over"
+        "rolled_over",
+        "pending"
       ],
-      "default": "success"
+      "type": "string"
+    },
+    "tx_id": {
+      "description": "Omen transaction id. 'pending-\u2026' = written before paying and Omen's answer was unclear; check the Omen portal (run-book 5.2).",
+      "type": "string"
+    },
+    "wallet_address": {
+      "description": "Recipient wallet (lowercase)",
+      "type": "string"
     }
   },
   "required": [
@@ -45,6 +47,7 @@
     "wallet_address",
     "amount"
   ],
+  "type": "object",
   "rls": {
     "create": {
       "user_condition": {
