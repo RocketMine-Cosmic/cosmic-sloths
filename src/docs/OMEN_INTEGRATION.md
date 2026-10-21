@@ -163,8 +163,14 @@ payout went to too many players) and only runs when pressed.
 
 ### VIP chest webhook
 
-It lives on the **SlowBurn Studio site** (separate Vercel project, writes to Supabase), not in Base44.
-Omen's checklist: verify HMAC-SHA256 over `${timestamp}.${rawBody}` (secret includes `whsec_`) with a ±5
+It lives **in Base44** (since 21 Oct 2026): `functions/onVipChestRewardGranted` (portal URL
+`https://cosmic-sloths.com/functions/onVipChestRewardGranted`), handler `shared/vipChestWebhook.ts`, grant logic
+`shared/vipChests.ts`, one `VipChestReceipt` row per chest opened. Each prize (gold + star fragments + a cosmetic,
+with a same-rarity swap for duplicates) goes on the save in ONE atomic step, players get a one-time 🎁 popup,
+and Admin → Player Operations → 🎁 VIP Chests lists anything held, failed or unknown. Secrets
+`OMENX_VIP_CHEST_WEBHOOK_SECRET` and `DISCORD_CHEST_WEBHOOK`. Full record: `claude/handoffs/VIP_CHESTS.md` in the
+Sloths project. The old receiver (SlowBurn site on Vercel → Supabase) is idle and is retired after the first
+real chest lands on Base44. Omen's checklist: verify HMAC-SHA256 over `${timestamp}.${rawBody}` (secret includes `whsec_`) with a ±5
 min replay window, and use **`open.openReceiptId` as the idempotency key (not the delivery id)**. Reply 2xx only
 after a durable write. Payload: `rewardPayload.kind` is product, nft or bundle; `quantity` is
 omitted when 1; optional fields are absent, not null; `open.isTestnet` is the only environment switch. Secret
@@ -336,7 +342,10 @@ upgrade gives a **realtime wallet subscription**, which could replace balance po
   - log `platformFeeApplied` / `developerNetTxHash` on TokenSpendLog;
   - the old restore button can't read parts-v2 backups; replace it or remove it.
 
-### 10. Check the VIP chest webhook on the SlowBurn site against Omen's checklist (Part 2)
+### 10. ~~Check the VIP chest webhook against Omen's checklist (Part 2)~~ — done 21 Oct 2026
+Rebuilt in Base44 to the checklist: HMAC over `${timestamp}.${rawBody}` with the `whsec_` secret, ±5 min window,
+`open.openReceiptId` as the idempotency key, 2xx only after the receipt row is written, `isTestnet` never granted,
+optional fields read as absent. Proven against a real Omen body (byte-identical) and 12 test scenarios.
 
 ### 11. Evaluate "Sign in once" / `<omen-signin>` as a replacement for our login flow
 
