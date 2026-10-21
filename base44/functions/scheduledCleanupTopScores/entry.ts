@@ -20,6 +20,15 @@ const SCAN_HARD_CAP = 50_000;
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Admin / scheduler / AdminDash only (K-A2 part 2, T-001, 21 Oct 2026). The scheduled
+// workflow passes this as an admin (same check proven on refreshSkuPrices); an anonymous
+// caller on the internet gets 403 instead of running the archive job.
+async function isAdminCaller(base44, body) {
+    const key = body?.adminKey || body?.args?.adminKey;
+    if (key && key === Deno.env.get('AdminDash')) return true;
+    try { const me = await base44.auth.me(); return me?.role === 'admin'; } catch { return false; }
+}
+
 async function with429Retry(fn, label = 'sdk') {
     let lastErr;
     for (let attempt = 0; attempt < 4; attempt++) {
@@ -45,6 +54,10 @@ async function with429Retry(fn, label = 'sdk') {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
+        const body = await req.json().catch(() => ({}));
+        if (!(await isAdminCaller(base44, body))) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
         const db = base44.asServiceRole;
         const startedAt = Date.now();
         const deadline = startedAt + TIME_BUDGET_MS;
