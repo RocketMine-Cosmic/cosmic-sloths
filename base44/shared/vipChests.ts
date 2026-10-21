@@ -212,11 +212,14 @@ export function describeGrant(g: Granted | null | undefined): string {
   if (!g) return '';
   const parts: string[] = [];
   if (g.gold) parts.push(`${g.gold.toLocaleString('en-GB')} gold`);
-  if (g.star_fragments) parts.push(`${g.star_fragments} star fragments`);
+  const fallback = (g.cosmetics || []).filter((c) => c.swap === 'fragments');
+  if (g.star_fragments) {
+    parts.push(`${g.star_fragments} star fragments` + (fallback.length
+      ? ` (incl. ${fallback.map((c) => `${c.fragments} instead of ${cosmeticName(c.won)}`).join(', ')} — owns every one)` : ''));
+  }
   for (const c of g.cosmetics || []) {
     if (c.swap === 'none') parts.push(cosmeticName(c.given));
     else if (c.swap === 'swapped') parts.push(`${cosmeticName(c.given)} (already had ${cosmeticName(c.won)})`);
-    else parts.push(`+${c.fragments} fragments instead of ${cosmeticName(c.won)} (owns every one)`);
   }
   return parts.join(' · ');
 }
