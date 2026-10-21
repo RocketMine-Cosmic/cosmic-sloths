@@ -1,0 +1,80 @@
+{
+  "name": "PointGrantLog",
+  "type": "object",
+  "properties": {
+    "idempotency_key": {
+      "type": "string",
+      "unique": true,
+      "description": "Deterministic key sent to Omen as the Idempotency-Key header, e.g. ap-login-2026-10-21-0xabc\u2026 . One row per reward occurrence; a second claim of the same occurrence finds this row instead of granting again."
+    },
+    "wallet_address": {
+      "type": "string",
+      "description": "Lowercase wallet the points were granted to."
+    },
+    "event": {
+      "type": "string",
+      "description": "login | streak3 | streak7 | streak14 | streak30 | bounties | tasks | mission | wscore | wkills | war | champs"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Points requested."
+    },
+    "credited": {
+      "type": "number",
+      "description": "Points Omen says it credited (0 unless outcome is granted). Reconcile on this, never on amount."
+    },
+    "outcome": {
+      "type": "string",
+      "description": "pending (written before the call) | granted | refused (final; reason says why) | not_in_game (404, final) | guard (our own cap stopped it before calling Omen) | error (no final answer yet; safe to retry with the same key)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Omen's error code + message, or which of our guards stopped it."
+    },
+    "day_key": {
+      "type": "string",
+      "description": "UTC day the grant belongs to (YYYY-MM-DD). Used by the per-player daily guard and the Star Ops 'today' figure."
+    },
+    "month_key": {
+      "type": "string",
+      "description": "UTC month the grant belongs to (YYYY-MM). Omen's allocation resets monthly; used by the pool and per-player monthly guards."
+    },
+    "period_id": {
+      "type": "string",
+      "description": "Weekly placement only: the ISO week, war id or season the grant settles."
+    },
+    "attempts": {
+      "type": "number",
+      "description": "How many times Omen was called for this key."
+    }
+  },
+  "required": [
+    "idempotency_key",
+    "wallet_address",
+    "event",
+    "amount",
+    "outcome"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
