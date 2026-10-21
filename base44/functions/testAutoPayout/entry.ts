@@ -56,10 +56,6 @@ Deno.serve(async (req) => {
         if (planted) { try { await db.entities.PayoutLog.delete(planted.id); } catch {} }
     }
 
-    // What next Monday would do (for the eyes, not pass/fail).
-    const preview = await run({ step: 'weekly_score' });
-    const previewKills = await run({ step: 'weekly_kills' });
-
     // Tidy: dry-run rows from this scorecard are not part of the record.
     try {
         const dryRows = await db.entities.PayoutRun.filter({ mode: 'dry' }, '-created_date', 100);
@@ -71,10 +67,6 @@ Deno.serve(async (req) => {
     return Response.json({
         verdict: passed === cases.length ? `ALL ${passed} PASSED` : `${cases.length - passed} of ${cases.length} FAILED`,
         cases,
-        next_monday: {
-            weekly_score: { status: preview.status, period: preview.period, reason: preview.reason, would_pay: preview.to_pay_total },
-            weekly_kills: { status: previewKills.status, period: previewKills.period, reason: previewKills.reason, would_pay: previewKills.to_pay_total },
-            note: 'Monday\'s week is still open, so these say "stopped: has not closed yet" until Monday 00:00 UTC. That is correct.',
-        },
+        next_monday: `${openWeek} closes Sunday 23:59 UTC; the first automatic payout would pay it from Monday 10:40 UTC, if auto_payout is switched on and live.`,
     });
 });
