@@ -1,0 +1,93 @@
+{
+  "name": "PayoutRun",
+  "type": "object",
+  "properties": {
+    "run_key": {
+      "type": "string",
+      "unique": true,
+      "description": "<period>:<step> for a live run (e.g. 2026-W43:weekly_score) \u2014 the unique key is the lock: a step can only ever start once per period. Dry runs use dry:<period>:<step>:<ms>."
+    },
+    "period_id": {
+      "type": "string",
+      "description": "ISO week (2026-W43) or season (2026-S11) the step pays."
+    },
+    "step": {
+      "type": "string",
+      "description": "weekly_score | weekly_kills | close_week | seasonal | champions"
+    },
+    "mode": {
+      "type": "string",
+      "description": "live | dry"
+    },
+    "status": {
+      "type": "string",
+      "description": "running (started; if it stays running the step crashed mid-way \u2014 needs Rob) | ok (paid and verified) | skipped (nothing to do, e.g. not a season-end week, or already paid by hand) | stopped (a guard tripped; nothing was paid by this run unless 'reason' says otherwise; later steps refuse until Rob clears it) | dry (dry run: what it would have paid)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Plain-English why, for skipped / stopped / dry."
+    },
+    "to_pay_count": {
+      "type": "number",
+      "description": "Wallets the preview said were owed before the run."
+    },
+    "to_pay_total": {
+      "type": "number",
+      "description": "OMCADE the preview said was owed before the run."
+    },
+    "paid_count": {
+      "type": "number",
+      "description": "Wallets confirmed paid by this run (PayoutLog / SquadChampionsPayoutLog rows with a real tx id)."
+    },
+    "paid_total": {
+      "type": "number",
+      "description": "OMCADE confirmed paid by this run."
+    },
+    "pool_total_spent": {
+      "type": "number",
+      "description": "TokenPool.total_spent the amounts were computed from."
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The preview's payment list and the payout function's own answer, kept for the report."
+    },
+    "finished_at": {
+      "type": "string",
+      "description": "ISO time the step finished (any status but running)."
+    },
+    "acknowledged": {
+      "type": "boolean",
+      "description": "Rob has looked at a stopped run. A stopped step is only retried after its row is deleted (see run-book)."
+    }
+  },
+  "required": [
+    "run_key",
+    "period_id",
+    "step",
+    "mode",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
