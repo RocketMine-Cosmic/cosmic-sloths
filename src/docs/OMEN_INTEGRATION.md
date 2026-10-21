@@ -272,6 +272,17 @@ do the rest. Afterwards, update the price text in the admin Discord guides (`Adm
 ### 4. Rob: decide the margin before the 15% fee (Part 2)
 
 ### 5. 🔴 Card checkout (`requestPurchase`, Web SDK 2.4.0): only if we opt in
+
+**Checked 21 Oct against the real 2.4.0 package on npm (CHANGELOG):** nothing we use changes.
+`createPurchase` / `POST /v1/purchases` (our `purchaseSku`) is untouched, and selling through the
+Arcade purchase sheet is optional. Flow if we adopt it: our server calls `createPurchaseRequest`
+(`POST /v1/purchase-requests`, scope `purchase:write`) → the game calls `sdk.requestPurchase(requestId)`
+→ the server grants only from the signed `purchase.paid` webhook or `getPurchaseRequest`, then
+`markPurchaseDelivered`. `unavailable` = keep the current flow. Edward (21 Oct): purchases switch on
+**Fri 23 Oct** for games that integrated it; the in-game price is then only a preview, the checkout
+is the real price. The one 2.4.0 exception (games sending the Arcade frame token to the Arcade's own
+`/api` routes) does not apply to us: we only call `api.omen.foundation/v1` from the server. We are on
+SDK 1.0.x; upgrading is item 8.
 It needs 2.4.0 on npm and its guide. If it's turned on, a card sale happens inside Omen's checkout,
 not through `purchaseSku`. The game must still grant the item and **add the sale to the token pools**,
 or card buyers won't feed the prize pools. Design that before opting in.
