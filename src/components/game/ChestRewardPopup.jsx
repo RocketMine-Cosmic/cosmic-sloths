@@ -18,9 +18,13 @@ export default function ChestRewardPopup({ enabled, onSaveRefreshed }) {
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    (async () => {
+    let retryTimer = null;
+    const run = async (attempt) => {
       try {
         const res = await base44.functions.invoke('getMyChestRewards', { action: 'list' });
+        // A brand-new player's save is created by their first sync, which can land after this call.
+        // If a prize is still held, ask again a little later (twice at most).
+        if (res.data?.stillHeld > 0 && attempt < 2 && alive) retryTimer = setTimeout(() => run(attempt + 1), 20000);
         const list = res.data?.rewards || [];
         if (!alive) return;
         if (res.data?.saveChanged || list.length) {
@@ -35,10 +39,11 @@ export default function ChestRewardPopup({ enabled, onSaveRefreshed }) {
             }
           } catch { /* the next sync adopts the cloud copy anyway */ }
         }
-        if (alive) setRewards(list);
+        if (alive && list.length) setRewards(list);
       } catch { /* never block the hub over this */ }
-    })();
-    return () => { alive = false; };
+    };
+    run(0);
+    return () => { alive = false; if (retryTimer) clearTimeout(retryTimer); };
   }, [enabled]);
 
   if (!rewards.length) return null;
