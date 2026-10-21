@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         if (!keyOk) { try { me = await base44.auth.me(); } catch { me = null; } }
         let callerWallet = keyOk ? 'EMERGENCY_KEY' : (is_automated ? 'AUTOMATION' : 'ADMIN');
         if (!keyOk && me?.role !== 'admin') {
-            if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            if (!me) return Response.json({ error: 'Forbidden' }, { status: 403 });
             callerWallet = me.wallet_address?.toLowerCase();
             if (!callerWallet) return Response.json({ error: 'No wallet linked' }, { status: 401 });
             const records = await db.entities.AdminWallet.filter({ wallet_address: callerWallet });
