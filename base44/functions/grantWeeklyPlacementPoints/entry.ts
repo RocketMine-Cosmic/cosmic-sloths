@@ -99,18 +99,34 @@ Deno.serve(async (req) => {
 
         if (dryRun) return Response.json({ ok: true, dryRun: true, enabled: cfg.enabled, weeks, count: todo.length, todo });
 
+        // Base44 stops a function at 5 minutes (the first run on 21 Oct hit that at grant 69 of ~75).
+        // Stop cleanly well before it; whatever is left is picked up by the next hourly run, and the
+        // fixed keys mean nothing is granted twice. Grants already logged are skipped up front so a
+        // big backlog doesn't spend the time budget re-checking finished ones.
+        const started = Date.now();
+        const BUDGET_MS = 200_000;
+        const doneKeys = new Set<string>();
+        for (const chunk of [todo.slice(0, 100), todo.slice(100, 200)]) {
+            if (!chunk.length) continue;
+            const rows = await db.entities.PointGrantLog.filter({ idempotency_key: { $in: chunk.map((g: any) => g.idempotencyKey) } }, '-created_date', 200);
+            for (const r of rows || []) if (['granted', 'refused', 'not_in_game', 'guard'].includes(r.outcome)) doneKeys.add(r.idempotency_key);
+        }
         const results: any[] = [];
         const today = utcDay();
+        let leftForNextRun = 0;
         for (const g of todo) {
+            if (doneKeys.has(g.idempotencyKey)) continue;
+            if (Date.now() - started > BUDGET_MS) { leftForNextRun++; continue; }
             const r = await grantActivityPoints(db, { ...g, dayKey: g.dayKey || today, config: cfg });
             if (!r.already) {
                 results.push({ key: g.idempotencyKey, why: g.why, outcome: r.outcome, credited: r.credited, reason: r.reason || '' });
-                await sleep(700); // spread calls; never near the rate limit
+                await sleep(150); // spread calls a little
             }
         }
         const granted = results.filter(r => r.outcome === 'granted').reduce((s, r) => s + (r.credited || 0), 0);
         if (results.length) console.log(`[grantWeeklyPlacementPoints] ${results.length} new outcomes, ${granted} points granted`);
-        return Response.json({ ok: true, weeks, checked: todo.length, newOutcomes: results.length, granted, results });
+        if (leftForNextRun) console.log(`[grantWeeklyPlacementPoints] time budget reached; ${leftForNextRun} left for the next hourly run`);
+        return Response.json({ ok: true, weeks, checked: todo.length, newOutcomes: results.length, granted, leftForNextRun, results });
     } catch (e) {
         console.error('[grantWeeklyPlacementPoints]', (e as any)?.message || e);
         return Response.json({ ok: false, error: String((e as any)?.message || e) }, { status: 500 });
