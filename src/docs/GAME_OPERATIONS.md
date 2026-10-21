@@ -38,7 +38,7 @@ All times are **UTC**. UK clocks go back on Sun 25 Oct, so from then on UTC = UK
 | Job | Why it's off |
 |---|---|
 | Weekly / Seasonal Reward Distribution (`distributeRewards`) | It would **pay every week again** that was paid by hand. See K-B1. Payouts are done by hand. |
-| Squad Wars Champions Payout | Not safe against double payment (K-B2). Paid by hand. |
+| Squad Wars Champions Payout | Log-first since 21 Oct (K-B2 fixed): an unclear answer leaves `pending` rows and stops. |
 | Auto-toggle OMENX purchases | Makes a real 1-token purchase from Rob's wallet every 5 minutes. Off since June. |
 | Leaderboard Takeover Alert, Weekly Discord Leaderboard Post | Discord posts. No auth checks, and the leaderboard post counts endless runs. |
 
@@ -118,8 +118,9 @@ Admin → Live Ops → **Rewards**.
    - Pairing must have succeeded first: Champions counts only settled wars.
    - Preview, then Distribute (two clicks within 8 s).
    - It pays **current** squad members, so pay soon after the preview.
-   - Until K-B2 is fixed: **if it errors part-way, stop**. Check Omen for the failed part before anything
-     else. A retry can pay twice.
+   - If it stops part-way, read the message. "Refused" = nothing paid for that part, a re-run is safe.
+     "UNCLEAR" = its wallets are logged `pending` and a re-run skips them; check Omen for that tx
+     before marking them paid or deleting them (same as weekly pending- rows, 5.2).
 
 ---
 
@@ -203,7 +204,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 | ID | Issue | Impact | Effort | Status |
 |---|---|---|---|---|
 | K-A1 | **Who a player is rests on `User.wallet_address`.** See §9 for how it works, why it's built this way, and the evidence. In short: the field is written with the player's own login, so the player can also write it directly, and the server never re-checks Omen. **No sign of abuse** (checked 21 Oct). | Critical **if** used | **Decided 21 Oct: watch only.** It's in the daily check (§9). Nine months live without a problem. **Don't change the login flow or `User.wallet_address`**: the table rules and the two-login setup depend on it. | 🟡 watched |
-| K-A2 | **Functions with no caller check, callable by anyone on the internet:** `scheduledMaintenanceFlip` (lock the game), `autoToggleOmenxPurchases` (purchase from Rob's wallet), `mirrorProfileFanOut` (rename anyone), `alertLeaderboardTakeover`/`postDiscordLeaderboard` (Discord spam), `backupData {is_automated}` (burns write quota), pairing and cleanups. Anonymous calls do reach functions (confirmed 20 Oct with `getSkuPrices`). | High | Easy: a shared secret for scheduled callers, an admin check for people | 🔴 Needs Rob (security) |
+| K-A2 | **Functions with no caller check, callable by anyone on the internet:** `scheduledMaintenanceFlip` (lock the game), `autoToggleOmenxPurchases` (purchase from Rob's wallet), `mirrorProfileFanOut` (rename anyone), `alertLeaderboardTakeover`/`postDiscordLeaderboard` (Discord spam), `backupData {is_automated}` (burns write quota), pairing and cleanups. Anonymous calls do reach functions (confirmed 20 Oct with `getSkuPrices`). | High | Easy: a shared secret for scheduled callers, an admin check for people | 🟡 **Part fixed 21 Oct:** maintenance flip, purchase toggle, Discord leaderboard post and direct name-mirror now need admin (403 otherwise); takeover alert and name-mirror trigger re-read the database. Still open: `backupData {is_automated}`, pairing, cleanups, purges (they run on schedules, need care). |
 | K-A3 | Login popup posts tokens to `'*'`. `state` isn't checked, and any saved verifier is accepted. Raw tokens are written to function logs. | Medium | Easy | 🔴 |
 | K-A4 | `manage_admins` holders can give themselves wipe or refund rights. Squad surgery (`adminSquadOps`, including delete) and several backfills accept **any** staff wallet. | Medium | Easy | 🔴 |
 | K-A5 | Squad actions: any player can remove any squad member; officers can kick from other squads; anyone can post in any squad chat. | High (griefing) | Easy | 🔴 |
@@ -213,7 +214,7 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 | ID | Issue | Impact | Effort | Status |
 |---|---|---|---|---|
 | K-B1 | The automatic payout job (`distributeRewards`) re-pays any week not marked finished, never checks PayoutLog, and pays seasonal and weekly at the same minute. | Critical if enabled | Keep off. Mark all paid weeks finished. Rewrite before ever enabling. | 🔴 (off) |
-| K-B2 | **Squad Champions payout:** records only after success, and retries unclear answers with another key, so it can **pay twice**. Next run **2 Nov**. | High, dated | Easy: same log-first pattern as the weekly buttons | 🔴 **before 2 Nov. Needs Rob** |
+| K-B2 | **Squad Champions payout:** records only after success, and retries unclear answers with another key, so it can **pay twice**. Next run **2 Nov**. | High, dated | Easy: same log-first pattern as the weekly buttons | ✅ **Fixed 21 Oct** (live, before the 2 Nov run). Only a 429 now switches key. |
 | K-B3 | Refunds (single and bulk) keep no record and retry, so they can refund twice. Manual refund can send up to 100,000 to any wallet. | Medium | Easy: log-first and a record | 🔴 |
 | K-B4 | The blacklist isn't checked by the weekly, seasonal or kill payouts. | Medium | Easy | 🔴 Needs Rob (policy) |
 | K-B5 | Payout buttons: no confirm, nothing stops two at once, and the open week can be paid. | Medium | Easy: confirm, closed-period check, lock | 🔴 |
@@ -304,7 +305,7 @@ player chooses to log in.
 2. **Server-only copy.** Keep the profile field and the whole login flow exactly as they are. Add a copy
    of the verified wallet that only the server can write, and make the server functions trust
    that instead. The browser and table rules don't change. This touches ~80 functions, and on Base44
-   backend changes go live the moment they're saved: there's no branch test for functions.
+   backend changes reach automations at once and the live site on the next publish: there's no branch test for functions.
 
 **Decision (Rob, 21 Oct): option 1, watch.** The game has run nine months without a problem here.
 The daily check does the watching.
@@ -314,9 +315,14 @@ in step, so Base44 stays the live home of the game. Any fix happens here.
 
 ## 8. Questions for Rob (ask one at a time; remove when answered)
 
-2. Fix the no-check functions (K-A2) and the Squad Champions payout (K-B2) before 2 Nov?
-3. Should banned wallets be left out of all payouts (K-B4)?
-4. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
-5. Compensate the ~1 day of W43 war kills lost to the pairing failure?
-6. Is the treasury buff meant to do something?
-7. Who else holds admin permissions or the `AdminDash` key, and rotate it?
+Later, Rob's call (not urgent): sort out activity points; move the VIP chest webhook off the old
+Supabase build (today a Discord alert arrives and Rob rewards the chest by hand).
+
+Note: function fixes reach scheduled jobs at once, but the live site keeps the old version until the
+app is **published**. After a function fix, publish and then test on cosmic-sloths.com.
+
+1. Should banned wallets be left out of all payouts (K-B4)?
+2. What should week 53 / "S14" be: merged into S13, merged into 2027-S1, or a short season (K-C1)?
+3. Compensate the ~1 day of W43 war kills lost to the pairing failure?
+4. Is the treasury buff meant to do something?
+5. Who else holds admin permissions or the `AdminDash` key, and rotate it?
