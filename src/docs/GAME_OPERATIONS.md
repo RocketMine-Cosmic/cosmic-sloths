@@ -315,12 +315,13 @@ in step, so Base44 stays the live home of the game. Any fix happens here.
 
 ## 8. Questions for Rob (ask one at a time; remove when answered)
 
+Answered 21 Oct: W43 war kills were already recovered (Rob ran "Resync Squad War Kills"; note the resync writes nothing to AdminChangesLog, so it can't be seen there).
+
 Later, Rob's call (not urgent): sort out activity points; move the VIP chest webhook off the old
 Supabase build (today a Discord alert arrives and Rob rewards the chest by hand).
 
 Note: function fixes reach scheduled jobs at once, but the live site keeps the old version until the
 app is **published**. After a function fix, publish and then test on cosmic-sloths.com.
 
-1. Compensate the ~1 day of W43 war kills lost to the pairing failure?
-2. Is the treasury buff meant to do something?
-3. Who else holds admin permissions or the `AdminDash` key, and rotate it?
+1. Is the treasury buff meant to do something?
+2. Who else holds admin permissions or the `AdminDash` key, and rotate it?
