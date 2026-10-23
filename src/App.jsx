@@ -40,6 +40,7 @@ const SquadLeaderDashboard = React.lazy(() => import('./pages/SquadLeaderDashboa
 const SquadMeteor = React.lazy(() => import('./pages/SquadMeteor'));
 const Sandbox = React.lazy(() => import('./pages/Sandbox'));
 import { initOmenX } from '@/lib/omenx';
+import { isBase44Editor } from '@/lib/frameContext';
 import { enforceWeeklyOmenSession } from '@/lib/omenxSessionWeek';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
@@ -70,8 +71,10 @@ const MainApp = () => {
     SaveManager.initialize();
   }, []);
 
-  // In preview mode, bypass all auth gates
-  const isPreview = window.self !== window.top;
+  // In the Base44 builder preview, bypass all auth gates. Only Base44's own
+  // editor counts: inside the Omen Arcade frame players get the normal
+  // signed-in game (F-002 — any frame used to count as the preview).
+  const isPreview = isBase44Editor();
   const fallback = <div className="fixed inset-0 flex items-center justify-center bg-slate-950"><div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
   if (isPreview) {
