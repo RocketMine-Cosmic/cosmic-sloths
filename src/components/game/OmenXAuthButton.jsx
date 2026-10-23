@@ -5,6 +5,7 @@ import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
 import { stampAuthWeek } from '@/lib/omenxSessionWeek';
 import { base44 } from '@/api/base44Client';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
+import { signInBase44 } from '@/lib/frameAuth';
 
 const STORAGE_KEY = 'omenx_auth_data';
 
@@ -60,14 +61,20 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         // appears dead. Await it, log any error, and reset the loading state so
         // the user can tap again instead of staring at a stuck "Redirecting…".
         try {
-            const result = base44.auth.redirectToLogin(window.location.href);
+            // In its own tab: full-page redirect, as before. Inside the Omen
+            // Arcade frame: Base44's login page in a popup (F-002).
+            const result = signInBase44();
             if (result && typeof result.then === 'function') await result;
             // If we're still here after a brief moment, something went wrong with
             // the redirect — reset so the user can retry.
             setTimeout(() => setLoading(false), 4000);
         } catch (err) {
-            console.error('[OmenXAuthButton] redirectToLogin failed:', err);
+            console.error('[OmenXAuthButton] sign-in failed:', err);
             setLoading(false);
+            if (err?.message === 'popup_blocked') {
+                setSuccessMsg('Sign in didn\'t open. Please allow pop-ups and tap Sign In again.');
+                setTimeout(() => setSuccessMsg(''), 8000);
+            }
         }
     };
 
