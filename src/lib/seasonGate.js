@@ -5,6 +5,7 @@
 //
 // Used by: GameEngine.js, PickupSystem.js, pages/Game.js (HUD score mirror).
 import { getCurrentPeriodIds } from './periodIds';
+import { isBase44Editor } from './frameContext';
 
 // Numeric season compare — string compare breaks at 2026-S10 vs 2026-S7 ('1' < '7').
 function seasonAtLeast(seasonId, year, seas) {
