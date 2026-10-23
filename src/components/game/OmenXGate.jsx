@@ -3,6 +3,8 @@ import SpaceBackground from './SpaceBackground';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { base44 } from '@/api/base44Client';
 import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
+import { isBase44Editor } from '@/lib/frameContext';
+import { signInBase44 } from '@/lib/frameAuth';
 
 export default function OmenXGate({ children, isCarousel }) {
     // Read shared auth state — no per-gate `me` call (was 13× across the carousel).
@@ -12,9 +14,8 @@ export default function OmenXGate({ children, isCarousel }) {
     const [ctaError, setCtaError] = useState('');
     const [ctaLoading, setCtaLoading] = useState(false);
 
-    // Bypass auth inside Base44 preview iframe
-    const isPreview = window.self !== window.top && window.location !== window.parent.location;
-    if (isPreview) return children;
+    // Bypass auth inside the Base44 builder preview only (not the Omen Arcade frame).
+    if (isBase44Editor()) return children;
 
     // Both signed in + wallet connected → render children
     if (base44Authed && auth) return children;
@@ -36,11 +37,15 @@ export default function OmenXGate({ children, isCarousel }) {
             : 'Sign in to access this area.';
         ctaLabel = 'Sign In';
         ctaAction = async () => {
+            setCtaError('');
             try {
-                const result = base44.auth.redirectToLogin(window.location.href);
+                const result = signInBase44();
                 if (result && typeof result.then === 'function') await result;
             } catch (err) {
-                console.error('[OmenXGate] redirectToLogin failed:', err);
+                console.error('[OmenXGate] sign-in failed:', err);
+                if (err?.message === 'popup_blocked') {
+                    setCtaError('Sign in didn\'t open. Please allow pop-ups for this site and tap Sign In again.');
+                }
             }
         };
     } else {
