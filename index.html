@@ -14,6 +14,28 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // F-002: return page for Base44 sign-in from inside the Omen Arcade frame
+      // (see src/lib/frameAuth.js). Runs before the game loads. Only acts on
+      // /auth/frame-return; every other page is untouched.
+      (function () {
+        try {
+          if (location.pathname !== '/auth/frame-return') return;
+          var token = new URLSearchParams(location.search).get('access_token');
+          if (!token) { location.replace('/'); return; }
+          if (window.opener && !window.opener.closed) {
+            // Hand the token to the framed game (same origin only), then close.
+            window.opener.postMessage({ type: 'cs_base44_frame_auth', access_token: token }, location.origin);
+            history.replaceState({}, document.title, '/auth/frame-return');
+            document.title = 'Signed in';
+            setTimeout(function () { window.close(); }, 100);
+            return;
+          }
+          // No opener (popup turned into a tab): just open the game signed in here.
+          location.replace('/?access_token=' + encodeURIComponent(token));
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
