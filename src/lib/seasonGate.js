@@ -88,7 +88,8 @@ export function isS7OrLater() {
 // enforces season_id → leaderboard safe regardless.
 export function isS8OrLater() {
     if (typeof window !== 'undefined') {
-        if (window.self !== window.top) return true;
+        // Builder preview only — not the Omen Arcade frame (F-002).
+        if (isBase44Editor()) return true;
         try {
             if (window.location.hostname.endsWith('.base44.app')) return true;
         } catch {}
