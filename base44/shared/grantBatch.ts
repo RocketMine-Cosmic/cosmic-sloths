@@ -123,7 +123,8 @@ export async function replayPendingBand(db: any, opts: {
         return { resolved: true, final: true, rows: sorted.length, band: parsed.band, tx_id: ans.txId, replayed: ans.replayed, idempotencyKey, request: ans.request };
     }
     // 409 (key reused / not replayable) and 422 (stored failure) will not change by waiting: hand to Rob.
-    const final = ans.outcome === 'rejected' || ans.status === 409 || ans.status === 422;
+    // A 429 (rate limit) is worth waiting out; any other clear refusal is not.
+    const final = (ans.outcome === 'rejected' && ans.status !== 429) || ans.status === 409 || ans.status === 422;
     return { resolved: false, final, rows: sorted.length, band: parsed.band, status: ans.status, code: ans.code,
         reason: `replay answered ${ans.status || ans.code}: ${ans.detail}`, idempotencyKey, request: ans.request };
 }
