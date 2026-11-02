@@ -1,149 +1,136 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { saveAuthToIndexedDB } from '@/lib/indexedDbAuth';
-import { stampAuthWeek } from '@/lib/omenxSessionWeek';
+import { applyOmenAuth } from '@/lib/omenAuthStore';
+import { OMEN_AUTH_MESSAGE, OMEN_AUTH_ERROR_MESSAGE } from '@/lib/omenxRedirectAuth';
+
+// /auth/callback — where Omen sends the player back after our own sign-in (F-002, 2 Nov 2026).
+// Started by /auth/omen-start (index.html), which saved the PKCE verifier and the flow
+// ({ mode, ret }) in this window's sessionStorage under the `state` Omen hands back.
+//   popup    → exchange the code, post the sign-in to the window that opened us, close.
+//   redirect → exchange, save, go back to `ret`.
+//   silent   → exchange, save, go back to `ret`. If Omen answers with an error instead of a code
+//              (login_required / consent_required: it can't sign in without a screen), go back to
+//              `ret` with nothing changed — the player just keeps playing.
+
+const readFlow = (state) => {
+    try {
+        const raw = state && sessionStorage.getItem(`omenx_flow_${state}`);
+        if (raw) return JSON.parse(raw);
+    } catch {}
+    // Not started by /auth/omen-start (an old link): popup if something opened us, else redirect.
+    return { mode: window.opener ? 'popup' : 'redirect', ret: '/' };
+};
+
+const safeReturn = (ret) => (typeof ret === 'string' && ret.startsWith('/') && !ret.startsWith('//') ? ret : '/');
+
+const toOpener = (message) => {
+    try {
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(message, window.location.origin);
+            return true;
+        }
+    } catch {}
+    return false;
+};
 
 export default function OmenXCallback() {
-    const [status, setStatus] = useState('Processing login...');
+    const [status, setStatus] = useState('Signing in…');
     const [debugInfo, setDebugInfo] = useState(null);
 
     useLayoutEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const exchangeToken = async () => {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const code = params.get('code');
+        const run = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const error = params.get('error');
+            const state = params.get('state');
+            const flow = readFlow(state);
+            const ret = safeReturn(flow.ret);
 
-                if (!code) {
-                    setStatus('❌ No authorization code received');
-                    setTimeout(() => window.close(), 2000);
+            const cleanUp = () => {
+                try {
+                    if (state) {
+                        sessionStorage.removeItem(`omenx_pkce_${state}`);
+                        sessionStorage.removeItem(`omenx_flow_${state}`);
+                    }
+                } catch {}
+            };
+
+            // Omen said no (or couldn't do it silently).
+            if (!code) {
+                cleanUp();
+                const why = error || 'no_code';
+                console.warn('[OmenXCallback] no code:', why);
+                if (flow.mode === 'silent') { window.location.replace(ret); return; }
+                if (flow.mode === 'popup' && toOpener({ type: OMEN_AUTH_ERROR_MESSAGE, error: why })) {
+                    window.close();
                     return;
                 }
+                setStatus(why === 'access_denied' ? '❌ Sign-in cancelled' : `❌ Sign-in failed (${why})`);
+                return;
+            }
 
-                const state = params.get('state');
+            try {
                 const codeVerifier = (state && sessionStorage.getItem(`omenx_pkce_${state}`)) ||
-                                     Object.keys(sessionStorage)
-                                         .filter(k => k.startsWith('omenx_pkce_'))
-                                         .map(k => sessionStorage.getItem(k))[0] ||
-                                     null;
-
-                console.log('[OmenXCallback] Starting token exchange', {
-                    currentUrl: window.location.href,
-                    origin: window.location.origin,
-                    codePresent: !!code,
-                    state,
-                    hasCodeVerifier: !!codeVerifier,
-                });
+                    Object.keys(sessionStorage)
+                        .filter(k => k.startsWith('omenx_pkce_'))
+                        .map(k => sessionStorage.getItem(k))[0] ||
+                    null;
 
                 const redirectUri = `${window.location.origin}/auth/callback`;
                 const res = await base44.functions.invoke('exchangeOmenXCode', { code, codeVerifier, redirectUri });
                 const tokenData = res.data;
-                console.log('[OmenXCallback] Exchange response', tokenData);
+                cleanUp();
 
-                if (!tokenData || tokenData.error) {
-                    const errMsg = tokenData?.details?.error?.message || tokenData?.details?.error?.code || tokenData?.error || 'unknown';
-                    const debugPayload = {
-                        currentUrl: window.location.href,
-                        origin: window.location.origin,
-                        state,
-                        hasCodeVerifier: !!codeVerifier,
-                        response: tokenData,
-                    };
-                    console.error('[OmenXCallback] Exchange failed', debugPayload);
-                    setDebugInfo(debugPayload);
+                if (!tokenData || tokenData.error || !tokenData.accessToken || !tokenData.walletAddress) {
+                    const errMsg = tokenData?.details?.error?.message || tokenData?.details?.error?.code || tokenData?.error || 'invalid token response';
+                    console.error('[OmenXCallback] exchange failed', tokenData);
+                    if (flow.mode === 'silent') { window.location.replace(ret); return; }
+                    if (flow.mode === 'popup' && toOpener({ type: OMEN_AUTH_ERROR_MESSAGE, error: errMsg })) {
+                        window.close();
+                        return;
+                    }
+                    setDebugInfo({ response: tokenData });
                     setStatus(`❌ ${errMsg}`);
                     return;
                 }
 
-                // Validate token data has required fields
-                if (!tokenData.accessToken || !tokenData.walletAddress) {
-                    setStatus('❌ Invalid token response: missing accessToken or walletAddress');
-                    return;
-                }
-
-                // stampAuthWeek marks the ISO week this token was minted in. Without
-                // it, enforceWeeklyOmenSession sees an "unknown age" session on the
-                // very next page load and forces a full re-login — an endless loop.
-                const authData = stampAuthWeek({
+                const authData = {
                     accessToken: tokenData.accessToken,
                     refreshToken: tokenData.refreshToken,
                     expiresIn: tokenData.expiresIn,
                     walletAddress: tokenData.walletAddress,
                     username: tokenData.username || '',
-                    // Preserve any existing profile customizations from prior session
-                    ...(() => {
-                        try {
-                            const stored = localStorage.getItem('omenx_auth_data');
-                            if (!stored) return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' };
-                            const existing = JSON.parse(stored);
-                            return {
-                                player_name: existing?.player_name || tokenData.username || '',
-                                player_title: existing?.player_title || '',
-                                pilot_icon: existing?.pilot_icon || '🦥',
-                            };
-                        } catch { return { player_name: tokenData.username || '', player_title: '', pilot_icon: '🦥' }; }
-                    })(),
-                });
-
-                // Save to IndexedDB (survives history clear) and localStorage (fallback)
-                try {
-                    await saveAuthToIndexedDB(authData);
-                } catch (e) {
-                    console.error('[OmenXCallback] Storage error');
-                }
-                localStorage.setItem('omenx_auth_data', JSON.stringify(authData));
-                // Fresh session recorded — drop the "why were you signed out" notice.
-                try { localStorage.removeItem('omen_reauth_notice'); } catch {}
-                
-                // Generate and store sessionId for multi-device detection
-                const sessionId = `${authData.walletAddress}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-                localStorage.setItem('omenx_session_data', JSON.stringify({ sessionId, createdAt: Date.now() }));
-                
-                // Notify opener (popup mode) via postMessage — works cross-origin
-                if (window.opener) {
-                    try {
-                        window.opener.postMessage({ type: 'omenx_auth', authData }, '*');
-                    } catch(e) { /* ignore */ }
-                    // Also try same-origin storage event as fallback
-                    try {
-                        window.opener.dispatchEvent(new StorageEvent('storage', {
-                            key: 'omenx_auth_data',
-                            newValue: JSON.stringify(authData),
-                            storageArea: localStorage,
-                        }));
-                    } catch(e) { /* cross-origin, ignore */ }
-                }
-                
-                // NOTE: We intentionally do NOT pre-write a blank cosmic_sloth_save here.
-                // SaveManager.load() returns sensible defaults if missing, and
-                // SaveManager.initialize() handles cloud load + merge for returning users
-                // (including new devices). Writing a blank save here was wiping returning
-                // players' UI state with zeros until cloud sync caught up.
-
-                setStatus('✓ Login successful!');
-                // Always try to close — works when opened as popup
-                // If this was a direct navigation, window.close() will fail silently
-                // and we fall back to redirect after a short delay
-                window.close();
-                // Fallback: if still open after 1.5s, we're in direct navigation mode
-                setTimeout(() => {
-                    window.location.replace('/');
-                }, 1500);
-            } catch (err) {
-                const debugPayload = {
-                    currentUrl: typeof window !== 'undefined' ? window.location.href : '',
-                    origin: typeof window !== 'undefined' ? window.location.origin : '',
-                    error: err?.message || 'Unknown error',
-                    response: err?.response?.data || null,
                 };
-                console.error('[OmenXCallback] Unexpected error', debugPayload);
-                setDebugInfo(debugPayload);
-                setStatus(`❌ ${err.message}`);
+
+                if (flow.mode === 'popup') {
+                    // The game that opened us saves it in its own storage (inside the Arcade frame
+                    // that storage is separate from ours). Saved here too: on the website it's shared.
+                    applyOmenAuth(authData, { fresh: true });
+                    toOpener({ type: OMEN_AUTH_MESSAGE, authData });
+                    setStatus('✓ Signed in');
+                    window.close();
+                    setTimeout(() => window.location.replace('/'), 1500);
+                    return;
+                }
+
+                applyOmenAuth(authData, { fresh: true });
+                window.location.replace(ret);
+            } catch (err) {
+                cleanUp();
+                console.error('[OmenXCallback] unexpected error', err?.message);
+                if (flow.mode === 'silent') { window.location.replace(ret); return; }
+                if (flow.mode === 'popup' && toOpener({ type: OMEN_AUTH_ERROR_MESSAGE, error: err?.message || 'error' })) {
+                    window.close();
+                    return;
+                }
+                setDebugInfo({ error: err?.message || 'Unknown error', response: err?.data || null });
+                setStatus(`❌ ${err?.message || 'Sign-in failed'}`);
             }
         };
 
-        exchangeToken();
+        run();
     }, []);
 
     return (
