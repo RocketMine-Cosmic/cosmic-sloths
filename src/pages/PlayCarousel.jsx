@@ -6,6 +6,7 @@ import SpaceBackground from '../components/game/SpaceBackground';
 import WarpMenu from '../components/game/WarpMenu';
 import WelcomeModal from '../components/onboarding/WelcomeModal';
 import { SoundManager } from '../game/SoundManager';
+import { isEmbeddedForPlayers } from '@/lib/frameContext';
 
 // Static imports — bundled into the main entry chunk so they can't suffer
 // from stale dynamic-chunk timestamps when Vite's dev server restarts.
