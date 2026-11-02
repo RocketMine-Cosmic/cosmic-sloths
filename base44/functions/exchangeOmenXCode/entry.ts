@@ -50,7 +50,9 @@ Deno.serve(async (req) => {
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('[exchangeOmenXCode] raw token response:', JSON.stringify(tokenData));
+    // Never log the token response: it holds the player's Omen pass (F-002, 2 Nov 2026 — it used
+    // to be written to the function log in full).
+    console.log('[exchangeOmenXCode] ok wallet=', tokenData?.user?.walletAddress || 'unknown', 'expires_in=', tokenData?.expires_in);
 
     // Check token expiry before responding
     if (tokenData.expires_in && tokenData.expires_in <= 0) {
