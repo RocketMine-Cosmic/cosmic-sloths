@@ -63,7 +63,7 @@ export function refreshOmenSessionIfDue() {
     const hasSession = !!(auth?.walletAddress && auth?.accessToken);
     if (forced && hasSession) {
         markTried();
-        redirectToOmenAuth({ silent: true });
+        redirectToOmenAuth({ silent: true, test: true });
         return true;
     }
 
