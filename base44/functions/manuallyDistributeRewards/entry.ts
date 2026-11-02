@@ -1,19 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
+import { batchIdempotencyKey, sendGrantBatch, replayPendingBand } from '../../shared/grantBatch.ts';
 
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
-// Omen's "never pay twice" key for grant-batch (K-B8, added 21 Oct 2026). Same batch (same wallets,
-// same amounts) -> same key, so a retry after an unclear answer is answered by Omen with the original
-// result instead of paying again. A different batch gets a different key. Max 128 chars.
-async function batchIdempotencyKey(prefix, payments) {
-    const s = payments.map(p => `${String(p.walletAddress).toLowerCase()}:${p.amount}`).sort().join(',');
-    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-    const h = [...new Uint8Array(d)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
-    return `${prefix}-${h}`.replace(/[^A-Za-z0-9:_-]/g, '-').slice(0, 128);
-}
+// Omen's "never pay twice" key for grant-batch (K-B8) now lives in shared/grantBatch.ts, with the send
+// itself (own 50 s timeout) and the replay of an unclear band — see T-002 there.
+//
+// T-002 (2 Nov 2026) call options, used by the automatic payouts (autoPayoutStep):
+//   one_band: true      — pay ONE rank band and return (has_more says if bands remain). An unclear Omen
+//                         answer comes back as a 200 with unclear_band: { marker } instead of a 500.
+//   replay_marker: '…'  — re-send that one "maybe paid" band (period_type says which log), byte-for-byte,
+//                         with the same key; Omen answers with the original result, never a second payment.
+// Without them (the admin Distribute button) it behaves as before: every band in one call.
 
 // S7 pool re-split gate (2026-06-04). Periods >= S7 use AppConfig-driven pool
 // %s (15% weekly + 20% seasonal + 5% weekly kill pool); earlier periods keep
@@ -78,6 +79,22 @@ Deno.serve(async (req) => {
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) return Response.json({ error: 'OMENX_API_KEY not configured' }, { status: 500 });
 
+        const oneBand = body.one_band === true;
+        if (typeof body.replay_marker === 'string' && body.replay_marker) {
+            if (!['weekly', 'seasonal', 'weekly_kills'].includes(period_type)) {
+                return Response.json({ error: `replay only for weekly / seasonal / weekly_kills (got ${period_type})` }, { status: 400 });
+            }
+            const base = period_type === 'seasonal' ? `Cosmic Sloths seasonal payout ${period_id}`
+                : period_type === 'weekly_kills' ? `Cosmic Sloths weekly KILL payout ${period_id}`
+                : `Cosmic Sloths weekly payout ${period_id}`;
+            const r = await replayPendingBand(base44.asServiceRole, {
+                period_id, period_type, marker: body.replay_marker, apiBaseUrl, apiKey, gameId: GAME_ID, gameName: GAME_NAME,
+                noteFor: (_band, rows) => `${base} — ${rankTierLabel(Number(rows[0]?.rank || 0)).label}`,
+            });
+            console.log(`[manuallyDistributeRewards] replay ${body.replay_marker}: ${r.resolved ? 'resolved' : 'still unclear'} ${r.reason || ''}`);
+            return Response.json({ success: !!r.resolved, ...r, request: undefined });
+        }
+
         // NOTE: payouts go through direct grant-batch fetch calls below — the
         // OmenX npm SDK is deliberately NOT imported here (it uses runtime code
         // generation, which the Deno isolate blocks and which made functions
@@ -100,14 +117,14 @@ Deno.serve(async (req) => {
 
         let result;
         if (period_type === 'weekly') {
-            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, { includeStaff, includeKills });
+            result = await distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, { includeStaff, includeKills, oneBand });
         } else if (period_type === 'seasonal') {
-            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey);
+            result = await distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey, { oneBand });
         } else {
             return Response.json({ error: 'Invalid period_type' }, { status: 400 });
         }
 
-        return Response.json({ success: true, ...result });
+        return Response.json({ success: !result?.unclear_band, ...result });
     } catch (error) {
         console.error('[manuallyDistributeRewards] ERROR:', error);
         return Response.json({ error: error?.message || String(error) }, { status: 500 });
@@ -255,7 +272,7 @@ function rankTierLabel(rank) {
 //   status — 'pending-…' or real txId) so we skip them entirely.
 //   All pending tiers are sent in this one invocation — grant-batch exists to
 //   pay many wallets per call, so we keep every tier in the same request.
-async function postTieredBatches(base44, period_id, period_type, payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets) {
+async function postTieredBatches(base44, period_id, period_type, payments, apiBaseUrl, apiKey, baseNote, alreadyPaidWallets, oneBand = false) {
     if (payments.length === 0) return { txId: '', tiersPaid: 0, tiersSkipped: 0, hasMore: false, tiersRemaining: 0, tierLabel: '' };
     const tiers = new Map();
     for (const p of payments) {
@@ -284,43 +301,40 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
             });
             createdLogIds.push(row.id);
         }
-        // 2) Fire the actual OmenX batch.
-        let response;
-        try {
-            response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({
-                    payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
-                    gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
-                    idempotencyKey: await batchIdempotencyKey(`cs-${period_type}-${period_id}-${key}`, tier.payments),
-                }),
-            });
-        } catch (netErr) {
-            // Network error / gateway timeout — outcome ambiguous. LEAVE pending
-            // logs in place so a resume skips these wallets. Admin can inspect
-            // the 'pending-…' tx_ids in PayoutLog and top-up manually if needed.
-            throw new Error(`Tier ${tier.label} network error (pending logs retained for safety): ${netErr?.message || netErr}`);
-        }
-        const batchResult = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            // 4xx = definitive rejection (not settled on-chain) → safe to delete
-            //       pending logs so retry re-attempts.
-            // 5xx = ambiguous → keep pending logs (safer to skip on retry).
-            if (response.status >= 400 && response.status < 500) {
-                for (const id of createdLogIds) {
-                    try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
-                }
+        // 2) Fire the actual OmenX batch (shared/grantBatch.ts: own 50 s timeout, so a slow Omen reply
+        //    can never run this call into Base44's 120 s edge).
+        const ans = await sendGrantBatch({
+            apiBaseUrl, apiKey, gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
+            payments: tier.payments,
+            idempotencyKey: await batchIdempotencyKey(`cs-${period_type}-${period_id}-${key}`, tier.payments),
+        });
+        if (ans.outcome === 'rejected') {
+            // A clear "no" before paying (400/401/403/429…) → safe to delete the pending logs so a retry
+            // re-attempts. (409 / 422 / 5xx / timeout are NOT this case: see 'unclear' below.)
+            for (const id of createdLogIds) {
+                try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
             }
-            throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+            throw new Error(`Tier ${tier.label} failed — HTTP ${ans.status}: ${ans.detail}`);
+        }
+        if (ans.outcome === 'unclear') {
+            // Outcome ambiguous — LEAVE pending logs in place so a resume skips these wallets. The
+            // automatic job replays the band with the same key (T-002); by hand: run-book §5.2.
+            const msg = `Tier ${tier.label}: unclear answer from Omen (${ans.status || ans.code}) — pending logs retained for safety: ${ans.detail}`;
+            if (oneBand) {
+                console.warn('[manuallyDistributeRewards]', msg);
+                return { txId: txIds.join(','), tiersPaid, tiersSkipped: 0, tierLabel, tiersRemaining: Math.max(0, pendingKeys.length - tiersPaid),
+                    hasMore: true, unclearBand: { marker: pendingMarker, band: key, label: tier.label, status: ans.status, code: ans.code, error: msg } };
+            }
+            throw new Error(msg);
         }
         // 3) Success — patch tx_id from 'pending-…' to the real transaction hash.
-        const txId = batchResult?.transactionId || batchResult?.txHash || '';
+        const txId = ans.txId;
         if (txId) txIds.push(txId);
         for (const id of createdLogIds) {
             try { await base44.asServiceRole.entities.PayoutLog.update(id, { tx_id: txId }); } catch {}
         }
         tiersPaid++;
+        if (oneBand) break; // one band per call; the caller re-invokes while has_more
     }
     return {
         txId: txIds.join(','),
@@ -332,7 +346,7 @@ async function postTieredBatches(base44, period_id, period_type, payments, apiBa
     };
 }
 
-async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { includeStaff: true, includeKills: true }) {
+async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts: any = { includeStaff: true, includeKills: true, oneBand: false }) {
     // S7 gate — periods >= S7 use config-driven pool % (15%); earlier use 20%.
     const useNewPools = isNewPoolPeriod(pool.period_id, 'weekly');
     const cfg = await loadPayoutConfig(base44, pool);
@@ -443,8 +457,11 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { 
     // Log-first pattern (see postTieredBatches) — pending log written BEFORE the
     // fetch so ambiguous errors don't leave silently-paid wallets untracked.
     const playerBase = `Cosmic Sloths weekly payout ${pool.period_id}`;
-    const { txId: playerTxId, hasMore: playersHaveMore, tiersRemaining: playerTiersRemaining, tierLabel: playerTierLabel, tiersPaid: playerTiersPaid } =
-        await postTieredBatches(base44, pool.period_id, 'weekly', payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets);
+    const { txId: playerTxId, hasMore: playersHaveMore, tiersRemaining: playerTiersRemaining, tierLabel: playerTierLabel, tiersPaid: playerTiersPaid, unclearBand: playerUnclear } =
+        await postTieredBatches(base44, pool.period_id, 'weekly', payments, apiBaseUrl, apiKey, playerBase, alreadyPaidWallets, opts.oneBand === true);
+    if (playerUnclear) {
+        return { has_more: true, unclear_band: playerUnclear, tiers_paid: playerTiersPaid, tier_paid: playerTierLabel, error: playerUnclear.error };
+    }
 
     // Staff: single batch, log-first (same rationale). Gated by opts.includeStaff
     // — the green "Distribute (Players)" button skips this; use the "Staff Only"
@@ -532,7 +549,7 @@ async function distributeWeekly(base44, sdk, pool, apiBaseUrl, apiKey, opts = { 
     };
 }
 
-async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
+async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey, opts: any = { oneBand: false }) {
     // Seasonal pool split: pre-S7 = 30% top players, S7+ = 20% (config-driven).
     // 10% Squad Wars Champions (separate fn) unchanged regardless of season.
     const useNewPools = isNewPoolPeriod(pool.period_id, 'seasonal');
@@ -556,12 +573,15 @@ async function distributeSeasonal(base44, sdk, pool, apiBaseUrl, apiKey) {
 
     // Log-first pattern (see postTieredBatches) — pending log written BEFORE
     // the fetch so ambiguous errors don't leave silently-paid wallets untracked.
-    const { txId, tiersPaid, hasMore, tiersRemaining, tierLabel } = await postTieredBatches(
+    const { txId, tiersPaid, hasMore, tiersRemaining, tierLabel, unclearBand } = await postTieredBatches(
         base44, pool.period_id, 'seasonal',
         payments, apiBaseUrl, apiKey,
         `Cosmic Sloths seasonal payout ${pool.period_id}`,
-        alreadyPaidWallets
+        alreadyPaidWallets, opts.oneBand === true
     );
+    if (unclearBand) {
+        return { has_more: true, unclear_band: unclearBand, tiersPaid, tier_paid: tierLabel, error: unclearBand.error };
+    }
 
     // Only close the pool once every tier has been sent.
     if (!hasMore) await base44.asServiceRole.entities.TokenPool.update(pool.id, { distributed: true });
