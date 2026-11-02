@@ -167,10 +167,14 @@ export default function PlayCarousel() {
                 <ChevronRight className="w-6 h-6" />
             </button>
 
-            {/* Warp button at top — anchored under the status bar with safe-area padding. */}
+            {/* Warp button at top — anchored under the status bar with safe-area padding.
+                Inside the Omen Arcade, the Arcade's own game bar (Switch game / Leave) sits over the
+                top ~58px of the frame and can't be moved, so ours starts below it (F-002, 2 Nov). */}
             <div
                 className="px-3 pt-2 pb-2 md:px-6 md:pt-3 md:pb-3 flex justify-center items-center z-20 relative shrink-0"
-                style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)' }}
+                style={{ paddingTop: isEmbeddedForPlayers()
+                    ? 'calc(env(safe-area-inset-top, 0px) + 64px)'
+                    : 'max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)' }}
             >
                 <WarpMenu
                     currentIndex={selectedIndex}
