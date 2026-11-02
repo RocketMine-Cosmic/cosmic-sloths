@@ -41,7 +41,7 @@ const SquadMeteor = React.lazy(() => import('./pages/SquadMeteor'));
 const Sandbox = React.lazy(() => import('./pages/Sandbox'));
 import { initOmenX } from '@/lib/omenx';
 import { isBase44Editor } from '@/lib/frameContext';
-import { enforceWeeklyOmenSession } from '@/lib/omenxSessionWeek';
+import { refreshOmenSessionIfDue } from '@/lib/omenSessionRefresh';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
 import { updateOmenXUser } from '@/lib/omenxUser';
 import { SoundManager } from './game/SoundManager';
@@ -175,13 +175,11 @@ const MainApp = () => {
 
 function App() {
   useEffect(() => {
-    // Weekly Omen session refresh — clears cached auth minted in an earlier ISO
-    // week so the player re-runs the OAuth flow (recording a fresh Omen session,
-    // which the developer API now requires within 30 days). Skipped on /game so
-    // nobody is ever bounced to a Connect Wallet gate mid-run.
-    if (!window.location.pathname.startsWith('/game')) {
-      enforceWeeklyOmenSession().catch(err => console.error('[omenSession]', err));
-    }
+    // Keeps a website player's Omen login fresh for Omen's 30-day session gate: once a day the
+    // first page open passes quietly through Omen and back (F-002, 2 Nov 2026 — replaced the
+    // Monday sign-out). Not inside the Arcade frame, not mid-run, at most one try a day.
+    if (refreshOmenSessionIfDue()) return;
+    // Inside the Omen Arcade: the 2.4.0 SDK takes the Arcade's sign-in and its renewals.
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
     // Live store prices from the Omen portal (every price screen reads these).
     startStorePrices();
@@ -190,35 +188,6 @@ function App() {
     // Auto-retry the queue when auth (re)establishes or tab regains focus.
     bindFlushListeners();
     // CurrencyProvider subscription will handle centralized fetch
-
-    // Listen for auth data pushed from parent page (when embedded on Omen website).
-    // omenx_auth_data is OAuth-only after Option A migration (2026-05-08) — profile
-    // fields live in cosmic_sloth_save.profile. Simple merge with whatever was there
-    // (e.g. tokens we may have refreshed locally).
-    const onParentMessage = (event) => {
-      const { type, authData } = event.data || {};
-      if ((type === 'omenx_auth' || type === 'omenx_auth_response') && authData?.accessToken) {
-        console.log('[OmenX] Received auth from parent iframe');
-        try {
-          const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-          // Do NOT stamp a fresh auth_week here. This token was pushed in by the
-          // parent page — no PKCE flow ran, so Omen recorded NO new session for
-          // it. Stamping it would mark the session "fresh" every single week and
-          // permanently exempt these players from enforceWeeklyOmenSession, which
-          // is exactly how a wallet ends up with a months-stale Omen session.
-          // Keeping the existing stamp (or none at all) lets the weekly check
-          // clear it and run the real OAuth flow.
-          const merged = { ...existing, ...authData };
-          localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'omenx_auth_data',
-            newValue: JSON.stringify(merged),
-            storageArea: localStorage,
-          }));
-        } catch (e) {}
-      }
-    };
-    window.addEventListener('message', onParentMessage);
 
     // Browsers block autoplay until the user interacts with the page.
     // Try to start menu BGM on user interaction, and KEEP retrying on every
