@@ -3,6 +3,12 @@ import React, { useState } from 'react';
 import { Pause, Heart, CircleDollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { isS6OrLater } from '@/lib/seasonGate';
 import DynamicDifficultyPill from './DynamicDifficultyPill';
+import { isEmbeddedForPlayers } from '@/lib/frameContext';
+
+// Inside the Omen Arcade the Arcade's game bar (Switch game / Leave) opens over the top ~58px of
+// the frame and can't be moved, so the HUD's top row starts below it there (F-002, 2 Nov 2026 —
+// Rob saw it cover the timer). Same 64px as the Warp bar in PlayCarousel.jsx.
+const ARCADE_TOP_INSET = isEmbeddedForPlayers() ? { paddingTop: 64 } : undefined;
 
 function OmenXIcon({ className }) {
     return <img src={TOKEN_LOGO_URL} className={className} alt={TOKEN_NAME} />;
@@ -69,7 +75,7 @@ function UIOverlay({ hp, maxHp, time, duration, level, xp, xpRequired, gold, ome
     const showKillsCapped = !_isS6 && killsCapped;
 
     return (
-        <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40">
+        <div className="absolute inset-0 pointer-events-none p-2 md:p-4 flex flex-col justify-between font-sans select-none z-40" style={ARCADE_TOP_INSET}>
             <div className="flex justify-between items-start gap-1 md:gap-4">
                 {/* Top Left: HP & Equipped — collapsible on mobile so the loadout list doesn't push the pause button off-screen. */}
                 <div className={`pointer-events-auto shrink-0 flex flex-col gap-2 ${loadoutCollapsed ? 'w-16 md:w-24' : 'w-32 md:w-52'}`}>
