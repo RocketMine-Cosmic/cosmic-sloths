@@ -788,7 +788,8 @@ Deno.serve(async (req) => {
                 // it arrives as a 404 just like SKU_NOT_FOUND, so it must be matched
                 // FIRST or it gets misreported as a missing SKU (and never heals).
                 // Nothing was charged — the player just needs to reconnect their wallet.
-                if (/player_not_found/i.test(msg) || (/\b404\b/.test(msg) && !/sku_not_found/i.test(msg))) {
+                // 403 NOT_IN_GAME is the same gate (Omen docs; F-002, 2 Nov 2026) — same answer.
+                if (/player_not_found|not_in_game/i.test(msg) || (/\b404\b/.test(msg) && !/sku_not_found/i.test(msg))) {
                     console.warn(`[purchaseSku] OmenX 404 PLAYER_NOT_FOUND wallet=${walletAddress} sku=${skuId} — stale Omen session`);
                     postDiscord('DISCORD_ERROR_WEBHOOK', 0xf59e0b, {
                         title: '🔄 Purchase blocked — stale Omen session',
