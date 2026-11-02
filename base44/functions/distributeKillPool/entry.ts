@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
+import { batchIdempotencyKey, sendGrantBatch, replayPendingBand } from '../../shared/grantBatch.ts';
 
 // Standalone weekly KILL leaderboard payout.
 //
@@ -22,15 +23,16 @@ import { resolvePayoutConfig } from '../../shared/payoutConfig.ts';
 const GAME_ID = 'cosmic-sloths';
 const GAME_NAME = 'Cosmic Sloths';
 
-// Omen's "never pay twice" key for grant-batch (K-B8, added 21 Oct 2026). Same batch (same wallets,
-// same amounts) -> same key, so a retry after an unclear answer is answered by Omen with the original
-// result instead of paying again. A different batch gets a different key. Max 128 chars.
-async function batchIdempotencyKey(prefix, payments) {
-    const s = payments.map(p => `${String(p.walletAddress).toLowerCase()}:${p.amount}`).sort().join(',');
-    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-    const h = [...new Uint8Array(d)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
-    return `${prefix}-${h}`.replace(/[^A-Za-z0-9:_-]/g, '-').slice(0, 128);
-}
+// Omen's "never pay twice" key for grant-batch (K-B8) now lives in shared/grantBatch.ts, with the send
+// itself (own 50 s timeout) and the replay of an unclear band — see T-002 there.
+//
+// T-002 (2 Nov 2026) call options, used by the automatic payouts (autoPayoutStep):
+//   one_band: true      — pay ONE rank band and return (has_more says if bands remain), so no single call
+//                         nears Base44's 120 s edge. An unclear Omen answer comes back as a 200 with
+//                         unclear_band: { marker } instead of a 500.
+//   replay_marker: '…'  — re-send that one "maybe paid" band, byte-for-byte, with the same key; Omen
+//                         answers with the original result, never a second payment.
+// Without them (the admin "Kill Pool Only" button) it behaves as before: every band in one call.
 const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 
 function getPeriodSeason(period_id) {
@@ -150,6 +152,8 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
         const { period_id, adminKey } = body;
+        const oneBand = body.one_band === true;
+        const replayMarker = typeof body.replay_marker === 'string' ? body.replay_marker : '';
 
         let callerWallet = 'EMERGENCY_KEY';
         if (!(adminKey && adminKey === Deno.env.get('AdminDash'))) {
@@ -173,6 +177,16 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('OMENX_REWARDS_API_KEY');
         const apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
         if (!apiKey) return Response.json({ error: 'OMENX_REWARDS_API_KEY not configured' }, { status: 500 });
+
+        if (replayMarker) {
+            const r = await replayPendingBand(base44.asServiceRole, {
+                period_id, period_type: 'weekly_kills', marker: replayMarker, apiBaseUrl, apiKey,
+                gameId: GAME_ID, gameName: GAME_NAME,
+                noteFor: (_band, rows) => `Cosmic Sloths weekly KILL payout ${period_id} — ${rankTierLabel(Number(rows[0]?.rank || 0)).label}`,
+            });
+            console.log(`[distributeKillPool] replay ${replayMarker}: ${r.resolved ? 'resolved' : 'still unclear'} ${r.reason || ''}`);
+            return Response.json({ success: !!r.resolved, ...r, request: undefined });
+        }
 
         const pools = await base44.asServiceRole.entities.TokenPool.filter({ period_id, period_type: 'weekly' });
         if (pools.length === 0) return Response.json({ error: 'No weekly pool found for this period' }, { status: 404 });
@@ -267,30 +281,29 @@ Deno.serve(async (req) => {
                 createdLogIds.push(row.id);
             }
 
-            let response;
-            try {
-                response = await fetch(`${apiBaseUrl}/v1/game-rewards/grant-batch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                    body: JSON.stringify({
-                        payments: tier.payments.map(p => ({ walletAddress: p.walletAddress, amount: p.amount })),
-                        gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
-                        idempotencyKey: await batchIdempotencyKey(`cs-weekly_kills-${period_id}-${key}`, tier.payments),
-                    }),
-                });
-            } catch (netErr) {
-                throw new Error(`Kill tier ${tier.label} network error (pending logs retained for safety): ${netErr?.message || netErr}`);
-            }
-            const batchResult = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                if (response.status >= 400 && response.status < 500) {
-                    for (const id of createdLogIds) {
-                        try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
-                    }
+            const ans = await sendGrantBatch({
+                apiBaseUrl, apiKey, gameId: GAME_ID, gameName: GAME_NAME, note: `${baseNote} — ${tier.label}`,
+                payments: tier.payments,
+                idempotencyKey: await batchIdempotencyKey(`cs-weekly_kills-${period_id}-${key}`, tier.payments),
+            });
+            if (ans.outcome === 'rejected') {
+                // A clear "no" before paying — safe to remove the pending rows so a retry re-attempts.
+                for (const id of createdLogIds) {
+                    try { await base44.asServiceRole.entities.PayoutLog.delete(id); } catch {}
                 }
-                throw new Error(`Tier ${tier.label} failed — HTTP ${response.status}: ${JSON.stringify(batchResult)}`);
+                throw new Error(`Tier ${tier.label} failed — HTTP ${ans.status}: ${ans.detail}`);
             }
-            const tierTxId = batchResult?.transactionId || batchResult?.txHash || '';
+            if (ans.outcome === 'unclear') {
+                // Maybe paid. Pending rows stay (a retry skips these wallets); the replay can settle it.
+                const msg = `Kill tier ${tier.label}: unclear answer from Omen (${ans.status || ans.code}) — pending logs retained for safety: ${ans.detail}`;
+                if (oneBand) {
+                    console.warn('[distributeKillPool]', msg);
+                    return Response.json({ success: false, unclear_band: { marker: pendingMarker, band: key, label: tier.label, status: ans.status, code: ans.code },
+                        has_more: true, tiers_paid: tiersPaid, paid: walletsPaid, totalOmenx: omenxPaid, error: msg, period_id });
+                }
+                throw new Error(msg);
+            }
+            const tierTxId = ans.txId;
             if (tierTxId) txIds.push(tierTxId);
             tiersPaid++;
             for (const id of createdLogIds) {
@@ -300,6 +313,7 @@ Deno.serve(async (req) => {
                 walletsPaid++;
                 omenxPaid += p.amount;
             }
+            if (oneBand) break; // one band per call; the caller re-invokes while has_more
         }
 
         try {
