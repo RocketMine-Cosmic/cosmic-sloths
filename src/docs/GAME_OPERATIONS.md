@@ -140,7 +140,7 @@ Rob asked for fully hands-off payouts on 21 Oct. The function `autoPayoutStep` r
 | 10:40 | `weekly_score` | Distribute (Players), Weekly | every Monday |
 | 11:00 | `weekly_kills` | Kill Pool Only | every Monday |
 | 11:20 | `close_week` | Staff Only (staff is 0%, so this only marks the week paid) | every Monday |
-| 11:40 | `seasonal` | Distribute (Players), Seasonal | Monday after a season's last week; skips itself otherwise |
+| 11:40 | `seasonal` | Distribute (Players), Seasonal | Monday after a season's last week; skips itself otherwise (recorded under the week, never the season) |
 | 12:00 | `champions` | Squad Champions, Execute, with the season named | same |
 
 It does no payout maths of its own: the amounts, the log-first `PayoutLog` rows and the per-wallet
@@ -152,7 +152,21 @@ result instead of paying twice; this protects the buttons too. Around each press
   season. It refuses the open week/season even if asked.
 - **In order.** A step runs only if the step before it, for the same period, finished `ok` or `skipped`.
 - **Once.** A `PayoutRun` row keyed `<period>:<step>` (unique) is written before anything is paid; a
-  second run of the same step finds it and does nothing.
+  second run of the same step finds it and does nothing. The season steps decide whether this is a
+  season-end Monday *before* taking that lock: on an ordinary Monday they finish `skipped` under the
+  closed **week** (`2026-W45:seasonal`), so they can never lock the season they belong to. (Until 2 Nov the
+  check sat after the lock, and an ordinary Monday wrote `2026-S11:seasonal` / `:champions` as `stopped`,
+  which made the real S11 season payout do nothing on 2 Nov; Rob paid S11 by hand. T-002.)
+- **One rank band per press, and a slow answer is settled, not abandoned.** The paying steps press the
+  button once per rank band (rank 1, 2, 3, 4–10, 11–20), so no single call gets near Base44's 120 s cut-off,
+  and each Omen call gives up after 50 s. A band whose answer doesn't come back is left "maybe paid" as
+  always; the job then waits 40 s and re-sends the *identical* batch with the *same* idempotency key, up to
+  four times. Omen answers a repeat with the original result (`replayed: true`) and never pays twice, so
+  the job writes the real transaction onto those rows and carries on with the next band. It stops for Rob
+  only if Omen still can't say, answers 409 / 422 (key already used for something else / a stored
+  failure), or the step runs out of its 4-minute budget. (W43's kill payout died exactly this way on
+  26 Oct: rank 3 paid on chain in ~45 s but Omen's reply took ~110 s. T-002.) The whole step stays well
+  inside Omen's 10 batches a minute.
 - **Stops on anything odd, before paying:** any `pending-` payout anywhere (or a champions row in
   `pending`); 0 or 2+ pool rows for the period; the period already partly paid; an amount over 10,000
   or under 1; the total over the pool; more than 20 wallets (100 for champions); a staff share above 0.
@@ -172,7 +186,8 @@ runs (status `dry`, nothing sent). Both on since 21 Oct.
 **When a step has stopped** (`PayoutRun.status` `stopped`, or `running` for more than an hour, which
 means it crashed mid-way): later steps refuse to run until it is dealt with. Nothing was paid wrongly;
 at worst some wallets are waiting. Read its `reason`, then:
-1. "maybe paid" → check those rows on Omen (§5.2) and resolve them.
+1. "maybe paid" → the job has already re-sent that band and Omen still couldn't say; the step's
+   `details.answer.bands` shows each try. Check those rows on Omen (§5.2) and resolve them.
 2. "partly paid", or the step paid some and not others → finish that step by hand with the same button
    (§3.2/§3.3); the button skips everyone already paid.
 3. Anything else (pool rows, totals, staff share) → fix the cause, or pay by hand if it was fine.
@@ -180,10 +195,13 @@ at worst some wallets are waiting. Read its `reason`, then:
    "period": "<period>" }` (or finish the remaining steps by hand). Deleting the row is the only way to let
    a step run again for that period.
 
-**Testing:** `testAutoPayout` (admin, body `{}`) dry-runs seven cases — an already-paid week and season
-for every step, the open week, and a planted "maybe paid" row — and returns a pass/fail scorecard;
-nothing is paid and its rows are tidied away. 7/7 passed on 21 Oct. Run it after any change to the
-payout functions.
+**Testing:** `testAutoPayout` (admin, body `{}`) returns a pass/fail scorecard of twelve cases; nothing
+is paid and its rows are tidied away. Dry runs: an already-paid week and season for every step, the open
+week, a planted "maybe paid" row, the season steps on an ordinary Monday (must be `skipped` with no season
+lock) and on a season-end Monday (must not be refused as open). Plus one case with a *fake* Omen inside the
+function: an answer that arrives too late must come back unclear, and the identical replay must settle
+both planted rows with the original transaction. Run it after any change to the payout functions. (The
+weeks it uses can be changed with `paidWeek`, `paidSeason`, `ordinaryWeek`, `seasonEndWeek`.)
 
 ---
 
@@ -218,8 +236,11 @@ All of these live in `AppConfig`. Players pick up changes within **about 6 minut
 7. **Raid runs bought but missing:** add `extraRaidRuns[date] += 5` in the save editor.
 
 ### 5.2 `pending-` payout rows
-A payout button hit an unclear answer from Omen and recorded the wallet as "maybe paid". Find the batch on
-the Omen portal (note text `Cosmic Sloths weekly payout <week> — Rank #N`).
+A payout hit an unclear answer from Omen (no reply within 50 s, a 5xx such as `502 GRANT_PENDING`, or a
+409 / 422) and recorded the wallet as "maybe paid". The automatic Monday job settles its own by re-sending
+the identical band with the same key (§3.4), so a row that is still here after a Monday is one Omen
+couldn't answer even then, or one left by a button. Find the batch on the Omen portal (note text
+`Cosmic Sloths weekly payout <week> — Rank #N`).
 - **Paid:** leave the row (optionally put the real hash in `tx_id`).
 - **Not paid:** delete the row, then press the same button again. Only those wallets get paid.
 - **Never** delete one while Omen still shows it pending.
