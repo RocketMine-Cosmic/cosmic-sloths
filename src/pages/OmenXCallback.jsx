@@ -47,6 +47,15 @@ export default function OmenXCallback() {
             const state = params.get('state');
             const flow = readFlow(state);
             const ret = safeReturn(flow.ret);
+            // ?omen_refresh=1 test switch: show the outcome for a few seconds, then go back.
+            const goBack = (shown) => {
+                if (flow.test) {
+                    setStatus(shown);
+                    setTimeout(() => window.location.replace(ret), 4000);
+                } else {
+                    window.location.replace(ret);
+                }
+            };
 
             const cleanUp = () => {
                 try {
@@ -62,7 +71,7 @@ export default function OmenXCallback() {
                 cleanUp();
                 const why = error || 'no_code';
                 console.warn('[OmenXCallback] no code:', why);
-                if (flow.mode === 'silent') { window.location.replace(ret); return; }
+                if (flow.mode === 'silent') { goBack(`✗ Refresh not done: Omen answered ${why}`); return; }
                 if (flow.mode === 'popup' && toOpener({ type: OMEN_AUTH_ERROR_MESSAGE, error: why })) {
                     window.close();
                     return;
@@ -86,7 +95,7 @@ export default function OmenXCallback() {
                 if (!tokenData || tokenData.error || !tokenData.accessToken || !tokenData.walletAddress) {
                     const errMsg = tokenData?.details?.error?.message || tokenData?.details?.error?.code || tokenData?.error || 'invalid token response';
                     console.error('[OmenXCallback] exchange failed', tokenData);
-                    if (flow.mode === 'silent') { window.location.replace(ret); return; }
+                    if (flow.mode === 'silent') { goBack(`✗ Refresh not done: ${errMsg}`); return; }
                     if (flow.mode === 'popup' && toOpener({ type: OMEN_AUTH_ERROR_MESSAGE, error: errMsg })) {
                         window.close();
                         return;
@@ -116,11 +125,11 @@ export default function OmenXCallback() {
                 }
 
                 applyOmenAuth(authData, { fresh: true });
-                window.location.replace(ret);
+                goBack('✓ Refreshed: fresh Omen login recorded');
             } catch (err) {
                 cleanUp();
                 console.error('[OmenXCallback] unexpected error', err?.message);
-                if (flow.mode === 'silent') { window.location.replace(ret); return; }
+                if (flow.mode === 'silent') { goBack(`✗ Refresh not done: ${err?.message || 'error'}`); return; }
                 if (flow.mode === 'popup' && toOpener({ type: OMEN_AUTH_ERROR_MESSAGE, error: err?.message || 'error' })) {
                     window.close();
                     return;
