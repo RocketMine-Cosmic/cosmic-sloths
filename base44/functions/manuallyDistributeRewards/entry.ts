@@ -16,7 +16,7 @@ const MAX_PAYOUT_PER_PLAYER_CAP = 10000;
 //                         with the same key; Omen answers with the original result, never a second payment.
 // Without them (the admin Distribute button) it behaves as before: every band in one call.
 
-// S7 pool re-split gate (2026-06-04). Periods >= S7 use AppConfig-driven pool
+// S7 pool  re-split gate (2026-06-04). Periods >= S7 use AppConfig-driven pool
 // %s (15% weekly + 20% seasonal + 5% weekly kill pool); earlier periods keep
 // the legacy 20/30 / no-kill split untouched. See docs/OMENX_POOL_RESPLIT_PLAN.md.
 const NEW_POOL_SEASON = '2026-S7';
