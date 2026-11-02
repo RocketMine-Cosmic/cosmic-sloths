@@ -6,7 +6,7 @@ import { batchIdempotencyKey, sendGrantBatch, replayPendingBand } from '../../sh
 //
 // Split out from manuallyDistributeRewards (2026-06-22) because doing players +
 // staff + kills in one HTTP call was hitting the gateway 504 (~30s timeout)
-// when all three pools were non-empty. Each path makes ~20+ external OmenX
+// when  all three pools were non-empty. Each path makes ~20+ external OmenX
 // HTTP calls + per-recipient DB writes — too much for one request.
 //
 // Behaviour mirrors the kill-pool block in manuallyDistributeRewards EXACTLY:
