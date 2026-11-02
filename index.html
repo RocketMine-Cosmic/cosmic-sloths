@@ -21,6 +21,7 @@
       (function () {
         try {
           if (location.pathname !== '/auth/frame-return') return;
+          window.__CS_AUTH_HANDOFF = true; // main.jsx: don't boot the game on this page
           var token = new URLSearchParams(location.search).get('access_token');
           if (!token) { location.replace('/'); return; }
           if (window.opener && !window.opener.closed) {
@@ -34,6 +35,47 @@
           // No opener (popup turned into a tab): just open the game signed in here.
           location.replace('/?access_token=' + encodeURIComponent(token));
         } catch (e) {}
+      })();
+    </script>
+    <script>
+      // F-002 (2 Nov 2026): start page for every Omen sign-in we run ourselves (see
+      // src/lib/omenxRedirectAuth.js). Makes the PKCE verifier and state in THIS window's own
+      // storage, then goes to Omen; /auth/callback (OmenXCallback.jsx) finishes it.
+      //   ?mode=popup     a sign-in window opened by a click (also from inside the Arcade frame)
+      //   ?mode=redirect  same tab, back to ?return=
+      //   ?mode=silent    same tab with prompt=none: no screen, back to ?return= either way
+      (function () {
+        if (location.pathname !== '/auth/omen-start') return;
+        window.__CS_AUTH_HANDOFF = true; // main.jsx: don't boot the game on this page
+        var q = new URLSearchParams(location.search);
+        var mode = q.get('mode') || 'redirect';
+        var ret = q.get('return') || '/';
+        if (ret.charAt(0) !== '/' || ret.charAt(1) === '/') ret = '/'; // own pages only
+        function b64url(bytes) {
+          var s = '';
+          for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+          return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+        try {
+          var state = b64url(crypto.getRandomValues(new Uint8Array(16)));
+          var verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+          crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(function (digest) {
+            sessionStorage.setItem('omenx_pkce_' + state, verifier);
+            sessionStorage.setItem('omenx_flow_' + state, JSON.stringify({ mode: mode, ret: ret }));
+            var u = new URL('https://api.omen.foundation/v1/oauth/authorize');
+            u.searchParams.set('client_id', 'cosmic-sloths');
+            u.searchParams.set('redirect_uri', location.origin + '/auth/callback');
+            u.searchParams.set('response_type', 'code');
+            u.searchParams.set('scope', 'openid profile email');
+            u.searchParams.set('state', state);
+            u.searchParams.set('code_challenge', b64url(new Uint8Array(digest)));
+            u.searchParams.set('code_challenge_method', 'S256');
+            if (mode === 'silent') u.searchParams.set('prompt', 'none');
+            location.replace(u.toString());
+          }, function () { location.replace(ret); });
+        } catch (e) {
+          location.replace(ret);
+        }
       })();
     </script>
     <script type="module" src="/src/main.jsx"></script>
