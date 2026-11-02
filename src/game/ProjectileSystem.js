@@ -14,9 +14,9 @@ const _IS_S8 = isS8OrLater();
 //
 // NOTE these gate constants are cached at MODULE LOAD, so a tab left open
 // across the rollover keeps the old behaviour until it reloads. That is fine
-// and is true of _IS_S7/_IS_S8 as well: the weekly Omen re-auth
-// (omenxSessionWeek.js) clears auth at Mon 00:00 UTC and ends in a
-// location.reload(), which sweeps up anyone still sitting on a stale module.
+// and is true of _IS_S7/_IS_S8 as well. (The weekly Omen re-auth that used to
+// reload every tab on Monday was retired on 2 Nov 2026, F-002; this gate's
+// rollover, S9, is long past, so nothing here depends on that reload now.)
 const _HITSTOP_FRAME_FIX = isHitstopFrameFixEnabled();
 
 // Swept circle-vs-point hit test: returns true if the line segment from (px0,py0)
