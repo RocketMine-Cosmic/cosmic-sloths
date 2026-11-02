@@ -1,87 +1,79 @@
-import { OmenXGameSDK } from '@omen.foundation/game-sdk';
+// Omen Web SDK 2.4.0 — sign in once inside the Omen Arcade (F-002, 2 Nov 2026).
+//
+// The SDK runs ONLY when the game is framed by something other than the Base44 builder (in
+// practice: the Omen Arcade). There the Arcade hands the frame a 15-minute pass, posts a new one
+// about 2 minutes before it ends, and tells us when the player signs out of the Arcade. Each pass
+// is written into the game's saved sign-in (omenAuthStore.js), which the rest of the game reads.
+//
+// On cosmic-sloths.com in its own tab the SDK is not started at all: our own sign-in owns the saved
+// sign-in there (omenxRedirectAuth.js, OmenXCallback.jsx, omenSessionRefresh.js). That keeps the
+// SDK's own stored session (from the 1.x popup) from ever overwriting it.
+//
+// Replaces the 1.x code that posted `omenx_request_auth` to '*' and the App.jsx listener that took
+// `omenx_auth` from any origin: 2.4.0 talks only to the page that frames us, and only when that page
+// is the Omen Arcade (https://app.omen.foundation).
 
-const getBaseUrl = () => {
-  if (typeof window === 'undefined') return '';
-  return window.location.origin;
-};
+import { OmenXGameSDK } from '@omen.foundation/game-sdk';
+import { isEmbeddedForPlayers } from '@/lib/frameContext';
+import { applyOmenAuth, clearOmenAuth, readOmenAuth, setReauthNotice } from '@/lib/omenAuthStore';
+
+const inArcadeFrame = () => isEmbeddedForPlayers();
 
 export const omenx = new OmenXGameSDK({
-  gameId: 'cosmic-sloths',
-  apiBaseUrl: 'https://api.omen.foundation',
-  oauthAuthorizeUrl: 'https://api.omen.foundation/v1/oauth/authorize',
-  enableIframeAuth: true,
-  onAuth: (authData) => {
-    console.log('[OmenX] ✓ onAuth triggered with:', authData);
-    try {
-      // Merge — preserve user's profile customizations across re-auth.
-      // The OAuth payload doesn't include player_title / pilot_icon / player_name,
-      // so a naive overwrite wipes the equipped title every time auth refreshes,
-      // making titles appear "stuck" reverting to blank/old values.
-      let preserved = {};
-      try {
-        const existing = JSON.parse(localStorage.getItem('omenx_auth_data') || '{}');
-        if (existing && typeof existing === 'object') {
-          if (existing.player_title !== undefined) preserved.player_title = existing.player_title;
-          if (existing.pilot_icon !== undefined) preserved.pilot_icon = existing.pilot_icon;
-          if (existing.player_name !== undefined) preserved.player_name = existing.player_name;
-          // Carry the EXISTING mint week forward — never stamp a new one here.
-          // onAuth fires for any session the SDK surfaces, including iframe /
-          // parent-pushed and restored-from-storage tokens where no PKCE flow ran
-          // and Omen recorded no new session. Stamping here refreshed the week on
-          // every boot, permanently exempting those players from
-          // enforceWeeklyOmenSession — which is how a wallet ends up on a
-          // months-stale Omen session. Only OmenXCallback (a real completed OAuth
-          // flow) is allowed to stamp a fresh week.
-          if (existing.auth_week !== undefined) preserved.auth_week = existing.auth_week;
-        }
-      } catch {}
-      const merged = { ...authData, ...preserved };
-      localStorage.setItem('omenx_auth_data', JSON.stringify(merged));
-      // Fresh session recorded — the "why were you signed out" notice is done.
-      try { localStorage.removeItem('omen_reauth_notice'); } catch {}
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'omenx_auth_data',
-        newValue: JSON.stringify(merged),
-        storageArea: localStorage,
-      }));
-    } catch (e) {
-      console.error('[OmenX] Failed to store auth data', e);
-    }
-  },
-  onAuthError: (err) => {
-    console.error('[OmenX] ❌ onAuthError triggered:', {
-      message: err.message,
-      code: err.code,
-      status: err.status,
-      fullError: err,
-    });
-  },
-  onLogout: () => {
-    console.log('[OmenX] Logged out');
-    try {
-      localStorage.removeItem('omenx_auth_data');
-    } catch (e) {
-      console.error('[OmenX] Failed to clear auth data', e);
-    }
-  },
+    gameId: 'cosmic-sloths',
+    apiBaseUrl: 'https://api.omen.foundation',
+    // Renewable 15-minute passes. The game reads the current pass from the saved sign-in, which
+    // onAuth rewrites on every renewal.
+    renewal: true,
+    // The website's new-tab sign-in is ours (omenSessionRefresh.js), not the SDK's.
+    arcadeSignIn: false,
+    // No live wallet connection from the SDK: the game has never used one.
+    realtime: false,
+    onAuth: (authData) => {
+        if (!inArcadeFrame()) return;
+        // Every Arcade pass is a recorded login to our game (Edward, 24 Oct), so it counts as fresh.
+        applyOmenAuth(authData, { fresh: true });
+    },
+    onAuthError: (err) => {
+        console.warn('[OmenX] sign-in error:', err?.code || err?.message);
+    },
+    onLogout: () => {
+        if (!inArcadeFrame()) return;
+        clearOmenAuth();
+    },
+    // In the frame the Arcade renews the pass by itself; nothing to do here.
+    onSessionExpired: () => {},
 });
 
+let started = false;
+
 export const initOmenX = async () => {
-  try {
-    await omenx.init();
-  } catch (err) {
-    // Silently fail - expected in some environments
-  }
+    if (started) return;
+    started = true;
 
-  // If embedded in an iframe (e.g. Omen website), request auth token from parent
-  if (window.self !== window.top) {
+    // Purchase safety net, on the website: if Omen refused a purchase because the wallet has no
+    // recent login (purchaseSku answers `omenSessionStale`), drop the saved Omen sign-in so the
+    // Connect Wallet button comes back, and say why. Inside the Arcade a fresh pass arrives with
+    // every load, so there is nothing to drop.
+    window.addEventListener('omenSessionStale', () => {
+        if (inArcadeFrame()) return;
+        if (!readOmenAuth()) return;
+        setReauthNotice('stale');
+        clearOmenAuth();
+    });
+
+    if (!inArcadeFrame()) return;
+
+    omenx.session.subscribe(({ type, reason }) => {
+        if (type === 'signedOut') {
+            console.log('[OmenX] Arcade session ended:', reason);
+            clearOmenAuth();
+        }
+    });
+
     try {
-      window.parent.postMessage({ type: 'omenx_request_auth', gameId: 'cosmic-sloths' }, '*');
-      console.log('[OmenX] Requested auth from parent iframe');
-    } catch (e) {
-      console.error('[OmenX] Failed to request auth from parent', e);
+        await omenx.init();
+    } catch (err) {
+        console.warn('[OmenX] init failed:', err?.message);
     }
-  }
 };
-
-export const getRedirectUri = () => `${getBaseUrl()}/auth/callback`;
