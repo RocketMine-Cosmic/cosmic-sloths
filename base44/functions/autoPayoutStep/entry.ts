@@ -68,6 +68,51 @@ async function invoke(base44: any, fn: string, body: any) {
     }
 }
 
+// T-002 (2 Nov 2026): the paying steps pay ONE rank band per call (so no call nears Base44's 120 s edge,
+// which killed W43's kill payout), and a band whose Omen answer never came is re-sent with the SAME batch
+// and key a little later — Omen answers that with the original result, never a second payment (checked
+// in Omen's SDK 2.4.0 docs; see shared/grantBatch.ts). Only if Omen still can't say after a few tries
+// does the step stop for Rob, exactly as before.
+const STEP_BUDGET_MS = 240_000;   // the whole step, kept clear of the workflow's 5-minute limit
+const REPLAY_WAIT_MS = 40_000;    // let Omen finish the slow one before asking again
+const REPLAY_TRIES = 4;
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+// Pays one paying step band by band. Returns the last answer plus a short log of what happened.
+async function payBandByBand(base44: any, db: any, fn: string, args: any, periodType: string, started: number) {
+    const deadline = started + STEP_BUDGET_MS;
+    const log: any[] = [];
+    let answer: any = null;
+    for (let call = 0; call < 12; call++) {
+        answer = await invoke(base44, fn, { ...args, one_band: true });
+        let marker = answer.data?.unclear_band?.marker || '';
+        if (!answer.ok && !marker) {
+            // The call itself failed (e.g. cut at the edge). If it left exactly one band "maybe paid" for this
+            // period, that is the band to settle; anything else is for Rob.
+            const rows = await db.entities.PayoutLog.filter({ period_id: args.period_id, period_type: periodType, tx_id: { $regex: '^pending-' } }, '-created_date', 50);
+            const markers = [...new Set((rows || []).map((r: any) => r.tx_id))];
+            if (markers.length === 1) marker = markers[0] as string;
+        }
+        log.push({ call: call + 1, band: answer.data?.tier_paid || answer.data?.unclear_band?.label || '', ok: answer.ok, has_more: !!answer.data?.has_more, unclear: marker || undefined, status: answer.status });
+        if (marker) {
+            let resolved = false;
+            for (let t = 1; t <= REPLAY_TRIES; t++) {
+                if (Date.now() + REPLAY_WAIT_MS + 60_000 > deadline) { log.push({ replay: t, skipped: 'out of time for this step' }); break; }
+                await sleep(REPLAY_WAIT_MS);
+                const r = await invoke(base44, fn, { ...args, replay_marker: marker });
+                log.push({ replay: t, resolved: !!r.data?.resolved, replayed: r.data?.replayed, tx_id: r.data?.tx_id, reason: r.data?.reason || r.error || '' });
+                if (r.data?.resolved) { resolved = true; break; }
+                if (r.data?.final) break;
+            }
+            if (!resolved) return { answer: { ...answer, ok: false }, log };
+            continue; // band settled — carry on with the next one
+        }
+        if (!answer.ok || !answer.data?.has_more) break;
+        if (Date.now() + 60_000 > deadline) { log.push({ stopped: 'out of time for this step; bands left' }); return { answer: { ...answer, ok: false }, log }; }
+    }
+    return { answer, log };
+}
+
 async function pendingAnywhere(db: any) {
     const p = await db.entities.PayoutLog.filter({ tx_id: { $regex: '^pending-' } }, '-created_date', 20);
     const c = await db.entities.SquadChampionsPayoutLog.filter({ status: 'pending' }, '-created_date', 20);
@@ -232,22 +277,22 @@ Deno.serve(async (req) => {
 
         if (dry) return await finish('dry', { ...base, reason: step === 'close_week' ? `would mark ${period} as paid` : `would pay ${owed.length} wallets ${owedTotal} OMCADE` });
 
-        // ---- Pay, by pressing the same button Rob presses ----
+        // ---- Pay, by pressing the same button Rob presses (one rank band per press — T-002) ----
         let answer: any;
+        let bandLog: any[] | undefined;
         if (step === 'weekly_score' || step === 'seasonal') {
             const period_type = step === 'seasonal' ? 'seasonal' : 'weekly';
-            for (let i = 0; i < 10; i++) {
-                answer = await invoke(base44, 'manuallyDistributeRewards', { period_id: period, period_type });
-                if (!answer.ok || !answer.data?.has_more) break;
-            }
+            const r = await payBandByBand(base44, db, 'manuallyDistributeRewards', { period_id: period, period_type }, period_type, Date.parse(started));
+            answer = r.answer; bandLog = r.log;
         } else if (step === 'weekly_kills') {
-            answer = await invoke(base44, 'distributeKillPool', { period_id: period });
+            const r = await payBandByBand(base44, db, 'distributeKillPool', { period_id: period }, 'weekly_kills', Date.parse(started));
+            answer = r.answer; bandLog = r.log;
         } else if (step === 'close_week') {
             answer = await invoke(base44, 'distributeStaffPayout', { period_id: period });
         } else {
             answer = await invoke(base44, 'distributeSquadChampions', { mode: 'execute', period_id: period });
         }
-        const answerDetail = { status: answer.status, data: answer.data, error: answer.error };
+        const answerDetail = { status: answer.status, data: answer.data, error: answer.error, bands: bandLog };
 
         // ---- Verify against the books, not against the answer ----
         const pend2 = await pendingAnywhere(db);
