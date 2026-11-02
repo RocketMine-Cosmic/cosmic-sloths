@@ -25,7 +25,7 @@ import { currentWeekId } from '../../shared/treasuryBuff.ts';
 // { step, period?, dryRun? }: period overrides the default (for a re-run or a dry run on an old week);
 // the current week/season is always refused.
 //
-// Plan and reasons: project doc claude/handoffs/AUTO_PAYOUTS.md. Monday report: the Reports tab.
+// Plan and  reasons: project doc claude/handoffs/AUTO_PAYOUTS.md. Monday report: the Reports tab.
 
 const STEPS = ['weekly_score', 'weekly_kills', 'close_week', 'seasonal', 'champions'];
 const PREVIOUS: Record<string, string | null> = {
