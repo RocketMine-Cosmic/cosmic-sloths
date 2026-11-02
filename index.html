@@ -50,6 +50,7 @@
         var q = new URLSearchParams(location.search);
         var mode = q.get('mode') || 'redirect';
         var ret = q.get('return') || '/';
+        var test = q.get('test') === '1'; // ?omen_refresh=1 test switch: callback shows the result
         if (ret.charAt(0) !== '/' || ret.charAt(1) === '/') ret = '/'; // own pages only
         function b64url(bytes) {
           var s = '';
@@ -61,12 +62,15 @@
           var verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
           crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(function (digest) {
             sessionStorage.setItem('omenx_pkce_' + state, verifier);
-            sessionStorage.setItem('omenx_flow_' + state, JSON.stringify({ mode: mode, ret: ret }));
+            sessionStorage.setItem('omenx_flow_' + state, JSON.stringify({ mode: mode, ret: ret, test: test }));
             var u = new URL('https://api.omen.foundation/v1/oauth/authorize');
             u.searchParams.set('client_id', 'cosmic-sloths');
             u.searchParams.set('redirect_uri', location.origin + '/auth/callback');
             u.searchParams.set('response_type', 'code');
-            u.searchParams.set('scope', 'openid profile email');
+            // The silent refresh can't show a screen, and Remember approval covers everything except
+            // email (it is always asked separately), so it asks without email. The game never reads
+            // the Omen email (Omen doesn't return it). Proved 2 Nov 2026.
+            u.searchParams.set('scope', mode === 'silent' ? 'openid profile' : 'openid profile email');
             u.searchParams.set('state', state);
             u.searchParams.set('code_challenge', b64url(new Uint8Array(digest)));
             u.searchParams.set('code_challenge_method', 'S256');
