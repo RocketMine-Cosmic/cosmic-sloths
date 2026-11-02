@@ -4,7 +4,9 @@ import { isEmbeddedForPlayers } from '@/lib/frameContext';
 // Inside the Omen Arcade the Arcade hands over the player's Omen sign-in by itself, usually within
 // a second of the page opening. Until it does, the game shows "Connecting via Omen Arcade…" instead
 // of a Connect Wallet button (Rob, 23 Oct: hide it in the Arcade). If nothing has arrived after
-// WAIT_MS — the player is signed out of the Arcade, say — the button comes back so nobody is stuck.
+// WAIT_MS — the player is signed out of the Arcade, say — the game shows ArcadeSignInNotice (sign in
+// to the Arcade; Reload; Open in its own tab). A Connect Wallet button can't work in the frame
+// (see that file), so it never comes back there (Rob, 2 Nov: option A).
 const WAIT_MS = 8000;
 const bootAt = Date.now();
 
@@ -20,6 +22,9 @@ export function useArcadeWaiting(hasOmenAuth) {
 
     return framed && !hasOmenAuth && !expired;
 }
+
+// True inside the Omen Arcade frame (not the Base44 builder): no Connect Wallet button there.
+export const inArcadeFrame = () => isEmbeddedForPlayers();
 
 // Words for the errors a Connect Wallet click can end with (omenxRedirectAuth.js).
 export function connectErrorText(err) {
