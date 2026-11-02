@@ -206,7 +206,6 @@ function App() {
     bgmEvents.forEach(ev => window.addEventListener(ev, startBgmOnce));
 
     return () => {
-      window.removeEventListener('message', onParentMessage);
       removeBgmListeners();
     };
   }, []);
