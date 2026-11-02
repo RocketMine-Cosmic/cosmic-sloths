@@ -129,6 +129,33 @@ Deno.serve(async (req) => {
         return row;
     };
 
+    // ---- Season steps only on a season-end Monday (unless a season was named) ----
+    // This MUST come before the lock (T-002, 2 Nov 2026). It used to sit after the lock and after the
+    // open-period check, so on every ordinary Monday the season steps finished 'stopped' ("has not closed
+    // yet") under the run_key <season>:<step> — and that row then blocked the REAL season payout on the
+    // season-end Monday (S11 seasonal + champions silently did nothing on 2 Nov). A season step that is
+    // not due this week is recorded under the WEEK (<closed week>:<step>), never under the season, so it
+    // can never lock the season's own run.
+    if (isSeasonStep && !(args.period && /-S\d+$/.test(args.period))) {
+        let notDue: { status: string, reason: string } | null = null;
+        if (cw === 52 && yearHas53Weeks(cy)) {
+            notDue = { status: 'skipped', reason: `week 52 of a 53-week year: ${period} runs on into week 53 (Rob, 21 Oct: W53 joins S13), so it is paid the following Monday` };
+        } else if (cw === 53) {
+            notDue = { status: 'stopped', reason: `week 53 closed: the season that includes it must be paid as a 5-week season, which is not built yet (K-C1) — pay it by hand` };
+        } else if (!seasonEnd) {
+            notDue = { status: 'skipped', reason: `${closedWeek} is not the last week of a season` };
+        }
+        if (notDue) {
+            const row = { run_key: dry ? `dry:${closedWeek}:${step}:${Date.now()}` : `${closedWeek}:${step}`, period_id: closedWeek, step,
+                mode: dry ? 'dry' : 'live', status: notDue.status, finished_at: new Date().toISOString(), reason: notDue.reason };
+            try { await db.entities.PayoutRun.create(row); } catch { /* already recorded for this week — fine */ }
+            const log = `[autoPayoutStep] ${dry ? 'DRY ' : ''}${closedWeek} ${step}: ${notDue.status} — ${notDue.reason}`;
+            if (notDue.status === 'stopped') console.error(log); else console.log(log);
+            return Response.json({ ok: notDue.status !== 'stopped', step, period: closedWeek, season: period, mode: dry ? 'dry' : 'live',
+                status: notDue.status, reason: notDue.reason, lock_written: false });
+        }
+    }
+
     // ---- Lock / already done (live only) ----
     let runRow: any = null;
     if (!dry) {
@@ -160,16 +187,7 @@ Deno.serve(async (req) => {
             return await finish('stopped', { reason: `${period} has not closed yet — refusing to pay an open period` });
         }
 
-        // ---- Season steps only on a season-end Monday (unless a season was named) ----
-        if (isSeasonStep && !(args.period && /-S\d+$/.test(args.period))) {
-            if (cw === 52 && yearHas53Weeks(cy)) {
-                return await finish('skipped', { reason: `week 52 of a 53-week year: ${period} runs on into week 53 (Rob, 21 Oct: W53 joins S13), so it is paid the following Monday` });
-            }
-            if (cw === 53) {
-                return await finish('stopped', { reason: `week 53 closed: the season that includes it must be paid as a 5-week season, which is not built yet (K-C1) — pay it by hand` });
-            }
-            if (!seasonEnd) return await finish('skipped', { reason: `${closedWeek} is not the last week of a season` });
-        }
+        // (The "is this a season-end Monday?" check is above the lock — see T-002 there.)
 
         // ---- Order: the step before must be done for this period (live only) ----
         const prev = PREVIOUS[step];
