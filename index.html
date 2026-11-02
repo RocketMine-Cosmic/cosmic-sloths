@@ -69,7 +69,7 @@
             u.searchParams.set('response_type', 'code');
             // The silent refresh can't show a screen, and Remember approval covers everything except
             // email (it is always asked separately), so it asks without email. The game never reads
-            // the Omen email (Omen doesn't return it). Proved 2 Nov 2026.
+            // the Omen email (Omen doesn't return it). (2 Nov 2026)
             u.searchParams.set('scope', mode === 'silent' ? 'openid profile' : 'openid profile email');
             u.searchParams.set('state', state);
             u.searchParams.set('code_challenge', b64url(new Uint8Array(digest)));
