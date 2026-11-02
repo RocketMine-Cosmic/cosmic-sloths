@@ -5,7 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
 import { isBase44Editor } from '@/lib/frameContext';
 import { signInBase44 } from '@/lib/frameAuth';
-import { useArcadeWaiting, connectErrorText } from '@/lib/useArcadeWaiting';
+import { useArcadeWaiting, connectErrorText, inArcadeFrame } from '@/lib/useArcadeWaiting';
+import ArcadeSignInNotice from '@/components/game/ArcadeSignInNotice';
 
 export default function OmenXGate({ children, isCarousel }) {
     // Read shared auth state — no per-gate `me` call (was 13× across the carousel).
@@ -55,6 +56,11 @@ export default function OmenXGate({ children, isCarousel }) {
         icon = '🔗';
         title = 'Connecting';
         subtitle = 'Signing you in through Omen Arcade…';
+    } else if (inArcadeFrame()) {
+        // No Connect Wallet inside the Arcade (it can't work in a frame): see ArcadeSignInNotice.
+        icon = '🔗';
+        title = 'Wallet Required';
+        subtitle = null;
     } else {
         icon = '🔗';
         title = 'Wallet Required';
@@ -81,7 +87,8 @@ export default function OmenXGate({ children, isCarousel }) {
             <div className="relative z-10 text-center flex flex-col items-center gap-4">
                 <div className="text-6xl mb-2">{icon}</div>
                 <h2 className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white">{title}</h2>
-                <p className="text-slate-400 text-sm max-w-xs">{subtitle}</p>
+                {subtitle && <p className="text-slate-400 text-sm max-w-xs">{subtitle}</p>}
+                {base44Authed && !auth && !arcadeWaiting && inArcadeFrame() && <ArcadeSignInNotice />}
                 {ctaAction && (
                     <button
                         onClick={ctaAction}
