@@ -35,12 +35,12 @@ function markTried() {
     try { sessionStorage.setItem(TRIED_DAY_KEY, todayUtc()); } catch {}
 }
 
-// Removes ?omen_signin=1 from the address bar; returns whether it was there.
-function takeArcadeSignInHint() {
+// Removes ?<name>=1 from the address bar; returns whether it was there.
+function takeFlag(name) {
     try {
         const url = new URL(window.location.href);
-        if (url.searchParams.get('omen_signin') !== '1') return false;
-        url.searchParams.delete('omen_signin');
+        if (url.searchParams.get(name) !== '1') return false;
+        url.searchParams.delete(name);
         window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
         return true;
     } catch {
@@ -51,14 +51,21 @@ function takeArcadeSignInHint() {
 // Call once on page open. Returns true if the page is navigating away for the silent sign-in.
 export function refreshOmenSessionIfDue() {
     if (typeof window === 'undefined') return false;
-    const hint = takeArcadeSignInHint();
+    const hint = takeFlag('omen_signin');
+    // Test switch: ?omen_refresh=1 runs the refresh now, even if it already ran today.
+    const forced = takeFlag('omen_refresh');
     if (isFramed()) return false;
     const path = window.location.pathname;
     if (path.startsWith('/game') || path.startsWith('/auth/')) return false;
-    if (triedToday()) return false;
+    if (triedToday() && !forced) return false;
 
     const auth = readOmenAuth();
     const hasSession = !!(auth?.walletAddress && auth?.accessToken);
+    if (forced && hasSession) {
+        markTried();
+        redirectToOmenAuth({ silent: true });
+        return true;
+    }
 
     // Website players who have connected their wallet: refresh once a day.
     // Players with no Omen sign-in: only when Omen Arcade opened us with the sign-in hint.
