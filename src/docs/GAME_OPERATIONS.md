@@ -200,8 +200,12 @@ is paid and its rows are tidied away. Dry runs: an already-paid week and season 
 week, a planted "maybe paid" row, the season steps on an ordinary Monday (must be `skipped` with no season
 lock) and on a season-end Monday (must not be refused as open). Plus one case with a *fake* Omen inside the
 function: an answer that arrives too late must come back unclear, and the identical replay must settle
-both planted rows with the original transaction. Run it after any change to the payout functions. (The
-weeks it uses can be changed with `paidWeek`, `paidSeason`, `ordinaryWeek`, `seasonEndWeek`.)
+both planted rows with the original transaction. 12/12 passed on 2 Nov. Run it after any change to the
+payout functions, and only after those functions have been **redeployed**: editing a function's file
+(directly or over the API) does not change what runs. The function runs the new code only after
+**Save & Redeploy** in Code → Functions (or the redeploy API). On 2 Nov the first run scored 10/12 because
+`autoPayoutStep` was still the old deployed version. (The weeks it uses can be changed with `paidWeek`,
+`paidSeason`, `ordinaryWeek`, `seasonEndWeek`.)
 
 ---
 
