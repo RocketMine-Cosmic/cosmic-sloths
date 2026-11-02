@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
 import { isBase44Editor } from '@/lib/frameContext';
 import { signInBase44 } from '@/lib/frameAuth';
+import { useArcadeWaiting, connectErrorText } from '@/lib/useArcadeWaiting';
 
 export default function OmenXGate({ children, isCarousel }) {
     // Read shared auth state — no per-gate `me` call (was 13× across the carousel).
@@ -13,6 +14,8 @@ export default function OmenXGate({ children, isCarousel }) {
     // "Connect Wallet does nothing" on mobile Safari after logout + cache clear).
     const [ctaError, setCtaError] = useState('');
     const [ctaLoading, setCtaLoading] = useState(false);
+    // Inside the Omen Arcade: wait for the Arcade's sign-in instead of showing Connect Wallet.
+    const arcadeWaiting = useArcadeWaiting(!!auth);
 
     // Bypass auth inside the Base44 builder preview only (not the Omen Arcade frame).
     if (isBase44Editor()) return children;
@@ -48,6 +51,10 @@ export default function OmenXGate({ children, isCarousel }) {
                 }
             }
         };
+    } else if (arcadeWaiting) {
+        icon = '🔗';
+        title = 'Connecting';
+        subtitle = 'Signing you in through Omen Arcade…';
     } else {
         icon = '🔗';
         title = 'Wallet Required';
@@ -56,24 +63,15 @@ export default function OmenXGate({ children, isCarousel }) {
         ctaAction = async () => {
             setCtaError('');
             setCtaLoading(true);
-            let navigated = false;
-            const beforeUnload = () => { navigated = true; };
-            window.addEventListener('beforeunload', beforeUnload);
             try {
-                await connectOmenWallet();
+                // Popup (from this click); same-tab on the website if the popup is blocked.
+                const data = await connectOmenWallet();
+                if (!data) return; // navigating away
             } catch (e) {
-                console.error('[OmenXGate] authenticate threw:', e);
+                console.error('[OmenXGate] connect failed:', e?.message);
+                setCtaError(connectErrorText(e));
             }
-            // If no navigation kicks off within 1.5s, the SDK silently failed
-            // (typically mobile Safari blocking a popup). Surface a clear
-            // message so the user knows they need to retry / allow pop-ups.
-            setTimeout(() => {
-                window.removeEventListener('beforeunload', beforeUnload);
-                if (!navigated && document.visibilityState === 'visible') {
-                    setCtaLoading(false);
-                    setCtaError('Connect didn\'t open. Please allow pop-ups for this site and tap Connect Wallet again. If it still fails, reload the page and retry.');
-                }
-            }, 1500);
+            setCtaLoading(false);
         };
     }
 
