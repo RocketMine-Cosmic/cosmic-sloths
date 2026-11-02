@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { omenx, getRedirectUri } from '@/lib/omenx';
+import { omenx } from '@/lib/omenx';
 import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
-import { clearAuthFromIndexedDB } from '@/lib/indexedDbAuth';
-import { stampAuthWeek } from '@/lib/omenxSessionWeek';
+import { clearOmenAuth } from '@/lib/omenAuthStore';
 import { base44 } from '@/api/base44Client';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { signInBase44 } from '@/lib/frameAuth';
-
-const STORAGE_KEY = 'omenx_auth_data';
+import { useArcadeWaiting, connectErrorText } from '@/lib/useArcadeWaiting';
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     // Pull from shared context — no per-button `me` call (was running on every page mount).
@@ -15,51 +13,21 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const checkingBase44 = base44Authed === null;
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+    // Inside the Omen Arcade: wait for the Arcade's sign-in instead of showing Connect Wallet.
+    const arcadeWaiting = useArcadeWaiting(!!authData);
 
-    const applyAuthData = (rawData) => {
-        // Stamp the mint week so weekly re-auth enforcement can age it out.
-        const data = rawData ? stampAuthWeek(rawData) : null;
-        if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        else localStorage.removeItem(STORAGE_KEY);
-        setLoading(false);
-        if (data) {
-            setSuccessMsg(`Wallet connected: ${data.username || data.walletAddress?.slice(0, 8) || 'Omen Arcade'}`);
-            setTimeout(() => setSuccessMsg(''), 5000);
-        }
-        // Trigger storage event so OmenXAuthContext picks up the change in this tab.
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: STORAGE_KEY,
-            newValue: data ? JSON.stringify(data) : null,
-            storageArea: localStorage,
-        }));
-        onAuthChange?.(data);
+    useEffect(() => {
+        if (authData) setLoading(false);
+        onAuthChange?.(authData || null);
+    }, [authData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const flash = (text, ms) => {
+        setSuccessMsg(text);
+        if (text) setTimeout(() => setSuccessMsg(''), ms);
     };
-
-    useEffect(() => {
-        const onMessage = (event) => {
-            if (event.data?.type === 'omenx_auth' && event.data?.authData) {
-                const ad = event.data.authData;
-                if (ad?.walletAddress && ad?.accessToken) {
-                    applyAuthData(ad);
-                }
-            }
-        };
-        window.addEventListener('message', onMessage);
-        return () => window.removeEventListener('message', onMessage);
-    }, [onAuthChange]);
-
-    // Show success message briefly when wallet connects from elsewhere
-    useEffect(() => {
-        if (authData) {
-            setLoading(false);
-        }
-    }, [authData]);
 
     const handleBase44SignIn = async () => {
         setLoading(true);
-        // redirectToLogin can be async and may reject silently — if so the button
-        // appears dead. Await it, log any error, and reset the loading state so
-        // the user can tap again instead of staring at a stuck "Redirecting…".
         try {
             // In its own tab: full-page redirect, as before. Inside the Omen
             // Arcade frame: Base44's login page in a popup (F-002).
@@ -72,8 +40,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             console.error('[OmenXAuthButton] sign-in failed:', err);
             setLoading(false);
             if (err?.message === 'popup_blocked') {
-                setSuccessMsg('Sign in didn\'t open. Please allow pop-ups and tap Sign In again.');
-                setTimeout(() => setSuccessMsg(''), 8000);
+                flash('Sign in didn\'t open. Please allow pop-ups and tap Sign In again.', 8000);
             }
         }
     };
@@ -81,31 +48,16 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     const handleConnectWallet = async () => {
         setLoading(true);
         setSuccessMsg('');
-        // Safety net: if omenx.authenticate() silently fails (mobile Safari popup
-        // blockers, SDK edge cases), the button used to just sit doing nothing.
-        // Detect that and surface a clear error + reset so the user can retry.
-        // 2026-07-08 (Briantjeuh Discord report): "connect wallet does nothing"
-        // on mobile after logging out and clearing cache.
-        const redirectUri = getRedirectUri();
-        let navigated = false;
-        const beforeUnload = () => { navigated = true; };
-        window.addEventListener('beforeunload', beforeUnload);
         try {
-            await connectOmenWallet();
+            const data = await connectOmenWallet(); // popup; same-tab on the website if blocked
+            if (!data) return; // navigating away (same-tab sign-in)
+            setLoading(false);
+            flash(`Wallet connected: ${data.username || data.walletAddress?.slice(0, 8) || 'Omen Arcade'}`, 5000);
         } catch (err) {
-            console.error('[OmenXAuthButton] authenticate threw:', err);
+            console.error('[OmenXAuthButton] connect failed:', err?.message);
+            setLoading(false);
+            flash(connectErrorText(err), 8000);
         }
-        // Give the SDK ~1.5s to actually trigger a page navigation (redirect flow).
-        // If we're still here after that, something silently failed — reset the
-        // button and show a hint so the user knows what to do next.
-        setTimeout(() => {
-            window.removeEventListener('beforeunload', beforeUnload);
-            if (!navigated && document.visibilityState === 'visible') {
-                setLoading(false);
-                setSuccessMsg('Connect didn\'t open. Please allow pop-ups and try again, or reload the page.');
-                setTimeout(() => setSuccessMsg(''), 8000);
-            }
-        }, 1500);
     };
 
     const handleLogout = async () => {
@@ -116,9 +68,8 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
             console.error('[handleLogout] Failed to flush save:', e.message);
         }
 
-        applyAuthData(null);
         setSuccessMsg('');
-        try { await clearAuthFromIndexedDB(); } catch (e) {}
+        clearOmenAuth();
         try { await omenx.logout(); } catch (e) {}
         try { await base44.auth.logout(); } catch (e) {}
         window.location.reload();
@@ -127,9 +78,10 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     // Determine state
     // 1. checking → loader
     // 2. !base44Authed → "Sign In"
-    // 3. base44Authed && !authData → "Connect Wallet"
+    // 3. base44Authed && !authData → "Connect Wallet" (inside the Arcade: wait for its sign-in first)
     // 4. base44Authed && authData → "Logout"
     let label, icon, onClick, theme;
+    const waiting = checkingBase44 || (base44Authed && !authData && arcadeWaiting);
     if (checkingBase44) {
         label = 'Loading…';
         icon = '⏳';
@@ -140,6 +92,11 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         icon = '🚀';
         onClick = handleBase44SignIn;
         theme = 'bg-cyan-900/20 hover:bg-cyan-900/40 border-cyan-500/60 hover:border-cyan-400 text-cyan-100 hover:text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]';
+    } else if (!authData && arcadeWaiting) {
+        label = 'Connecting via Omen Arcade…';
+        icon = '🔗';
+        onClick = () => {};
+        theme = 'bg-purple-900/20 border-purple-500/40 text-purple-200';
     } else if (!authData) {
         label = loading ? 'Connecting…' : 'Connect Wallet';
         icon = '🔗';
@@ -156,7 +113,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         <div className={`flex flex-col ${fullWidth ? 'items-center w-full' : 'items-end'} gap-1`}>
             <button
                 onClick={onClick}
-                disabled={loading || checkingBase44}
+                disabled={loading || waiting}
                 type="button"
                 className={`font-black tracking-widest uppercase transition-all border flex items-center justify-center gap-2 backdrop-blur-md pointer-events-auto cursor-pointer ${
                     fullWidth
@@ -164,7 +121,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
                         : 'px-3 py-1.5 rounded-lg text-xs'
                 } ${theme}`}
             >
-                {loading || checkingBase44
+                {loading || waiting
                     ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block" />
                     : <span>{icon}</span>
                 }
