@@ -5,7 +5,8 @@ import { clearOmenAuth } from '@/lib/omenAuthStore';
 import { base44 } from '@/api/base44Client';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { signInBase44 } from '@/lib/frameAuth';
-import { useArcadeWaiting, connectErrorText } from '@/lib/useArcadeWaiting';
+import { useArcadeWaiting, connectErrorText, inArcadeFrame } from '@/lib/useArcadeWaiting';
+import ArcadeSignInNotice from '@/components/game/ArcadeSignInNotice';
 
 export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
     // Pull from shared context — no per-button `me` call (was running on every page mount).
@@ -74,6 +75,16 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         try { await base44.auth.logout(); } catch (e) {}
         window.location.reload();
     };
+
+    // Inside the Omen Arcade, signed in to Base44, no Omen sign-in from the Arcade after the wait:
+    // no Connect Wallet button (it can't work in a frame) — point the player at the Arcade instead.
+    if (base44Authed && !authData && !arcadeWaiting && inArcadeFrame()) {
+        return (
+            <div className={`flex flex-col ${fullWidth ? 'items-center w-full py-2' : 'items-end'}`}>
+                <ArcadeSignInNotice compact={!fullWidth} />
+            </div>
+        );
+    }
 
     // Determine state
     // 1. checking → loader
