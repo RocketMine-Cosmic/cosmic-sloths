@@ -23,18 +23,20 @@ import { applyOmenAuth } from '@/lib/omenAuthStore';
 export const OMEN_AUTH_MESSAGE = 'omenx_auth';
 export const OMEN_AUTH_ERROR_MESSAGE = 'omenx_auth_error';
 
-const startUrl = (mode, returnTo) => {
+const startUrl = (mode, returnTo, test = false) => {
     const u = new URL('/auth/omen-start', window.location.origin);
     u.searchParams.set('mode', mode);
     if (returnTo) u.searchParams.set('return', returnTo);
+    if (test) u.searchParams.set('test', '1');
     return u.toString();
 };
 
 const currentPath = () => window.location.pathname + window.location.search + window.location.hash;
 
 // Same-tab sign-in. Never inside the Arcade frame (Omen's page can't be framed).
-export function redirectToOmenAuth({ silent = false, returnTo = currentPath() } = {}) {
-    window.location.assign(startUrl(silent ? 'silent' : 'redirect', returnTo));
+// `test`: the callback shows the outcome on screen for a few seconds (the ?omen_refresh=1 switch).
+export function redirectToOmenAuth({ silent = false, returnTo = currentPath(), test = false } = {}) {
+    window.location.assign(startUrl(silent ? 'silent' : 'redirect', returnTo, test));
 }
 
 // Popup sign-in. Must be called straight from a click, or the browser blocks the popup.
