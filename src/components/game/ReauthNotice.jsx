@@ -4,13 +4,9 @@ import { AlertTriangle } from 'lucide-react';
 const KEY = 'omen_reauth_notice';
 
 const MESSAGES = {
-    weekly: {
-        title: 'Weekly session refresh',
-        body: 'Sign in and reconnect your wallet to keep balances, purchases and rewards working.',
-    },
     stale: {
         title: 'Wallet session expired',
-        body: 'We signed you out. Sign in and reconnect your wallet — nothing was lost and you were not charged.',
+        body: 'Omen needs a fresh sign-in for this wallet. Tap Connect Wallet — nothing was lost and you were not charged.',
     },
     unrecognized: {
         title: 'Balance temporarily unavailable',
@@ -18,9 +14,10 @@ const MESSAGES = {
     },
 };
 
-// Explains WHY the player was suddenly signed out. forceOmenReauth writes the
-// flag just before dropping the session; omenx.js clears it once fresh auth
-// lands. Same top-banner treatment as SessionExpiredBanner.
+// Explains WHY the player has to reconnect. Set by the purchase safety net (omenx.js, when Omen
+// refuses a purchase for lack of a recent login) and by playerDataCache (wallet unrecognized);
+// cleared once a fresh Omen sign-in lands (omenAuthStore.js). The weekly forced sign-out that used
+// to set it was retired on 2 Nov 2026 (F-002). Same top-banner treatment as SessionExpiredBanner.
 export default function ReauthNotice() {
     const [msg, setMsg] = useState(null);
     const [dismissed, setDismissed] = useState(false);
