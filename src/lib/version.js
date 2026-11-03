@@ -20,7 +20,13 @@
 // on their own at the S9 boundary. See seasonGate.js isHitstopFrameFixEnabled().
 // 1.1.0 (2026-09-22) — release bump. `min_client_version` left untouched (no
 // forced update).
-export const APP_VERSION = '1.1.0';
+// 1.1.1 (2026-11-03) — F-002 (Omen Arcade Play Mode, SDK 2.4.0, new sign-in flow) was
+// published 2 Nov WITHOUT a bump, so browsers holding the cached pre-F-002 bundle kept
+// running the old sign-in code against the new callback/server (a player got stuck on
+// "Syncing" and a sign-in loop). After publishing this, set min_client_version to 1.1.1
+// (Admin → Maintenance) so old clients get the reload gate once. Bump on every publish
+// that changes sign-in or anything the server and client must agree on.
+export const APP_VERSION = '1.1.1';
 
 // Lightweight numeric semver compare. Returns:
 //   -1 if a < b
