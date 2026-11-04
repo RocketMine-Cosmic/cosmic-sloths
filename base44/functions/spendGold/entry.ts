@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getWalletNftNames } from '../../shared/nftCache.ts';
 
 // 429-aware retry wrapper — protects gold deductions and grants from being lost
 // when Base44 hits its rate limit. The PlayerSave write is the critical step:
@@ -74,47 +75,22 @@ function getUnlockedTalentsForTier(save, charId, tier) {
 
 // Rotate across all 9 balance API keys (each 100 req/min). Returns shuffled list
 // so callers retry on 429 across the pool — must mirror purchaseSku.js.
-function getBalanceKeys() {
-    const keys = [
-        Deno.env.get('OMENX_BALANCE_API_KEY'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_2'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_3'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_4'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_5'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_6'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_7'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_8'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_9'),
-    ].filter(Boolean);
-    return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
-}
 
 // Default starter is always owned. Otherwise check the save's unlockedCharacters
 // list (set by milestone server-side) OR a live NFT lookup (NFT name = char id).
 // Rotates through all 9 balance keys with 429 retry — was previously using a
 // single key, which caused "haven't unlocked this character" errors when that
 // key was rate-limited (Hugo bug 2026-04-30).
-async function ownsCharacter(save, walletAddress, charId) {
+// T-003: the NFT list comes from shared/nftCache.ts — one Omen call per wallet
+// per 10 min instead of one per action. Omen unreachable → not owned (as before).
+async function ownsCharacter(base44, save, walletAddress, charId) {
     if (charId === 'neobyte') return true;
     const unlocked = save.unlockedCharacters || ['neobyte'];
     if (unlocked.includes(charId)) return true;
     try {
-        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
-        const keys = getBalanceKeys();
-        for (const key of keys) {
-            const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
-                headers: { 'Authorization': `Bearer ${key}` },
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const nfts = data?.nfts || [];
-                return nfts.some(nft => (nft?.metadata?.name || '').toLowerCase() === charId);
-            }
-            // Retry only on rate-limit / server errors. 4xx (other than 429) → genuine miss.
-            if (res.status !== 429 && res.status < 500) return false;
-        }
-        return false;
+        const names = await getWalletNftNames(base44, walletAddress, 'spendGold');
+        if (!names) return false;
+        return names.some(n => n === charId);
     } catch {
         return false;
     }
@@ -385,7 +361,7 @@ Deno.serve(async (req) => {
 
         // For talent grants, verify the player actually owns the character (kill-milestone or NFT).
         if (grantInfo.type === 'talent') {
-            const owns = await ownsCharacter(saveData, walletAddress, grantInfo.charId);
+            const owns = await ownsCharacter(base44, saveData, walletAddress, grantInfo.charId);
             if (!owns) {
                 return Response.json({ error: `You haven't unlocked this character yet.` }, { status: 403 });
             }

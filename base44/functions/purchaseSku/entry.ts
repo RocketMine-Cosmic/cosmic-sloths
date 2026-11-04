@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getWalletNftNames } from '../../shared/nftCache.ts';
 import { createPurchase } from '../../shared/omenxPurchase.ts';
 
 // Direct REST call to OmenX instead of the npm game-sdk (see shared/omenxPurchase
@@ -181,20 +182,6 @@ function getUnlockedTalentsForTier(save, charId, tier) {
     return new Set(arr);
 }
 
-function getBalanceKeys() {
-    const keys = [
-        Deno.env.get('OMENX_BALANCE_API_KEY'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_2'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_3'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_4'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_5'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_6'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_7'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_8'),
-        Deno.env.get('OMENX_BALANCE_API_KEY_9'),
-    ].filter(Boolean);
-    return keys.map(k => ({ k, r: Math.random() })).sort((a, b) => a.r - b.r).map(x => x.k);
-}
 
 // Strip the "_am" Asset Managers suffix so the new OmenX collection
 // (e.g. "novabyte_am") still resolves to the same character ID as the
@@ -204,28 +191,16 @@ function normalizeNftCharacterName(rawName) {
     return rawName.toLowerCase().replace(/_am$/, '');
 }
 
-async function ownsCharacter(save, walletAddress, charId) {
+// T-003: the NFT list comes from shared/nftCache.ts — one Omen call per wallet
+// per 10 min instead of one per action. Omen unreachable → not owned (as before).
+async function ownsCharacter(base44, save, walletAddress, charId) {
     if (charId === 'neobyte') return true;
     const unlocked = save.unlockedCharacters || ['neobyte'];
     if (unlocked.includes(charId)) return true;
     try {
-        let apiBaseUrl = Deno.env.get('DEVELOPER_API_BASE_URL') || 'https://api.omen.foundation';
-        if (!apiBaseUrl.startsWith('http')) apiBaseUrl = `https://${apiBaseUrl}`;
-        const keys = getBalanceKeys();
-        for (const key of keys) {
-            const res = await fetch(`${apiBaseUrl}/v1/players/${walletAddress}?chainId=56`, {
-                headers: { 'Authorization': `Bearer ${key}` },
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const nfts = data?.nfts || [];
-                return nfts.some(nft => normalizeNftCharacterName(nft?.metadata?.name) === charId);
-            }
-            // 404 is wallet-dependent, not key-dependent (all keys verified 200 on a
-            // live wallet 2026-07-31) — retrying across keys just multiplies the 404s.
-            if (res.status !== 429 && res.status < 500) return false;
-        }
-        return false;
+        const names = await getWalletNftNames(base44, walletAddress, 'purchaseSku');
+        if (!names) return false;
+        return names.some(n => normalizeNftCharacterName(n) === charId);
     } catch {
         return false;
     }
@@ -679,7 +654,7 @@ Deno.serve(async (req) => {
 
             // Talents require the player to actually own the character (kill-milestone or NFT).
             if (grantInfo.type === 'talent') {
-                const owns = await ownsCharacter(saveData, walletAddress, grantInfo.charId);
+                const owns = await ownsCharacter(base44, saveData, walletAddress, grantInfo.charId);
                 if (!owns) {
                     return Response.json({ error: `You haven't unlocked this character yet.` }, { status: 403 });
                 }
