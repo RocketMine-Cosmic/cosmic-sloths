@@ -191,9 +191,6 @@ function getToday() {
     return new Date().toISOString().slice(0, 10);
 }
 
-// Rotate across all 9 balance API keys (each 100 req/min) so a single rate-limited
-// key doesn't make ownsCharacter fail and block the player from forging augments.
-
 // T-003: the NFT list comes from shared/nftCache.ts — one Omen call per wallet
 // per 10 min instead of one per action. Omen unreachable → not owned (as before).
 async function ownsCharacter(base44, save, walletAddress, charId) {

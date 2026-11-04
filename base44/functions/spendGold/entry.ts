@@ -73,9 +73,6 @@ function getUnlockedTalentsForTier(save, charId, tier) {
     return new Set(arr);
 }
 
-// Rotate across all 9 balance API keys (each 100 req/min). Returns shuffled list
-// so callers retry on 429 across the pool — must mirror purchaseSku.js.
-
 // Default starter is always owned. Otherwise check the save's unlockedCharacters
 // list (set by milestone server-side) OR a live NFT lookup (NFT name = char id).
 // Rotates through all 9 balance keys with 429 retry — was previously using a
