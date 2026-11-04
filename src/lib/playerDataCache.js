@@ -11,7 +11,7 @@ import { base44 } from '@/api/base44Client';
 // VIP and NFT have SEPARATE cooldowns so users can refresh either independently.
 // ─────────────────────────────────────────────────────────
 
-const BALANCE_TTL = 5 * 60 * 1000;           // 5 min — refetched only while tab is visible
+const BALANCE_TTL = 15 * 60 * 1000;          // 15 min — refetched only while tab is visible (T-003: was 5 min; each poll is one billed Omen call)
 const VIP_COOLDOWN = 24 * 60 * 60 * 1000;    // 24 h
 const NFT_COOLDOWN = 60 * 1000;              // 60s — short enough for users who just bought/sold NFTs to keep retrying while upstream indexes the transaction
 
@@ -346,7 +346,7 @@ export function subscribePlayerData(fn) {
         loadUserDataLocal();
         checkNftRefreshNonce();   // pick up admin-triggered refreshes from cloud save
         fetchPlayerData();        // TTL-gated initial fetch
-        attachVisibilityListener(); // 5-min loop while tab is visible
+        attachVisibilityListener(); // 15-min loop while tab is visible
     }
 
     if (!storageListenerAttached) {
