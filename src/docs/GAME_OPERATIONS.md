@@ -31,10 +31,17 @@ All times are **UTC**. UK clocks go back on Sun 25 Oct, so from then on UTC = UK
 | Auto-rollover stale periods | daily 00:30 | Resets expired weekly and seasonal upgrades for every player | Re-run. Safe. (It does run: about 15–35 s each day.) |
 | Profile Fan-Out | on every name, title or icon change | Copies it onto leaderboard, squad and chat rows | Self-heals on the next change |
 | Squad Wars Weekly Pairing | **Mon 00:05** | Settles last week's wars, then pairs this week | **Re-run the same day** (see 3.1) |
-| Refresh store prices (every 5 min) | every 5 min | Fetches the Omen catalogue once and saves it (AppConfig `omen_store_prices`); every player's game reads that copy via `getSkuPrices`. Added 21 Oct to replace per-player polling of Omen | Harmless: after 20 min stale, `getSkuPrices` fetches from Omen itself. Re-run to refresh now |
+| Refresh store prices | hourly (every 5 min until 4 Nov) | Fetches the Omen catalogue once and saves it (AppConfig `omen_store_prices`); every player's game reads that copy via `getSkuPrices`. Added 21 Oct to replace per-player polling of Omen; hourly since 4 Nov (Rob: "ever hr is fine") to cut billed Omen calls. The price actually charged is read live inside `purchaseSku`, so a shown price up to an hour old costs nobody anything | Harmless: after 2 h stale, `getSkuPrices` fetches from Omen itself. Re-run to refresh now |
 | Auto payout — 1 … 5 | **Mon 10:40, 11:00, 11:20, 11:40, 12:00** | The automatic payouts, one step each (§3.4) | A stopped step waits for Rob; see §3.4 |
 | Activity points — weekly placement + retries | hourly (:17) | Grants Omen activity points for the last two finished weeks' board placements (read from `PayoutLog`, so they land once the Monday payouts are done), Squad War wins and Squad Champions, and retries any grant left `pending`/`error`. Added 21 Oct. Does nothing while `points_config.enabled` is false | Harmless: every grant has a fixed key, the next run picks up where this one stopped |
 | Weekly Purge Old Spend Logs | Wed 09:00 | Deletes spend logs older than 6 weeks (only 50 per run, see K-E3) | Harmless |
+
+**Omen bills per request (found 4 Nov: 1,645 requests in 1–4 Nov, ~550/day, for a handful of players; T-003).** What calls Omen often, and how it is kept down:
+- Store prices: the hourly job above (was about half of all calls at every 5 min).
+- A player's balance: the game asks `getPlayerBalance` (one `GET /v1/players/:wallet`) every **15 min** while its tab is visible, and once after each purchase (`src/lib/playerDataCache.js`, `BALANCE_TTL`; 5 min before 1.1.2).
+- NFT ownership for talent / gold / forge buys on an NFT character: `spendGold`, `forgeAction` and `purchaseSku` share `base44/shared/nftCache.ts`, which keeps each wallet's NFT names for **10 min** (isolate memory, then the server-only `OmenNftCache` table, one row per wallet). The function logs say `[nftCache] <fn> OMEN CALL` or `hit` — count those to see it working. A row is only a cache, never ownership: safe to delete any or all rows at any time (the next buy just asks Omen). Errors are never cached.
+- The nine `OMENX_BALANCE_API_KEY*` keys add no capacity (Edward, 28 Oct: limits are per game; a key's 100/min can only lower one). Don't add keys.
+Target at current player numbers: well under ~150 requests a day on Omen's billing panel.
 
 **Switched off on purpose (never turn on without reading the note):**
 
