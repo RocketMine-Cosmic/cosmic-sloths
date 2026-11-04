@@ -4,7 +4,7 @@ import { useOmenXAuth } from '@/lib/OmenXAuthContext';
 import { base44 } from '@/api/base44Client';
 import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
 import { isBase44Editor } from '@/lib/frameContext';
-import { signInBase44 } from '@/lib/frameAuth';
+import { signInBase44, base44SignInLabel } from '@/lib/frameAuth';
 import { useArcadeWaiting, connectErrorText, inArcadeFrame } from '@/lib/useArcadeWaiting';
 import ArcadeSignInNotice from '@/components/game/ArcadeSignInNotice';
 
@@ -39,7 +39,7 @@ export default function OmenXGate({ children, isCarousel }) {
         subtitle = auth
             ? 'Your wallet is connected, but you need to sign in to link it and enable cloud saves.'
             : 'Sign in to access this area.';
-        ctaLabel = 'Sign In';
+        ctaLabel = base44SignInLabel(auth);
         ctaAction = async () => {
             setCtaError('');
             try {

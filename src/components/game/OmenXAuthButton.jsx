@@ -4,7 +4,7 @@ import { connectOmenWallet } from '@/lib/omenxRedirectAuth';
 import { clearOmenAuth } from '@/lib/omenAuthStore';
 import { base44 } from '@/api/base44Client';
 import { useOmenXAuth } from '@/lib/OmenXAuthContext';
-import { signInBase44 } from '@/lib/frameAuth';
+import { signInBase44, base44SignInLabel } from '@/lib/frameAuth';
 import { useArcadeWaiting, connectErrorText, inArcadeFrame } from '@/lib/useArcadeWaiting';
 import ArcadeSignInNotice from '@/components/game/ArcadeSignInNotice';
 
@@ -99,7 +99,7 @@ export default function OmenXAuthButton({ fullWidth = false, onAuthChange }) {
         onClick = () => {};
         theme = 'bg-slate-800/40 border-slate-600/60 text-slate-300';
     } else if (!base44Authed) {
-        label = loading ? 'Redirecting…' : 'Sign In';
+        label = loading ? 'Signing in…' : base44SignInLabel(authData);
         icon = '🚀';
         onClick = handleBase44SignIn;
         theme = 'bg-cyan-900/20 hover:bg-cyan-900/40 border-cyan-500/60 hover:border-cyan-400 text-cyan-100 hover:text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]';

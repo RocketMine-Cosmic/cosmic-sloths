@@ -15,10 +15,10 @@
 // Not Base44's documented route: proved on a test page before players see it.
 
 import { base44 } from '@/api/base44Client';
-import { appParams } from '@/lib/app-params';
 import { isEmbeddedForPlayers } from '@/lib/frameContext';
 
 export const FRAME_RETURN_PATH = '/auth/frame-return';
+export const FRAME_RESUME_PATH = '/auth/frame-resume';
 export const FRAME_AUTH_MESSAGE = 'cs_base44_frame_auth';
 
 export function signInBase44() {
@@ -29,8 +29,10 @@ export function signInBase44() {
 }
 
 function signInViaPopup() {
-    const returnUrl = `${window.location.origin}${FRAME_RETURN_PATH}`;
-    const loginUrl = `${appParams.appBaseUrl || ''}/login?from_url=${encodeURIComponent(returnUrl)}`;
+    // T-003 (4 Nov 2026): the popup starts at /auth/frame-resume (index.html), which hands back a
+    // sign-in this site already has saved in its own storage — one tap on iPhone, where the frame's
+    // storage is wiped between visits — and otherwise goes on to Base44's /login as before.
+    const loginUrl = `${window.location.origin}${FRAME_RESUME_PATH}`;
 
     const width = 500;
     const height = 650;
@@ -74,4 +76,13 @@ function signInViaPopup() {
         }, 500);
         window.addEventListener('message', onMessage);
     });
+}
+
+// T-003: label for the Base44 sign-in button. Inside the Arcade with the Omen pass already
+// here (the wallet half recovers on its own every load), the player is only missing the Base44
+// half — usually a wiped iPhone frame — so offer "Continue as <name>" instead of "Sign In".
+export function base44SignInLabel(omenAuth) {
+    if (!isEmbeddedForPlayers() || !omenAuth?.walletAddress) return 'Sign In';
+    const name = String(omenAuth.player_name || omenAuth.username || '').trim();
+    return name ? `Continue as ${name.slice(0, 18)}` : 'Continue';
 }

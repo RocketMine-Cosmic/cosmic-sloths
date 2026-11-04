@@ -24,6 +24,11 @@
           window.__CS_AUTH_HANDOFF = true; // main.jsx: don't boot the game on this page
           var token = new URLSearchParams(location.search).get('access_token');
           if (!token) { location.replace('/'); return; }
+          // T-003 (4 Nov 2026): keep this sign-in in cosmic-sloths.com's OWN storage too (same key
+          // the website uses), so /auth/frame-resume can hand it back next time without the sign-in
+          // screen. Needed for iPhone/Safari, where the Arcade frame's own storage is wiped when the
+          // browsing session ends. Side effect: the website in its own tab is signed in as well.
+          try { localStorage.setItem('base44_access_token', token); } catch (e) {}
           if (window.opener && !window.opener.closed) {
             // Hand the token to the framed game (same origin only), then close.
             window.opener.postMessage({ type: 'cs_base44_frame_auth', access_token: token }, location.origin);
@@ -35,6 +40,49 @@
           // No opener (popup turned into a tab): just open the game signed in here.
           location.replace('/?access_token=' + encodeURIComponent(token));
         } catch (e) {}
+      })();
+    </script>
+    <script>
+      // T-003 (4 Nov 2026): first stop of the Base44 sign-in popup opened from inside the Omen Arcade
+      // frame (src/lib/frameAuth.js). This window is cosmic-sloths.com in its own right, so its storage
+      // is not the frame's (partitioned, and wiped on iPhone when Safari's session ends). If a sign-in
+      // is saved here and Base44 still accepts it, hand it straight back to the frame — one tap, no
+      // screen. Otherwise (none saved, expired, rejected, or Safari cleared it) go on to Base44's normal
+      // sign-in page, which returns via /auth/frame-return as before. Checked 4 Nov: Base44's /login does
+      // NOT skip itself when a session exists, so this check is the only thing that makes it one tap.
+      (function () {
+        if (location.pathname !== '/auth/frame-resume') return;
+        window.__CS_AUTH_HANDOFF = true; // main.jsx: don't boot the game on this page
+        var APP_ID = '69de258a7e072380b89d66e3';
+        var toLogin = function () {
+          location.replace('/login?from_url=' + encodeURIComponent(location.origin + '/auth/frame-return'));
+        };
+        try {
+          var token = localStorage.getItem('base44_access_token');
+          if (!token || !window.opener || window.opener.closed) { toLogin(); return; }
+          // Expiry from the token itself (only its exp field is read; nothing is printed).
+          try {
+            var p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (p && p.exp && p.exp * 1000 < Date.now() + 60000) { localStorage.removeItem('base44_access_token'); toLogin(); return; }
+          } catch (e) {}
+          document.title = 'Signing in…';
+          // Ask Base44 whether it still accepts this sign-in (catches a sign-out elsewhere), so the
+          // frame is never handed a dead token and sent round in a loop.
+          var done = false;
+          var timer = setTimeout(function () { if (!done) { done = true; toLogin(); } }, 6000);
+          fetch('/api/apps/' + APP_ID + '/entities/User/me', {
+            headers: { 'X-App-Id': APP_ID, 'Authorization': 'Bearer ' + token }
+          }).then(function (r) {
+            if (done) return;
+            done = true; clearTimeout(timer);
+            if (!r.ok) {
+              if (r.status === 401 || r.status === 403) { try { localStorage.removeItem('base44_access_token'); } catch (e) {} }
+              toLogin(); return;
+            }
+            window.opener.postMessage({ type: 'cs_base44_frame_auth', access_token: token }, location.origin);
+            setTimeout(function () { window.close(); }, 100);
+          }).catch(function () { if (!done) { done = true; clearTimeout(timer); toLogin(); } });
+        } catch (e) { toLogin(); }
       })();
     </script>
     <script>
