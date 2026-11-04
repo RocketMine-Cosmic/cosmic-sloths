@@ -7,14 +7,22 @@
 // GET /v1/products, growing with every player online and sharing the game's one
 // Omen rate-limit bucket with purchases and payouts.
 //
-// Now: the scheduled job refreshSkuPrices fetches the catalogue every 5 minutes
+// Now: the scheduled job refreshSkuPrices fetches the catalogue every HOUR
 // and stores it in AppConfig (key below). getSkuPrices only READS that row.
-// Omen calls = one per 5 minutes, however many players are online.
+// Omen calls = one per hour, however many players are online.
+//
+// 2026-11-04: slowed from every 5 min to hourly (Rob). The 5-min schedule was
+// ~288 Omen calls a day on its own — about half the game's Omen requests in
+// November. The price SHOWN can be up to an hour old; the price CHARGED is read
+// live from Omen inside purchaseSku at the moment of buying, so a stale screen
+// can't cost a player anything.
 
 export const PRICE_CONFIG_KEY = 'omen_store_prices';
 // If the saved copy is older than this (scheduled job stopped?), getSkuPrices
 // fetches from Omen itself and re-saves, so players never get stuck on old prices.
-export const STALE_AFTER_MS = 20 * 60 * 1000;
+// Must stay comfortably above the refresh interval (hourly), or getSkuPrices
+// treats every saved copy as stale and goes to Omen itself.
+export const STALE_AFTER_MS = 2 * 60 * 60 * 1000;
 
 function getPaymentKeys(): string[] {
     const keys: string[] = [];
