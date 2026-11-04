@@ -26,7 +26,10 @@
 // "Syncing" and a sign-in loop). After publishing this, set min_client_version to 1.1.1
 // (Admin → Maintenance) so old clients get the reload gate once. Bump on every publish
 // that changes sign-in or anything the server and client must agree on.
-export const APP_VERSION = '1.1.1';
+// 1.1.2 (2026-11-04) — T-003: balance poll 5 → 15 min (fewer billed Omen calls) and the
+// iPhone Arcade sign-in "Continue" (T-003 part 3, if built). After publishing, set
+// min_client_version to 1.1.2 (Admin → Maintenance) so old clients stop 5-min polling.
+export const APP_VERSION = '1.1.2';
 
 // Lightweight numeric semver compare. Returns:
 //   -1 if a < b
