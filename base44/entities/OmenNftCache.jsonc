@@ -1,0 +1,47 @@
+{
+  "name": "OmenNftCache",
+  "properties": {
+    "fetched_at_ms": {
+      "description": "Unix ms when Omen answered. Server-only short-lived cache (10 min) so a burst of talent buys / forges makes one Omen call. Never a record of ownership: an NFT can be sold.",
+      "type": "number"
+    },
+    "nft_names": {
+      "description": "Lowercased metadata.name of every NFT Omen's GET /v1/players/:wallet?chainId=56 returned at fetched_at_ms. Raw names, NOT normalised; each caller matches as it always did.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "wallet_address": {
+      "description": "Lowercase wallet. One row per wallet (T-003).",
+      "type": "string"
+    }
+  },
+  "required": [
+    "wallet_address",
+    "fetched_at_ms"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "type": "object"
+}
