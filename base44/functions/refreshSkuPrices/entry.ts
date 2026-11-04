@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { fetchOmenPrices, savePrices } from '../../shared/storePrices.ts';
 
-// Scheduled every 5 minutes ("Refresh store prices" workflow). Fetches the Omen
+// Scheduled hourly ("Refresh store prices" workflow, every 5 min until 4 Nov 2026). Fetches the Omen
 // catalogue ONCE and saves it for every player's game to read via getSkuPrices.
 // See shared/storePrices.ts for why. Admin / scheduler / AdminDash only.
 async function isAdminCaller(base44, body) {

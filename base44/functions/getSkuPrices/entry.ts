@@ -7,10 +7,10 @@ import { fetchOmenPrices, readSavedPrices, savePrices, STALE_AFTER_MS } from '..
 // fixed-price product on the Omen portal.
 //
 // 2026-10-21: this NO LONGER calls Omen on every request. The scheduled job
-// refreshSkuPrices fetches the catalogue every 5 minutes and saves it in
+// refreshSkuPrices fetches the catalogue every hour and saves it in
 // AppConfig ('omen_store_prices'); this function just reads that saved copy.
 // Before, every open game window caused an Omen call every 5 minutes (see
-// shared/storePrices.ts). Only if the saved copy is older than 20 minutes (the
+// shared/storePrices.ts). Only if the saved copy is older than 2 hours (the
 // schedule has stopped) does this fetch from Omen itself and re-save, at most
 // once per 5 minutes per server instance, so players never get stuck on old prices.
 //
