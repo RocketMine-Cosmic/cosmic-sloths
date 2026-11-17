@@ -265,7 +265,11 @@ The save editor writes the **whole** save as it was when the editor opened. Anyt
 meanwhile is lost (K-E5). Ask the player to stay offline, open, edit and save quickly.
 
 ### 5.5 Someone can't log in
-1. `OmenAuthEvent` for the wallet: no row this week means they never finished Omen's login.
+1. `OmenAuthEvent` for the wallet. It has two kinds of row: no `source` = a full Omen code swap
+   (`exchangeOmenXCode`, the normal website sign-in); `source: "link"` = `linkWalletToUser` confirmed the
+   player's Omen token when it put the wallet on the account (the only row an Omen Arcade sign-in leaves).
+   For a "PLAYER_NOT_FOUND" question only a no-`source` row this week proves they finished Omen's login;
+   a `link` row proves they own the wallet, not that Omen minted a fresh session.
 2. `User.wallet_address`: is it linked?
 3. A "PLAYER_NOT_FOUND" on balance means Omen doesn't see a recent session. Re-login fixes it.
 4. On a new domain, check the redirect URI is registered on the Omen portal **with `/auth/callback`**.
@@ -404,7 +408,15 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 - **Omen:** OAuth, which proves they own a wallet.
 
 The game joins them in `linkWalletToUser`. It checks the Omen token with Omen, then writes the
-wallet onto the player's **own Base44 profile** (`User.wallet_address`) using the player's own login.
+wallet onto the player's **own Base44 profile** (`User.wallet_address`) using the player's own login,
+and stamps an `OmenAuthEvent` row with `source: "link"` (since 17 Nov 2026, T-005).
+
+**Login records cover both sign-in paths.** `OmenAuthEvent` gets a row from the website's Omen code
+swap (`exchangeOmenXCode`, no `source`) and from every wallet link (`linkWalletToUser`, `source:
+"link"`). Omen Arcade players (F-002) never do a code swap, so the `link` row is their only record.
+A wallet typed onto a profile by hand (`auth.updateMe` from the console) gets neither, which is what
+the watch below looks for. Accounts linked before 17 Nov through the Arcade (the first was 16 Nov,
+wallet 0xd1e6…de20) have no row and stay flagged until that player links again or logs in on the website.
 From then on every function asks "whose wallet is this?" by reading that profile field.
 
 **Why it's on the profile.** Base44's table rules (RLS) can only look at fields on the signed-in user
