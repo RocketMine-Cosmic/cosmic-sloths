@@ -410,14 +410,16 @@ that don't change rules (e.g. a payout safety fix) can go in any time, but not i
 The game joins them in `linkWalletToUser`. It checks the Omen token with Omen, then writes the
 wallet onto the player's **own Base44 profile** (`User.wallet_address`) using the player's own login,
 and stamps an `OmenAuthEvent` row with `source: "link"` (since 17 Nov 2026, T-005).
+From then on every function asks "whose wallet is this?" by reading that profile field.
 
 **Login records cover both sign-in paths.** `OmenAuthEvent` gets a row from the website's Omen code
 swap (`exchangeOmenXCode`, no `source`) and from every wallet link (`linkWalletToUser`, `source:
 "link"`). Omen Arcade players (F-002) never do a code swap, so the `link` row is their only record.
 A wallet typed onto a profile by hand (`auth.updateMe` from the console) gets neither, which is what
 the watch below looks for. Accounts linked before 17 Nov through the Arcade (the first was 16 Nov,
-wallet 0xd1e6…de20) have no row and stay flagged until that player links again or logs in on the website.
-From then on every function asks "whose wallet is this?" by reading that profile field.
+wallet 0xd1e6…de20) have no row. The link function only runs when the wallet is not yet on the account, so those
+players get a row only if they sign in on the website (code swap); until then the daily check
+notes them as "Arcade, linked before T-005" rather than as a suspect wallet.
 
 **Why it's on the profile.** Base44's table rules (RLS) can only look at fields on the signed-in user
 (`{{user.data.wallet_address}}`). That is how "a player can only read their own save" works on
