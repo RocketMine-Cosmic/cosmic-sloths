@@ -419,7 +419,7 @@ A wallet typed onto a profile by hand (`auth.updateMe` from the console) gets ne
 the watch below looks for. Accounts linked before 17 Nov through the Arcade (the first was 16 Nov,
 wallet 0xd1e6…de20) have no row. The link function only runs when the wallet is not yet on the account, so those
 players get a row only if they sign in on the website (code swap); until then the daily check
-notes them as "Arcade, linked before T-005" rather than as a suspect wallet.
+lists them on their own as "linked before T-005" (no record either way, not proof of misuse).
 
 **Why it's on the profile.** Base44's table rules (RLS) can only look at fields on the signed-in user
 (`{{user.data.wallet_address}}`). That is how "a player can only read their own save" works on
