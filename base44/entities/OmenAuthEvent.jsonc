@@ -1,24 +1,28 @@
 {
   "name": "OmenAuthEvent",
-  "type": "object",
   "properties": {
-    "wallet_address": {
-      "type": "string",
-      "description": "Lowercase wallet that completed a full OmenX OAuth code exchange."
-    },
     "at_ms": {
-      "type": "number",
-      "description": "Unix ms timestamp of the successful token exchange (server clock). Proof that a real PKCE flow completed \u2014 which is exactly what Omen requires to record a session. Lets us tell 'player never re-logged in' apart from 'player DID re-log in and Omen still 404s them'."
+      "description": "Unix ms timestamp of the successful token exchange (server clock). Proof that a real PKCE flow completed \u2014 which is exactly what Omen requires to record a session. Lets us tell 'player never re-logged in' apart from 'player DID re-log in and Omen still 404s them'.",
+      "type": "number"
+    },
+    "source": {
+      "description": "Which path wrote the row. Absent = exchangeOmenXCode (full Omen code swap, a real PKCE login). 'link' = linkWalletToUser: Omen confirmed the player's token when the wallet was put on the account (covers Omen Arcade sign-ins, which never do a code swap; T-005, 17 Nov 2026). A 'link' row proves wallet ownership, not that a fresh PKCE session was minted.",
+      "type": "string"
+    },
+    "wallet_address": {
+      "description": "Lowercase wallet that completed a full OmenX OAuth code exchange (or, with source 'link', whose Omen token was confirmed by linkWalletToUser).",
+      "type": "string"
     },
     "week_id": {
-      "type": "string",
-      "description": "ISO week id (e.g. 2026-W31) of the exchange, so we can check whether a fresh login happened in the current weekly re-auth window."
+      "description": "ISO week id (e.g. 2026-W31) of the exchange, so we can check whether a fresh login happened in the current weekly re-auth window.",
+      "type": "string"
     }
   },
   "required": [
     "wallet_address",
     "at_ms"
   ],
+  "type": "object",
   "rls": {
     "read": {
       "user_condition": {
