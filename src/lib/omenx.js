@@ -43,6 +43,17 @@ export const omenx = new OmenXGameSDK({
     },
     // In the frame the Arcade renews the pass by itself; nothing to do here.
     onSessionExpired: () => {},
+    // Session telemetry (T-006): log the few outcomes worth seeing; nothing goes to Discord.
+    // (Same filter as omenTelemetry.js, kept here so this file doesn't import that one.)
+    onTelemetryDiagnostic: (d) => {
+        try {
+            if (d?.code === 'unauthorized' || d?.code === 'telemetry_paused') {
+                console.warn(`[OmenX telemetry] ${d.code}${d.errorCode ? ' ' + d.errorCode : ''}`, d.requestId || '');
+            } else if (['session_started', 'session_ended', 'session_disabled', 'session_lost'].includes(d?.code)) {
+                console.info(`[OmenX telemetry] ${d.code}`);
+            }
+        } catch {}
+    },
 });
 
 let started = false;
@@ -76,4 +87,11 @@ export const initOmenX = async () => {
     } catch (err) {
         console.warn('[OmenX] init failed:', err?.message);
     }
+
+    // Session telemetry (T-006, 24 Nov 2026). Resolves `unauthenticated` until the Arcade's pass
+    // arrives, then the SDK registers by itself and follows every renewal. Heartbeat-only
+    // (realtime: false above). Closing the frame (pagehide) ends the session. If the Arcade ever
+    // hands us a website-session token instead, Omen answers 401 GAME_SCOPED_TOKEN_REQUIRED and
+    // the SDK goes quiet on its own — leave it.
+    omenx.startSession().catch(() => {});
 };
