@@ -40,6 +40,7 @@ const SquadLeaderDashboard = React.lazy(() => import('./pages/SquadLeaderDashboa
 const SquadMeteor = React.lazy(() => import('./pages/SquadMeteor'));
 const Sandbox = React.lazy(() => import('./pages/Sandbox'));
 import { initOmenX } from '@/lib/omenx';
+import { initOmenTelemetry } from '@/lib/omenTelemetry';
 import { isBase44Editor } from '@/lib/frameContext';
 import { refreshOmenSessionIfDue } from '@/lib/omenSessionRefresh';
 import { flushPendingScores, bindFlushListeners } from '@/lib/flushPendingScores';
