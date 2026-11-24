@@ -7,6 +7,7 @@ import WarpMenu from '../components/game/WarpMenu';
 import WelcomeModal from '../components/onboarding/WelcomeModal';
 import { SoundManager } from '../game/SoundManager';
 import { isEmbeddedForPlayers } from '@/lib/frameContext';
+import { reportOmenActivity } from '@/lib/omenTelemetry';
 
 // Static imports — bundled into the main entry chunk so they can't suffer
 // from stale dynamic-chunk timestamps when Vite's dev server restarts.
@@ -80,6 +81,9 @@ export default function PlayCarousel() {
     // Tracks whether a slide change came from the URL (popstate / back button)
     // so we don't push a redundant history entry in response.
     const syncingFromUrlRef = useRef(false);
+    // Omen session telemetry (T-006): the last slide reported, so only a real change is counted
+    // (the first select on mount is the page opening, not a player action).
+    const lastReportedSlideRef = useRef(null);
 
     const scrollPrev = useCallback(() => { SoundManager.playUIClick(); emblaApi?.scrollPrev(); }, [emblaApi]);
     const scrollNext = useCallback(() => { SoundManager.playUIClick(); emblaApi?.scrollNext(); }, [emblaApi]);
@@ -121,6 +125,11 @@ export default function PlayCarousel() {
         const onSelect = () => {
             const idx = emblaApi.selectedScrollSnap();
             setSelectedIndex(idx);
+
+            if (lastReportedSlideRef.current !== null && lastReportedSlideRef.current !== idx) {
+                reportOmenActivity('screen_changed', { screen: SLIDE_LABELS[idx]?.name || String(idx) });
+            }
+            lastReportedSlideRef.current = idx;
 
             // Mirror the active slide into the URL. Use replace for the initial
             // slide (0) so we don't pollute history, and push for navigations
