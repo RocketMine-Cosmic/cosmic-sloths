@@ -29,7 +29,10 @@
 // 1.1.2 (2026-11-04) — T-003: balance poll 5 → 15 min (fewer billed Omen calls) and the
 // iPhone Arcade sign-in "Continue" (T-003 part 3, if built). After publishing, set
 // min_client_version to 1.1.2 (Admin → Maintenance) so old clients stop 5-min polling.
-export const APP_VERSION = '1.1.2';
+// 1.1.3 (2026-11-24) — T-006: Omen session telemetry (Arcade: SDK startSession; website:
+// standalone activity client + refreshOmenXToken). After publishing, set min_client_version to
+// 1.1.3 (Admin → Maintenance) so old clients reload into the telemetry build.
+export const APP_VERSION = '1.1.3';
 
 // Lightweight numeric semver compare. Returns:
 //   -1 if a < b
