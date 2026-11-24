@@ -333,17 +333,28 @@ month end. Built and switched on 21 Oct (design and reasons: project doc
   The code works either way.
 - Go back to Omen before 150 monthly actives (26 in the 30 days to 20 Oct).
 
-### 8. 🔴 Telemetry (browser SDK 2.3+)
-The browser SDK is still 1.0.x, so Omen sees logins only: no session length and no engagement. 2.3 adds
-`startSession` / `reportActivity` / `endSession`. Omen sizes allocations on engagement, so this
-helps item 7. Upgrading the browser SDK is a breaking change:
-- add `onSessionExpired` (which leads to our ReauthNotice);
-- `logout()` is local only;
-- the login scope changes;
-- remove `enablePKCE` / `state` options.
+### 8. 🟡 SDK 2.4.0 and session telemetry
+The browser SDK is **2.4.0** (F-002, 2 Nov), started only inside the Omen Arcade frame. Session
+telemetry (T-006, 1.1.3, built 24 Nov, awaiting publish and check) tells Omen how long players stay and
+what they do, which Omen uses to size allocations (item 7). Omen's portal → game → **Activity** shows
+each player as active / idle / stale / ended. Not an earning source yet. Guide: the portal page
+`/docs/guides/activity-telemetry` (the developer MCP does not carry portal guides) and the package's
+`docs/ACTIVITY_TELEMETRY.md`.
 
-Test the login round-trip in a normal tab (PKCE fails inside the builder preview). The same
-upgrade gives a **realtime wallet subscription**, which could replace balance polling.
+- **In the Arcade:** `omenx.startSession()` after `init()` (`src/lib/omenx.js`); the SDK follows the
+  Arcade's 15-minute pass renewals. `realtime: false`, so heartbeat-only, no presence connection.
+- **On cosmic-sloths.com:** Omen's standalone `OmenXActivityClient` (`src/lib/omenTelemetry.js`) reads
+  our saved sign-in. That pass lasts 1 hour; the server function `refreshOmenXToken` redeems the refresh
+  token Omen gives our confidential client (`POST /v1/oauth/token/refresh`, `OMENX_AUTH_API_KEY`) when
+  the pass is nearly out and the player acts. The new pass is used for telemetry only. If Omen gives no
+  usable refresh token, telemetry pauses until the next fresh sign-in (Rob turned down Omen's suggested
+  Continue button, 24 Nov).
+- **Events** come only from player actions (Omen's rule): `run_started`, `run_ended` {outcome},
+  `upgrade_chosen`, `screen_changed`, `purchase_made` {sku_type}, `reward_claimed` {kind},
+  `squad_action` {action}. The last three come from one allow-list in `src/api/base44Client.js`.
+- Telemetry calls are not billed (Rob, 24 Nov); the refresh is (run-book §1).
+- The **realtime wallet subscription** (`sdk.subscribeWallet`, needs `realtime` on) could still replace
+  balance polling one day; not used.
 
 ### 9. 🔴 Smaller fixes
 - **NFT paging:** `getNFTs` and the ownership check in `purchaseSku` read only the first 100 NFTs.
