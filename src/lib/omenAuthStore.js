@@ -64,6 +64,20 @@ export function applyOmenAuth(authData, { fresh = true } = {}) {
     return merged;
 }
 
+// T-006 (24 Nov 2026): Omen may hand back a NEW refresh token when the telemetry client redeems
+// the old one (refreshOmenXToken). Keep it, for the same wallet only, so the next page load can
+// still refresh. Nothing else in the saved sign-in changes and nothing is announced: no other part
+// of the game reads `refreshToken`.
+export function updateOmenRefreshToken(walletAddress, refreshToken) {
+    if (!walletAddress || !refreshToken) return;
+    const cur = readOmenAuth();
+    if (!cur?.walletAddress || cur.walletAddress.toLowerCase() !== String(walletAddress).toLowerCase()) return;
+    if (cur.refreshToken === refreshToken) return;
+    const merged = { ...cur, refreshToken };
+    try { localStorage.setItem(OMEN_AUTH_KEY, JSON.stringify(merged)); } catch {}
+    saveAuthToIndexedDB(merged).catch(() => {});
+}
+
 export function clearOmenAuth() {
     try { localStorage.removeItem(OMEN_AUTH_KEY); } catch {}
     clearAuthFromIndexedDB().catch(() => {});
