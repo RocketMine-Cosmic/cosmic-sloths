@@ -34,6 +34,7 @@ import SynergyBanner from '../components/game/SynergyBanner';
 import SessionExpiredBanner from '../components/game/SessionExpiredBanner';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { useOmenXPurchasesDisabled } from '@/hooks/useOmenXPurchasesDisabled';
+import { reportOmenActivity } from '@/lib/omenTelemetry';
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -472,6 +473,8 @@ export default function Game() {
                 }
             },
             onGameOver: (stats) => {
+                // Omen session telemetry (T-006).
+                reportOmenActivity('run_ended', { arena: String(arenaId || ''), outcome: 'defeat' });
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 stats.startingWeaponId = startingWeaponId;
@@ -589,6 +592,8 @@ export default function Game() {
                 }
             },
             onVictory: (stats) => {
+                // Omen session telemetry (T-006).
+                reportOmenActivity('run_ended', { arena: String(arenaId || ''), outcome: 'victory' });
                 stats.difficultyId = difficultyId;
                 stats.isEndless = isEndless;
                 stats.startingWeaponId = startingWeaponId;
@@ -689,6 +694,9 @@ export default function Game() {
         }
 
         engineRef.current = engine;
+
+        // Omen session telemetry (T-006): the player launched a run.
+        reportOmenActivity('run_started', { arena: String(arenaId || '') });
 
         // Sandbox — pre-fire N starter level-ups so the player picks their build
         // before mobs spawn. Same pattern as squad meteor's pendingStarterLevelUps
@@ -898,6 +906,7 @@ export default function Game() {
     const handleUpgradeSelect = (upgrade) => {
         const engine = engineRef.current;
         if (!engine) { setLevelUpChoices(null); return; }
+        reportOmenActivity('upgrade_chosen'); // Omen session telemetry (T-006)
         engine.applyUpgrade(upgrade);
         // If applyUpgrade caused another level-up (XP overflow OR the squad-meteor
         // starter stack queued the next one), fire the NEXT levelUp() IMMEDIATELY
@@ -1063,6 +1072,7 @@ export default function Game() {
         }
         // Endless / abandoned runs: must await saveScore before navigating away,
         // otherwise unmount cancels the in-flight fetch and progress is lost.
+        reportOmenActivity('run_ended', { arena: String(engine.arena?.id || ''), outcome: 'quit' });
         setIsQuitting(true);
         engine.isPaused = false;
         engine.isGameOver = true;
