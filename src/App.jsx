@@ -181,6 +181,8 @@ function App() {
     if (refreshOmenSessionIfDue()) return;
     // Inside the Omen Arcade: the 2.4.0 SDK takes the Arcade's sign-in and its renewals.
     initOmenX().catch(err => console.error('[OmenX] init failed', err));
+    // Omen session telemetry (T-006): Arcade via the SDK above, website via the standalone client.
+    initOmenTelemetry();
     // Live store prices from the Omen portal (every price screen reads these).
     startStorePrices();
     // Retry any runs that failed to save in a previous session.
